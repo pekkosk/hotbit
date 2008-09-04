@@ -1,0 +1,50 @@
+
+<!doctype html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><title>Python: module md</title>
+</head><body bgcolor="#f0f0f8">
+
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
+<tr bgcolor="#7799ee">
+<td valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>md</strong></big></big></font></td
+><td align=right valign=bottom
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/home/pekkosk/work/programs/python/box/md.py">/home/pekkosk/work/programs/python/box/md.py</a></font></td></tr></table>
+    <p></p>
+<p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ee77aa">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Classes</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#ee77aa"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl>
+<dt><font face="helvetica, arial"><a href="md.html#TrajectoryWriter">TrajectoryWriter</a>
+</font></dt></dl>
+ <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="TrajectoryWriter">class <strong>TrajectoryWriter</strong></a></font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Trajectory&nbsp;writer&nbsp;for&nbsp;transition&nbsp;paths.&nbsp;<br>
+Write&nbsp;each&nbsp;path&nbsp;into&nbsp;its&nbsp;own&nbsp;file.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="TrajectoryWriter-__call__"><strong>__call__</strong></a>(self)</dt><dd><tt>Writes&nbsp;trajectory&nbsp;file&nbsp;for&nbsp;current&nbsp;atoms&nbsp;list.</tt></dd></dl>
+
+<dl><dt><a name="TrajectoryWriter-__init__"><strong>__init__</strong></a>(self, images, name<font color="#909090">=None</font>)</dt><dd><tt>images&nbsp;is&nbsp;the&nbsp;list&nbsp;of&nbsp;Atoms&nbsp;objects;&nbsp;you&nbsp;can&nbsp;supply&nbsp;also&nbsp;the&nbsp;name.</tt></dd></dl>
+
+</td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#eeaa77">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Functions</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#eeaa77"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl><dt><a name="-merge_atoms"><strong>merge_atoms</strong></a>(atoms1, atoms2, box_from<font color="#909090">=None</font>, R<font color="#909090">=0.29999999999999999</font>)</dt><dd><tt>Merge&nbsp;two&nbsp;sets&nbsp;of&nbsp;atoms&nbsp;without&nbsp;atom&nbsp;duplication.<br>
+(atoms1&nbsp;and&nbsp;atoms2&nbsp;may&nbsp;share&nbsp;same&nbsp;atoms&nbsp;within&nbsp;radius&nbsp;R)</tt></dd></dl>
+ <dl><dt><a name="-quench"><strong>quench</strong></a>(atoms, name<font color="#909090">=None</font>, fmax<font color="#909090">=0.050000000000000003</font>)</dt><dd><tt>Quench&nbsp;given&nbsp;Atoms&nbsp;object&nbsp;with&nbsp;given&nbsp;attached&nbsp;calculator.</tt></dd></dl>
+ <dl><dt><a name="-transition_barrier"><strong>transition_barrier</strong></a>(calc, quench, guess, cell<font color="#909090">=None</font>, pbc<font color="#909090">=None</font>, constraints<font color="#909090">=None</font>, M<font color="#909090">=None</font>, name<font color="#909090">=None</font>, fmax<font color="#909090">=0.050000000000000003</font>, steps<font color="#909090">=1000000</font>)</dt></dl>
+</td></tr></table>
+</body></html>

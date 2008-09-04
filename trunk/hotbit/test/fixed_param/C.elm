@@ -1,0 +1,9 @@
+symbol=C     
+Z=      6
+m=      12.01
+valence=     4.0       
+orbitals=     4       
+energies=-0.4988 -0.1974 -0.1974 -0.1974
+U=      0.365  
+FWHM=   3.64   
+vib=    2290  

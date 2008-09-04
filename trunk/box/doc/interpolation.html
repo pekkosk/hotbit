@@ -1,0 +1,229 @@
+
+<!doctype html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><title>Python: module interpolation</title>
+</head><body bgcolor="#f0f0f8">
+
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
+<tr bgcolor="#7799ee">
+<td valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>interpolation</strong></big></big></font></td
+><td align=right valign=bottom
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/home/pekkosk/work/programs/python/box/interpolation.py">/home/pekkosk/work/programs/python/box/interpolation.py</a></font></td></tr></table>
+    <p></p>
+<p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#aa55cc">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#fffff" face="helvetica, arial"><big><strong>Modules</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="box.mix.html">box.mix</a><br>
+</td><td width="25%" valign=top><a href="numpy.html">numpy</a><br>
+</td><td width="25%" valign=top><a href="pylab.html">pylab</a><br>
+</td><td width="25%" valign=top></td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ee77aa">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Classes</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#ee77aa"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl>
+<dt><font face="helvetica, arial"><a href="interpolation.html#BilinearInterpolation">BilinearInterpolation</a>
+</font></dt><dt><font face="helvetica, arial"><a href="interpolation.html#SplineFunction">SplineFunction</a>
+</font></dt><dt><font face="helvetica, arial"><a href="interpolation.html#TrilinearInterpolation">TrilinearInterpolation</a>
+</font></dt><dt><font face="helvetica, arial"><a href="interpolation.html#VectorSplineFunction">VectorSplineFunction</a>
+</font></dt></dl>
+ <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="BilinearInterpolation">class <strong>BilinearInterpolation</strong></a></font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Perform&nbsp;bilinear&nbsp;interpolation&nbsp;for&nbsp;2D&nbsp;(xy)-data<br>
+&nbsp;<br>
+For&nbsp;bilinear&nbsp;interpolation,&nbsp;see&nbsp;e.g.&nbsp;Wikipedia.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="BilinearInterpolation-__call__"><strong>__call__</strong></a>(self, x, y)</dt><dd><tt>Return&nbsp;the&nbsp;interpolated&nbsp;value&nbsp;at&nbsp;x,y.</tt></dd></dl>
+
+<dl><dt><a name="BilinearInterpolation-__init__"><strong>__init__</strong></a>(self, a, xgrid<font color="#909090">=None</font>, ygrid<font color="#909090">=None</font>)</dt></dl>
+
+<dl><dt><a name="BilinearInterpolation-plot"><strong>plot</strong></a>(self, nx<font color="#909090">=100</font>, ny<font color="#909090">=100</font>, out<font color="#909090">='screen'</font>)</dt><dd><tt>Make&nbsp;2D&nbsp;contour-color&nbsp;plot&nbsp;of&nbsp;the&nbsp;data.</tt></dd></dl>
+
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="SplineFunction">class <strong>SplineFunction</strong></a></font></td></tr>
+    
+<tr><td bgcolor="#ffc8d8"><tt>&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="SplineFunction-__call__"><strong>__call__</strong></a>(self, x, der<font color="#909090">=0</font>)</dt><dd><tt>Return&nbsp;der'th&nbsp;derivative&nbsp;of&nbsp;f(x)</tt></dd></dl>
+
+<dl><dt><a name="SplineFunction-__init__"><strong>__init__</strong></a>(self, x, y, k<font color="#909090">=3</font>, s<font color="#909090">=0</font>)</dt><dd><tt>Simple&nbsp;B-spline&nbsp;function;&nbsp;order&nbsp;k&nbsp;is&nbsp;cubic&nbsp;by&nbsp;default.</tt></dd></dl>
+
+<dl><dt><a name="SplineFunction-integrate"><strong>integrate</strong></a>(self, a, b)</dt><dd><tt>Integrate&nbsp;given&nbsp;function&nbsp;within&nbsp;[a,b]</tt></dd></dl>
+
+<dl><dt><a name="SplineFunction-limits"><strong>limits</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="SplineFunction-max_deviation_from_linear"><strong>max_deviation_from_linear</strong></a>(self)</dt><dd><tt>For&nbsp;given&nbsp;spline&nbsp;(default&nbsp;cubic),&nbsp;return&nbsp;maximum&nbsp;difference<br>
+wrt&nbsp;linear&nbsp;(k=0)&nbsp;interpolation.</tt></dd></dl>
+
+<dl><dt><a name="SplineFunction-plot"><strong>plot</strong></a>(self, return_pylab<font color="#909090">=False</font>, der<font color="#909090">=0</font>, filename<font color="#909090">=None</font>)</dt><dd><tt>Plot&nbsp;the&nbsp;function&nbsp;with&nbsp;matplolib</tt></dd></dl>
+
+<dl><dt><a name="SplineFunction-smoothness"><strong>smoothness</strong></a>(self)</dt><dd><tt>Return&nbsp;a&nbsp;measure&nbsp;for&nbsp;the&nbsp;''smoothness''&nbsp;of&nbsp;interpolation.<br>
+&nbsp;<br>
+It&nbsp;is&nbsp;measured&nbsp;by&nbsp;max_deviation_from_linear/average|dy|.<br>
+Smooth&nbsp;interpolations&nbsp;should&nbsp;have&nbsp;&lt;&lt;1.<br>
+If&nbsp;~1,&nbsp;then&nbsp;interpolation&nbsp;deviates&nbsp;as&nbsp;much&nbsp;as&nbsp;is&nbsp;the&nbsp;variations<br>
+in&nbsp;y&nbsp;and&nbsp;interpolation&nbsp;is&nbsp;not&nbsp;smooth.</tt></dd></dl>
+
+<dl><dt><a name="SplineFunction-solve"><strong>solve</strong></a>(self, y, a<font color="#909090">=None</font>, b<font color="#909090">=None</font>)</dt><dd><tt>Solve&nbsp;x&nbsp;for&nbsp;f(x)=y,&nbsp;where&nbsp;x&nbsp;in&nbsp;[a,b].</tt></dd></dl>
+
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="TrilinearInterpolation">class <strong>TrilinearInterpolation</strong></a></font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Perform&nbsp;trilinear&nbsp;interpolation&nbsp;for&nbsp;3D&nbsp;(xyz)-data<br>
+&nbsp;<br>
+For&nbsp;trilinear&nbsp;interpolation,&nbsp;see&nbsp;e.g.&nbsp;Wikipedia.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="TrilinearInterpolation-__call__"><strong>__call__</strong></a>(self, r)</dt><dd><tt>Return&nbsp;the&nbsp;interpolated&nbsp;value&nbsp;at&nbsp;r.</tt></dd></dl>
+
+<dl><dt><a name="TrilinearInterpolation-__init__"><strong>__init__</strong></a>(self, a, grids<font color="#909090">=None</font>)</dt></dl>
+
+<dl><dt><a name="TrilinearInterpolation-write_vtk"><strong>write_vtk</strong></a>(self, name<font color="#909090">='trilinear'</font>, gpts<font color="#909090">=None</font>)</dt><dd><tt>Write&nbsp;date&nbsp;into&nbsp;vtk&nbsp;file&nbsp;with&nbsp;given&nbsp;number&nbsp;of&nbsp;grid&nbsp;points.&nbsp;<br>
+&nbsp;<br>
+Parameters:<br>
+gpts&nbsp;-&nbsp;number&nbsp;of&nbsp;grid&nbsp;points&nbsp;to&nbsp;all&nbsp;directions.&nbsp;Default<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is&nbsp;the&nbsp;number&nbsp;of&nbsp;DFT&nbsp;grid&nbsp;points.</tt></dd></dl>
+
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="VectorSplineFunction">class <strong>VectorSplineFunction</strong></a></font></td></tr>
+    
+<tr><td bgcolor="#ffc8d8"><tt>&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="VectorSplineFunction-__call__"><strong>__call__</strong></a>(self, t<font color="#909090">=None</font>, u<font color="#909090">=None</font>, der<font color="#909090">=0</font>)</dt><dd><tt>Return&nbsp;the&nbsp;interpolated&nbsp;r(t)&nbsp;or&nbsp;r(u).&nbsp;If&nbsp;you&nbsp;evaluate&nbsp;t-derivatives<br>
+then&nbsp;chain&nbsp;rule&nbsp;is&nbsp;used:&nbsp;dr(t)/dt=dr(u)/du*(du/dt).&nbsp;This&nbsp;because<br>
+spline&nbsp;routine&nbsp;is&nbsp;always&nbsp;called&nbsp;using&nbsp;internal&nbsp;u-parameter.&nbsp;Take&nbsp;special<br>
+care&nbsp;to&nbsp;return&nbsp;initial&nbsp;or&nbsp;end-points&nbsp;if&nbsp;parameter==0&nbsp;or&nbsp;1.</tt></dd></dl>
+
+<dl><dt><a name="VectorSplineFunction-__init__"><strong>__init__</strong></a>(self, r, k<font color="#909090">=3</font>, s<font color="#909090">=None</font>, u<font color="#909090">=None</font>, force<font color="#909090">=None</font>)</dt><dd><tt>Interpolate&nbsp;vector&nbsp;r's&nbsp;path&nbsp;in&nbsp;N-dimensional&nbsp;space&nbsp;(from&nbsp;M&nbsp;points&nbsp;{r}).<br>
+&nbsp;<br>
+r=array([[vec1],&nbsp;[vec2],&nbsp;[vec3],&nbsp;...,&nbsp;[vecM]])<br>
+(r[:,i]&nbsp;is&nbsp;the&nbsp;trajectory&nbsp;of&nbsp;component&nbsp;i.)<br>
+&nbsp;<br>
+k&nbsp;=&nbsp;order&nbsp;of&nbsp;the&nbsp;spline&nbsp;(cubic&nbsp;(3)&nbsp;by&nbsp;default&nbsp;to&nbsp;get&nbsp;curvature)<br>
+s&nbsp;=&nbsp;smoothing&nbsp;parameter&nbsp;ala&nbsp;scipy&nbsp;(s=0&nbsp;-&gt;&nbsp;points&nbsp;r&nbsp;given&nbsp;exactly)<br>
+u&nbsp;=&nbsp;node&nbsp;points&nbsp;(for&nbsp;internal&nbsp;u-parameter)<br>
+force&nbsp;=&nbsp;force&nbsp;field&nbsp;at&nbsp;the&nbsp;nodes&nbsp;of&nbsp;r&nbsp;(forces&nbsp;evaluated&nbsp;at&nbsp;each&nbsp;M&nbsp;point)<br>
+&nbsp;<br>
+Usage:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;fr=<a href="#VectorSplineFunction">VectorSplineFunction</a>(r)&nbsp;(now&nbsp;r=fr(t)&nbsp;with&nbsp;t&nbsp;[0,1])<br>
+&nbsp;&nbsp;&nbsp;&nbsp;tan=fr.<a href="#VectorSplineFunction-normalized_tangent">normalized_tangent</a>(0.2)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;...&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;<br>
+The&nbsp;trajectory&nbsp;is&nbsp;parametrized&nbsp;with&nbsp;variable&nbsp;'t'&nbsp;([0,1])&nbsp;where&nbsp;<br>
+t=l/L&nbsp;(L&nbsp;is&nbsp;the&nbsp;total&nbsp;length&nbsp;of&nbsp;the&nbsp;trajectory&nbsp;and&nbsp;l&nbsp;length&nbsp;so&nbsp;far).<br>
+Internally&nbsp;for&nbsp;technical&nbsp;reasons&nbsp;the&nbsp;path&nbsp;is&nbsp;internally&nbsp;parametrized&nbsp;<br>
+by&nbsp;'u'&nbsp;([0,1]),&nbsp;where&nbsp;the&nbsp;path&nbsp;is&nbsp;taken&nbsp;to&nbsp;be&nbsp;_linear_&nbsp;between&nbsp;<br>
+the&nbsp;points.&nbsp;Thus,&nbsp;for&nbsp;k=1,&nbsp;u&nbsp;is&nbsp;equal&nbsp;to&nbsp;t.&nbsp;&nbsp;&nbsp;<br>
+&nbsp;<br>
+r=r(t)&nbsp;and&nbsp;r=r(u);&nbsp;r(t=0)=r(u=0)&nbsp;and&nbsp;r(t=1)=r(u=1)<br>
+The&nbsp;length&nbsp;along&nbsp;the&nbsp;path&nbsp;l(u)&nbsp;and&nbsp;l(t).&nbsp;t&nbsp;has&nbsp;the&nbsp;property<br>
+dl(t)/dr=L/1=L&nbsp;=&nbsp;constant&nbsp;(l(t=0)=0&nbsp;and&nbsp;l(t=1)=L).<br>
+&nbsp;<br>
+dl&nbsp;&nbsp;&nbsp;dl(t)&nbsp;dt&nbsp;&nbsp;&nbsp;dt&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l'(u)<br>
+--&nbsp;=&nbsp;-----*--=L*--&nbsp;&nbsp;--&gt;&nbsp;dt=-----du&nbsp;--&gt;&nbsp;t(u)=l(u)/L&nbsp;(with&nbsp;correct&nbsp;bound.cond.)<br>
+du&nbsp;&nbsp;&nbsp;&nbsp;dt&nbsp;&nbsp;&nbsp;du&nbsp;&nbsp;&nbsp;du&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;L<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/b&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/b<br>
+l(a,b)=&nbsp;|&nbsp;&nbsp;&nbsp;ds&nbsp;=&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;|dr(u)/du|du&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(for&nbsp;a,b=u)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/u=a&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/u=a<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/b&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/b<br>
+l(a,b)=&nbsp;|&nbsp;&nbsp;&nbsp;ds&nbsp;=&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;|dr(u)/du*du/dt|dt&nbsp;&nbsp;&nbsp;&nbsp;(for&nbsp;a,b=t)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/t=a&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/t=a<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+where&nbsp;|...|&nbsp;is&nbsp;the&nbsp;Eucledian&nbsp;norm.<br>
+&nbsp;<br>
+&nbsp;<br>
+Energy&nbsp;slope&nbsp;E'(t)=F(t)*r'(t)</tt></dd></dl>
+
+<dl><dt><a name="VectorSplineFunction-closest_parameter"><strong>closest_parameter</strong></a>(self, r)</dt><dd><tt>Return&nbsp;the&nbsp;parameter&nbsp;t&nbsp;that&nbsp;minimizes&nbsp;<br>
+|r(t)-r|&nbsp;along&nbsp;the&nbsp;splined&nbsp;curve.</tt></dd></dl>
+
+<dl><dt><a name="VectorSplineFunction-closest_parameters"><strong>closest_parameters</strong></a>(self, r<font color="#909090">=None</font>)</dt><dd><tt>Return&nbsp;the&nbsp;parameters&nbsp;t&nbsp;(in&nbsp;[0,1])&nbsp;minimizing&nbsp;|f(t)-r|&nbsp;for&nbsp;all&nbsp;r.</tt></dd></dl>
+
+<dl><dt><a name="VectorSplineFunction-curvature"><strong>curvature</strong></a>(self, t)</dt><dd><tt>Return&nbsp;the&nbsp;curvature&nbsp;norm&nbsp;|r''(t)|&nbsp;at&nbsp;t&nbsp;(can&nbsp;be&nbsp;a&nbsp;list).</tt></dd></dl>
+
+<dl><dt><a name="VectorSplineFunction-deviation_from_linear"><strong>deviation_from_linear</strong></a>(self, t)</dt><dd><tt>Return&nbsp;|r(t)-rl(t')|&nbsp;where&nbsp;rl&nbsp;is&nbsp;linear&nbsp;and&nbsp;t'&nbsp;minimizing&nbsp;the&nbsp;norm.</tt></dd></dl>
+
+<dl><dt><a name="VectorSplineFunction-deviations_at_nodes"><strong>deviations_at_nodes</strong></a>(self)</dt><dd><tt>Return&nbsp;|r(t_i)-r_i|&nbsp;for&nbsp;all&nbsp;nodes.</tt></dd></dl>
+
+<dl><dt><a name="VectorSplineFunction-get_length"><strong>get_length</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="VectorSplineFunction-homogenize"><strong>homogenize</strong></a>(self, div<font color="#909090">=None</font>)</dt><dd><tt>Return&nbsp;set&nbsp;of&nbsp;r&nbsp;that&nbsp;have&nbsp;equal&nbsp;distances&nbsp;in&nbsp;between.</tt></dd></dl>
+
+<dl><dt><a name="VectorSplineFunction-line_integral"><strong>line_integral</strong></a>(self, a<font color="#909090">=None</font>, b<font color="#909090">=None</font>, parameter<font color="#909090">=None</font>, full_out<font color="#909090">=False</font>)</dt><dd><tt>Return&nbsp;line&nbsp;integral&nbsp;in&nbsp;N-dimensional&nbsp;space&nbsp;along&nbsp;splined&nbsp;function.<br>
+Paramater&nbsp;is&nbsp;'u'&nbsp;or&nbsp;'t'&nbsp;[a,b].&nbsp;If&nbsp;b&lt;a,&nbsp;the&nbsp;integral&nbsp;is&nbsp;negative.<br>
+if&nbsp;full_out==True,&nbsp;return&nbsp;the&nbsp;function&nbsp;where&nbsp;the&nbsp;upper&nbsp;limit&nbsp;goes<br>
+from&nbsp;a&nbsp;to&nbsp;b.</tt></dd></dl>
+
+<dl><dt><a name="VectorSplineFunction-max_deviation_from_linear"><strong>max_deviation_from_linear</strong></a>(self)</dt><dd><tt>Return&nbsp;the&nbsp;maximum&nbsp;deviation&nbsp;from&nbsp;linear&nbsp;interpolation.</tt></dd></dl>
+
+<dl><dt><a name="VectorSplineFunction-normalized_tangent"><strong>normalized_tangent</strong></a>(self, t)</dt><dd><tt>Return&nbsp;r'(t)/|r'(t)|</tt></dd></dl>
+
+<dl><dt><a name="VectorSplineFunction-plot"><strong>plot</strong></a>(self, out<font color="#909090">='screen'</font>)</dt></dl>
+
+<dl><dt><a name="VectorSplineFunction-tangent"><strong>tangent</strong></a>(self, t)</dt><dd><tt>Return&nbsp;tangent&nbsp;r'(t)</tt></dd></dl>
+
+<dl><dt><a name="VectorSplineFunction-tangents"><strong>tangents</strong></a>(self, t<font color="#909090">=None</font>)</dt><dd><tt>Return&nbsp;tangents&nbsp;at&nbsp;t&nbsp;(list).&nbsp;Nodes&nbsp;by&nbsp;default.</tt></dd></dl>
+
+</td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#eeaa77">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Functions</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#eeaa77"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl><dt><a name="-grid"><strong>grid</strong></a>(n)</dt></dl>
+ <dl><dt><a name="-vec"><strong>vec</strong></a> = array(...)</dt><dd><tt>array(object,&nbsp;dtype=None,&nbsp;copy=1,order=None,&nbsp;subok=0,ndmin=0)<br>
+&nbsp;<br>
+Return&nbsp;an&nbsp;array&nbsp;from&nbsp;object&nbsp;with&nbsp;the&nbsp;specified&nbsp;date-type.<br>
+&nbsp;<br>
+Inputs:<br>
+&nbsp;&nbsp;object&nbsp;-&nbsp;an&nbsp;array,&nbsp;any&nbsp;object&nbsp;exposing&nbsp;the&nbsp;array&nbsp;interface,&nbsp;any<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;object&nbsp;whose&nbsp;__array__&nbsp;method&nbsp;returns&nbsp;an&nbsp;array,&nbsp;or&nbsp;any<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(nested)&nbsp;sequence.<br>
+&nbsp;&nbsp;dtype&nbsp;&nbsp;-&nbsp;The&nbsp;desired&nbsp;data-type&nbsp;for&nbsp;the&nbsp;array.&nbsp;&nbsp;If&nbsp;not&nbsp;given,&nbsp;then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;type&nbsp;will&nbsp;be&nbsp;determined&nbsp;as&nbsp;the&nbsp;minimum&nbsp;type&nbsp;required<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;to&nbsp;hold&nbsp;the&nbsp;objects&nbsp;in&nbsp;the&nbsp;sequence.&nbsp;&nbsp;This&nbsp;argument&nbsp;can&nbsp;only<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;be&nbsp;used&nbsp;to&nbsp;'upcast'&nbsp;the&nbsp;array.&nbsp;&nbsp;For&nbsp;downcasting,&nbsp;use&nbsp;the<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;.astype(t)&nbsp;method.<br>
+&nbsp;&nbsp;copy&nbsp;&nbsp;&nbsp;-&nbsp;If&nbsp;true,&nbsp;then&nbsp;force&nbsp;a&nbsp;copy.&nbsp;&nbsp;Otherwise&nbsp;a&nbsp;copy&nbsp;will&nbsp;only&nbsp;occur<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;__array__&nbsp;returns&nbsp;a&nbsp;copy,&nbsp;obj&nbsp;is&nbsp;a&nbsp;nested&nbsp;sequence,&nbsp;or<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;copy&nbsp;is&nbsp;needed&nbsp;to&nbsp;satisfy&nbsp;any&nbsp;of&nbsp;the&nbsp;other&nbsp;requirements<br>
+&nbsp;&nbsp;order&nbsp;&nbsp;-&nbsp;Specify&nbsp;the&nbsp;order&nbsp;of&nbsp;the&nbsp;array.&nbsp;&nbsp;If&nbsp;order&nbsp;is&nbsp;'C',&nbsp;then&nbsp;the<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;array&nbsp;will&nbsp;be&nbsp;in&nbsp;C-contiguous&nbsp;order&nbsp;(last-index&nbsp;varies&nbsp;the<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fastest).&nbsp;&nbsp;If&nbsp;order&nbsp;is&nbsp;'FORTRAN',&nbsp;then&nbsp;the&nbsp;returned&nbsp;array<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;will&nbsp;be&nbsp;in&nbsp;Fortran-contiguous&nbsp;order&nbsp;(first-index&nbsp;varies&nbsp;the<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fastest).&nbsp;&nbsp;If&nbsp;order&nbsp;is&nbsp;None,&nbsp;then&nbsp;the&nbsp;returned&nbsp;array&nbsp;may<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;be&nbsp;in&nbsp;either&nbsp;C-,&nbsp;or&nbsp;Fortran-contiguous&nbsp;order&nbsp;or&nbsp;even<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;discontiguous.<br>
+&nbsp;&nbsp;subok&nbsp;&nbsp;-&nbsp;If&nbsp;True,&nbsp;then&nbsp;sub-classes&nbsp;will&nbsp;be&nbsp;passed-through,&nbsp;otherwise<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;returned&nbsp;array&nbsp;will&nbsp;be&nbsp;forced&nbsp;to&nbsp;be&nbsp;a&nbsp;base-class&nbsp;array<br>
+&nbsp;&nbsp;ndmin&nbsp;&nbsp;-&nbsp;Specifies&nbsp;the&nbsp;minimum&nbsp;number&nbsp;of&nbsp;dimensions&nbsp;that&nbsp;the&nbsp;resulting<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;array&nbsp;should&nbsp;have.&nbsp;&nbsp;1's&nbsp;will&nbsp;be&nbsp;pre-pended&nbsp;to&nbsp;the&nbsp;shape&nbsp;as<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;needed&nbsp;to&nbsp;meet&nbsp;this&nbsp;requirement.</tt></dd></dl>
+</td></tr></table>
+</body></html>
