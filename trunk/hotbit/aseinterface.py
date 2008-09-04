@@ -1,7 +1,8 @@
 """
     ASE-calculator interface for HOTBIT.
+    (Handy Open-source Tight-binding Tool)
     
-    P. Koskinen 21.1 2008-
+    P. Koskinen 21.1 2008 onwards
     
 """
 
