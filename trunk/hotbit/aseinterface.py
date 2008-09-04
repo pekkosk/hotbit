@@ -1,7 +1,7 @@
 """
     ASE-calculator interface for HOTBIT.
     
-    P. Koskinen 21.1 2008
+    P. Koskinen 21.1 2008-
     
 """
 
