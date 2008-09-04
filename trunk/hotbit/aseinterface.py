@@ -44,8 +44,8 @@ class Calculator(Output):
         
         Parameters:
         -----------
-        charge            total electric charge for system
-        width             width of Fermi occupation 
+        charge            total electric charge for system (-1 means an additional electron)
+        width             width of Fermi occupation (in eV)
         SCC               Self-Consistent Charge calculation
         convergence       convergence criterion (Mulliken charge variation/atom)
         mixing_constant   density mixing for Anderson mixer
