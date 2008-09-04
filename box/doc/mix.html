@@ -1,0 +1,198 @@
+
+<!doctype html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><title>Python: module mix</title>
+</head><body bgcolor="#f0f0f8">
+
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
+<tr bgcolor="#7799ee">
+<td valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>mix</strong></big></big></font></td
+><td align=right valign=bottom
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/home/pekkosk/work/programs/python/box/mix.py">/home/pekkosk/work/programs/python/box/mix.py</a></font></td></tr></table>
+    <p><tt>A&nbsp;module&nbsp;containing&nbsp;miscellanous&nbsp;utility&nbsp;functions.<br>
+&nbsp;<br>
+Author:&nbsp;P.&nbsp;Koskinen&nbsp;11.9&nbsp;2006-</tt></p>
+<p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#aa55cc">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#fffff" face="helvetica, arial"><big><strong>Modules</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="numpy.html">numpy</a><br>
+</td><td width="25%" valign=top></td><td width="25%" valign=top></td><td width="25%" valign=top></td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ee77aa">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Classes</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#ee77aa"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl>
+<dt><font face="helvetica, arial"><a href="mix.html#AnalyticFunction">AnalyticFunction</a>
+</font></dt><dt><font face="helvetica, arial"><a href="mix.html#Const">Const</a>
+</font></dt><dt><font face="helvetica, arial"><a href="mix.html#IFunction">IFunction</a>
+</font></dt></dl>
+ <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="AnalyticFunction">class <strong>AnalyticFunction</strong></a></font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Class&nbsp;for&nbsp;defining&nbsp;analytic&nbsp;functions&nbsp;with&nbsp;strings.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="AnalyticFunction-__call__"><strong>__call__</strong></a>(self, variable, **kwargs)</dt><dd><tt>variable&nbsp;is&nbsp;the&nbsp;independent&nbsp;variable</tt></dd></dl>
+
+<dl><dt><a name="AnalyticFunction-__init__"><strong>__init__</strong></a>(self, expr, variable<font color="#909090">='x'</font>, **kwargs)</dt><dd><tt>e.g.&nbsp;f=<a href="#AnalyticFunction">AnalyticFunction</a>('a*x**2+b*x',a=1,b=2).&nbsp;free=independent&nbsp;variable</tt></dd></dl>
+
+<dl><dt><a name="AnalyticFunction-info"><strong>info</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="AnalyticFunction-plot"><strong>plot</strong></a>(self, a<font color="#909090">=None</font>, b<font color="#909090">=None</font>, N<font color="#909090">=200</font>, out<font color="#909090">='screen'</font>)</dt></dl>
+
+<dl><dt><a name="AnalyticFunction-set"><strong>set</strong></a>(self, **kwagrs)</dt></dl>
+
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="Const">class <strong>Const</strong></a></font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Simple&nbsp;class&nbsp;for&nbsp;constants.&nbsp;<br>
+&nbsp;<br>
+Example:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;const=<a href="#Const">Const</a>()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;E=const.kB*T<br>
+&nbsp;&nbsp;&nbsp;&nbsp;const.<a href="#Const-list_constants">list_constants</a>()&nbsp;-&gt;&nbsp;list&nbsp;of&nbsp;available&nbsp;constants<br>
+&nbsp;&nbsp;&nbsp;&nbsp;const.<a href="#Const-search">search</a>('Boltzmann')<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="Const-__init__"><strong>__init__</strong></a>(self, lst)</dt></dl>
+
+<dl><dt><a name="Const-add_const"><strong>add_const</strong></a>(self, st)</dt><dd><tt>Add&nbsp;constant&nbsp;(given&nbsp;as&nbsp;string)&nbsp;to&nbsp;list.</tt></dd></dl>
+
+<dl><dt><a name="Const-info"><strong>info</strong></a>(self, const)</dt><dd><tt>Print&nbsp;info&nbsp;for&nbsp;the&nbsp;given&nbsp;constant.</tt></dd></dl>
+
+<dl><dt><a name="Const-list_constants"><strong>list_constants</strong></a>(self)</dt><dd><tt>List&nbsp;all&nbsp;the&nbsp;constants&nbsp;in&nbsp;this&nbsp;object.</tt></dd></dl>
+
+<dl><dt><a name="Const-search"><strong>search</strong></a>(self, st)</dt><dd><tt>Search&nbsp;a&nbsp;part&nbsp;of&nbsp;string&nbsp;from&nbsp;the&nbsp;constant&nbsp;database.</tt></dd></dl>
+
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="IFunction">class <strong>IFunction</strong></a></font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Simple&nbsp;class&nbsp;for&nbsp;interpolating&nbsp;functions&nbsp;on&nbsp;a&nbsp;grid.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="IFunction-__call__"><strong>__call__</strong></a>(self, x, der<font color="#909090">=0</font>)</dt><dd><tt>Evaluate&nbsp;function&nbsp;or&nbsp;its&nbsp;derivatives&nbsp;(der=1,2)&nbsp;at&nbsp;x.</tt></dd></dl>
+
+<dl><dt><a name="IFunction-__init__"><strong>__init__</strong></a>(self, x, y, s<font color="#909090">=0</font>)</dt><dd><tt>x&nbsp;is&nbsp;the&nbsp;grid&nbsp;and&nbsp;y&nbsp;the&nbsp;corresponding&nbsp;values.<br>
+s&nbsp;is&nbsp;the&nbsp;"smoothness",&nbsp;default&nbsp;s=0&nbsp;(f(x_i)=y_i&nbsp;exactly)</tt></dd></dl>
+
+<dl><dt><a name="IFunction-integrate"><strong>integrate</strong></a>(self, x1, x2)</dt><dd><tt>Integrate&nbsp;the&nbsp;function&nbsp;from&nbsp;x1&nbsp;to&nbsp;x2.</tt></dd></dl>
+
+</td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#eeaa77">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Functions</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#eeaa77"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl><dt><a name="-a2s"><strong>a2s</strong></a>(a, fmt<font color="#909090">='%20.14g'</font>, end<font color="#909090">=''</font>)</dt><dd><tt>Transforms&nbsp;vector&nbsp;array&nbsp;into&nbsp;a&nbsp;string&nbsp;with&nbsp;given&nbsp;format.</tt></dd></dl>
+ <dl><dt><a name="-abs_sum"><strong>abs_sum</strong></a>(a)</dt><dd><tt>Return&nbsp;the&nbsp;sum&nbsp;of&nbsp;all&nbsp;elements&nbsp;(absolute&nbsp;values)&nbsp;in&nbsp;array.</tt></dd></dl>
+ <dl><dt><a name="-add_file_appendix"><strong>add_file_appendix</strong></a>(file, app)</dt><dd><tt>Adds&nbsp;appendix&nbsp;to&nbsp;file&nbsp;name,&nbsp;preserving&nbsp;the&nbsp;file&nbsp;type.&nbsp;<br>
+Examples:&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;'result.out'&nbsp;+&nbsp;'1'&nbsp;--&gt;&nbsp;'result_1.out'<br>
+&nbsp;&nbsp;&nbsp;&nbsp;'result'&nbsp;'1'&nbsp;--&gt;&nbsp;'result_1'<br>
+&nbsp;&nbsp;&nbsp;&nbsp;'result.out.xyz'&nbsp;'1'&nbsp;--&gt;&nbsp;'result.out_1.xyz'</tt></dd></dl>
+ <dl><dt><a name="-add_to_file"><strong>add_to_file</strong></a>(s, file)</dt><dd><tt>Add&nbsp;string&nbsp;to&nbsp;a&nbsp;file.</tt></dd></dl>
+ <dl><dt><a name="-base_and_extension"><strong>base_and_extension</strong></a>(filename)</dt><dd><tt>Separate&nbsp;the&nbsp;basename&nbsp;and&nbsp;extension&nbsp;from&nbsp;given&nbsp;file&nbsp;name.</tt></dd></dl>
+ <dl><dt><a name="-clean_indentation"><strong>clean_indentation</strong></a>(st)</dt><dd><tt>Return&nbsp;multiple-line&nbsp;string&nbsp;into&nbsp;lowest&nbsp;indentation&nbsp;equal&nbsp;to&nbsp;zero.&nbsp;<br>
+Remove&nbsp;initial&nbsp;and&nbsp;trailing&nbsp;empty&nbsp;line.</tt></dd></dl>
+ <dl><dt><a name="-cosd"><strong>cosd</strong></a>(x)</dt></dl>
+ <dl><dt><a name="-eof"><strong>eof</strong></a>(file, tol<font color="#909090">=3</font>)</dt><dd><tt>Test&nbsp;enf&nbsp;of&nbsp;file&nbsp;within&nbsp;given&nbsp;byte&nbsp;tolerance.</tt></dd></dl>
+ <dl><dt><a name="-error_exit"><strong>error_exit</strong></a>(s)</dt><dd><tt>Simpy&nbsp;exit&nbsp;routine.</tt></dd></dl>
+ <dl><dt><a name="-execute"><strong>execute</strong></a>(cmd, echo<font color="#909090">=True</font>)</dt></dl>
+ <dl><dt><a name="-file_safeopen"><strong>file_safeopen</strong></a>(file, action<font color="#909090">='r'</font>)</dt><dd><tt>Return&nbsp;file&nbsp;if&nbsp;file&nbsp;is&nbsp;a&nbsp;file-object,&nbsp;otherwise&nbsp;return&nbsp;the&nbsp;opened&nbsp;file&nbsp;<br>
+object&nbsp;and&nbsp;True/False&nbsp;if&nbsp;the&nbsp;file&nbsp;was&nbsp;opened&nbsp;or&nbsp;not.&nbsp;Action&nbsp;'r','w','rw'.</tt></dd></dl>
+ <dl><dt><a name="-find_value"><strong>find_value</strong></a>(inp, key, fmt<font color="#909090">='default'</font>, default<font color="#909090">=None</font>, position<font color="#909090">='start'</font>)</dt><dd><tt>Find&nbsp;value&nbsp;for&nbsp;key&nbsp;from&nbsp;file.<br>
+&nbsp;<br>
+Usage:&nbsp;value_string=find_key(f,key)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;value_string_list=find_key(f,key,fmt='default')<br>
+&nbsp;<br>
+Input:<br>
+&nbsp;&nbsp;inp&nbsp;-&nbsp;file&nbsp;object&nbsp;or&nbsp;file&nbsp;name<br>
+&nbsp;&nbsp;key&nbsp;&nbsp;-&nbsp;key&nbsp;string&nbsp;(corresponding&nbsp;to&nbsp;'key=value')<br>
+&nbsp;&nbsp;fmt&nbsp;&nbsp;-&nbsp;the&nbsp;format&nbsp;of&nbsp;the&nbsp;value:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'default'&nbsp;=&nbsp;return&nbsp;first&nbsp;value&nbsp;as&nbsp;string&nbsp;from&nbsp;the&nbsp;same&nbsp;line<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'all'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;return&nbsp;the&nbsp;whole&nbsp;line&nbsp;from&nbsp;the&nbsp;same&nbsp;line<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'onestr'&nbsp;&nbsp;=&nbsp;return&nbsp;the&nbsp;whole&nbsp;line&nbsp;from&nbsp;the&nbsp;same&nbsp;line&nbsp;as&nbsp;one&nbsp;string<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'matrix'&nbsp;&nbsp;=&nbsp;return&nbsp;a&nbsp;matrix&nbsp;coming&nbsp;after&nbsp;key&nbsp;as&nbsp;float<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'strings'&nbsp;=&nbsp;return&nbsp;the&nbsp;non-empty&nbsp;lines&nbsp;coming&nbsp;after&nbsp;the&nbsp;key&nbsp;as&nbsp;str<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'bool'&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;interpret&nbsp;the&nbsp;line&nbsp;as&nbsp;boolean<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'test'&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;return&nbsp;True&nbsp;if&nbsp;key&nbsp;found,&nbsp;otherwise&nbsp;False<br>
+&nbsp;&nbsp;&nbsp;default&nbsp;-&nbsp;returned&nbsp;value&nbsp;if&nbsp;key&nbsp;not&nbsp;found<br>
+&nbsp;&nbsp;&nbsp;position&nbsp;-&nbsp;position&nbsp;to&nbsp;start&nbsp;searching<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'start'&nbsp;&nbsp;&nbsp;=&nbsp;beginning&nbsp;of&nbsp;the&nbsp;file&nbsp;object<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'current'&nbsp;=&nbsp;current&nbsp;position<br>
+Example:&nbsp;f=open('data.txt')<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mass=float(&nbsp;<a href="#-find_value">find_value</a>(f,'mass')&nbsp;)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mat&nbsp;=&nbsp;<a href="#-find_value">find_value</a>(f,'m','matrix')</tt></dd></dl>
+ <dl><dt><a name="-gauss_fct"><strong>gauss_fct</strong></a>(x, mean<font color="#909090">=0.0</font>, sigma<font color="#909090">=1.0</font>)</dt><dd><tt>Returns&nbsp;1/sqrt(2*pi*sigma**2)*exp(-(x-mean)**2/(2*sigma**2)<br>
+mean=0&nbsp;and&nbsp;sigma=1&nbsp;on&nbsp;default</tt></dd></dl>
+ <dl><dt><a name="-gplot"><strong>gplot</strong></a>(string, file<font color="#909090">=None</font>, delete<font color="#909090">=False</font>, view<font color="#909090">=False</font>)</dt><dd><tt>Make&nbsp;a&nbsp;gnuplot&nbsp;file&nbsp;and&nbsp;call&nbsp;gnuplot&nbsp;to&nbsp;make&nbsp;an&nbsp;image&nbsp;from&nbsp;string.<br>
+If&nbsp;delete=True,&nbsp;remove&nbsp;the&nbsp;intermediate&nbsp;.gp&nbsp;-files</tt></dd></dl>
+ <dl><dt><a name="-grid"><strong>grid</strong></a>(min, max, N)</dt><dd><tt>Returns&nbsp;a&nbsp;grid&nbsp;with&nbsp;min&nbsp;and&nbsp;max&nbsp;as&nbsp;end-points&nbsp;and&nbsp;(N-1)&nbsp;divisions.</tt></dd></dl>
+ <dl><dt><a name="-identify_column"><strong>identify_column</strong></a>(col, file, commentchar<font color="#909090">='#'</font>)</dt><dd><tt>Return&nbsp;the&nbsp;column&nbsp;index&nbsp;(starting&nbsp;from&nbsp;0),&nbsp;identified&nbsp;by&nbsp;col.<br>
+The&nbsp;first&nbsp;row&nbsp;identifies&nbsp;the&nbsp;columns,&nbsp;and&nbsp;starts&nbsp;with&nbsp;commentchar.<br>
+Example:&nbsp;i=mix.<a href="#-identify_column">identify_column</a>('energy','stuff.out')&nbsp;-&gt;&nbsp;i=2&nbsp;with<br>
+stuff.out&nbsp;begining&nbsp;e.g.&nbsp;#&nbsp;time&nbsp;temperature&nbsp;energy&nbsp;distance&nbsp;...</tt></dd></dl>
+ <dl><dt><a name="-max_norm"><strong>max_norm</strong></a>(vecs)</dt><dd><tt>Return&nbsp;the&nbsp;maximum&nbsp;norm&nbsp;of&nbsp;given&nbsp;list&nbsp;of&nbsp;vectors.</tt></dd></dl>
+ <dl><dt><a name="-norm"><strong>norm</strong></a>(a)</dt><dd><tt>Return&nbsp;the&nbsp;norm&nbsp;of&nbsp;the&nbsp;vector&nbsp;a.</tt></dd></dl>
+ <dl><dt><a name="-random_direction"><strong>random_direction</strong></a>(vector<font color="#909090">=False</font>)</dt><dd><tt>Return&nbsp;random&nbsp;direction&nbsp;from&nbsp;4*pi&nbsp;(phi,theta)&nbsp;or&nbsp;unit&nbsp;vector.</tt></dd></dl>
+ <dl><dt><a name="-read"><strong>read</strong></a>(file, commentchar<font color="#909090">='#'</font>, fmt<font color="#909090">='array'</font>)</dt><dd><tt>Read&nbsp;a&nbsp;data&nbsp;set&nbsp;from&nbsp;given&nbsp;file.<br>
+&nbsp;<br>
+*&nbsp;file&nbsp;--&nbsp;file&nbsp;name&nbsp;of&nbsp;file&nbsp;object&nbsp;(for&nbsp;object&nbsp;the&nbsp;"next"&nbsp;set&nbsp;is&nbsp;read)<br>
+*&nbsp;commentchar&nbsp;--&nbsp;character&nbsp;for&nbsp;comments,&nbsp;which&nbsp;are&nbsp;not&nbsp;read<br>
+*&nbsp;fmt&nbsp;--&nbsp;format&nbsp;for&nbsp;output:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;'array'&nbsp;--&nbsp;return&nbsp;two-dimensional&nbsp;numpy&nbsp;array<br>
+&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;'string'&nbsp;--&nbsp;return&nbsp;the&nbsp;set&nbsp;as&nbsp;a&nbsp;list&nbsp;of&nbsp;strings</tt></dd></dl>
+ <dl><dt><a name="-read_column"><strong>read_column</strong></a>(col, file, commentchar<font color="#909090">='#'</font>)</dt><dd><tt>Load&nbsp;a&nbsp;column&nbsp;with&nbsp;name&nbsp;col&nbsp;into&nbsp;one-dimensional&nbsp;NumPy&nbsp;array.<br>
+The&nbsp;first&nbsp;row&nbsp;identifies&nbsp;the&nbsp;columns,&nbsp;and&nbsp;starts&nbsp;with&nbsp;commentchar.<br>
+Example:&nbsp;energies=mix.<a href="#-read_column">read_column</a>('energy','stuff.out')<br>
+(stuff.out&nbsp;begins&nbsp;e.g.&nbsp;#&nbsp;time&nbsp;temperature&nbsp;energy&nbsp;distance&nbsp;...)</tt></dd></dl>
+ <dl><dt><a name="-read_file"><strong>read_file</strong></a>(file, mode<font color="#909090">='all'</font>, commentchar<font color="#909090">='#'</font>)</dt><dd><tt>Read&nbsp;the&nbsp;lines&nbsp;in&nbsp;file&nbsp;into&nbsp;list&nbsp;of&nbsp;strings.<br>
+mode:&nbsp;&nbsp;&nbsp;all&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;read&nbsp;the&nbsp;whole&nbsp;file<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;comments&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;read&nbsp;only&nbsp;comments<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nocomments&nbsp;&nbsp;-&nbsp;everything&nbsp;but&nbsp;comments</tt></dd></dl>
+ <dl><dt><a name="-sec_to_time"><strong>sec_to_time</strong></a>(secs)</dt><dd><tt>return&nbsp;days,hours,minutes&nbsp;and&nbsp;seconds&nbsp;in&nbsp;list&nbsp;[dd,hh,mm,ss]</tt></dd></dl>
+ <dl><dt><a name="-select_vector_mode"><strong>select_vector_mode</strong></a>(vec, mode)</dt><dd><tt>Change&nbsp;given&nbsp;vector&nbsp;into&nbsp;given&nbsp;mode&nbsp;(default&nbsp;or&nbsp;global)<br>
+If&nbsp;mode&nbsp;is&nbsp;the&nbsp;same&nbsp;as&nbsp;vector,&nbsp;do&nbsp;nothing.</tt></dd></dl>
+ <dl><dt><a name="-sind"><strong>sind</strong></a>(x)</dt></dl>
+ <dl><dt><a name="-spherical_to_cartesian"><strong>spherical_to_cartesian</strong></a>(theta, phi, r<font color="#909090">=1.0</font>)</dt><dd><tt>Transform&nbsp;spherical&nbsp;coordinates&nbsp;to&nbsp;cartesian&nbsp;ones.</tt></dd></dl>
+ <dl><dt><a name="-todo"><strong>todo</strong></a>(s)</dt><dd><tt>Give&nbsp;todo-message.</tt></dd></dl>
+ <dl><dt><a name="-true_false"><strong>true_false</strong></a>(s)</dt><dd><tt>Interpret&nbsp;string&nbsp;s&nbsp;as&nbsp;boolean&nbsp;ans&nbsp;return&nbsp;True&nbsp;or&nbsp;False.</tt></dd></dl>
+ <dl><dt><a name="-type_check"><strong>type_check</strong></a>(x, t)</dt></dl>
+ <dl><dt><a name="-write"><strong>write</strong></a>(file, a, fmt<font color="#909090">='%g'</font>)</dt><dd><tt>Write&nbsp;a&nbsp;two-dimensional&nbsp;NumPy&nbsp;array&nbsp;a&nbsp;in&nbsp;a&nbsp;tabular&nbsp;form.<br>
+file&nbsp;can&nbsp;be&nbsp;file&nbsp;name&nbsp;or&nbsp;file&nbsp;object.<br>
+fmt&nbsp;is&nbsp;the&nbsp;format&nbsp;of&nbsp;output&nbsp;(Default:&nbsp;fmt='%g')<br>
+Example:<br>
+&nbsp;&nbsp;<a href="#-write">write</a>('data.out',array,'%14.2f')<br>
+&nbsp;&nbsp;<a href="#-write">write</a>(f,r)</tt></dd></dl>
+</td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#55aa55">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Data</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><strong>AU</strong> = &lt;mix.Const instance at 0x1781560&gt;<br>
+<strong>AU_const</strong> = '<font color="#c040c0">\n</font>time unit;                      t_0;1.032749899.../(2*epsilon_0*h*c));    alpha;  7.29735308E-3; 1 '<br>
+<strong>SI</strong> = &lt;mix.Const instance at 0x1781320&gt;<br>
+<strong>SI_const</strong> = '<font color="#c040c0">\n</font>speed of light in a vacuum;     c;  2.99792458E.../(2*epsilon_0*h*c));    alpha;  7.29735308E-3; 1 '</td></tr></table>
+</body></html>

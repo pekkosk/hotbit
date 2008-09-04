@@ -1,0 +1,630 @@
+
+<!doctype html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><title>Python: module random</title>
+</head><body bgcolor="#f0f0f8">
+
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
+<tr bgcolor="#7799ee">
+<td valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>random</strong></big></big></font></td
+><td align=right valign=bottom
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/home/pekkosk/work/programs/python/box/random.py">/home/pekkosk/work/programs/python/box/random.py</a></font></td></tr></table>
+    <p><tt><a href="#Random">Random</a>&nbsp;variable&nbsp;generators.<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;integers<br>
+&nbsp;&nbsp;&nbsp;&nbsp;--------<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;uniform&nbsp;within&nbsp;range<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;sequences<br>
+&nbsp;&nbsp;&nbsp;&nbsp;---------<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pick&nbsp;random&nbsp;element<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pick&nbsp;random&nbsp;sample<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;generate&nbsp;random&nbsp;permutation<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;distributions&nbsp;on&nbsp;the&nbsp;real&nbsp;line:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;------------------------------<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;uniform<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;normal&nbsp;(Gaussian)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lognormal<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;negative&nbsp;exponential<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gamma<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;beta<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pareto<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Weibull<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;distributions&nbsp;on&nbsp;the&nbsp;circle&nbsp;(angles&nbsp;0&nbsp;to&nbsp;2pi)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;---------------------------------------------<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;circular&nbsp;uniform<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;von&nbsp;Mises<br>
+&nbsp;<br>
+General&nbsp;notes&nbsp;on&nbsp;the&nbsp;underlying&nbsp;Mersenne&nbsp;Twister&nbsp;core&nbsp;generator:<br>
+&nbsp;<br>
+*&nbsp;The&nbsp;period&nbsp;is&nbsp;2**19937-1.<br>
+*&nbsp;It&nbsp;is&nbsp;one&nbsp;of&nbsp;the&nbsp;most&nbsp;extensively&nbsp;tested&nbsp;generators&nbsp;in&nbsp;existence.<br>
+*&nbsp;Without&nbsp;a&nbsp;direct&nbsp;way&nbsp;to&nbsp;compute&nbsp;N&nbsp;steps&nbsp;forward,&nbsp;the&nbsp;semantics&nbsp;of<br>
+&nbsp;&nbsp;<a href="#-jumpahead">jumpahead</a>(n)&nbsp;are&nbsp;weakened&nbsp;to&nbsp;simply&nbsp;jump&nbsp;to&nbsp;another&nbsp;distant&nbsp;state&nbsp;and&nbsp;rely<br>
+&nbsp;&nbsp;on&nbsp;the&nbsp;large&nbsp;period&nbsp;to&nbsp;avoid&nbsp;overlapping&nbsp;sequences.<br>
+*&nbsp;The&nbsp;<a href="#-random">random</a>()&nbsp;method&nbsp;is&nbsp;implemented&nbsp;in&nbsp;C,&nbsp;executes&nbsp;in&nbsp;a&nbsp;single&nbsp;Python&nbsp;step,<br>
+&nbsp;&nbsp;and&nbsp;is,&nbsp;therefore,&nbsp;threadsafe.</tt></p>
+<p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#aa55cc">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#fffff" face="helvetica, arial"><big><strong>Modules</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="_random.html">_random</a><br>
+</td><td width="25%" valign=top><a href="numpy.html">numpy</a><br>
+</td><td width="25%" valign=top></td><td width="25%" valign=top></td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ee77aa">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Classes</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#ee77aa"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl>
+<dt><font face="helvetica, arial"><a href="_random.html#Random">_random.Random</a>(<a href="__builtin__.html#object">__builtin__.object</a>)
+</font></dt><dd>
+<dl>
+<dt><font face="helvetica, arial"><a href="random.html#Random">Random</a>
+</font></dt><dd>
+<dl>
+<dt><font face="helvetica, arial"><a href="random.html#SystemRandom">SystemRandom</a>
+</font></dt><dt><font face="helvetica, arial"><a href="random.html#WichmannHill">WichmannHill</a>
+</font></dt></dl>
+</dd>
+</dl>
+</dd>
+</dl>
+ <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="Random">class <strong>Random</strong></a>(<a href="_random.html#Random">_random.Random</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt><a href="#Random">Random</a>&nbsp;number&nbsp;generator&nbsp;base&nbsp;class&nbsp;used&nbsp;by&nbsp;bound&nbsp;module&nbsp;functions.<br>
+&nbsp;<br>
+Used&nbsp;to&nbsp;instantiate&nbsp;instances&nbsp;of&nbsp;<a href="#Random">Random</a>&nbsp;to&nbsp;get&nbsp;generators&nbsp;that&nbsp;don't<br>
+share&nbsp;state.&nbsp;&nbsp;Especially&nbsp;useful&nbsp;for&nbsp;multi-threaded&nbsp;programs,&nbsp;creating<br>
+a&nbsp;different&nbsp;instance&nbsp;of&nbsp;<a href="#Random">Random</a>&nbsp;for&nbsp;each&nbsp;thread,&nbsp;and&nbsp;using&nbsp;the&nbsp;<a href="#Random-jumpahead">jumpahead</a>()<br>
+method&nbsp;to&nbsp;ensure&nbsp;that&nbsp;the&nbsp;generated&nbsp;sequences&nbsp;seen&nbsp;by&nbsp;each&nbsp;thread&nbsp;don't<br>
+overlap.<br>
+&nbsp;<br>
+Class&nbsp;<a href="#Random">Random</a>&nbsp;can&nbsp;also&nbsp;be&nbsp;subclassed&nbsp;if&nbsp;you&nbsp;want&nbsp;to&nbsp;use&nbsp;a&nbsp;different&nbsp;basic<br>
+generator&nbsp;of&nbsp;your&nbsp;own&nbsp;devising:&nbsp;in&nbsp;that&nbsp;case,&nbsp;override&nbsp;the&nbsp;following<br>
+methods:&nbsp;&nbsp;<a href="#Random-random">random</a>(),&nbsp;<a href="#Random-seed">seed</a>(),&nbsp;<a href="#Random-getstate">getstate</a>(),&nbsp;<a href="#Random-setstate">setstate</a>()&nbsp;and&nbsp;<a href="#Random-jumpahead">jumpahead</a>().<br>
+Optionally,&nbsp;implement&nbsp;a&nbsp;getrandombits()&nbsp;method&nbsp;so&nbsp;that&nbsp;<a href="#Random-randrange">randrange</a>()<br>
+can&nbsp;cover&nbsp;arbitrarily&nbsp;large&nbsp;ranges.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%"><dl><dt>Method resolution order:</dt>
+<dd><a href="random.html#Random">Random</a></dd>
+<dd><a href="_random.html#Random">_random.Random</a></dd>
+<dd><a href="__builtin__.html#object">__builtin__.object</a></dd>
+</dl>
+<hr>
+Methods defined here:<br>
+<dl><dt><a name="Random-__getstate__"><strong>__getstate__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="Random-__init__"><strong>__init__</strong></a>(self, x<font color="#909090">=None</font>)</dt><dd><tt>Initialize&nbsp;an&nbsp;instance.<br>
+&nbsp;<br>
+Optional&nbsp;argument&nbsp;x&nbsp;controls&nbsp;seeding,&nbsp;as&nbsp;for&nbsp;<a href="#Random">Random</a>.<a href="#Random-seed">seed</a>().</tt></dd></dl>
+
+<dl><dt><a name="Random-__reduce__"><strong>__reduce__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="Random-__setstate__"><strong>__setstate__</strong></a>(self, state)</dt></dl>
+
+<dl><dt><a name="Random-betavariate"><strong>betavariate</strong></a>(self, alpha, beta)</dt><dd><tt>Beta&nbsp;distribution.<br>
+&nbsp;<br>
+Conditions&nbsp;on&nbsp;the&nbsp;parameters&nbsp;are&nbsp;alpha&nbsp;&gt;&nbsp;0&nbsp;and&nbsp;beta&nbsp;&gt;&nbsp;0.<br>
+Returned&nbsp;values&nbsp;range&nbsp;between&nbsp;0&nbsp;and&nbsp;1.</tt></dd></dl>
+
+<dl><dt><a name="Random-choice"><strong>choice</strong></a>(self, seq)</dt><dd><tt>Choose&nbsp;a&nbsp;random&nbsp;element&nbsp;from&nbsp;a&nbsp;non-empty&nbsp;sequence.</tt></dd></dl>
+
+<dl><dt><a name="Random-expovariate"><strong>expovariate</strong></a>(self, lambd)</dt><dd><tt>Exponential&nbsp;distribution.<br>
+&nbsp;<br>
+lambd&nbsp;is&nbsp;1.0&nbsp;divided&nbsp;by&nbsp;the&nbsp;desired&nbsp;mean.&nbsp;&nbsp;(The&nbsp;parameter&nbsp;would&nbsp;be<br>
+called&nbsp;"lambda",&nbsp;but&nbsp;that&nbsp;is&nbsp;a&nbsp;reserved&nbsp;word&nbsp;in&nbsp;Python.)&nbsp;&nbsp;Returned<br>
+values&nbsp;range&nbsp;from&nbsp;0&nbsp;to&nbsp;positive&nbsp;infinity.</tt></dd></dl>
+
+<dl><dt><a name="Random-gammavariate"><strong>gammavariate</strong></a>(self, alpha, beta)</dt><dd><tt>Gamma&nbsp;distribution.&nbsp;&nbsp;Not&nbsp;the&nbsp;gamma&nbsp;function!<br>
+&nbsp;<br>
+Conditions&nbsp;on&nbsp;the&nbsp;parameters&nbsp;are&nbsp;alpha&nbsp;&gt;&nbsp;0&nbsp;and&nbsp;beta&nbsp;&gt;&nbsp;0.</tt></dd></dl>
+
+<dl><dt><a name="Random-gauss"><strong>gauss</strong></a>(self, mu, sigma)</dt><dd><tt>Gaussian&nbsp;distribution.<br>
+&nbsp;<br>
+mu&nbsp;is&nbsp;the&nbsp;mean,&nbsp;and&nbsp;sigma&nbsp;is&nbsp;the&nbsp;standard&nbsp;deviation.&nbsp;&nbsp;This&nbsp;is<br>
+slightly&nbsp;faster&nbsp;than&nbsp;the&nbsp;<a href="#Random-normalvariate">normalvariate</a>()&nbsp;function.<br>
+&nbsp;<br>
+Not&nbsp;thread-safe&nbsp;without&nbsp;a&nbsp;lock&nbsp;around&nbsp;calls.</tt></dd></dl>
+
+<dl><dt><a name="Random-getstate"><strong>getstate</strong></a>(self)</dt><dd><tt>Return&nbsp;internal&nbsp;state;&nbsp;can&nbsp;be&nbsp;passed&nbsp;to&nbsp;<a href="#Random-setstate">setstate</a>()&nbsp;later.</tt></dd></dl>
+
+<dl><dt><a name="Random-lognormvariate"><strong>lognormvariate</strong></a>(self, mu, sigma)</dt><dd><tt>Log&nbsp;normal&nbsp;distribution.<br>
+&nbsp;<br>
+If&nbsp;you&nbsp;take&nbsp;the&nbsp;natural&nbsp;logarithm&nbsp;of&nbsp;this&nbsp;distribution,&nbsp;you'll&nbsp;get&nbsp;a<br>
+normal&nbsp;distribution&nbsp;with&nbsp;mean&nbsp;mu&nbsp;and&nbsp;standard&nbsp;deviation&nbsp;sigma.<br>
+mu&nbsp;can&nbsp;have&nbsp;any&nbsp;value,&nbsp;and&nbsp;sigma&nbsp;must&nbsp;be&nbsp;greater&nbsp;than&nbsp;zero.</tt></dd></dl>
+
+<dl><dt><a name="Random-normalvariate"><strong>normalvariate</strong></a>(self, mu, sigma)</dt><dd><tt>Normal&nbsp;distribution.<br>
+&nbsp;<br>
+mu&nbsp;is&nbsp;the&nbsp;mean,&nbsp;and&nbsp;sigma&nbsp;is&nbsp;the&nbsp;standard&nbsp;deviation.</tt></dd></dl>
+
+<dl><dt><a name="Random-paretovariate"><strong>paretovariate</strong></a>(self, alpha)</dt><dd><tt>Pareto&nbsp;distribution.&nbsp;&nbsp;alpha&nbsp;is&nbsp;the&nbsp;shape&nbsp;parameter.</tt></dd></dl>
+
+<dl><dt><a name="Random-randint"><strong>randint</strong></a>(self, a, b)</dt><dd><tt>Return&nbsp;random&nbsp;integer&nbsp;in&nbsp;range&nbsp;[a,&nbsp;b],&nbsp;including&nbsp;both&nbsp;end&nbsp;points.</tt></dd></dl>
+
+<dl><dt><a name="Random-randrange"><strong>randrange</strong></a>(self, start, stop<font color="#909090">=None</font>, step<font color="#909090">=1</font>, int<font color="#909090">=&lt;type 'int'&gt;</font>, default<font color="#909090">=None</font>, maxwidth<font color="#909090">=9007199254740992L</font>)</dt><dd><tt>Choose&nbsp;a&nbsp;random&nbsp;item&nbsp;from&nbsp;range(start,&nbsp;stop[,&nbsp;step]).<br>
+&nbsp;<br>
+This&nbsp;fixes&nbsp;the&nbsp;problem&nbsp;with&nbsp;<a href="#Random-randint">randint</a>()&nbsp;which&nbsp;includes&nbsp;the<br>
+endpoint;&nbsp;in&nbsp;Python&nbsp;this&nbsp;is&nbsp;usually&nbsp;not&nbsp;what&nbsp;you&nbsp;want.<br>
+Do&nbsp;not&nbsp;supply&nbsp;the&nbsp;'int',&nbsp;'default',&nbsp;and&nbsp;'maxwidth'&nbsp;arguments.</tt></dd></dl>
+
+<dl><dt><a name="Random-sample"><strong>sample</strong></a>(self, population, k)</dt><dd><tt>Chooses&nbsp;k&nbsp;unique&nbsp;random&nbsp;elements&nbsp;from&nbsp;a&nbsp;population&nbsp;sequence.<br>
+&nbsp;<br>
+Returns&nbsp;a&nbsp;new&nbsp;list&nbsp;containing&nbsp;elements&nbsp;from&nbsp;the&nbsp;population&nbsp;while<br>
+leaving&nbsp;the&nbsp;original&nbsp;population&nbsp;unchanged.&nbsp;&nbsp;The&nbsp;resulting&nbsp;list&nbsp;is<br>
+in&nbsp;selection&nbsp;order&nbsp;so&nbsp;that&nbsp;all&nbsp;sub-slices&nbsp;will&nbsp;also&nbsp;be&nbsp;valid&nbsp;random<br>
+samples.&nbsp;&nbsp;This&nbsp;allows&nbsp;raffle&nbsp;winners&nbsp;(the&nbsp;sample)&nbsp;to&nbsp;be&nbsp;partitioned<br>
+into&nbsp;grand&nbsp;prize&nbsp;and&nbsp;second&nbsp;place&nbsp;winners&nbsp;(the&nbsp;subslices).<br>
+&nbsp;<br>
+Members&nbsp;of&nbsp;the&nbsp;population&nbsp;need&nbsp;not&nbsp;be&nbsp;hashable&nbsp;or&nbsp;unique.&nbsp;&nbsp;If&nbsp;the<br>
+population&nbsp;contains&nbsp;repeats,&nbsp;then&nbsp;each&nbsp;occurrence&nbsp;is&nbsp;a&nbsp;possible<br>
+selection&nbsp;in&nbsp;the&nbsp;sample.<br>
+&nbsp;<br>
+To&nbsp;choose&nbsp;a&nbsp;sample&nbsp;in&nbsp;a&nbsp;range&nbsp;of&nbsp;integers,&nbsp;use&nbsp;xrange&nbsp;as&nbsp;an&nbsp;argument.<br>
+This&nbsp;is&nbsp;especially&nbsp;fast&nbsp;and&nbsp;space&nbsp;efficient&nbsp;for&nbsp;sampling&nbsp;from&nbsp;a<br>
+large&nbsp;population:&nbsp;&nbsp;&nbsp;<a href="#Random-sample">sample</a>(xrange(10000000),&nbsp;60)</tt></dd></dl>
+
+<dl><dt><a name="Random-seed"><strong>seed</strong></a>(self, a<font color="#909090">=None</font>)</dt><dd><tt>Initialize&nbsp;internal&nbsp;state&nbsp;from&nbsp;hashable&nbsp;object.<br>
+&nbsp;<br>
+None&nbsp;or&nbsp;no&nbsp;argument&nbsp;seeds&nbsp;from&nbsp;current&nbsp;time&nbsp;or&nbsp;from&nbsp;an&nbsp;operating<br>
+system&nbsp;specific&nbsp;randomness&nbsp;source&nbsp;if&nbsp;available.<br>
+&nbsp;<br>
+If&nbsp;a&nbsp;is&nbsp;not&nbsp;None&nbsp;or&nbsp;an&nbsp;int&nbsp;or&nbsp;long,&nbsp;hash(a)&nbsp;is&nbsp;used&nbsp;instead.</tt></dd></dl>
+
+<dl><dt><a name="Random-setstate"><strong>setstate</strong></a>(self, state)</dt><dd><tt>Restore&nbsp;internal&nbsp;state&nbsp;from&nbsp;object&nbsp;returned&nbsp;by&nbsp;<a href="#Random-getstate">getstate</a>().</tt></dd></dl>
+
+<dl><dt><a name="Random-shuffle"><strong>shuffle</strong></a>(self, x, random<font color="#909090">=None</font>, int<font color="#909090">=&lt;type 'int'&gt;</font>)</dt><dd><tt>x,&nbsp;random=random.random&nbsp;-&gt;&nbsp;shuffle&nbsp;list&nbsp;x&nbsp;in&nbsp;place;&nbsp;return&nbsp;None.<br>
+&nbsp;<br>
+Optional&nbsp;arg&nbsp;random&nbsp;is&nbsp;a&nbsp;0-argument&nbsp;function&nbsp;returning&nbsp;a&nbsp;random<br>
+float&nbsp;in&nbsp;[0.0,&nbsp;1.0);&nbsp;by&nbsp;default,&nbsp;the&nbsp;standard&nbsp;random.random.</tt></dd></dl>
+
+<dl><dt><a name="Random-uniform"><strong>uniform</strong></a>(self, a, b)</dt><dd><tt>Get&nbsp;a&nbsp;random&nbsp;number&nbsp;in&nbsp;the&nbsp;range&nbsp;[a,&nbsp;b).</tt></dd></dl>
+
+<dl><dt><a name="Random-vonmisesvariate"><strong>vonmisesvariate</strong></a>(self, mu, kappa)</dt><dd><tt>Circular&nbsp;data&nbsp;distribution.<br>
+&nbsp;<br>
+mu&nbsp;is&nbsp;the&nbsp;mean&nbsp;angle,&nbsp;expressed&nbsp;in&nbsp;radians&nbsp;between&nbsp;0&nbsp;and&nbsp;2*pi,&nbsp;and<br>
+kappa&nbsp;is&nbsp;the&nbsp;concentration&nbsp;parameter,&nbsp;which&nbsp;must&nbsp;be&nbsp;greater&nbsp;than&nbsp;or<br>
+equal&nbsp;to&nbsp;zero.&nbsp;&nbsp;If&nbsp;kappa&nbsp;is&nbsp;equal&nbsp;to&nbsp;zero,&nbsp;this&nbsp;distribution&nbsp;reduces<br>
+to&nbsp;a&nbsp;uniform&nbsp;random&nbsp;angle&nbsp;over&nbsp;the&nbsp;range&nbsp;0&nbsp;to&nbsp;2*pi.</tt></dd></dl>
+
+<dl><dt><a name="Random-weibullvariate"><strong>weibullvariate</strong></a>(self, alpha, beta)</dt><dd><tt>Weibull&nbsp;distribution.<br>
+&nbsp;<br>
+alpha&nbsp;is&nbsp;the&nbsp;scale&nbsp;parameter&nbsp;and&nbsp;beta&nbsp;is&nbsp;the&nbsp;shape&nbsp;parameter.</tt></dd></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<hr>
+Data and other attributes defined here:<br>
+<dl><dt><strong>VERSION</strong> = 2</dl>
+
+<hr>
+Methods inherited from <a href="_random.html#Random">_random.Random</a>:<br>
+<dl><dt><a name="Random-__getattribute__"><strong>__getattribute__</strong></a>(...)</dt><dd><tt>x.<a href="#Random-__getattribute__">__getattribute__</a>('name')&nbsp;&lt;==&gt;&nbsp;x.name</tt></dd></dl>
+
+<dl><dt><a name="Random-getrandbits"><strong>getrandbits</strong></a>(...)</dt><dd><tt><a href="#Random-getrandbits">getrandbits</a>(k)&nbsp;-&gt;&nbsp;x.&nbsp;&nbsp;Generates&nbsp;a&nbsp;long&nbsp;int&nbsp;with&nbsp;k&nbsp;random&nbsp;bits.</tt></dd></dl>
+
+<dl><dt><a name="Random-jumpahead"><strong>jumpahead</strong></a>(...)</dt><dd><tt><a href="#Random-jumpahead">jumpahead</a>(int)&nbsp;-&gt;&nbsp;None.&nbsp;&nbsp;Create&nbsp;new&nbsp;state&nbsp;from&nbsp;existing&nbsp;state&nbsp;and&nbsp;integer.</tt></dd></dl>
+
+<dl><dt><a name="Random-random"><strong>random</strong></a>(...)</dt><dd><tt><a href="#Random-random">random</a>()&nbsp;-&gt;&nbsp;x&nbsp;in&nbsp;the&nbsp;interval&nbsp;[0,&nbsp;1).</tt></dd></dl>
+
+<hr>
+Data and other attributes inherited from <a href="_random.html#Random">_random.Random</a>:<br>
+<dl><dt><strong>__new__</strong> = &lt;built-in method __new__ of type object at 0x2aaab29ae7c0&gt;<dd><tt>T.<a href="#Random-__new__">__new__</a>(S,&nbsp;...)&nbsp;-&gt;&nbsp;a&nbsp;new&nbsp;object&nbsp;with&nbsp;type&nbsp;S,&nbsp;a&nbsp;subtype&nbsp;of&nbsp;T</tt></dl>
+
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="SystemRandom">class <strong>SystemRandom</strong></a>(<a href="random.html#Random">Random</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Alternate&nbsp;random&nbsp;number&nbsp;generator&nbsp;using&nbsp;sources&nbsp;provided<br>
+by&nbsp;the&nbsp;operating&nbsp;system&nbsp;(such&nbsp;as&nbsp;/dev/urandom&nbsp;on&nbsp;Unix&nbsp;or<br>
+CryptGenRandom&nbsp;on&nbsp;Windows).<br>
+&nbsp;<br>
+&nbsp;Not&nbsp;available&nbsp;on&nbsp;all&nbsp;systems&nbsp;(see&nbsp;os.urandom()&nbsp;for&nbsp;details).<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%"><dl><dt>Method resolution order:</dt>
+<dd><a href="random.html#SystemRandom">SystemRandom</a></dd>
+<dd><a href="random.html#Random">Random</a></dd>
+<dd><a href="_random.html#Random">_random.Random</a></dd>
+<dd><a href="__builtin__.html#object">__builtin__.object</a></dd>
+</dl>
+<hr>
+Methods defined here:<br>
+<dl><dt><a name="SystemRandom-getrandbits"><strong>getrandbits</strong></a>(self, k)</dt><dd><tt><a href="#SystemRandom-getrandbits">getrandbits</a>(k)&nbsp;-&gt;&nbsp;x.&nbsp;&nbsp;Generates&nbsp;a&nbsp;long&nbsp;int&nbsp;with&nbsp;k&nbsp;random&nbsp;bits.</tt></dd></dl>
+
+<dl><dt><a name="SystemRandom-getstate"><strong>getstate</strong></a> = <a href="#SystemRandom-_notimplemented">_notimplemented</a>(self, *args, **kwds)</dt></dl>
+
+<dl><dt><a name="SystemRandom-jumpahead"><strong>jumpahead</strong></a> = <a href="#SystemRandom-_stub">_stub</a>(self, *args, **kwds)</dt></dl>
+
+<dl><dt><a name="SystemRandom-random"><strong>random</strong></a>(self)</dt><dd><tt>Get&nbsp;the&nbsp;next&nbsp;random&nbsp;number&nbsp;in&nbsp;the&nbsp;range&nbsp;[0.0,&nbsp;1.0).</tt></dd></dl>
+
+<dl><dt><a name="SystemRandom-seed"><strong>seed</strong></a> = <a href="#SystemRandom-_stub">_stub</a>(self, *args, **kwds)</dt></dl>
+
+<dl><dt><a name="SystemRandom-setstate"><strong>setstate</strong></a> = <a href="#SystemRandom-_notimplemented">_notimplemented</a>(self, *args, **kwds)</dt></dl>
+
+<hr>
+Methods inherited from <a href="random.html#Random">Random</a>:<br>
+<dl><dt><a name="SystemRandom-__getstate__"><strong>__getstate__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="SystemRandom-__init__"><strong>__init__</strong></a>(self, x<font color="#909090">=None</font>)</dt><dd><tt>Initialize&nbsp;an&nbsp;instance.<br>
+&nbsp;<br>
+Optional&nbsp;argument&nbsp;x&nbsp;controls&nbsp;seeding,&nbsp;as&nbsp;for&nbsp;<a href="#Random">Random</a>.<a href="#SystemRandom-seed">seed</a>().</tt></dd></dl>
+
+<dl><dt><a name="SystemRandom-__reduce__"><strong>__reduce__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="SystemRandom-__setstate__"><strong>__setstate__</strong></a>(self, state)</dt></dl>
+
+<dl><dt><a name="SystemRandom-betavariate"><strong>betavariate</strong></a>(self, alpha, beta)</dt><dd><tt>Beta&nbsp;distribution.<br>
+&nbsp;<br>
+Conditions&nbsp;on&nbsp;the&nbsp;parameters&nbsp;are&nbsp;alpha&nbsp;&gt;&nbsp;0&nbsp;and&nbsp;beta&nbsp;&gt;&nbsp;0.<br>
+Returned&nbsp;values&nbsp;range&nbsp;between&nbsp;0&nbsp;and&nbsp;1.</tt></dd></dl>
+
+<dl><dt><a name="SystemRandom-choice"><strong>choice</strong></a>(self, seq)</dt><dd><tt>Choose&nbsp;a&nbsp;random&nbsp;element&nbsp;from&nbsp;a&nbsp;non-empty&nbsp;sequence.</tt></dd></dl>
+
+<dl><dt><a name="SystemRandom-expovariate"><strong>expovariate</strong></a>(self, lambd)</dt><dd><tt>Exponential&nbsp;distribution.<br>
+&nbsp;<br>
+lambd&nbsp;is&nbsp;1.0&nbsp;divided&nbsp;by&nbsp;the&nbsp;desired&nbsp;mean.&nbsp;&nbsp;(The&nbsp;parameter&nbsp;would&nbsp;be<br>
+called&nbsp;"lambda",&nbsp;but&nbsp;that&nbsp;is&nbsp;a&nbsp;reserved&nbsp;word&nbsp;in&nbsp;Python.)&nbsp;&nbsp;Returned<br>
+values&nbsp;range&nbsp;from&nbsp;0&nbsp;to&nbsp;positive&nbsp;infinity.</tt></dd></dl>
+
+<dl><dt><a name="SystemRandom-gammavariate"><strong>gammavariate</strong></a>(self, alpha, beta)</dt><dd><tt>Gamma&nbsp;distribution.&nbsp;&nbsp;Not&nbsp;the&nbsp;gamma&nbsp;function!<br>
+&nbsp;<br>
+Conditions&nbsp;on&nbsp;the&nbsp;parameters&nbsp;are&nbsp;alpha&nbsp;&gt;&nbsp;0&nbsp;and&nbsp;beta&nbsp;&gt;&nbsp;0.</tt></dd></dl>
+
+<dl><dt><a name="SystemRandom-gauss"><strong>gauss</strong></a>(self, mu, sigma)</dt><dd><tt>Gaussian&nbsp;distribution.<br>
+&nbsp;<br>
+mu&nbsp;is&nbsp;the&nbsp;mean,&nbsp;and&nbsp;sigma&nbsp;is&nbsp;the&nbsp;standard&nbsp;deviation.&nbsp;&nbsp;This&nbsp;is<br>
+slightly&nbsp;faster&nbsp;than&nbsp;the&nbsp;<a href="#SystemRandom-normalvariate">normalvariate</a>()&nbsp;function.<br>
+&nbsp;<br>
+Not&nbsp;thread-safe&nbsp;without&nbsp;a&nbsp;lock&nbsp;around&nbsp;calls.</tt></dd></dl>
+
+<dl><dt><a name="SystemRandom-lognormvariate"><strong>lognormvariate</strong></a>(self, mu, sigma)</dt><dd><tt>Log&nbsp;normal&nbsp;distribution.<br>
+&nbsp;<br>
+If&nbsp;you&nbsp;take&nbsp;the&nbsp;natural&nbsp;logarithm&nbsp;of&nbsp;this&nbsp;distribution,&nbsp;you'll&nbsp;get&nbsp;a<br>
+normal&nbsp;distribution&nbsp;with&nbsp;mean&nbsp;mu&nbsp;and&nbsp;standard&nbsp;deviation&nbsp;sigma.<br>
+mu&nbsp;can&nbsp;have&nbsp;any&nbsp;value,&nbsp;and&nbsp;sigma&nbsp;must&nbsp;be&nbsp;greater&nbsp;than&nbsp;zero.</tt></dd></dl>
+
+<dl><dt><a name="SystemRandom-normalvariate"><strong>normalvariate</strong></a>(self, mu, sigma)</dt><dd><tt>Normal&nbsp;distribution.<br>
+&nbsp;<br>
+mu&nbsp;is&nbsp;the&nbsp;mean,&nbsp;and&nbsp;sigma&nbsp;is&nbsp;the&nbsp;standard&nbsp;deviation.</tt></dd></dl>
+
+<dl><dt><a name="SystemRandom-paretovariate"><strong>paretovariate</strong></a>(self, alpha)</dt><dd><tt>Pareto&nbsp;distribution.&nbsp;&nbsp;alpha&nbsp;is&nbsp;the&nbsp;shape&nbsp;parameter.</tt></dd></dl>
+
+<dl><dt><a name="SystemRandom-randint"><strong>randint</strong></a>(self, a, b)</dt><dd><tt>Return&nbsp;random&nbsp;integer&nbsp;in&nbsp;range&nbsp;[a,&nbsp;b],&nbsp;including&nbsp;both&nbsp;end&nbsp;points.</tt></dd></dl>
+
+<dl><dt><a name="SystemRandom-randrange"><strong>randrange</strong></a>(self, start, stop<font color="#909090">=None</font>, step<font color="#909090">=1</font>, int<font color="#909090">=&lt;type 'int'&gt;</font>, default<font color="#909090">=None</font>, maxwidth<font color="#909090">=9007199254740992L</font>)</dt><dd><tt>Choose&nbsp;a&nbsp;random&nbsp;item&nbsp;from&nbsp;range(start,&nbsp;stop[,&nbsp;step]).<br>
+&nbsp;<br>
+This&nbsp;fixes&nbsp;the&nbsp;problem&nbsp;with&nbsp;<a href="#SystemRandom-randint">randint</a>()&nbsp;which&nbsp;includes&nbsp;the<br>
+endpoint;&nbsp;in&nbsp;Python&nbsp;this&nbsp;is&nbsp;usually&nbsp;not&nbsp;what&nbsp;you&nbsp;want.<br>
+Do&nbsp;not&nbsp;supply&nbsp;the&nbsp;'int',&nbsp;'default',&nbsp;and&nbsp;'maxwidth'&nbsp;arguments.</tt></dd></dl>
+
+<dl><dt><a name="SystemRandom-sample"><strong>sample</strong></a>(self, population, k)</dt><dd><tt>Chooses&nbsp;k&nbsp;unique&nbsp;random&nbsp;elements&nbsp;from&nbsp;a&nbsp;population&nbsp;sequence.<br>
+&nbsp;<br>
+Returns&nbsp;a&nbsp;new&nbsp;list&nbsp;containing&nbsp;elements&nbsp;from&nbsp;the&nbsp;population&nbsp;while<br>
+leaving&nbsp;the&nbsp;original&nbsp;population&nbsp;unchanged.&nbsp;&nbsp;The&nbsp;resulting&nbsp;list&nbsp;is<br>
+in&nbsp;selection&nbsp;order&nbsp;so&nbsp;that&nbsp;all&nbsp;sub-slices&nbsp;will&nbsp;also&nbsp;be&nbsp;valid&nbsp;random<br>
+samples.&nbsp;&nbsp;This&nbsp;allows&nbsp;raffle&nbsp;winners&nbsp;(the&nbsp;sample)&nbsp;to&nbsp;be&nbsp;partitioned<br>
+into&nbsp;grand&nbsp;prize&nbsp;and&nbsp;second&nbsp;place&nbsp;winners&nbsp;(the&nbsp;subslices).<br>
+&nbsp;<br>
+Members&nbsp;of&nbsp;the&nbsp;population&nbsp;need&nbsp;not&nbsp;be&nbsp;hashable&nbsp;or&nbsp;unique.&nbsp;&nbsp;If&nbsp;the<br>
+population&nbsp;contains&nbsp;repeats,&nbsp;then&nbsp;each&nbsp;occurrence&nbsp;is&nbsp;a&nbsp;possible<br>
+selection&nbsp;in&nbsp;the&nbsp;sample.<br>
+&nbsp;<br>
+To&nbsp;choose&nbsp;a&nbsp;sample&nbsp;in&nbsp;a&nbsp;range&nbsp;of&nbsp;integers,&nbsp;use&nbsp;xrange&nbsp;as&nbsp;an&nbsp;argument.<br>
+This&nbsp;is&nbsp;especially&nbsp;fast&nbsp;and&nbsp;space&nbsp;efficient&nbsp;for&nbsp;sampling&nbsp;from&nbsp;a<br>
+large&nbsp;population:&nbsp;&nbsp;&nbsp;<a href="#SystemRandom-sample">sample</a>(xrange(10000000),&nbsp;60)</tt></dd></dl>
+
+<dl><dt><a name="SystemRandom-shuffle"><strong>shuffle</strong></a>(self, x, random<font color="#909090">=None</font>, int<font color="#909090">=&lt;type 'int'&gt;</font>)</dt><dd><tt>x,&nbsp;random=random.random&nbsp;-&gt;&nbsp;shuffle&nbsp;list&nbsp;x&nbsp;in&nbsp;place;&nbsp;return&nbsp;None.<br>
+&nbsp;<br>
+Optional&nbsp;arg&nbsp;random&nbsp;is&nbsp;a&nbsp;0-argument&nbsp;function&nbsp;returning&nbsp;a&nbsp;random<br>
+float&nbsp;in&nbsp;[0.0,&nbsp;1.0);&nbsp;by&nbsp;default,&nbsp;the&nbsp;standard&nbsp;random.random.</tt></dd></dl>
+
+<dl><dt><a name="SystemRandom-uniform"><strong>uniform</strong></a>(self, a, b)</dt><dd><tt>Get&nbsp;a&nbsp;random&nbsp;number&nbsp;in&nbsp;the&nbsp;range&nbsp;[a,&nbsp;b).</tt></dd></dl>
+
+<dl><dt><a name="SystemRandom-vonmisesvariate"><strong>vonmisesvariate</strong></a>(self, mu, kappa)</dt><dd><tt>Circular&nbsp;data&nbsp;distribution.<br>
+&nbsp;<br>
+mu&nbsp;is&nbsp;the&nbsp;mean&nbsp;angle,&nbsp;expressed&nbsp;in&nbsp;radians&nbsp;between&nbsp;0&nbsp;and&nbsp;2*pi,&nbsp;and<br>
+kappa&nbsp;is&nbsp;the&nbsp;concentration&nbsp;parameter,&nbsp;which&nbsp;must&nbsp;be&nbsp;greater&nbsp;than&nbsp;or<br>
+equal&nbsp;to&nbsp;zero.&nbsp;&nbsp;If&nbsp;kappa&nbsp;is&nbsp;equal&nbsp;to&nbsp;zero,&nbsp;this&nbsp;distribution&nbsp;reduces<br>
+to&nbsp;a&nbsp;uniform&nbsp;random&nbsp;angle&nbsp;over&nbsp;the&nbsp;range&nbsp;0&nbsp;to&nbsp;2*pi.</tt></dd></dl>
+
+<dl><dt><a name="SystemRandom-weibullvariate"><strong>weibullvariate</strong></a>(self, alpha, beta)</dt><dd><tt>Weibull&nbsp;distribution.<br>
+&nbsp;<br>
+alpha&nbsp;is&nbsp;the&nbsp;scale&nbsp;parameter&nbsp;and&nbsp;beta&nbsp;is&nbsp;the&nbsp;shape&nbsp;parameter.</tt></dd></dl>
+
+<hr>
+Data descriptors inherited from <a href="random.html#Random">Random</a>:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<hr>
+Data and other attributes inherited from <a href="random.html#Random">Random</a>:<br>
+<dl><dt><strong>VERSION</strong> = 2</dl>
+
+<hr>
+Methods inherited from <a href="_random.html#Random">_random.Random</a>:<br>
+<dl><dt><a name="SystemRandom-__getattribute__"><strong>__getattribute__</strong></a>(...)</dt><dd><tt>x.<a href="#SystemRandom-__getattribute__">__getattribute__</a>('name')&nbsp;&lt;==&gt;&nbsp;x.name</tt></dd></dl>
+
+<hr>
+Data and other attributes inherited from <a href="_random.html#Random">_random.Random</a>:<br>
+<dl><dt><strong>__new__</strong> = &lt;built-in method __new__ of type object at 0x2aaab29ae7c0&gt;<dd><tt>T.<a href="#SystemRandom-__new__">__new__</a>(S,&nbsp;...)&nbsp;-&gt;&nbsp;a&nbsp;new&nbsp;object&nbsp;with&nbsp;type&nbsp;S,&nbsp;a&nbsp;subtype&nbsp;of&nbsp;T</tt></dl>
+
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="WichmannHill">class <strong>WichmannHill</strong></a>(<a href="random.html#Random">Random</a>)</font></td></tr>
+    
+<tr><td bgcolor="#ffc8d8"><tt>&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl><dt>Method resolution order:</dt>
+<dd><a href="random.html#WichmannHill">WichmannHill</a></dd>
+<dd><a href="random.html#Random">Random</a></dd>
+<dd><a href="_random.html#Random">_random.Random</a></dd>
+<dd><a href="__builtin__.html#object">__builtin__.object</a></dd>
+</dl>
+<hr>
+Methods defined here:<br>
+<dl><dt><a name="WichmannHill-getstate"><strong>getstate</strong></a>(self)</dt><dd><tt>Return&nbsp;internal&nbsp;state;&nbsp;can&nbsp;be&nbsp;passed&nbsp;to&nbsp;<a href="#WichmannHill-setstate">setstate</a>()&nbsp;later.</tt></dd></dl>
+
+<dl><dt><a name="WichmannHill-jumpahead"><strong>jumpahead</strong></a>(self, n)</dt><dd><tt>Act&nbsp;as&nbsp;if&nbsp;n&nbsp;calls&nbsp;to&nbsp;<a href="#WichmannHill-random">random</a>()&nbsp;were&nbsp;made,&nbsp;but&nbsp;quickly.<br>
+&nbsp;<br>
+n&nbsp;is&nbsp;an&nbsp;int,&nbsp;greater&nbsp;than&nbsp;or&nbsp;equal&nbsp;to&nbsp;0.<br>
+&nbsp;<br>
+Example&nbsp;use:&nbsp;&nbsp;If&nbsp;you&nbsp;have&nbsp;2&nbsp;threads&nbsp;and&nbsp;know&nbsp;that&nbsp;each&nbsp;will<br>
+consume&nbsp;no&nbsp;more&nbsp;than&nbsp;a&nbsp;million&nbsp;random&nbsp;numbers,&nbsp;create&nbsp;two&nbsp;<a href="#Random">Random</a><br>
+objects&nbsp;r1&nbsp;and&nbsp;r2,&nbsp;then&nbsp;do<br>
+&nbsp;&nbsp;&nbsp;&nbsp;r2.<a href="#WichmannHill-setstate">setstate</a>(r1.<a href="#WichmannHill-getstate">getstate</a>())<br>
+&nbsp;&nbsp;&nbsp;&nbsp;r2.<a href="#WichmannHill-jumpahead">jumpahead</a>(1000000)<br>
+Then&nbsp;r1&nbsp;and&nbsp;r2&nbsp;will&nbsp;use&nbsp;guaranteed-disjoint&nbsp;segments&nbsp;of&nbsp;the&nbsp;full<br>
+period.</tt></dd></dl>
+
+<dl><dt><a name="WichmannHill-random"><strong>random</strong></a>(self)</dt><dd><tt>Get&nbsp;the&nbsp;next&nbsp;random&nbsp;number&nbsp;in&nbsp;the&nbsp;range&nbsp;[0.0,&nbsp;1.0).</tt></dd></dl>
+
+<dl><dt><a name="WichmannHill-seed"><strong>seed</strong></a>(self, a<font color="#909090">=None</font>)</dt><dd><tt>Initialize&nbsp;internal&nbsp;state&nbsp;from&nbsp;hashable&nbsp;object.<br>
+&nbsp;<br>
+None&nbsp;or&nbsp;no&nbsp;argument&nbsp;seeds&nbsp;from&nbsp;current&nbsp;time&nbsp;or&nbsp;from&nbsp;an&nbsp;operating<br>
+system&nbsp;specific&nbsp;randomness&nbsp;source&nbsp;if&nbsp;available.<br>
+&nbsp;<br>
+If&nbsp;a&nbsp;is&nbsp;not&nbsp;None&nbsp;or&nbsp;an&nbsp;int&nbsp;or&nbsp;long,&nbsp;hash(a)&nbsp;is&nbsp;used&nbsp;instead.<br>
+&nbsp;<br>
+If&nbsp;a&nbsp;is&nbsp;an&nbsp;int&nbsp;or&nbsp;long,&nbsp;a&nbsp;is&nbsp;used&nbsp;directly.&nbsp;&nbsp;Distinct&nbsp;values&nbsp;between<br>
+0&nbsp;and&nbsp;27814431486575L&nbsp;inclusive&nbsp;are&nbsp;guaranteed&nbsp;to&nbsp;yield&nbsp;distinct<br>
+internal&nbsp;states&nbsp;(this&nbsp;guarantee&nbsp;is&nbsp;specific&nbsp;to&nbsp;the&nbsp;default<br>
+Wichmann-Hill&nbsp;generator).</tt></dd></dl>
+
+<dl><dt><a name="WichmannHill-setstate"><strong>setstate</strong></a>(self, state)</dt><dd><tt>Restore&nbsp;internal&nbsp;state&nbsp;from&nbsp;object&nbsp;returned&nbsp;by&nbsp;<a href="#WichmannHill-getstate">getstate</a>().</tt></dd></dl>
+
+<dl><dt><a name="WichmannHill-whseed"><strong>whseed</strong></a>(self, a<font color="#909090">=None</font>)</dt><dd><tt>Seed&nbsp;from&nbsp;hashable&nbsp;object's&nbsp;hash&nbsp;code.<br>
+&nbsp;<br>
+None&nbsp;or&nbsp;no&nbsp;argument&nbsp;seeds&nbsp;from&nbsp;current&nbsp;time.&nbsp;&nbsp;It&nbsp;is&nbsp;not&nbsp;guaranteed<br>
+that&nbsp;objects&nbsp;with&nbsp;distinct&nbsp;hash&nbsp;codes&nbsp;lead&nbsp;to&nbsp;distinct&nbsp;internal<br>
+states.<br>
+&nbsp;<br>
+This&nbsp;is&nbsp;obsolete,&nbsp;provided&nbsp;for&nbsp;compatibility&nbsp;with&nbsp;the&nbsp;seed&nbsp;routine<br>
+used&nbsp;prior&nbsp;to&nbsp;Python&nbsp;2.1.&nbsp;&nbsp;Use&nbsp;the&nbsp;.<a href="#WichmannHill-seed">seed</a>()&nbsp;method&nbsp;instead.</tt></dd></dl>
+
+<hr>
+Data and other attributes defined here:<br>
+<dl><dt><strong>VERSION</strong> = 1</dl>
+
+<hr>
+Methods inherited from <a href="random.html#Random">Random</a>:<br>
+<dl><dt><a name="WichmannHill-__getstate__"><strong>__getstate__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="WichmannHill-__init__"><strong>__init__</strong></a>(self, x<font color="#909090">=None</font>)</dt><dd><tt>Initialize&nbsp;an&nbsp;instance.<br>
+&nbsp;<br>
+Optional&nbsp;argument&nbsp;x&nbsp;controls&nbsp;seeding,&nbsp;as&nbsp;for&nbsp;<a href="#Random">Random</a>.<a href="#WichmannHill-seed">seed</a>().</tt></dd></dl>
+
+<dl><dt><a name="WichmannHill-__reduce__"><strong>__reduce__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="WichmannHill-__setstate__"><strong>__setstate__</strong></a>(self, state)</dt></dl>
+
+<dl><dt><a name="WichmannHill-betavariate"><strong>betavariate</strong></a>(self, alpha, beta)</dt><dd><tt>Beta&nbsp;distribution.<br>
+&nbsp;<br>
+Conditions&nbsp;on&nbsp;the&nbsp;parameters&nbsp;are&nbsp;alpha&nbsp;&gt;&nbsp;0&nbsp;and&nbsp;beta&nbsp;&gt;&nbsp;0.<br>
+Returned&nbsp;values&nbsp;range&nbsp;between&nbsp;0&nbsp;and&nbsp;1.</tt></dd></dl>
+
+<dl><dt><a name="WichmannHill-choice"><strong>choice</strong></a>(self, seq)</dt><dd><tt>Choose&nbsp;a&nbsp;random&nbsp;element&nbsp;from&nbsp;a&nbsp;non-empty&nbsp;sequence.</tt></dd></dl>
+
+<dl><dt><a name="WichmannHill-expovariate"><strong>expovariate</strong></a>(self, lambd)</dt><dd><tt>Exponential&nbsp;distribution.<br>
+&nbsp;<br>
+lambd&nbsp;is&nbsp;1.0&nbsp;divided&nbsp;by&nbsp;the&nbsp;desired&nbsp;mean.&nbsp;&nbsp;(The&nbsp;parameter&nbsp;would&nbsp;be<br>
+called&nbsp;"lambda",&nbsp;but&nbsp;that&nbsp;is&nbsp;a&nbsp;reserved&nbsp;word&nbsp;in&nbsp;Python.)&nbsp;&nbsp;Returned<br>
+values&nbsp;range&nbsp;from&nbsp;0&nbsp;to&nbsp;positive&nbsp;infinity.</tt></dd></dl>
+
+<dl><dt><a name="WichmannHill-gammavariate"><strong>gammavariate</strong></a>(self, alpha, beta)</dt><dd><tt>Gamma&nbsp;distribution.&nbsp;&nbsp;Not&nbsp;the&nbsp;gamma&nbsp;function!<br>
+&nbsp;<br>
+Conditions&nbsp;on&nbsp;the&nbsp;parameters&nbsp;are&nbsp;alpha&nbsp;&gt;&nbsp;0&nbsp;and&nbsp;beta&nbsp;&gt;&nbsp;0.</tt></dd></dl>
+
+<dl><dt><a name="WichmannHill-gauss"><strong>gauss</strong></a>(self, mu, sigma)</dt><dd><tt>Gaussian&nbsp;distribution.<br>
+&nbsp;<br>
+mu&nbsp;is&nbsp;the&nbsp;mean,&nbsp;and&nbsp;sigma&nbsp;is&nbsp;the&nbsp;standard&nbsp;deviation.&nbsp;&nbsp;This&nbsp;is<br>
+slightly&nbsp;faster&nbsp;than&nbsp;the&nbsp;<a href="#WichmannHill-normalvariate">normalvariate</a>()&nbsp;function.<br>
+&nbsp;<br>
+Not&nbsp;thread-safe&nbsp;without&nbsp;a&nbsp;lock&nbsp;around&nbsp;calls.</tt></dd></dl>
+
+<dl><dt><a name="WichmannHill-lognormvariate"><strong>lognormvariate</strong></a>(self, mu, sigma)</dt><dd><tt>Log&nbsp;normal&nbsp;distribution.<br>
+&nbsp;<br>
+If&nbsp;you&nbsp;take&nbsp;the&nbsp;natural&nbsp;logarithm&nbsp;of&nbsp;this&nbsp;distribution,&nbsp;you'll&nbsp;get&nbsp;a<br>
+normal&nbsp;distribution&nbsp;with&nbsp;mean&nbsp;mu&nbsp;and&nbsp;standard&nbsp;deviation&nbsp;sigma.<br>
+mu&nbsp;can&nbsp;have&nbsp;any&nbsp;value,&nbsp;and&nbsp;sigma&nbsp;must&nbsp;be&nbsp;greater&nbsp;than&nbsp;zero.</tt></dd></dl>
+
+<dl><dt><a name="WichmannHill-normalvariate"><strong>normalvariate</strong></a>(self, mu, sigma)</dt><dd><tt>Normal&nbsp;distribution.<br>
+&nbsp;<br>
+mu&nbsp;is&nbsp;the&nbsp;mean,&nbsp;and&nbsp;sigma&nbsp;is&nbsp;the&nbsp;standard&nbsp;deviation.</tt></dd></dl>
+
+<dl><dt><a name="WichmannHill-paretovariate"><strong>paretovariate</strong></a>(self, alpha)</dt><dd><tt>Pareto&nbsp;distribution.&nbsp;&nbsp;alpha&nbsp;is&nbsp;the&nbsp;shape&nbsp;parameter.</tt></dd></dl>
+
+<dl><dt><a name="WichmannHill-randint"><strong>randint</strong></a>(self, a, b)</dt><dd><tt>Return&nbsp;random&nbsp;integer&nbsp;in&nbsp;range&nbsp;[a,&nbsp;b],&nbsp;including&nbsp;both&nbsp;end&nbsp;points.</tt></dd></dl>
+
+<dl><dt><a name="WichmannHill-randrange"><strong>randrange</strong></a>(self, start, stop<font color="#909090">=None</font>, step<font color="#909090">=1</font>, int<font color="#909090">=&lt;type 'int'&gt;</font>, default<font color="#909090">=None</font>, maxwidth<font color="#909090">=9007199254740992L</font>)</dt><dd><tt>Choose&nbsp;a&nbsp;random&nbsp;item&nbsp;from&nbsp;range(start,&nbsp;stop[,&nbsp;step]).<br>
+&nbsp;<br>
+This&nbsp;fixes&nbsp;the&nbsp;problem&nbsp;with&nbsp;<a href="#WichmannHill-randint">randint</a>()&nbsp;which&nbsp;includes&nbsp;the<br>
+endpoint;&nbsp;in&nbsp;Python&nbsp;this&nbsp;is&nbsp;usually&nbsp;not&nbsp;what&nbsp;you&nbsp;want.<br>
+Do&nbsp;not&nbsp;supply&nbsp;the&nbsp;'int',&nbsp;'default',&nbsp;and&nbsp;'maxwidth'&nbsp;arguments.</tt></dd></dl>
+
+<dl><dt><a name="WichmannHill-sample"><strong>sample</strong></a>(self, population, k)</dt><dd><tt>Chooses&nbsp;k&nbsp;unique&nbsp;random&nbsp;elements&nbsp;from&nbsp;a&nbsp;population&nbsp;sequence.<br>
+&nbsp;<br>
+Returns&nbsp;a&nbsp;new&nbsp;list&nbsp;containing&nbsp;elements&nbsp;from&nbsp;the&nbsp;population&nbsp;while<br>
+leaving&nbsp;the&nbsp;original&nbsp;population&nbsp;unchanged.&nbsp;&nbsp;The&nbsp;resulting&nbsp;list&nbsp;is<br>
+in&nbsp;selection&nbsp;order&nbsp;so&nbsp;that&nbsp;all&nbsp;sub-slices&nbsp;will&nbsp;also&nbsp;be&nbsp;valid&nbsp;random<br>
+samples.&nbsp;&nbsp;This&nbsp;allows&nbsp;raffle&nbsp;winners&nbsp;(the&nbsp;sample)&nbsp;to&nbsp;be&nbsp;partitioned<br>
+into&nbsp;grand&nbsp;prize&nbsp;and&nbsp;second&nbsp;place&nbsp;winners&nbsp;(the&nbsp;subslices).<br>
+&nbsp;<br>
+Members&nbsp;of&nbsp;the&nbsp;population&nbsp;need&nbsp;not&nbsp;be&nbsp;hashable&nbsp;or&nbsp;unique.&nbsp;&nbsp;If&nbsp;the<br>
+population&nbsp;contains&nbsp;repeats,&nbsp;then&nbsp;each&nbsp;occurrence&nbsp;is&nbsp;a&nbsp;possible<br>
+selection&nbsp;in&nbsp;the&nbsp;sample.<br>
+&nbsp;<br>
+To&nbsp;choose&nbsp;a&nbsp;sample&nbsp;in&nbsp;a&nbsp;range&nbsp;of&nbsp;integers,&nbsp;use&nbsp;xrange&nbsp;as&nbsp;an&nbsp;argument.<br>
+This&nbsp;is&nbsp;especially&nbsp;fast&nbsp;and&nbsp;space&nbsp;efficient&nbsp;for&nbsp;sampling&nbsp;from&nbsp;a<br>
+large&nbsp;population:&nbsp;&nbsp;&nbsp;<a href="#WichmannHill-sample">sample</a>(xrange(10000000),&nbsp;60)</tt></dd></dl>
+
+<dl><dt><a name="WichmannHill-shuffle"><strong>shuffle</strong></a>(self, x, random<font color="#909090">=None</font>, int<font color="#909090">=&lt;type 'int'&gt;</font>)</dt><dd><tt>x,&nbsp;random=random.random&nbsp;-&gt;&nbsp;shuffle&nbsp;list&nbsp;x&nbsp;in&nbsp;place;&nbsp;return&nbsp;None.<br>
+&nbsp;<br>
+Optional&nbsp;arg&nbsp;random&nbsp;is&nbsp;a&nbsp;0-argument&nbsp;function&nbsp;returning&nbsp;a&nbsp;random<br>
+float&nbsp;in&nbsp;[0.0,&nbsp;1.0);&nbsp;by&nbsp;default,&nbsp;the&nbsp;standard&nbsp;random.random.</tt></dd></dl>
+
+<dl><dt><a name="WichmannHill-uniform"><strong>uniform</strong></a>(self, a, b)</dt><dd><tt>Get&nbsp;a&nbsp;random&nbsp;number&nbsp;in&nbsp;the&nbsp;range&nbsp;[a,&nbsp;b).</tt></dd></dl>
+
+<dl><dt><a name="WichmannHill-vonmisesvariate"><strong>vonmisesvariate</strong></a>(self, mu, kappa)</dt><dd><tt>Circular&nbsp;data&nbsp;distribution.<br>
+&nbsp;<br>
+mu&nbsp;is&nbsp;the&nbsp;mean&nbsp;angle,&nbsp;expressed&nbsp;in&nbsp;radians&nbsp;between&nbsp;0&nbsp;and&nbsp;2*pi,&nbsp;and<br>
+kappa&nbsp;is&nbsp;the&nbsp;concentration&nbsp;parameter,&nbsp;which&nbsp;must&nbsp;be&nbsp;greater&nbsp;than&nbsp;or<br>
+equal&nbsp;to&nbsp;zero.&nbsp;&nbsp;If&nbsp;kappa&nbsp;is&nbsp;equal&nbsp;to&nbsp;zero,&nbsp;this&nbsp;distribution&nbsp;reduces<br>
+to&nbsp;a&nbsp;uniform&nbsp;random&nbsp;angle&nbsp;over&nbsp;the&nbsp;range&nbsp;0&nbsp;to&nbsp;2*pi.</tt></dd></dl>
+
+<dl><dt><a name="WichmannHill-weibullvariate"><strong>weibullvariate</strong></a>(self, alpha, beta)</dt><dd><tt>Weibull&nbsp;distribution.<br>
+&nbsp;<br>
+alpha&nbsp;is&nbsp;the&nbsp;scale&nbsp;parameter&nbsp;and&nbsp;beta&nbsp;is&nbsp;the&nbsp;shape&nbsp;parameter.</tt></dd></dl>
+
+<hr>
+Data descriptors inherited from <a href="random.html#Random">Random</a>:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<hr>
+Methods inherited from <a href="_random.html#Random">_random.Random</a>:<br>
+<dl><dt><a name="WichmannHill-__getattribute__"><strong>__getattribute__</strong></a>(...)</dt><dd><tt>x.<a href="#WichmannHill-__getattribute__">__getattribute__</a>('name')&nbsp;&lt;==&gt;&nbsp;x.name</tt></dd></dl>
+
+<dl><dt><a name="WichmannHill-getrandbits"><strong>getrandbits</strong></a>(...)</dt><dd><tt><a href="#WichmannHill-getrandbits">getrandbits</a>(k)&nbsp;-&gt;&nbsp;x.&nbsp;&nbsp;Generates&nbsp;a&nbsp;long&nbsp;int&nbsp;with&nbsp;k&nbsp;random&nbsp;bits.</tt></dd></dl>
+
+<hr>
+Data and other attributes inherited from <a href="_random.html#Random">_random.Random</a>:<br>
+<dl><dt><strong>__new__</strong> = &lt;built-in method __new__ of type object at 0x2aaab29ae7c0&gt;<dd><tt>T.<a href="#WichmannHill-__new__">__new__</a>(S,&nbsp;...)&nbsp;-&gt;&nbsp;a&nbsp;new&nbsp;object&nbsp;with&nbsp;type&nbsp;S,&nbsp;a&nbsp;subtype&nbsp;of&nbsp;T</tt></dl>
+
+</td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#eeaa77">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Functions</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#eeaa77"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl><dt><a name="-betavariate"><strong>betavariate</strong></a>(self, alpha, beta)<font color="#909090"><font face="helvetica, arial"> method of <a href="random.html#Random">Random</a> instance</font></font></dt><dd><tt>Beta&nbsp;distribution.<br>
+&nbsp;<br>
+Conditions&nbsp;on&nbsp;the&nbsp;parameters&nbsp;are&nbsp;alpha&nbsp;&gt;&nbsp;0&nbsp;and&nbsp;beta&nbsp;&gt;&nbsp;0.<br>
+Returned&nbsp;values&nbsp;range&nbsp;between&nbsp;0&nbsp;and&nbsp;1.</tt></dd></dl>
+ <dl><dt><a name="-choice"><strong>choice</strong></a>(self, seq)<font color="#909090"><font face="helvetica, arial"> method of <a href="random.html#Random">Random</a> instance</font></font></dt><dd><tt>Choose&nbsp;a&nbsp;random&nbsp;element&nbsp;from&nbsp;a&nbsp;non-empty&nbsp;sequence.</tt></dd></dl>
+ <dl><dt><a name="-expovariate"><strong>expovariate</strong></a>(self, lambd)<font color="#909090"><font face="helvetica, arial"> method of <a href="random.html#Random">Random</a> instance</font></font></dt><dd><tt>Exponential&nbsp;distribution.<br>
+&nbsp;<br>
+lambd&nbsp;is&nbsp;1.0&nbsp;divided&nbsp;by&nbsp;the&nbsp;desired&nbsp;mean.&nbsp;&nbsp;(The&nbsp;parameter&nbsp;would&nbsp;be<br>
+called&nbsp;"lambda",&nbsp;but&nbsp;that&nbsp;is&nbsp;a&nbsp;reserved&nbsp;word&nbsp;in&nbsp;Python.)&nbsp;&nbsp;Returned<br>
+values&nbsp;range&nbsp;from&nbsp;0&nbsp;to&nbsp;positive&nbsp;infinity.</tt></dd></dl>
+ <dl><dt><a name="-gammavariate"><strong>gammavariate</strong></a>(self, alpha, beta)<font color="#909090"><font face="helvetica, arial"> method of <a href="random.html#Random">Random</a> instance</font></font></dt><dd><tt>Gamma&nbsp;distribution.&nbsp;&nbsp;Not&nbsp;the&nbsp;gamma&nbsp;function!<br>
+&nbsp;<br>
+Conditions&nbsp;on&nbsp;the&nbsp;parameters&nbsp;are&nbsp;alpha&nbsp;&gt;&nbsp;0&nbsp;and&nbsp;beta&nbsp;&gt;&nbsp;0.</tt></dd></dl>
+ <dl><dt><a name="-gauss"><strong>gauss</strong></a>(self, mu, sigma)<font color="#909090"><font face="helvetica, arial"> method of <a href="random.html#Random">Random</a> instance</font></font></dt><dd><tt>Gaussian&nbsp;distribution.<br>
+&nbsp;<br>
+mu&nbsp;is&nbsp;the&nbsp;mean,&nbsp;and&nbsp;sigma&nbsp;is&nbsp;the&nbsp;standard&nbsp;deviation.&nbsp;&nbsp;This&nbsp;is<br>
+slightly&nbsp;faster&nbsp;than&nbsp;the&nbsp;<a href="#-normalvariate">normalvariate</a>()&nbsp;function.<br>
+&nbsp;<br>
+Not&nbsp;thread-safe&nbsp;without&nbsp;a&nbsp;lock&nbsp;around&nbsp;calls.</tt></dd></dl>
+ <dl><dt><a name="-getrandbits"><strong>getrandbits</strong></a>(...)</dt><dd><tt><a href="#-getrandbits">getrandbits</a>(k)&nbsp;-&gt;&nbsp;x.&nbsp;&nbsp;Generates&nbsp;a&nbsp;long&nbsp;int&nbsp;with&nbsp;k&nbsp;random&nbsp;bits.</tt></dd></dl>
+ <dl><dt><a name="-getstate"><strong>getstate</strong></a>(self)<font color="#909090"><font face="helvetica, arial"> method of <a href="random.html#Random">Random</a> instance</font></font></dt><dd><tt>Return&nbsp;internal&nbsp;state;&nbsp;can&nbsp;be&nbsp;passed&nbsp;to&nbsp;<a href="#-setstate">setstate</a>()&nbsp;later.</tt></dd></dl>
+ <dl><dt><a name="-jumpahead"><strong>jumpahead</strong></a>(...)</dt><dd><tt><a href="#-jumpahead">jumpahead</a>(int)&nbsp;-&gt;&nbsp;None.&nbsp;&nbsp;Create&nbsp;new&nbsp;state&nbsp;from&nbsp;existing&nbsp;state&nbsp;and&nbsp;integer.</tt></dd></dl>
+ <dl><dt><a name="-lognormvariate"><strong>lognormvariate</strong></a>(self, mu, sigma)<font color="#909090"><font face="helvetica, arial"> method of <a href="random.html#Random">Random</a> instance</font></font></dt><dd><tt>Log&nbsp;normal&nbsp;distribution.<br>
+&nbsp;<br>
+If&nbsp;you&nbsp;take&nbsp;the&nbsp;natural&nbsp;logarithm&nbsp;of&nbsp;this&nbsp;distribution,&nbsp;you'll&nbsp;get&nbsp;a<br>
+normal&nbsp;distribution&nbsp;with&nbsp;mean&nbsp;mu&nbsp;and&nbsp;standard&nbsp;deviation&nbsp;sigma.<br>
+mu&nbsp;can&nbsp;have&nbsp;any&nbsp;value,&nbsp;and&nbsp;sigma&nbsp;must&nbsp;be&nbsp;greater&nbsp;than&nbsp;zero.</tt></dd></dl>
+ <dl><dt><a name="-normalvariate"><strong>normalvariate</strong></a>(self, mu, sigma)<font color="#909090"><font face="helvetica, arial"> method of <a href="random.html#Random">Random</a> instance</font></font></dt><dd><tt>Normal&nbsp;distribution.<br>
+&nbsp;<br>
+mu&nbsp;is&nbsp;the&nbsp;mean,&nbsp;and&nbsp;sigma&nbsp;is&nbsp;the&nbsp;standard&nbsp;deviation.</tt></dd></dl>
+ <dl><dt><a name="-paretovariate"><strong>paretovariate</strong></a>(self, alpha)<font color="#909090"><font face="helvetica, arial"> method of <a href="random.html#Random">Random</a> instance</font></font></dt><dd><tt>Pareto&nbsp;distribution.&nbsp;&nbsp;alpha&nbsp;is&nbsp;the&nbsp;shape&nbsp;parameter.</tt></dd></dl>
+ <dl><dt><a name="-randint"><strong>randint</strong></a>(self, a, b)<font color="#909090"><font face="helvetica, arial"> method of <a href="random.html#Random">Random</a> instance</font></font></dt><dd><tt>Return&nbsp;random&nbsp;integer&nbsp;in&nbsp;range&nbsp;[a,&nbsp;b],&nbsp;including&nbsp;both&nbsp;end&nbsp;points.</tt></dd></dl>
+ <dl><dt><a name="-random"><strong>random</strong></a>(...)</dt><dd><tt><a href="#-random">random</a>()&nbsp;-&gt;&nbsp;x&nbsp;in&nbsp;the&nbsp;interval&nbsp;[0,&nbsp;1).</tt></dd></dl>
+ <dl><dt><a name="-randrange"><strong>randrange</strong></a>(self, start, stop<font color="#909090">=None</font>, step<font color="#909090">=1</font>, int<font color="#909090">=&lt;type 'int'&gt;</font>, default<font color="#909090">=None</font>, maxwidth<font color="#909090">=9007199254740992L</font>)<font color="#909090"><font face="helvetica, arial"> method of <a href="random.html#Random">Random</a> instance</font></font></dt><dd><tt>Choose&nbsp;a&nbsp;random&nbsp;item&nbsp;from&nbsp;range(start,&nbsp;stop[,&nbsp;step]).<br>
+&nbsp;<br>
+This&nbsp;fixes&nbsp;the&nbsp;problem&nbsp;with&nbsp;<a href="#-randint">randint</a>()&nbsp;which&nbsp;includes&nbsp;the<br>
+endpoint;&nbsp;in&nbsp;Python&nbsp;this&nbsp;is&nbsp;usually&nbsp;not&nbsp;what&nbsp;you&nbsp;want.<br>
+Do&nbsp;not&nbsp;supply&nbsp;the&nbsp;'int',&nbsp;'default',&nbsp;and&nbsp;'maxwidth'&nbsp;arguments.</tt></dd></dl>
+ <dl><dt><a name="-sample"><strong>sample</strong></a>(self, population, k)<font color="#909090"><font face="helvetica, arial"> method of <a href="random.html#Random">Random</a> instance</font></font></dt><dd><tt>Chooses&nbsp;k&nbsp;unique&nbsp;random&nbsp;elements&nbsp;from&nbsp;a&nbsp;population&nbsp;sequence.<br>
+&nbsp;<br>
+Returns&nbsp;a&nbsp;new&nbsp;list&nbsp;containing&nbsp;elements&nbsp;from&nbsp;the&nbsp;population&nbsp;while<br>
+leaving&nbsp;the&nbsp;original&nbsp;population&nbsp;unchanged.&nbsp;&nbsp;The&nbsp;resulting&nbsp;list&nbsp;is<br>
+in&nbsp;selection&nbsp;order&nbsp;so&nbsp;that&nbsp;all&nbsp;sub-slices&nbsp;will&nbsp;also&nbsp;be&nbsp;valid&nbsp;random<br>
+samples.&nbsp;&nbsp;This&nbsp;allows&nbsp;raffle&nbsp;winners&nbsp;(the&nbsp;sample)&nbsp;to&nbsp;be&nbsp;partitioned<br>
+into&nbsp;grand&nbsp;prize&nbsp;and&nbsp;second&nbsp;place&nbsp;winners&nbsp;(the&nbsp;subslices).<br>
+&nbsp;<br>
+Members&nbsp;of&nbsp;the&nbsp;population&nbsp;need&nbsp;not&nbsp;be&nbsp;hashable&nbsp;or&nbsp;unique.&nbsp;&nbsp;If&nbsp;the<br>
+population&nbsp;contains&nbsp;repeats,&nbsp;then&nbsp;each&nbsp;occurrence&nbsp;is&nbsp;a&nbsp;possible<br>
+selection&nbsp;in&nbsp;the&nbsp;sample.<br>
+&nbsp;<br>
+To&nbsp;choose&nbsp;a&nbsp;sample&nbsp;in&nbsp;a&nbsp;range&nbsp;of&nbsp;integers,&nbsp;use&nbsp;xrange&nbsp;as&nbsp;an&nbsp;argument.<br>
+This&nbsp;is&nbsp;especially&nbsp;fast&nbsp;and&nbsp;space&nbsp;efficient&nbsp;for&nbsp;sampling&nbsp;from&nbsp;a<br>
+large&nbsp;population:&nbsp;&nbsp;&nbsp;<a href="#-sample">sample</a>(xrange(10000000),&nbsp;60)</tt></dd></dl>
+ <dl><dt><a name="-seed"><strong>seed</strong></a>(self, a<font color="#909090">=None</font>)<font color="#909090"><font face="helvetica, arial"> method of <a href="random.html#Random">Random</a> instance</font></font></dt><dd><tt>Initialize&nbsp;internal&nbsp;state&nbsp;from&nbsp;hashable&nbsp;object.<br>
+&nbsp;<br>
+None&nbsp;or&nbsp;no&nbsp;argument&nbsp;seeds&nbsp;from&nbsp;current&nbsp;time&nbsp;or&nbsp;from&nbsp;an&nbsp;operating<br>
+system&nbsp;specific&nbsp;randomness&nbsp;source&nbsp;if&nbsp;available.<br>
+&nbsp;<br>
+If&nbsp;a&nbsp;is&nbsp;not&nbsp;None&nbsp;or&nbsp;an&nbsp;int&nbsp;or&nbsp;long,&nbsp;hash(a)&nbsp;is&nbsp;used&nbsp;instead.</tt></dd></dl>
+ <dl><dt><a name="-setstate"><strong>setstate</strong></a>(self, state)<font color="#909090"><font face="helvetica, arial"> method of <a href="random.html#Random">Random</a> instance</font></font></dt><dd><tt>Restore&nbsp;internal&nbsp;state&nbsp;from&nbsp;object&nbsp;returned&nbsp;by&nbsp;<a href="#-getstate">getstate</a>().</tt></dd></dl>
+ <dl><dt><a name="-shuffle"><strong>shuffle</strong></a>(self, x, random<font color="#909090">=None</font>, int<font color="#909090">=&lt;type 'int'&gt;</font>)<font color="#909090"><font face="helvetica, arial"> method of <a href="random.html#Random">Random</a> instance</font></font></dt><dd><tt>x,&nbsp;random=random.random&nbsp;-&gt;&nbsp;shuffle&nbsp;list&nbsp;x&nbsp;in&nbsp;place;&nbsp;return&nbsp;None.<br>
+&nbsp;<br>
+Optional&nbsp;arg&nbsp;random&nbsp;is&nbsp;a&nbsp;0-argument&nbsp;function&nbsp;returning&nbsp;a&nbsp;random<br>
+float&nbsp;in&nbsp;[0.0,&nbsp;1.0);&nbsp;by&nbsp;default,&nbsp;the&nbsp;standard&nbsp;random.random.</tt></dd></dl>
+ <dl><dt><a name="-uniform"><strong>uniform</strong></a>(self, a, b)<font color="#909090"><font face="helvetica, arial"> method of <a href="random.html#Random">Random</a> instance</font></font></dt><dd><tt>Get&nbsp;a&nbsp;random&nbsp;number&nbsp;in&nbsp;the&nbsp;range&nbsp;[a,&nbsp;b).</tt></dd></dl>
+ <dl><dt><a name="-vonmisesvariate"><strong>vonmisesvariate</strong></a>(self, mu, kappa)<font color="#909090"><font face="helvetica, arial"> method of <a href="random.html#Random">Random</a> instance</font></font></dt><dd><tt>Circular&nbsp;data&nbsp;distribution.<br>
+&nbsp;<br>
+mu&nbsp;is&nbsp;the&nbsp;mean&nbsp;angle,&nbsp;expressed&nbsp;in&nbsp;radians&nbsp;between&nbsp;0&nbsp;and&nbsp;2*pi,&nbsp;and<br>
+kappa&nbsp;is&nbsp;the&nbsp;concentration&nbsp;parameter,&nbsp;which&nbsp;must&nbsp;be&nbsp;greater&nbsp;than&nbsp;or<br>
+equal&nbsp;to&nbsp;zero.&nbsp;&nbsp;If&nbsp;kappa&nbsp;is&nbsp;equal&nbsp;to&nbsp;zero,&nbsp;this&nbsp;distribution&nbsp;reduces<br>
+to&nbsp;a&nbsp;uniform&nbsp;random&nbsp;angle&nbsp;over&nbsp;the&nbsp;range&nbsp;0&nbsp;to&nbsp;2*pi.</tt></dd></dl>
+ <dl><dt><a name="-weibullvariate"><strong>weibullvariate</strong></a>(self, alpha, beta)<font color="#909090"><font face="helvetica, arial"> method of <a href="random.html#Random">Random</a> instance</font></font></dt><dd><tt>Weibull&nbsp;distribution.<br>
+&nbsp;<br>
+alpha&nbsp;is&nbsp;the&nbsp;scale&nbsp;parameter&nbsp;and&nbsp;beta&nbsp;is&nbsp;the&nbsp;shape&nbsp;parameter.</tt></dd></dl>
+</td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#55aa55">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Data</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><strong>__all__</strong> = ['Random', 'seed', 'random', 'uniform', 'randint', 'choice', 'sample', 'randrange', 'shuffle', 'normalvariate', 'lognormvariate', 'expovariate', 'vonmisesvariate', 'gammavariate', 'gauss', 'betavariate', 'paretovariate', 'weibullvariate', 'getstate', 'setstate', ...]</td></tr></table>
+</body></html>

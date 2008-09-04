@@ -1,0 +1,695 @@
+ _           _    _     _ _
+| |__   ___ | |_ | |__ |_| |_
+|  _ \ / _ \|  _||  _ \| |  _|
+| | | | ( ) | |_ | ( ) | | |_
+|_| |_|\___/ \__|\____/|_|\__| 3.0 fortran-based
+Date: Tue Jun 17 12:46:58 2008
+Nodename: nano110.nano.jyu.fi
+Arch: x86_64
+Dir: /home/pekkosk/work/programs/hotbit/hotbit/test
+Element C in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/C.elm
+    no documentation
+Element Au in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/Au.elm
+    no documentation
+Element Na in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/Na.elm
+    no documentation
+Element H in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/H.elm
+    no documentation
+Element O in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/O.elm
+    no documentation
+Element N in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/N.elm
+    no documentation
+
+Interaction NH in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/N_H.par
+    no documentation
+Interaction OO in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/O_O.par
+    no documentation
+Interaction CH in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/C_H.par
+    no documentation
+Interaction CN in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/C_N.par
+    no documentation
+Interaction NN in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/N_N.par
+    no documentation
+Interaction OH in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/O_H.par
+    no documentation
+Interaction CC in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/C_C.par
+    Frauenheim original (r/r0)**2, r0=1.85*r_cov,
+    Frauenheim repulsion (probably)
+Interaction NC in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/C_N.par
+    no documentation
+Interaction NaNa in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/Na_Na.par
+    no documentation
+Interaction HH in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/H_H.par
+    no documentation
+Interaction HN in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/N_H.par
+    no documentation
+Interaction HO in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/O_H.par
+    no documentation
+Interaction AuAu in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/Au_Au.par
+    no documentation
+Interaction HC in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/C_H.par
+    no documentation
+
+Open hotbit pipes for communication...
+>               Total= 17.06 2008 - 12.46:58
+>                 init 17.06 2008 - 12.46:58
+>  read elements
+>  Selected elements: (indexing in Z-order)
+>            1 =H 
+>            2 =O 
+>  Allocate memory and read Slater-Koster tables...
+>  Start HOTBIT communication loop...
+>             setup_HS 17.06 2008 - 12.46:58
+>                mdiff 17.06 2008 - 12.46:58
+>  Non-zero MELs (%) 27.7777777777778
+>                solve 17.06 2008 - 12.46:58
+>                 E_BS 17.06 2008 - 12.46:58
+>               E_coul 17.06 2008 - 12.46:58
+>  mil,sil,max,T:           1           1  0.603123717010021       7.349861893590000E-004
+>  -0.301561802392825      -0.301561802392825       0.603123717010021     
+>   occupation_history 17.06 2008 - 12.46:58
+>  mil,sil,max,T:           1           2  0.457616955041885       7.349861893590000E-004
+>  -0.289120855275542      -0.289120855275542       0.578241698443890     
+>  mil,sil,max,T:           1           3  1.447196123755767E-003  7.349861893590000E-004
+>  -0.249270534142852      -0.249270534142852       0.498540967702866     
+>  mil,sil,max,T:           1           4  3.460999190340597E-004  7.349861893590000E-004
+>  -0.249427884351462      -0.249427884351462       0.498855672776699     
+>  mil,sil,max,T:           1           5  1.126025842990153E-005  7.349861893590000E-004
+>  -0.249396523460746      -0.249396523460746       0.498793035745621     
+>  mil,sil,max,T:           1           6  3.896887607601762E-007  7.349861893590000E-004
+>  -0.249397542793304      -0.249397542793304       0.498795203864574     
+>  mil,sil,max,T:           1           7  4.338999309849711E-008  7.349861893590000E-004
+>  -0.249397542793304      -0.249397542793304       0.498794965445995     
+> [solve] mil, SC <sil>, dE(eV):         1    7.0000    0.0000
+>               FORCES 17.06 2008 - 12.46:58
+>  mil,sil,max,T:           2           1  6.748733016870290E-009  7.349861893590000E-004
+>  -0.249397543258965      -0.249397543258965       0.498794965445995     
+>  mil,sil,max,T:           2           2  5.398986396842886E-009  7.349861893590000E-004
+>  -0.249397543258965      -0.249397543258965       0.498794965445995     
+ _           _    _     _ _
+| |__   ___ | |_ | |__ |_| |_
+|  _ \ / _ \|  _||  _ \| |  _|
+| | | | ( ) | |_ | ( ) | | |_
+|_| |_|\___/ \__|\____/|_|\__| 3.0 fortran-based
+Date: Tue Jun 17 12:47:28 2008
+Nodename: nano110.nano.jyu.fi
+Arch: x86_64
+Dir: /home/pekkosk/work/programs/hotbit/hotbit/test
+Element C in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/C.elm
+    no documentation
+Element Au in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/Au.elm
+    no documentation
+Element Na in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/Na.elm
+    no documentation
+Element H in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/H.elm
+    no documentation
+Element O in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/O.elm
+    no documentation
+Element N in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/N.elm
+    no documentation
+
+Interaction NH in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/N_H.par
+    no documentation
+Interaction OO in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/O_O.par
+    no documentation
+Interaction CH in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/C_H.par
+    no documentation
+Interaction CN in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/C_N.par
+    no documentation
+Interaction NN in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/N_N.par
+    no documentation
+Interaction OH in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/O_H.par
+    no documentation
+Interaction CC in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/C_C.par
+    Frauenheim original (r/r0)**2, r0=1.85*r_cov,
+    Frauenheim repulsion (probably)
+Interaction NC in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/C_N.par
+    no documentation
+Interaction NaNa in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/Na_Na.par
+    no documentation
+Interaction HH in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/H_H.par
+    no documentation
+Interaction HN in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/N_H.par
+    no documentation
+Interaction HO in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/O_H.par
+    no documentation
+Interaction AuAu in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/Au_Au.par
+    no documentation
+Interaction HC in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/C_H.par
+    no documentation
+
+Open hotbit pipes for communication...
+>               Total= 17.06 2008 - 12.47:28
+>                 init 17.06 2008 - 12.47:28
+>  read elements
+>  Selected elements: (indexing in Z-order)
+>            1 =H 
+>            2 =O 
+>  Allocate memory and read Slater-Koster tables...
+>  Start HOTBIT communication loop...
+>             setup_HS 17.06 2008 - 12.47:28
+>                mdiff 17.06 2008 - 12.47:28
+>  Non-zero MELs (%) 27.7777777777778
+>                solve 17.06 2008 - 12.47:28
+>                 E_BS 17.06 2008 - 12.47:28
+>               E_coul 17.06 2008 - 12.47:28
+>  mil,sil,max,T:           1           1  0.603131540119648       7.349861893590000E-004
+>  -0.301565797766671      -0.301565797766671       0.603131540119648     
+>   occupation_history 17.06 2008 - 12.47:28
+>  mil,sil,max,T:           1           2  0.457621172070503       7.349861893590000E-004
+>  -0.289123689057305      -0.289123689057305       0.578247480094433     
+>  mil,sil,max,T:           1           3  1.447775307295729E-003  7.349861893590000E-004
+>  -0.249270269647241      -0.249270269647241       0.498540729284286     
+>  mil,sil,max,T:           1           4  2.967165280793882E-004  7.349861893590000E-004
+>  -0.249423395842314      -0.249423395842314       0.498846702277660     
+>  mil,sil,max,T:           1           5  2.089126885596038E-006  7.349861893590000E-004
+>  -0.249397514387965      -0.249397514387965       0.498795144259930     
+>  mil,sil,max,T:           1           6  8.083493630017813E-008  7.349861893590000E-004
+>  -0.249397308100015      -0.249397308100015       0.498794727027416     
+> [solve] mil, SC <sil>, dE(eV):         1    6.0000    0.0000
+>               FORCES 17.06 2008 - 12.47:28
+>  mil,sil,max,T:           2           1  9.073108656054707E-008  7.349861893590000E-004
+>  -0.249397367704660      -0.249397367704660       0.498794667422771     
+>  mil,sil,max,T:           2           2  7.258486922623320E-008  7.349861893590000E-004
+>  -0.249397367704660      -0.249397367704660       0.498794667422771     
+>  mil,sil,max,T:           3           1  4.562982694195916E-003  7.349861893590000E-004
+>  -0.251678840606473      -0.251678840606473       0.503357665846124     
+>  mil,sil,max,T:           3           2  3.485443339456884E-003  7.349861893590000E-004
+>  -0.251596354297362      -0.251596354297362       0.503192723030224     
+>  mil,sil,max,T:           3           3  1.462673449026397E-008  7.349861893590000E-004
+>  -0.251329582068138      -0.251329582068138       0.502659173915163     
+>  mil,sil,max,T:           4           1  4.563024463429044E-003  7.349861893590000E-004
+>  -0.250980284996331      -0.250980284996331       0.501960642635822     
+>  mil,sil,max,T:           4           2  3.485401317714909E-003  7.349861893590000E-004
+>  -0.251062792725861      -0.251062792725861       0.502125660888851     
+>  mil,sil,max,T:           4           3  2.089701837126867E-007  7.349861893590000E-004
+>  -0.251329582533799      -0.251329582533799       0.502659173915163     
+>  mil,sil,max,T:           4           4  1.763029664481053E-007  7.349861893590000E-004
+>  -0.251329582068138      -0.251329582068138       0.502659173915163     
+>  mil,sil,max,T:           4           5  5.929498891887874E-008  7.349861893590000E-004
+>  -0.251329582068138      -0.251329582068138       0.502659173915163     
+>  mil,sil,max,T:           5           1  3.814153348713489E-008  7.349861893590000E-004
+>  -0.251329582068138      -0.251329582068138       0.502659173915163     
+>  mil,sil,max,T:           5           2  3.051322672309453E-008  7.349861893590000E-004
+>  -0.251329582068138      -0.251329582068138       0.502659173915163     
+>  mil,sil,max,T:           6           1  2.239784258062372E-008  7.349861893590000E-004
+>  -0.251329582068138      -0.251329582068138       0.502659173915163     
+>  mil,sil,max,T:           6           2  1.791827408670343E-008  7.349861893590000E-004
+>  -0.251329582068138      -0.251329582068138       0.502659173915163     
+>  mil,sil,max,T:           7           1  1.224852562882017E-002  7.349861893590000E-004
+>  -0.257453822763637      -0.257453822763637       0.514907699543983     
+>  mil,sil,max,T:           7           2  9.396809060126632E-003  7.349861893590000E-004
+>  -0.257252797018737      -0.257252797018737       0.514505688101053     
+>  mil,sil,max,T:           7           3  3.597636236696289E-007  7.349861893590000E-004
+>  -0.256590270670131      -0.256590270670131       0.513180604670197     
+>  mil,sil,max,T:           7           4  8.600877954290098E-008  7.349861893590000E-004
+>  -0.256590270670131      -0.256590270670131       0.513180604670197     
+>  mil,sil,max,T:           8           1  1.224888172947614E-002  7.349861893590000E-004
+>  -0.255726376548409      -0.255726376548409       0.511452825739980     
+>  mil,sil,max,T:           8           2  9.396694403266848E-003  7.349861893590000E-004
+>  -0.255927589023486      -0.255927589023486       0.511855236720294     
+>  mil,sil,max,T:           8           3  4.126064399034846E-007  7.349861893590000E-004
+>  -0.256590270670131      -0.256590270670131       0.513180604670197     
+>  mil,sil,max,T:           8           4  4.548018150973832E-008  7.349861893590000E-004
+>  -0.256590270437300      -0.256590270437300       0.513180605135858     
+>  mil,sil,max,T:           9           1  1.124121293827329E-007  7.349861893590000E-004
+>  -0.256590270670131      -0.256590270670131       0.513180604670197     
+>  mil,sil,max,T:           9           2  8.992970357279972E-008  7.349861893590000E-004
+>  -0.256590270670131      -0.256590270670131       0.513180604670197     
+>  mil,sil,max,T:          10           1  2.531721798870734E-008  7.349861893590000E-004
+>  -0.256590270437300      -0.256590270437300       0.513180605135858     
+>  mil,sil,max,T:          10           2  2.025377443537479E-008  7.349861893590000E-004
+>  -0.256590270437300      -0.256590270437300       0.513180605135858     
+>  mil,sil,max,T:          11           1  7.594523951411358E-003  7.349861893590000E-004
+>  -0.260387577349320      -0.260387577349320       0.520775129552931     
+>  mil,sil,max,T:          11           2  5.817745719105094E-003  7.349861893590000E-004
+>  -0.260258568217978      -0.260258568217978       0.520517256110907     
+>  mil,sil,max,T:          11           3  7.775064579940150E-007  7.349861893590000E-004
+>  -0.259836004814133      -0.259836004814133       0.519671985413879     
+>  mil,sil,max,T:          11           4  1.778400748886355E-008  7.349861893590000E-004
+>  -0.259836063953117      -0.259836063953117       0.519672224298120     
+>  mil,sil,max,T:          12           1  7.595071004495413E-003  7.349861893590000E-004
+>  -0.259284352418035      -0.259284352418035       0.518568761181086     
+>  mil,sil,max,T:          12           2  5.817931904477214E-003  7.349861893590000E-004
+>  -0.259413474239409      -0.259413474239409       0.518826886080205     
+>  mil,sil,max,T:          12           3  1.859616052257707E-007  7.349861893590000E-004
+>  -0.259836063720286      -0.259836063720286       0.519672224298120     
+>  mil,sil,max,T:          12           4  8.347800517505277E-008  7.349861893590000E-004
+>  -0.259836063953117      -0.259836063953117       0.519672224298120     
+>  mil,sil,max,T:          13           1  1.360656465276833E-007  7.349861893590000E-004
+>  -0.259836034383625      -0.259836034383625       0.519672223832458     
+>  mil,sil,max,T:          13           2  1.088525172221466E-007  7.349861893590000E-004
+>  -0.259836034383625      -0.259836034383625       0.519672223832458     
+>  mil,sil,max,T:          13           3  2.956949174404144E-008  7.349861893590000E-004
+>  -0.259836063953117      -0.259836063953117       0.519672224298120     
+>  mil,sil,max,T:          14           1  9.283332413900780E-008  7.349861893590000E-004
+>  -0.259836063953117      -0.259836063953117       0.519672224298120     
+>  mil,sil,max,T:          14           2  7.426665926679732E-008  7.349861893590000E-004
+>  -0.259836063953117      -0.259836063953117       0.519672224298120     
+>  mil,sil,max,T:          15           1  3.184292465448157E-003  7.349861893590000E-004
+>  -0.258243977790698      -0.258243977790698       0.516487932298332     
+>  mil,sil,max,T:          15           2  2.439405210316048E-003  7.349861893590000E-004
+>  -0.258297973545268      -0.258297973545268       0.516595961060375     
+>  mil,sil,max,T:          15           3  8.867083090002836E-008  7.349861893590000E-004
+>  -0.258474858477712      -0.258474858477712       0.516949619166553     
+>  mil,sil,max,T:          16           1  3.184215701158677E-003  7.349861893590000E-004
+>  -0.258705747313797      -0.258705747313797       0.517411348875612     
+>  mil,sil,max,T:          16           2  2.439381517448713E-003  7.349861893590000E-004
+>  -0.258651732932776      -0.258651732932776       0.517303357832134     
+>  mil,sil,max,T:          16           3  2.733845516633693E-008  7.349861893590000E-004
+>  -0.258474858477712      -0.258474858477712       0.516949619166553     
+>  mil,sil,max,T:          17           1  5.949855919062941E-008  7.349861893590000E-004
+>  -0.258474887814373      -0.258474887814373       0.516949619632214     
+>  mil,sil,max,T:          17           2  4.759884730809461E-008  7.349861893590000E-004
+>  -0.258474887814373      -0.258474887814373       0.516949619632214     
+>  mil,sil,max,T:          18           1  2.505407403763371E-008  7.349861893590000E-004
+>  -0.258474888280034      -0.258474888280034       0.516949619166553     
+>  mil,sil,max,T:          18           2  2.004325927451589E-008  7.349861893590000E-004
+>  -0.258474888280034      -0.258474888280034       0.516949619166553     
+>  mil,sil,max,T:          19           1  3.026798378602535E-008  7.349861893590000E-004
+>  -0.258474858477712      -0.258474858477712       0.516949619166553     
+>  mil,sil,max,T:          19           2  2.421438705102474E-008  7.349861893590000E-004
+>  -0.258474858477712      -0.258474858477712       0.516949619166553     
+ _           _    _     _ _
+| |__   ___ | |_ | |__ |_| |_
+|  _ \ / _ \|  _||  _ \| |  _|
+| | | | ( ) | |_ | ( ) | | |_
+|_| |_|\___/ \__|\____/|_|\__| 3.0 fortran-based
+Date: Tue Jun 17 12:48:35 2008
+Nodename: nano110.nano.jyu.fi
+Arch: x86_64
+Dir: /home/pekkosk/work/programs/hotbit/hotbit/test
+Element C in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/C.elm
+    no documentation
+Element Au in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/Au.elm
+    no documentation
+Element Na in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/Na.elm
+    no documentation
+Element H in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/H.elm
+    no documentation
+Element O in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/O.elm
+    no documentation
+Element N in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/N.elm
+    no documentation
+
+Interaction NH in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/N_H.par
+    no documentation
+Interaction OO in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/O_O.par
+    no documentation
+Interaction CH in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/C_H.par
+    no documentation
+Interaction CN in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/C_N.par
+    no documentation
+Interaction NN in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/N_N.par
+    no documentation
+Interaction OH in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/O_H.par
+    no documentation
+Interaction CC in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/C_C.par
+    Frauenheim original (r/r0)**2, r0=1.85*r_cov,
+    Frauenheim repulsion (probably)
+Interaction NC in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/C_N.par
+    no documentation
+Interaction NaNa in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/Na_Na.par
+    no documentation
+Interaction HH in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/H_H.par
+    no documentation
+Interaction HN in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/N_H.par
+    no documentation
+Interaction HO in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/O_H.par
+    no documentation
+Interaction AuAu in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/Au_Au.par
+    no documentation
+Interaction HC in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/C_H.par
+    no documentation
+
+Open hotbit pipes for communication...
+>               Total= 17.06 2008 - 12.48:35
+>                 init 17.06 2008 - 12.48:35
+>  read elements
+>  Selected elements: (indexing in Z-order)
+>            1 =H 
+>            2 =O 
+>  Allocate memory and read Slater-Koster tables...
+>  Start HOTBIT communication loop...
+>             setup_HS 17.06 2008 - 12.48:35
+>                mdiff 17.06 2008 - 12.48:35
+>  Non-zero MELs (%) 38.8888888888889
+>                solve 17.06 2008 - 12.48:35
+>                 E_BS 17.06 2008 - 12.48:35
+>               E_coul 17.06 2008 - 12.48:35
+>  mil,sil,max,T:           1           1  0.603446078021079       7.349861893590000E-004
+>  -0.301723035052419      -0.301723035052419       0.603446078021079     
+>   occupation_history 17.06 2008 - 12.48:35
+>  mil,sil,max,T:           1           2  0.462781867478043       7.349861893590000E-004
+>  -0.291735537117347      -0.291735537117347       0.583471083082259     
+>  mil,sil,max,T:           1           3  9.401287735486541E-004  7.349861893590000E-004
+>  -0.258406795794144      -0.258406795794144       0.516813700553030     
+>  mil,sil,max,T:           1           4  1.097363995665068E-003  7.349861893590000E-004
+>  -0.258395401295274      -0.258395401295274       0.516790848691016     
+>  mil,sil,max,T:           1           5  1.577026508825519E-006  7.349861893590000E-004
+>  -0.258475084323436      -0.258475084323436       0.516950134187937     
+>  mil,sil,max,T:           1           6  2.039986638502356E-007  7.349861893590000E-004
+>  -0.258474996080622      -0.258474996080622       0.516949894838035     
+>  mil,sil,max,T:           1           7  3.351005728458034E-008  7.349861893590000E-004
+>  -0.258474966278300      -0.258474966278300       0.516949894838035     
+> [solve] mil, SC <sil>, dE(eV):         1    7.0000    0.0000
+>               FORCES 17.06 2008 - 12.48:35
+ _           _    _     _ _
+| |__   ___ | |_ | |__ |_| |_
+|  _ \ / _ \|  _||  _ \| |  _|
+| | | | ( ) | |_ | ( ) | | |_
+|_| |_|\___/ \__|\____/|_|\__| 3.0 fortran-based
+Date: Tue Jun 17 12:48:41 2008
+Nodename: nano110.nano.jyu.fi
+Arch: x86_64
+Dir: /home/pekkosk/work/programs/hotbit/hotbit/test
+Element C in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/C.elm
+    no documentation
+Element Au in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/Au.elm
+    no documentation
+Element Na in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/Na.elm
+    no documentation
+Element H in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/H.elm
+    no documentation
+Element O in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/O.elm
+    no documentation
+Element N in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/N.elm
+    no documentation
+
+Interaction NH in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/N_H.par
+    no documentation
+Interaction OO in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/O_O.par
+    no documentation
+Interaction CH in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/C_H.par
+    no documentation
+Interaction CN in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/C_N.par
+    no documentation
+Interaction NN in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/N_N.par
+    no documentation
+Interaction OH in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/O_H.par
+    no documentation
+Interaction CC in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/C_C.par
+    Frauenheim original (r/r0)**2, r0=1.85*r_cov,
+    Frauenheim repulsion (probably)
+Interaction NC in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/C_N.par
+    no documentation
+Interaction NaNa in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/Na_Na.par
+    no documentation
+Interaction HH in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/H_H.par
+    no documentation
+Interaction HN in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/N_H.par
+    no documentation
+Interaction HO in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/O_H.par
+    no documentation
+Interaction AuAu in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/Au_Au.par
+    no documentation
+Interaction HC in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/C_H.par
+    no documentation
+
+Open hotbit pipes for communication...
+>               Total= 17.06 2008 - 12.48:41
+>                 init 17.06 2008 - 12.48:41
+>  read elements
+>  Selected elements: (indexing in Z-order)
+>            1 =H 
+>            2 =O 
+>  Allocate memory and read Slater-Koster tables...
+>  Start HOTBIT communication loop...
+>             setup_HS 17.06 2008 - 12.48:41
+>                mdiff 17.06 2008 - 12.48:41
+>  Non-zero MELs (%) 38.8888888888889
+>                solve 17.06 2008 - 12.48:41
+>                 E_BS 17.06 2008 - 12.48:41
+>               E_coul 17.06 2008 - 12.48:41
+>  mil,sil,max,T:           1           1  0.603446078021079       7.349861893590000E-004
+>  -0.301723035052419      -0.301723035052419       0.603446078021079     
+>   occupation_history 17.06 2008 - 12.48:41
+>  mil,sil,max,T:           1           2  0.462781867478043       7.349861893590000E-004
+>  -0.291735537117347      -0.291735537117347       0.583471083082259     
+>  mil,sil,max,T:           1           3  9.401287735486541E-004  7.349861893590000E-004
+>  -0.258406795794144      -0.258406795794144       0.516813700553030     
+>  mil,sil,max,T:           1           4  1.097363995665068E-003  7.349861893590000E-004
+>  -0.258395401295274      -0.258395401295274       0.516790848691016     
+>  mil,sil,max,T:           1           5  1.577026508825519E-006  7.349861893590000E-004
+>  -0.258475084323436      -0.258475084323436       0.516950134187937     
+>  mil,sil,max,T:           1           6  2.039986638502356E-007  7.349861893590000E-004
+>  -0.258474996080622      -0.258474996080622       0.516949894838035     
+>  mil,sil,max,T:           1           7  3.351005728458034E-008  7.349861893590000E-004
+>  -0.258474966278300      -0.258474966278300       0.516949894838035     
+> [solve] mil, SC <sil>, dE(eV):         1    7.0000    0.0000
+>               FORCES 17.06 2008 - 12.48:41
+ _           _    _     _ _
+| |__   ___ | |_ | |__ |_| |_
+|  _ \ / _ \|  _||  _ \| |  _|
+| | | | ( ) | |_ | ( ) | | |_
+|_| |_|\___/ \__|\____/|_|\__| 3.0 fortran-based
+Date: Tue Jun 17 12:49:38 2008
+Nodename: nano110.nano.jyu.fi
+Arch: x86_64
+Dir: /home/pekkosk/work/programs/hotbit/hotbit/test
+Element C in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/C.elm
+    no documentation
+Element Au in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/Au.elm
+    no documentation
+Element Na in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/Na.elm
+    no documentation
+Element H in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/H.elm
+    no documentation
+Element O in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/O.elm
+    no documentation
+Element N in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/N.elm
+    no documentation
+
+Interaction NH in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/N_H.par
+    no documentation
+Interaction OO in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/O_O.par
+    no documentation
+Interaction CH in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/C_H.par
+    no documentation
+Interaction CN in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/C_N.par
+    no documentation
+Interaction NN in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/N_N.par
+    no documentation
+Interaction OH in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/O_H.par
+    no documentation
+Interaction CC in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/C_C.par
+    Frauenheim original (r/r0)**2, r0=1.85*r_cov,
+    Frauenheim repulsion (probably)
+Interaction NC in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/C_N.par
+    no documentation
+Interaction NaNa in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/Na_Na.par
+    no documentation
+Interaction HH in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/H_H.par
+    no documentation
+Interaction HN in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/N_H.par
+    no documentation
+Interaction HO in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/O_H.par
+    no documentation
+Interaction AuAu in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/Au_Au.par
+    no documentation
+Interaction HC in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/C_H.par
+    no documentation
+
+Open hotbit pipes for communication...
+>               Total= 17.06 2008 - 12.49:39
+>                 init 17.06 2008 - 12.49:39
+>  read elements
+>  Selected elements: (indexing in Z-order)
+>            1 =H 
+>            2 =O 
+>  Allocate memory and read Slater-Koster tables...
+>  Start HOTBIT communication loop...
+>             setup_HS 17.06 2008 - 12.49:39
+>                mdiff 17.06 2008 - 12.49:39
+>  Non-zero MELs (%) 38.8888888888889
+>                solve 17.06 2008 - 12.49:39
+>                 E_BS 17.06 2008 - 12.49:39
+>               E_coul 17.06 2008 - 12.49:39
+>  mil,sil,max,T:           1           1  0.603446078021079       7.349861893590000E-004
+>  -0.301723035052419      -0.301723035052419       0.603446078021079     
+>   occupation_history 17.06 2008 - 12.49:39
+>  mil,sil,max,T:           1           2  0.462781867478043       7.349861893590000E-004
+>  -0.291735537117347      -0.291735537117347       0.583471083082259     
+>  mil,sil,max,T:           1           3  9.401287735486541E-004  7.349861893590000E-004
+>  -0.258406795794144      -0.258406795794144       0.516813700553030     
+>  mil,sil,max,T:           1           4  1.097363995665068E-003  7.349861893590000E-004
+>  -0.258395401295274      -0.258395401295274       0.516790848691016     
+>  mil,sil,max,T:           1           5  1.577026508825519E-006  7.349861893590000E-004
+>  -0.258475084323436      -0.258475084323436       0.516950134187937     
+>  mil,sil,max,T:           1           6  2.039986638502356E-007  7.349861893590000E-004
+>  -0.258474996080622      -0.258474996080622       0.516949894838035     
+>  mil,sil,max,T:           1           7  3.351005728458034E-008  7.349861893590000E-004
+>  -0.258474966278300      -0.258474966278300       0.516949894838035     
+> [solve] mil, SC <sil>, dE(eV):         1    7.0000    0.0000
+>               FORCES 17.06 2008 - 12.49:39
+Hotbit pipes explicitly closed.
+ _           _    _     _ _
+| |__   ___ | |_ | |__ |_| |_
+|  _ \ / _ \|  _||  _ \| |  _|
+| | | | ( ) | |_ | ( ) | | |_
+|_| |_|\___/ \__|\____/|_|\__| 3.0 fortran-based
+Date: Tue Jun 17 12:53:12 2008
+Nodename: nano110.nano.jyu.fi
+Arch: x86_64
+Dir: /home/pekkosk/work/programs/hotbit/hotbit/test
+Element C in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/C.elm
+    no documentation
+Element Au in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/Au.elm
+    no documentation
+Element Na in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/Na.elm
+    no documentation
+Element H in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/H.elm
+    no documentation
+Element O in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/O.elm
+    no documentation
+Element N in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/N.elm
+    no documentation
+
+Interaction NH in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/N_H.par
+    no documentation
+Interaction OO in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/O_O.par
+    no documentation
+Interaction CH in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/C_H.par
+    no documentation
+Interaction CN in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/C_N.par
+    no documentation
+Interaction NN in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/N_N.par
+    no documentation
+Interaction OH in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/O_H.par
+    no documentation
+Interaction CC in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/C_C.par
+    Frauenheim original (r/r0)**2, r0=1.85*r_cov,
+    Frauenheim repulsion (probably)
+Interaction NC in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/C_N.par
+    no documentation
+Interaction NaNa in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/Na_Na.par
+    no documentation
+Interaction HH in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/H_H.par
+    no documentation
+Interaction HN in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/N_H.par
+    no documentation
+Interaction HO in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/O_H.par
+    no documentation
+Interaction AuAu in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/Au_Au.par
+    no documentation
+Interaction HC in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/C_H.par
+    no documentation
+
+Open hotbit pipes for communication...
+>               Total= 17.06 2008 - 12.53:12
+>                 init 17.06 2008 - 12.53:12
+>  read elements
+>  Selected elements: (indexing in Z-order)
+>            1 =H 
+>            2 =O 
+>  Allocate memory and read Slater-Koster tables...
+>  Start HOTBIT communication loop...
+>             setup_HS 17.06 2008 - 12.53:13
+>                mdiff 17.06 2008 - 12.53:13
+>  Non-zero MELs (%) 38.8888888888889
+>                solve 17.06 2008 - 12.53:13
+>                 E_BS 17.06 2008 - 12.53:13
+>               E_coul 17.06 2008 - 12.53:13
+>  mil,sil,max,T:           1           1  0.603446078021079       7.349861893590000E-004
+>  -0.301723035052419      -0.301723035052419       0.603446078021079     
+>   occupation_history 17.06 2008 - 12.53:13
+>  mil,sil,max,T:           1           2  0.462781867478043       7.349861893590000E-004
+>  -0.291735537117347      -0.291735537117347       0.583471083082259     
+>  mil,sil,max,T:           1           3  9.401287735486541E-004  7.349861893590000E-004
+>  -0.258406795794144      -0.258406795794144       0.516813700553030     
+>  mil,sil,max,T:           1           4  1.097363995665068E-003  7.349861893590000E-004
+>  -0.258395401295274      -0.258395401295274       0.516790848691016     
+>  mil,sil,max,T:           1           5  1.577026508825519E-006  7.349861893590000E-004
+>  -0.258475084323436      -0.258475084323436       0.516950134187937     
+>  mil,sil,max,T:           1           6  2.039986638502356E-007  7.349861893590000E-004
+>  -0.258474996080622      -0.258474996080622       0.516949894838035     
+>  mil,sil,max,T:           1           7  3.351005728458034E-008  7.349861893590000E-004
+>  -0.258474966278300      -0.258474966278300       0.516949894838035     
+> [solve] mil, SC <sil>, dE(eV):         1    7.0000    0.0000
+>               FORCES 17.06 2008 - 12.53:13
+Hotbit pipes explicitly closed.
+ _           _    _     _ _
+| |__   ___ | |_ | |__ |_| |_
+|  _ \ / _ \|  _||  _ \| |  _|
+| | | | ( ) | |_ | ( ) | | |_
+|_| |_|\___/ \__|\____/|_|\__| 3.0 fortran-based
+Date: Tue Jun 17 12:53:23 2008
+Nodename: nano110.nano.jyu.fi
+Arch: x86_64
+Dir: /home/pekkosk/work/programs/hotbit/hotbit/test
+Element C in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/C.elm
+    no documentation
+Element Au in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/Au.elm
+    no documentation
+Element Na in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/Na.elm
+    no documentation
+Element H in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/H.elm
+    no documentation
+Element O in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/O.elm
+    no documentation
+Element N in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/N.elm
+    no documentation
+
+Interaction NH in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/N_H.par
+    no documentation
+Interaction OO in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/O_O.par
+    no documentation
+Interaction CH in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/C_H.par
+    no documentation
+Interaction CN in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/C_N.par
+    no documentation
+Interaction NN in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/N_N.par
+    no documentation
+Interaction OH in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/O_H.par
+    no documentation
+Interaction CC in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/C_C.par
+    Frauenheim original (r/r0)**2, r0=1.85*r_cov,
+    Frauenheim repulsion (probably)
+Interaction NC in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/C_N.par
+    no documentation
+Interaction NaNa in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/Na_Na.par
+    no documentation
+Interaction HH in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/H_H.par
+    no documentation
+Interaction HN in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/N_H.par
+    no documentation
+Interaction HO in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/O_H.par
+    no documentation
+Interaction AuAu in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/Au_Au.par
+    no documentation
+Interaction HC in /home/pekkosk/work/programs/hotbit/hotbit/test/fixed_param/C_H.par
+    no documentation
+
+Open hotbit pipes for communication...
+>               Total= 17.06 2008 - 12.53:23
+>                 init 17.06 2008 - 12.53:23
+>  read elements
+>  Selected elements: (indexing in Z-order)
+>            1 =H 
+>            2 =O 
+>  Allocate memory and read Slater-Koster tables...
+>  Start HOTBIT communication loop...
+>             setup_HS 17.06 2008 - 12.53:23
+>                mdiff 17.06 2008 - 12.53:23
+>  Non-zero MELs (%) 38.8888888888889
+>                solve 17.06 2008 - 12.53:23
+>                 E_BS 17.06 2008 - 12.53:23
+>               E_coul 17.06 2008 - 12.53:23
+>  mil,sil,max,T:           1           1  0.603446078021079       7.349861893590000E-004
+>  -0.301723035052419      -0.301723035052419       0.603446078021079     
+>   occupation_history 17.06 2008 - 12.53:23
+>  mil,sil,max,T:           1           2  0.462781867478043       7.349861893590000E-004
+>  -0.291735537117347      -0.291735537117347       0.583471083082259     
+>  mil,sil,max,T:           1           3  9.401287735486541E-004  7.349861893590000E-004
+>  -0.258406795794144      -0.258406795794144       0.516813700553030     
+>  mil,sil,max,T:           1           4  1.097363995665068E-003  7.349861893590000E-004
+>  -0.258395401295274      -0.258395401295274       0.516790848691016     
+>  mil,sil,max,T:           1           5  1.577026508825519E-006  7.349861893590000E-004
+>  -0.258475084323436      -0.258475084323436       0.516950134187937     
+>  mil,sil,max,T:           1           6  2.039986638502356E-007  7.349861893590000E-004
+>  -0.258474996080622      -0.258474996080622       0.516949894838035     
+>  mil,sil,max,T:           1           7  3.351005728458034E-008  7.349861893590000E-004
+>  -0.258474966278300      -0.258474966278300       0.516949894838035     
+> [solve] mil, SC <sil>, dE(eV):         1    7.0000    0.0000
+>               FORCES 17.06 2008 - 12.53:23
+Hotbit pipes explicitly closed.

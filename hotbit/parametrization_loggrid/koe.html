@@ -1,0 +1,76 @@
+Rnl range for H=   9.73244
+Rnl range for H=   9.73244
+<!--: spam
+Content-Type: text/html
+
+<body bgcolor="#f0f0f8"><font color="#f0f0f8" size="-5"> -->
+<body bgcolor="#f0f0f8"><font color="#f0f0f8" size="-5"> --> -->
+</font> </font> </font> </script> </object> </blockquote> </pre>
+</table> </table> </table> </table> </table> </font> </font> </font><body bgcolor="#f0f0f8">
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
+<tr bgcolor="#6622aa">
+<td valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>&lt;type 'exceptions.KeyboardInterrupt'&gt;</strong></big></big></font></td
+><td align=right valign=bottom
+><font color="#ffffff" face="helvetica, arial">Python 2.5.1: /usr/bin/python<br>Wed Jun 11 14:19:42 2008</font></td></tr></table>
+    
+<p>A problem occurred in a Python script.  Here is the sequence of
+function calls leading up to the error, in the order they occurred.</p>
+<table width="100%" cellspacing=0 cellpadding=0 border=0>
+<tr><td bgcolor="#d8bbff"><big>&nbsp;</big><a href="file:///home/pekkosk/work/programs/hotbit/hotbit/parametrization/sl.py">/home/pekkosk/work/programs/hotbit/hotbit/parametrization/sl.py</a> in <strong><module></strong>()</td></tr>
+<tr><td><font color="#909090"><tt><small>&nbsp;&nbsp;&nbsp;16</small>&nbsp;ns=[10,20,30,40,50,60,70,80,100,150,200,300]<br>
+</tt></font></td></tr>
+<tr><td><font color="#909090"><tt><small>&nbsp;&nbsp;&nbsp;17</small>&nbsp;for&nbsp;gr&nbsp;in&nbsp;ns:<br>
+</tt></font></td></tr>
+<tr><td bgcolor="#ffccee"><tt><small>&nbsp;&nbsp;&nbsp;18</small>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;grid,area=sk.make_grid(2.0,1E-6,10,nt=gr,nr=gr)<br>
+</tt></td></tr>
+<tr><td><font color="#909090"><tt><small>&nbsp;&nbsp;&nbsp;19</small>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;S,H=sk.integrate('sss',e1,'1s',e2,'1s',2.0,grid,area)<br>
+</tt></font></td></tr>
+<tr><td><font color="#909090"><tt><small>&nbsp;&nbsp;&nbsp;20</small>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s.append(S)<br>
+</tt></font></td></tr>
+<tr><td><small><font color="#909090"><strong>grid</strong>&nbsp;= array([[  6.48610578e-07,   1.43736857e-03],
+   ...1],
+       [  5.18847072e-01,   1.18182451e+01]]), <strong>area</strong>&nbsp;= array([  3.72657590e-09,   5.58675268e-08,   2.4...4364122e-01,   3.31352301e-01,   3.48941755e-01]), <strong>sk</strong>&nbsp;= &lt;hotbit.parametrization.slako.SlaterKosterTable instance at 0x199d5f0&gt;, sk.<strong>make_grid</strong>&nbsp;= &lt;bound method SlaterKosterTable.make_grid of &lt;ho...n.slako.SlaterKosterTable instance at 0x199d5f0&gt;&gt;, nt <em>undefined</em>, <strong>gr</strong>&nbsp;= 70, nr <em>undefined</em></font></small></td></tr></table>
+<table width="100%" cellspacing=0 cellpadding=0 border=0>
+<tr><td bgcolor="#d8bbff"><big>&nbsp;</big><a href="file:///home/pekkosk/work/programs/hotbit/hotbit/parametrization/slako.py">/home/pekkosk/work/programs/hotbit/hotbit/parametrization/slako.py</a> in <strong>make_grid</strong>(self=&lt;hotbit.parametrization.slako.SlaterKosterTable instance at 0x199d5f0&gt;, Rz=2.0, rmin=9.9999999999999995e-07, rmax=10, nt=70, nr=70, p=2, q=2, max_range=100, view=True)</td></tr>
+<tr><td><font color="#909090"><tt><small>&nbsp;&nbsp;260</small>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pl.ylim(-1,2)<br>
+</tt></font></td></tr>
+<tr><td><font color="#909090"><tt><small>&nbsp;&nbsp;261</small>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pl.xlim(0,3)<br>
+</tt></font></td></tr>
+<tr><td bgcolor="#ffccee"><tt><small>&nbsp;&nbsp;262</small>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pl.show()<br>
+</tt></td></tr>
+<tr><td><font color="#909090"><tt><small>&nbsp;&nbsp;263</small>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;grid,area<br>
+</tt></font></td></tr>
+<tr><td><font color="#909090"><tt><small>&nbsp;&nbsp;264</small>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+</tt></font></td></tr>
+<tr><td><small><font color="#909090"><em>global</em> <strong>pl</strong>&nbsp;= &lt;module 'pylab' from '/usr/lib64/python2.5/site-packages/pylab.pyc'&gt;, pl.<strong>show</strong>&nbsp;= &lt;function show at 0x1673230&gt;</font></small></td></tr></table>
+<table width="100%" cellspacing=0 cellpadding=0 border=0>
+<tr><td bgcolor="#d8bbff"><big>&nbsp;</big><a href="file:///usr/lib64/python2.5/site-packages/matplotlib/backends/backend_gtk.py">/usr/lib64/python2.5/site-packages/matplotlib/backends/backend_gtk.py</a> in <strong>show</strong>(mainloop=True)</td></tr>
+<tr><td><font color="#909090"><tt><small>&nbsp;&nbsp;&nbsp;69</small>&nbsp;<br>
+</tt></font></td></tr>
+<tr><td><font color="#909090"><tt><small>&nbsp;&nbsp;&nbsp;70</small>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;mainloop&nbsp;and&nbsp;gtk.main_level()&nbsp;==&nbsp;0:<br>
+</tt></font></td></tr>
+<tr><td bgcolor="#ffccee"><tt><small>&nbsp;&nbsp;&nbsp;71</small>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gtk.main()<br>
+</tt></td></tr>
+<tr><td><font color="#909090"><tt><small>&nbsp;&nbsp;&nbsp;72</small>&nbsp;<br>
+</tt></font></td></tr>
+<tr><td><font color="#909090"><tt><small>&nbsp;&nbsp;&nbsp;73</small>&nbsp;def&nbsp;new_figure_manager(num,&nbsp;*args,&nbsp;**kwargs):<br>
+</tt></font></td></tr>
+<tr><td><small><font color="#909090"><em>global</em> <strong>gtk</strong>&nbsp;= &lt;module 'gtk' from '/usr/lib64/python2.5/site-packages/gtk-2.0/gtk/__init__.pyc'&gt;, gtk.<strong>main</strong>&nbsp;= &lt;built-in function main&gt;</font></small></td></tr></table><p><strong>&lt;type 'exceptions.KeyboardInterrupt'&gt;</strong>: 
+
+
+<!-- The above is a description of an error in a Python program, formatted
+     for a Web browser because the 'cgitb' module was enabled.  In case you
+     are not reading this in a Web browser, here is the original traceback:
+
+Traceback (most recent call last):
+  File "sl.py", line 18, in <module>
+    grid,area=sk.make_grid(2.0,1E-6,10,nt=gr,nr=gr)
+  File "/home/pekkosk/work/programs/hotbit/hotbit/parametrization/slako.py", line 262, in make_grid
+    pl.show()
+  File "/usr/lib64/python2.5/site-packages/matplotlib/backends/backend_gtk.py", line 71, in show
+    gtk.main()
+KeyboardInterrupt
+
+-->
+
