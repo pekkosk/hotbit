@@ -118,6 +118,7 @@ class Calculator(Output):
         """ Simple greetings text """
         import time
         import os
+        print>>self.txt,  '\n\n\n\n\n'
         print>>self.txt,  ' _           _    _     _ _'
         print>>self.txt,  '| |__   ___ | |_ | |__ |_| |_'
         print>>self.txt,  '|  _ \ / _ \|  _||  _ \| |  _|'
