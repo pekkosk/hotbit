@@ -12,13 +12,13 @@ class LinearResponse:
     
     For details, see Niehaus et.al. Phys. Rev. B 63, 085108 (2001)
     """
-    def __init__(self,calc,energy_cut=1.0,timing=False,out=None):
+    def __init__(self,calc,energy_cut=10.0,timing=False,out=None):
         """ Construct the object.
         
         parameters:
         -----------
         calc: calculator object
-        energy_cut: max energy for particle-hole excitations
+        energy_cut: max energy (in eV) for particle-hole excitations
         timing: output timing summary after calculation
         out: output object (file name or object)
         """
@@ -26,19 +26,20 @@ class LinearResponse:
         self.st=calc.st
         self.el=calc.el
         self.es=calc.es
-        self.energy_cut=energy_cut
+        self.energy_cut=energy_cut/Hartree
         self.noc=self.st.get_hoc()+1 #number of occupied states (not index)
         self.nel=self.el.get_number_of_electrons()
         self.norb=self.el.get_nr_orbitals()
         self.e=self.st.get_eigenvalues()
+        self.f=self.st.get_occupations()
         self.N=len(self.el)
         
-        if abs(nu.mod(self.nel,2))>1E-2:
-            raise RuntimeError('Linear response only for closed shell systems! (even number of electrons)')
-        if abs(self.nel-2*self.noc)>1E-2:
-            print 'Number of electrons:',self.nel
-            print '2*Number of occupied states:',2*self.noc
-            raise RuntimeError('Number of electrons!=2*number of occupied orbitals. Decrease electronic temperature?')
+        #if abs(nu.mod(self.nel,2))>1E-2:
+            #raise RuntimeError('Linear response only for closed shell systems! (even number of electrons)')
+        #if abs(self.nel-2*self.noc)>1E-2:
+            #print 'Number of electrons:',self.nel
+            #print '2*Number of occupied states:',2*self.noc
+            #raise RuntimeError('Number of electrons!=2*number of occupied orbitals. Decrease electronic temperature?')
         if out is None:
             self.out=sys.stdout
         else:
@@ -49,22 +50,28 @@ class LinearResponse:
         
     def get_linear_response(self):
         """ Get linear response spectrum in eV. """
-        return self.omega*Hartree,self.F        
+        return self.omega*Hartree, self.F        
         
         
     def run(self):
         print>>self.out, '\nLR for %s (charge %.2f). ' %(self.el.atoms.get_name(),self.calc.get_charge()),
         # select electron-hole excitations (i occupied, j not occupied)
-        de=[]
+        de=[] # excitation energy ej-ei (ej>ei)
+        df=[] # occupation difference fi-fj (ej>ei so that fi>fj)
         particle_holes=[]
         self.timer.start('setup ph pairs')
-        for i in range(self.noc):
-            for j in range(self.noc,self.norb):
+        for i in range(self.norb):
+            for j in range(i+1,self.norb):
                 energy=self.e[j]-self.e[i]
-                if energy<self.energy_cut:
+                occup=self.f[i]-self.f[j]
+                if energy<self.energy_cut and occup>1E-6:
+                    assert energy>0 and occup>0
                     particle_holes.append([i,j])
                     de.append(energy)
+                    df.append(occup)
         self.timer.stop('setup ph pairs')
+        de=nu.array(de)
+        df=nu.array(df)
         
         # setup the matrix (gamma-approximation) and diagonalize
         self.timer.start('setup matrix')
@@ -89,7 +96,7 @@ class LinearResponse:
             matrix[k1,k1]=de[k1]**2
             for k2,ph2 in enumerate(particle_holes):
                 coupling=dot(transfer_q[k1,:],gamma_tq[k2,:])
-                matrix[k1,k2]+=2*sqrt(de[k1]*de[k2])*coupling
+                matrix[k1,k2]+=2*sqrt(df[k1]*de[k1]*de[k2]*df[k2])*coupling
         self.timer.stop('setup matrix')                            
                                                                         
         print>>self.out, 'coupling matrix constructed. ',
@@ -99,7 +106,7 @@ class LinearResponse:
         self.timer.stop('diagonalize')
         print>>self.out, 'Matrix diagonalized.',
         self.out.flush()
-        assert all(omega2>1E-9)           
+        assert all(omega2>1E-16)           
         omega=sqrt(omega2)
         
         # calculate oscillator strengths
@@ -108,7 +115,7 @@ class LinearResponse:
         for ex in range(dim):
             v=[]    
             for i in range(3):
-                v.append( sum( rv[:,i]*sqrt(de[:])*eigv[:,ex])/sqrt(omega[ex])*2 )
+                v.append( sum( rv[:,i]*sqrt(df[:]*de[:])*eigv[:,ex])/sqrt(omega[ex])*2 )
             F.append( omega[ex]*dot(v,v)*2.0/3 )
         self.omega=omega
         self.F=F   
