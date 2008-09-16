@@ -261,7 +261,7 @@ class Calculator(Output):
         self.solve_ground_state(atoms)
         return self.es.coulomb_energy()*Hartree
                
-    
+Hotbit=Calculator    
 
         
 if __name__=='__main__':
