@@ -137,19 +137,19 @@ class RepulsiveFitting:
         Calculate energy (or forces) for given structure with given charge
         and given parameters (elements & tables as well).
         """
-        from copy import deepcopy
+        from copy import deepcopy, copy
         if type(atoms)==type(''):
             atms=read(file)
         else:
             atms=atoms
-        calc=deepcopy(self.calc)
+        calc=copy(self.calc)
         calc.set(charge=charge)
         atms.set_calculator(calc)
         if forces:
             res=atms.get_forces()
         else:
             res=atms.get_potential_energy()
-        calc.finalize()
+        #calc.finalize()
         return res
         
     def fitting_function(self,d):
@@ -194,10 +194,12 @@ class RepulsiveFitting:
         pl.legend()
         pl.show()
                
+               
     def fit(self):
         """ Fit V_rep(r) into points {r,V_rep'(r)}. """
         from scipy.optimize import fmin
         self.param = fmin(self.fitting_function,self.param)
+    
     
     def use_energy_curve(traj,edft,charge,bonds,weight):
         """ 
@@ -235,6 +237,7 @@ class RepulsiveFitting:
                  comment='energy curve %s' %name)
         raise NotImplementedError('should (might) work; check!!')
     
+    
     def use_equilibrium_structure(atoms,relaxed=None):
         """
         Fit V_rep'(r) into given equilibrium (DFT) structure.
@@ -256,12 +259,14 @@ class RepulsiveFitting:
         #residuals=get_residuals(atoms,forces0)
         #minimize residuals -> vrep'  
         
+        
     def repulsion_forces(self,atoms,vrep):
         """ 
         Return the repulsive forces for atoms using given
         vrep(r) function for present element pairs.
         """
-        raise NotImplementedError('do idea if works, check!')
+        raise NotImplementedError('No idea if this works, check!')
+        
         n=len(atoms)
         forces=nu.empty((n,3))
         els=atoms.get_chemical_symbols()

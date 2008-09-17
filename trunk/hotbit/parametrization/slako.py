@@ -70,7 +70,7 @@ class SlaterKosterTable:
         
         parameters:
         -----------
-        ela, elb: element symbols
+        ela, elb: element objects (KSAllElectron)
         out: output file object or file name
         timing: output of timing summary after calculation
         """

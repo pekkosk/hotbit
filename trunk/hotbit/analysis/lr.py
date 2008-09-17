@@ -33,6 +33,8 @@ class LinearResponse:
         self.e=self.st.get_eigenvalues()
         self.f=self.st.get_occupations()
         self.N=len(self.el)
+        if self.calc.get('SCC')==False:
+            raise AssertionError('SCC should be True. (Otherwise, just plot DOS)')
         
         #if abs(nu.mod(self.nel,2))>1E-2:
             #raise RuntimeError('Linear response only for closed shell systems! (even number of electrons)')
@@ -77,7 +79,7 @@ class LinearResponse:
         self.timer.start('setup matrix')
         dim=len(de)
         print>>self.out, 'Dimension %i. ' %dim,
-        if not 0<dim<50000:
+        if not 0<=dim<100000:
             raise RuntimeError('Coupling matrix too large or small (%i)' %dim)
         r=self.el.get_positions()            
         transfer_q=nu.array([self.st.mulliken_transfer(ph[0],ph[1]) for ph in particle_holes])
