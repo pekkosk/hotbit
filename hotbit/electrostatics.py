@@ -23,7 +23,7 @@ class Electrostatics:
     
     def set_dq(self,dq):
         """ (Re)setting dq gives new gamma-potential. """
-        if all(abs(dq-self.dq)<1E-13) and self.gamma_potential!=None:
+        if nu.all(abs(dq-self.dq)<1E-13) and self.gamma_potential!=None:
             return
         self.dq=dq
         self.gamma_potential=nu.zeros((self.N,))

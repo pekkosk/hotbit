@@ -207,9 +207,9 @@ class Calculator(Output):
         self.set_enabled=False
         self.pbc=atoms.get_pbc()
         self.greetings()
-        if self.get('SCC') and any(self.pbc) and self.get('gamma_cut')==None:
+        if self.get('SCC') and nu.any(self.pbc) and self.get('gamma_cut')==None:
             raise NotImplementedError('SCC not implemented for periodic systems yet (see parameter gamma_cut).')
-        if any(self.pbc) and abs(self.get('charge'))>0.0:
+        if nu.any(self.pbc) and abs(self.get('charge'))>0.0:
             raise AssertionError('Charged system cannot be periodic.')
         self.flush()
         self.timer.stop('initialization')

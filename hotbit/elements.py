@@ -214,6 +214,10 @@ class Elements:
     def get_positions(self):
         return self.atoms.get_positions()/Bohr
     
+    def get_center_of_mass(self):
+        """ Return the center of mass. """
+        return self.atoms.get_center_of_mass() / Bohr
+
     def distance(self,ri,rj=None,mic=True):
         return self.atoms.distance(ri,rj,mic)/Bohr
     
