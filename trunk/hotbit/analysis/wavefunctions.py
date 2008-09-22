@@ -34,8 +34,95 @@ def phival(x,y):
         return 3*pi/2    
     else:
         raise RuntimeError('Strange things in phival')        
-        
-                
+
+
+def Plm(l, m):
+    """ Return the associated Legendre polynomial of the first kind """
+    if l == 0:
+        if m == 0:
+            def ret(x):
+                return 1
+    if l == 1:
+        if m == -1:
+            def ret(x):
+                return 0.5*nu.sqrt(1 - x**2)
+        if m == 0:
+            def ret(x):
+                return x
+        if m == 1:
+            def ret(x):
+                return -nu.sqrt(1 - x**2)
+    if l == 2:
+        if m == -2:
+            def ret(x):
+                return (1/24.)*3*(1 - x**2)
+        if m == -1:
+            def ret(x):
+                return (1/6.)*3*x*nu.sqrt(1 - x**2)
+        if m == 0:
+            def ret(x):
+                return 0.5*(3*x**2 - 1)
+        if m == 1:
+            def ret(x):
+                return -3*x*nu.sqrt(1 - x**2)
+        if m == 2:
+            def ret(x):
+                return 3*(1 - x**2)
+    if l == 3:
+        if m == -3:
+            def ret(x):
+                return (1/720.)*15*(1-x**2)**(1.5)
+        if m == -2:
+            def ret(x):
+                return (1/120.)*15*x*(1 - x**2)
+        if m == -1:
+            def ret(x):
+                return (1/12.)*1.5*(5*x**2 - 1)*nu.sqrt(1 - x**2)
+        if m == 0:
+            def ret(x):
+                return 0.5*(5*x**3 - 3*x)
+        if m == 1:
+            def ret(x):
+                return -1.5*(5*x**2 - 1)*nu.sqrt(1 - x**2)
+        if m == 2:
+            def ret(x):
+                return 15*x*(1 - x**2)
+        if m == 3:
+            def ret(x):
+                return -15*(1 - x**2)**(1.5)
+    return ret
+
+def factorial(n):
+    if n == 0:
+        return 1
+    else:
+        return n*factorial(n-1)
+
+def gaussian_peak(x, x0, width):
+    return nu.exp( -(x-x0)**2 / (2*width**2) )
+
+def Ylm(l, m):
+    """ Return the spherical harmonic function """
+    assert nu.abs(m) <= l
+    fact = factorial
+    norm_factor = nu.sqrt( ((2*l+1)*fact(l-m))/(4*nu.pi*fact(l+m)) )
+    def phase_term(phi):
+      return nu.exp(1j*m*phi)
+    Legendre_poly = Plm(l,m)
+    def ret(x):
+        if len(x) == 2:
+            # (theta, phi)
+            theta = x[0]
+            phi = x[1]
+        if len(x) == 3:
+            # cartesian coordinates
+            r = nu.sqrt( nu.dot(x,x) )
+            theta = nu.arccos(float(x[2])/nu.dot(x,x))
+            phi = phival(float(x[0]),float(x[1]))
+        return norm_factor*Legendre_poly(nu.cos(theta))*phase_term(phi)
+    return ret
+
+
 states=['s','px','py','pz','dxy','dyz','dzx','dx2-y2','d3z2-r2']     
 def angular(r,wf):
     """ Return angular part of wave function.
@@ -101,4 +188,256 @@ class WaveFunctions:
                         r=self.el.vector(orb['atom'],rj=r0)
                         wfg[i,j,k]+=c*Rnl(mix.norm(r))*angular(r,orbtype)
         box.vtk.rectilinear_vtk(grid,wfg,fname)        
-                              
+
+
+class JelliumAnalysis:
+    """
+    A class to analyse the wave functions of the system by projecting
+    them onto the spherical harmonics.
+
+    origin: The center of the expansion (Ang). If None, the center of
+            the mass will be used.
+    maxl:   The largest angular momentum the expansion is performed.
+    R_0:    The radius of the expansion (Ang)
+    a:      The length of the side of cubic grid box (Ang)
+
+    TODO:   Add more spherical harmonics.
+    """
+
+
+    def transform(self, name):
+        """ Returns the corresponding angular and magnetic momentum
+        indices for the given orbital name. """
+        names = ['s','px','py','pz','dxy','dyz','dzx','dx2-y2','d3z2-r2']
+        list = ((0,0),(1,-1),(1,0),(1,1),(2,-2),(2,-1),(2,0),(2,1),(2,2))
+        return list[names.index(name)]
+
+
+    def to_spherical_coordinates(self, vec):
+        """ Transforms the given cartesien vector to spherical
+            coordinates. """
+        x, y, z = vec
+        r = float(nu.linalg.norm(vec))
+        if r < 1e-6:
+            r = 0.0
+            theta = 0.0
+            phi = 0.0
+        else:
+            theta = float(acos(z/r))
+            phi = float(phival(x,y))
+        assert 0 <= theta <= nu.pi
+        assert 0 <= phi <= 2*nu.pi
+        return (r, theta, phi)
+
+
+    def __init__(self, atoms, origin=None, maxl=3, R_0=1, a=0.2, filename='JelliumAnalysis.dat'):
+        self.a = a/Bohr
+        self.calc = atoms.get_calculator()
+        self.R_0 = R_0/Bohr
+        self.atoms = atoms
+        if origin == None:
+            self.origin = self.calc.el.get_center_of_mass()
+        else:
+            self.origin = nu.array(origin)/Bohr
+        self.l_array = range(min(4, maxl+1))
+        self.filename = filename
+
+        self.c_nl = nu.zeros((self.calc.st.norb, len(self.l_array)))
+
+        self.colors = {0:'y', 1:'b', 2:'r', 3:'g'}
+        self.names =  {0:'s', 1:'p', 2:'d', 3:'f'}
+        self.letters = "spdfghi"
+
+        self.create_uniform_cubic_grid()
+
+
+    def create_uniform_cubic_grid(self):
+        """ Create grid of a x a x a cubes. """
+        self.dV = (self.a)**3
+        a = self.a
+        cell = self.calc.el.get_box_lengths()
+        self.Nx = round(cell[0]/a)
+        self.Lx = self.Nx*a
+        self.Ny = round(cell[1]/a)
+        self.Ly = self.Ny*a
+        self.Nz = round(cell[2]/a)
+        self.Lz = self.Nz*a
+        self.grid_points = [nu.arange(self.Nx)*a + a/2,
+                            nu.arange(self.Ny)*a + a/2,
+                            nu.arange(self.Nz)*a + a/2]
+
+        # force the given origin to be one of the grid points
+        # and find the closest one - a beautiful brute force solution
+        minimum = 1e10
+        for i, x in enumerate(self.grid_points[0]):
+            for j, y in enumerate(self.grid_points[1]):
+                for k, z in enumerate(self.grid_points[2]):
+                    vec = nu.array((x,y,z)) - self.origin
+                    norm = nu.linalg.norm(vec)
+                    if norm < minimum:
+                        minimum = norm
+                        new_origin = [x,y,z]
+        self.origin = nu.array(new_origin)
+
+
+        # Make sure that the expansion radius is not too large,
+        # ie, the max radius = the longest distance from center of the
+        # expansion to the corners of the grid
+        x_min, x_max = self.grid_points[0][0], self.grid_points[0][-1]
+        y_min, y_max = self.grid_points[1][0], self.grid_points[1][-1]
+        z_min, z_max = self.grid_points[2][0], self.grid_points[2][-1]
+        R_min = float(1e10)
+        for x in [x_min, x_max]:
+            for y in [y_min, y_max]:
+                for z in [z_min, z_max]:
+                    R_min = min( R_min, nu.linalg.norm(nu.array((x,y,z)) - self.origin) )
+        if self.R_0 > R_min:
+            self.R_0 = R_min
+
+
+    def mark_grids(self):
+        """ Create a grid that contains indices that tell to which
+            shell the grid belongs to. The thickness of the shells
+            is a. """
+        self.shell_index_grid = nu.zeros((self.Nx, self.Ny, self.Nz), dtype=int)
+        self.shells = {}
+        for i, x in enumerate(self.grid_points[0]):
+            for j, y in enumerate(self.grid_points[1]):
+                for k, z in enumerate(self.grid_points[2]):
+                    vec = nu.array((x,y,z)) - self.origin
+                    norm = nu.linalg.norm(vec)
+                    if norm <= self.R_0:
+                        index = int(round(norm/self.a)) + 1
+                        if index in self.shells:
+                            self.shells[index] += 1
+                        else:
+                            self.shells[index] = 1
+                        self.shell_index_grid[i,j,k] = index
+        self.shells.keys().sort()
+
+
+    def ylms_to_grid(self):
+        """ Calculates the values of spherical harmonics centered
+            to origin of the expansion to the grid. """
+        self.ylms = {}
+        origin = self.origin
+        for l in self.l_array:
+            for m in range(-l,l+1):
+                y_lm = Ylm(l, m)
+                print "Calculating Y_(l=%i,m=%i) to grid." % (l, m)
+                values = nu.zeros((self.Nx, self.Ny, self.Nz), dtype=nu.complex)
+                for i, x in enumerate(self.grid_points[0]):
+                    for j, y in enumerate(self.grid_points[1]):
+                        for k, z in enumerate(self.grid_points[2]):
+                            r, theta, phi = self.to_spherical_coordinates(nu.array((x,y,z))-self.origin)
+                            values[i,j,k] = y_lm((theta, phi))
+                self.ylms["%i,%i" % (l, m)] = values
+
+
+    def basis_functions_to_grid(self):
+        """ Calculates the basis functions into the cubic grid. """
+        self.basis_functions = {}
+        orbitals = self.calc.el.orbitals()
+        positions = self.calc.el.get_positions()
+        for orb in orbitals:
+            print "Calculating basis function %i/%i to grid." % (orb['index']+1, len(self.calc.el.orbitals()))
+            atom = orb['atom']
+            R = positions[atom]
+            r_nl = orb['Rnl']
+            l, m = self.transform(orb['orbital'])
+            y_lm = Ylm(l, m)
+            values = nu.zeros((self.Nx, self.Ny, self.Nz), dtype=nu.complex)
+            for i, x in enumerate(self.grid_points[0]):
+                xi = x - R[0]
+                for j, y in enumerate(self.grid_points[1]):
+                    yj = y - R[1]
+                    for k, z in enumerate(self.grid_points[2]):
+                        zk = z - R[2]
+                        r = nu.linalg.norm((xi, yj, zk))
+                        theta=acos(zk/r)
+                        phi=phival(xi,yj)
+                        values[i,j,k] = r_nl(r)*y_lm((theta, phi))
+            self.basis_functions[orb['index']] = values
+
+
+    def analyse_state(self, n, l):
+        """ Performs the angular momentum analysis with respect to
+            angular momentum l to the state n. """
+        wf_coefficients = self.calc.st.wf[:,n]
+        state_grid = nu.zeros((self.Nx,self.Ny,self.Nz), dtype=nu.complex)
+        for wf_coef, orb in zip(wf_coefficients, self.calc.el.orbitals()):
+            state_grid += wf_coef * self.basis_functions[orb['index']]
+        c = 0.0
+        for m in range(-l,l+1):
+            ylm = self.ylms["%i,%i" % (l, m)]
+            # The integration
+            solid_angle_integrals = nu.zeros((len(self.shells.keys())), dtype=nu.float64)
+            for i in self.shells.keys():
+                # the shell grid
+                shell_grid = nu.where(self.shell_index_grid == i, 1, 0)
+                # the number of boxes in the i:th shell
+                N_shell = self.shells[i]
+                # the integration over the solid angle
+                phi_nlm = nu.sum(ylm.conjugate() * state_grid * shell_grid)
+                c += phi_nlm.conjugate() * phi_nlm * 4*pi*self.dV / N_shell
+        self.c_nl[n,l] = c
+
+
+    def greetings(self):
+        print "\n*** Starting the angular momentum analysis. ***"
+        print "The grid contains %i x %i x %i grid points" % (self.Nx, self.Ny, self.Nz)
+        print "The center of the expansion (in Ang): %0.2f,%0.2f,%0.2f" % tuple(self.origin * Bohr)
+        print "The radius of the expansion (in Ang): %0.2f" % (self.R_0 * Bohr)
+        print "The analysis is performed on angular momentums:",
+        for l in self.l_array:
+            print self.letters[l],
+        print "\n"
+
+
+    def write_to_file(self):
+        f = open(self.filename, 'w')
+        print >> f, "The center of the expansion (in Ang): %0.2f,%0.2f,%0.2f" % tuple(self.origin * Bohr)
+        print >> f, "The radius of the expansion (in Ang): %0.2f" % (self.R_0 * Bohr)
+        print >> f, "The shell thickness (in Ang): %0.2f" % (self.a * Bohr)
+        print >> f, "#state  energy    occ",
+        for l in self.l_array:
+            print >> f, "%7s" % self.letters[l],
+        print >> f, ""
+        e = self.calc.st.get_eigenvalues()
+        occ = self.calc.st.get_occupations()
+        for n in range(self.calc.st.norb):
+            print >> f, "%4i%10.4f%7.2f" % (n, e[n], occ[n]),
+            for l in self.l_array:
+                print >> f, "%7.3f" % self.c_nl[n,l],
+            print >> f, ""
+        f.close()
+
+
+    def run(self):
+        self.greetings()
+        self.mark_grids()
+        self.ylms_to_grid()
+        self.basis_functions_to_grid()
+        for n in range(self.calc.st.norb):
+            print "Performing the angular momentum analysis on state %i/%i" % (n+1, self.calc.st.norb)
+            for l in self.l_array:
+                self.analyse_state(n, l)
+        # norm the coefficients
+        for n in range(self.calc.st.norb):
+            self.c_nl[n,:] = self.c_nl[n,:]/float(nu.sum(self.c_nl[n,:]))
+        self.write_to_file()
+
+
+if __name__ == '__main__':
+     import sys
+     from ase import *
+     from hotbit import Calculator
+     import pylab
+     if sys.argv[1] == 'H2':
+         h2 = Atoms('H2', ((0,0,0),(1,0,0)))
+         h2.center(vacuum=4.1)
+         h2.set_calculator(Calculator(SCC=True))
+         h2.get_potential_energy()
+         JA = JelliumAnalysis(h2, maxl=2, R_0=10, a=0.3)
+         JA.run()
+
