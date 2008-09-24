@@ -2,6 +2,7 @@ import box
 import numpy as nu
 import math
 from box import mix
+from time import time
 acos=math.acos
 cos=math.cos
 sin=math.sin
@@ -352,7 +353,6 @@ class JelliumAnalysis:
                         else:
                             self.shells[index] = 1
                         self.shell_index_grid[i,j,k] = index
-        #self.shells.keys().sort()
 
 
     def ylms_to_grid(self):
@@ -363,13 +363,15 @@ class JelliumAnalysis:
         for l in self.l_array:
             for m in range(-l,l+1):
                 y_lm = Ylm(l, m)
-                print "Calculating Y_(l=%i,m=%i) to grid." % (l, m)
+                t1 = time()
+                print "Calculating Y_(l=%i,m=%i) to grid..." % (l, m),
                 values = nu.zeros((self.Nx, self.Ny, self.Nz), dtype=nu.complex)
                 for i, x in enumerate(self.grid_points[0]):
                     for j, y in enumerate(self.grid_points[1]):
                         for k, z in enumerate(self.grid_points[2]):
                             r, theta, phi = self.to_spherical_coordinates(nu.array((x,y,z))-self.origin)
                             values[i,j,k] = y_lm((theta, phi))
+                print "in %i seconds." % (time() - t1)
                 self.ylms["%i,%i" % (l, m)] = values
 
 
@@ -379,7 +381,8 @@ class JelliumAnalysis:
         orbitals = self.calc.el.orbitals()
         positions = self.calc.el.get_positions()
         for orb in orbitals:
-            print "Calculating basis function %i/%i to grid." % (orb['index']+1, len(self.calc.el.orbitals()))
+            t1 = time()
+            print "Calculating basis function %i/%i to grid..." % (orb['index']+1, len(self.calc.el.orbitals())),
             atom = orb['atom']
             R = positions[atom]
             r_nl = orb['Rnl']
@@ -392,6 +395,7 @@ class JelliumAnalysis:
                         vec = nu.array((x,y,z))-nu.array(R)
                         r, theta, phi = self.to_spherical_coordinates(vec)
                         values[i,j,k] = r_nl(r)*y_lm((theta, phi))
+            print "in %i seconds." % (time() - t1)
             self.basis_functions[orb['index']] = values
 
 
@@ -399,7 +403,6 @@ class JelliumAnalysis:
         """ Performs the angular momentum analysis with respect to
             angular momentum l to the state n. """
         wf_coefficients = self.calc.st.wf[:,n]
-        print wf_coefficients
         state_grid = nu.zeros((self.Nx,self.Ny,self.Nz), dtype=nu.complex)
         for wf_coef, orb in zip(wf_coefficients, self.calc.el.orbitals()):
             state_grid += wf_coef * self.basis_functions[orb['index']]
@@ -407,7 +410,6 @@ class JelliumAnalysis:
         state_grid_squared = state_grid.conjugate() * state_grid
         self.norms[n] = nu.sum(state_grid_squared)
         self.weights[n] = nu.sum(state_grid_squared * nu.where(self.shell_index_grid != 0, 1, 0))
-        print self.norms[n], self.weights[n]
         for m in range(-l,l+1):
             ylm = self.ylms["%i,%i" % (l, m)]
             # The integration
@@ -461,9 +463,11 @@ class JelliumAnalysis:
         self.ylms_to_grid()
         self.basis_functions_to_grid()
         for n in range(self.calc.st.norb):
-            print "Performing the angular momentum analysis on state %i/%i" % (n+1, self.calc.st.norb)
+            t1 = time()
+            print "Performing the angular momentum analysis on state %i/%i..." % (n+1, self.calc.st.norb),
             for l in self.l_array:
                 self.analyse_state(n, l)
+            print "in %i seconds." % (time() - t1)
         # norm the coefficients
         for n in range(self.calc.st.norb):
             self.c_nl[n,:] = self.c_nl[n,:]/float(nu.sum(self.c_nl[n,:]))
@@ -479,6 +483,6 @@ if __name__ == '__main__':
          h2.center(vacuum=4.1)
          h2.set_calculator(Calculator(SCC=True))
          h2.get_potential_energy()
-         JA = JelliumAnalysis(h2, maxl=1, R_0=3, a=0.2)
+         JA = JelliumAnalysis(h2, maxl=1, R_0=3, a=0.5)
          JA.run()
 
