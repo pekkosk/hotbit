@@ -8,6 +8,7 @@ sin=math.sin
 atan=math.atan
 sqrt=math.sqrt
 pi=math.pi
+exp=nu.exp
 
 
         
@@ -36,94 +37,129 @@ def phival(x,y):
         raise RuntimeError('Strange things in phival')        
 
 
-def Plm(l, m):
-    """ Return the associated Legendre polynomial of the first kind """
-    if l == 0:
-        if m == 0:
-            def ret(x):
-                return 1
-    if l == 1:
-        if m == -1:
-            def ret(x):
-                return 0.5*nu.sqrt(1 - x**2)
-        if m == 0:
-            def ret(x):
-                return x
-        if m == 1:
-            def ret(x):
-                return -nu.sqrt(1 - x**2)
-    if l == 2:
-        if m == -2:
-            def ret(x):
-                return (1/24.)*3*(1 - x**2)
-        if m == -1:
-            def ret(x):
-                return (1/6.)*3*x*nu.sqrt(1 - x**2)
-        if m == 0:
-            def ret(x):
-                return 0.5*(3*x**2 - 1)
-        if m == 1:
-            def ret(x):
-                return -3*x*nu.sqrt(1 - x**2)
-        if m == 2:
-            def ret(x):
-                return 3*(1 - x**2)
-    if l == 3:
-        if m == -3:
-            def ret(x):
-                return (1/720.)*15*(1-x**2)**(1.5)
-        if m == -2:
-            def ret(x):
-                return (1/120.)*15*x*(1 - x**2)
-        if m == -1:
-            def ret(x):
-                return (1/12.)*1.5*(5*x**2 - 1)*nu.sqrt(1 - x**2)
-        if m == 0:
-            def ret(x):
-                return 0.5*(5*x**3 - 3*x)
-        if m == 1:
-            def ret(x):
-                return -1.5*(5*x**2 - 1)*nu.sqrt(1 - x**2)
-        if m == 2:
-            def ret(x):
-                return 15*x*(1 - x**2)
-        if m == 3:
-            def ret(x):
-                return -15*(1 - x**2)**(1.5)
-    return ret
-
 def factorial(n):
     if n == 0:
         return 1
     else:
         return n*factorial(n-1)
 
-def gaussian_peak(x, x0, width):
-    return nu.exp( -(x-x0)**2 / (2*width**2) )
 
 def Ylm(l, m):
-    """ Return the spherical harmonic function """
-    assert nu.abs(m) <= l
-    fact = factorial
-    norm_factor = nu.sqrt( ((2*l+1)*fact(l-m))/(4*nu.pi*fact(l+m)) )
-    def phase_term(phi):
-      return nu.exp(1j*m*phi)
-    Legendre_poly = Plm(l,m)
-    def ret(x):
-        if len(x) == 2:
-            # (theta, phi)
-            theta = x[0]
-            phi = x[1]
-        if len(x) == 3:
-            # cartesian coordinates
-            r = nu.sqrt( nu.dot(x,x) )
-            theta = nu.arccos(float(x[2])/nu.dot(x,x))
-            phi = phival(float(x[0]),float(x[1]))
-        return norm_factor*Legendre_poly(nu.cos(theta))*phase_term(phi)
+    """ Return the spherical harmonic function. """
+    if l == 0:
+        if m == 0:
+            def ret((theta, phi)):
+                return 0.5*sqrt(1/nu.pi)
+    if l == 1:
+        if m == -1:
+            def ret((theta, phi)):
+                return 0.5*sqrt(3./(2*pi))*exp(-1j*phi)*sin(theta)
+        if m == 0:
+            def ret((theta, phi)):
+                return 0.5*sqrt(3/pi)*cos(theta)
+        if m == 1:
+            def ret((theta, phi)):
+                return -0.5*sqrt(3./(2*pi))*exp(1j*phi)*sin(theta)
+    if l == 2:
+        if m == -2:
+            def ret((theta, phi)):
+                return 0.25*sqrt(15/(2*pi))*exp(-2j*phi)*sin(theta)**2
+        if m ==  -1:
+            def ret((theta, phi)):
+                return 0.5*sqrt(15/(2*pi))*exp(-1j*phi)*sin(theta)*cos(theta)
+        if m == 0:
+            def ret((theta, phi)):
+                return 0.25*sqrt(5/pi)*(3*cos(theta)**2 - 1)
+        if m == 1:
+            def ret((theta, phi)):
+                return -0.5*sqrt(15/(2*pi))*exp(1j*phi)*sin(theta)*cos(theta)
+        if m == 2:
+            def ret((theta, phi)):
+                return 0.25*sqrt(15/(2*pi))*exp(2j*phi)*sin(theta)**2
+    if l == 3:
+        if m == -3:
+            def ret((theta, phi)):
+                return 0.125*sqrt(35/pi)*exp(-3j*phi)*sin(theta)**3
+        if m == -2:
+            def ret((theta, phi)):
+                return 0.25*sqrt(105/(2*pi))*exp(-2j*phi)*sin(theta)**2 * cos(theta)
+        if m == -1:
+            def ret((theta, phi)):
+                return 0.125*sqrt(21/pi)*exp(-1j*phi)*sin(theta)*(5*cos(theta)**2 - 1)
+        if m == 0:
+            def ret((theta, phi)):
+                return 0.25*sqrt(7/pi)*(5*cos(theta)**3 - 3*cos(theta))
+        if m == 1:
+            def ret((theta, phi)):
+                return -0.125*sqrt(21/pi)*exp(1j*phi)*sin(theta)*(5*cos(theta)**2 - 1)
+        if m == 2:
+            def ret((theta, phi)):
+                return 0.25*sqrt(105/(2*pi))*exp(2j*phi)*sin(theta)**2 * cos(theta)
+        if m == 3:
+            def ret((theta, phi)):
+                return -0.125*sqrt(35/pi)*exp(3j*phi)*sin(theta)**3
+    if l == 4:
+        if abs(m) == 4:
+            def ret((theta, phi)):
+                return (3./16)*sqrt(35/(2*pi))*exp(m*1j*phi)*sin(theta)**4
+        if abs(m) == 3:
+            def ret((theta, phi)):
+                return nu.sign(-m)*(3./8)*sqrt(35/pi)*exp(m*1j*phi)*sin(theta)**3 * cos(theta)
+        if abs(m) == 2:
+            def ret((theta, phi)):
+                return (3./8)*sqrt(5/(2*pi))*exp(m*1j*phi)*sin(theta)**2 * (7*cos(theta)**2 - 1)
+        if abs(m) == 1:
+            def ret((theta, phi)):
+                return nu.sign(-m)*(3./8)*sqrt(5/pi)*exp(m*1j*phi)*sin(theta)*(7*cos(theta)**3 - 3*cos(theta))
+        if m == 0:
+            def ret((theta, phi)):
+                return (3./16)*sqrt(1/pi)*(35*cos(theta)**4 - 30*cos(theta)**2 + 3)
+
+    if l == 5:
+        if abs(m) == 5:
+            def ret((theta, phi)):
+                return nu.sign(-m)*(3./32)*sqrt(77/pi)*exp(m*1j*phi)*sin(theta)**5
+        if abs(m) == 4:
+            def ret((theta, phi)):
+                return (3./16)*sqrt(385/(2*pi))*exp(m*1j*phi)*sin(theta)**4 * cos(theta)
+        if abs(m) == 3:
+            def ret((theta, phi)):
+                return nu.sign(-m)*(1./32)*sqrt(385/pi)*exp(m*1j*phi)*sin(theta)**3 * (9*cos(theta)**2 - 1)
+        if abs(m) == 2:
+            def ret((theta, phi)):
+                return 0.125*sqrt(1155/(2*pi))*exp(m*1j*phi)*sin(theta)**2 * (3*cos(theta)**3 - cos(theta))
+        if abs(m) == 1:
+            def ret((theta, phi)):
+                return nu.sign(-m)*(1./16)*sqrt(165/(2*pi))*exp(m*1j*phi)*sin(theta) * (21*cos(theta)**4 - 14*cos(theta)**2 + 1)
+        if m == 0:
+            def ret((theta, phi)):
+                return (1./16)*sqrt(11/pi) * (63*cos(theta)**5 - 70*cos(theta)**3 + 15*cos(theta))
+    if l == 6:
+        if abs(m) == 6:
+            def ret((theta, phi)):
+                return (1./64)*sqrt(3003/pi)*exp(m*1j*phi)*sin(theta)**6
+        if abs(m) == 5:
+            def ret((theta, phi)):
+                return nu.sign(-m)*(3./32)*sqrt(1001/pi)*exp(m*1j*phi)*sin(theta)**5 * cos(theta)
+        if abs(m) == 4:
+            def ret((theta, phi)):
+                return (3./32)*sqrt(91/(2*pi))*exp(m*1j*phi)*sin(theta)**4 * (11*cos(theta)**2 - 1)
+        if abs(m) == 3:
+            def ret((theta, phi)):
+                return nu.sign(-m)*(1./32)*sqrt(1365/pi)*exp(m*1j*phi)*sin(theta)**3 * (11*cos(theta)**3 - 3*cos(theta))
+        if abs(m) == 2:
+            def ret((theta, phi)):
+                return (1./64)*sqrt(1365/pi)*exp(m*1j*phi)*sin(theta)**2 * (33*cos(theta)**4 - 18*cos(theta)**2 + 1)
+        if abs(m) == 1:
+            def ret((theta, phi)):
+                return nu.sign(-m)*(1./16)*sqrt(273/(2*pi))*exp(m*1j*phi)*sin(theta) * (33*cos(theta)**5 - 30*cos(theta)**3 + 5*cos(theta))
+        if m == 0:
+            def ret((theta, phi)):
+                return (1./32)*sqrt(13/pi)*(231*cos(theta)**6 - 315*cos(theta)**4 + 105*cos(theta)**2 - 5)
     return ret
 
 
-states=['s','px','py','pz','dxy','dyz','dzx','dx2-y2','d3z2-r2']     
+states=['s','px','py','pz','dxy','dyz','dzx','dx2-y2','d3z2-r2']
 def angular(r,wf):
     """ Return angular part of wave function.
     
@@ -200,8 +236,6 @@ class JelliumAnalysis:
     maxl:   The largest angular momentum the expansion is performed.
     R_0:    The radius of the expansion (Ang)
     a:      The length of the side of cubic grid box (Ang)
-
-    TODO:   Add more spherical harmonics.
     """
 
 
@@ -239,16 +273,21 @@ class JelliumAnalysis:
             self.origin = self.calc.el.get_center_of_mass()
         else:
             self.origin = nu.array(origin)/Bohr
-        self.l_array = range(min(4, maxl+1))
+        self.l_array = range(min(7, maxl+1))
         self.filename = filename
 
         self.c_nl = nu.zeros((self.calc.st.norb, len(self.l_array)))
 
-        self.colors = {0:'y', 1:'b', 2:'r', 3:'g'}
-        self.names =  {0:'s', 1:'p', 2:'d', 3:'f'}
-        self.letters = "spdfghi"
+        # The amount of states inside the expansion radius
+        self.weights = nu.zeros(self.calc.st.norb)
+        # The norms of the states
+        self.norms = nu.zeros(self.calc.st.norb)
 
         self.create_uniform_cubic_grid()
+
+        self.colors = ['#FFFF00','#FF0000','#5FD300','#2758D3',
+                       '#058C00','#E1AB18','#50E1D0']
+        self.letters = "spdfghi"
 
 
     def create_uniform_cubic_grid(self):
@@ -281,8 +320,8 @@ class JelliumAnalysis:
 
 
         # Make sure that the expansion radius is not too large,
-        # ie, the max radius = the longest distance from center of the
-        # expansion to the corners of the grid
+        # ie, the max radius = the longest distance from the center
+        # of the expansion to the corners of the grid
         x_min, x_max = self.grid_points[0][0], self.grid_points[0][-1]
         y_min, y_max = self.grid_points[1][0], self.grid_points[1][-1]
         z_min, z_max = self.grid_points[2][0], self.grid_points[2][-1]
@@ -313,12 +352,12 @@ class JelliumAnalysis:
                         else:
                             self.shells[index] = 1
                         self.shell_index_grid[i,j,k] = index
-        self.shells.keys().sort()
+        #self.shells.keys().sort()
 
 
     def ylms_to_grid(self):
         """ Calculates the values of spherical harmonics centered
-            to origin of the expansion to the grid. """
+            to the origin of the expansion to the grid. """
         self.ylms = {}
         origin = self.origin
         for l in self.l_array:
@@ -348,14 +387,10 @@ class JelliumAnalysis:
             y_lm = Ylm(l, m)
             values = nu.zeros((self.Nx, self.Ny, self.Nz), dtype=nu.complex)
             for i, x in enumerate(self.grid_points[0]):
-                xi = x - R[0]
                 for j, y in enumerate(self.grid_points[1]):
-                    yj = y - R[1]
                     for k, z in enumerate(self.grid_points[2]):
-                        zk = z - R[2]
-                        r = nu.linalg.norm((xi, yj, zk))
-                        theta=acos(zk/r)
-                        phi=phival(xi,yj)
+                        vec = nu.array((x,y,z))-nu.array(R)
+                        r, theta, phi = self.to_spherical_coordinates(vec)
                         values[i,j,k] = r_nl(r)*y_lm((theta, phi))
             self.basis_functions[orb['index']] = values
 
@@ -364,10 +399,15 @@ class JelliumAnalysis:
         """ Performs the angular momentum analysis with respect to
             angular momentum l to the state n. """
         wf_coefficients = self.calc.st.wf[:,n]
+        print wf_coefficients
         state_grid = nu.zeros((self.Nx,self.Ny,self.Nz), dtype=nu.complex)
         for wf_coef, orb in zip(wf_coefficients, self.calc.el.orbitals()):
             state_grid += wf_coef * self.basis_functions[orb['index']]
         c = 0.0
+        state_grid_squared = state_grid.conjugate() * state_grid
+        self.norms[n] = nu.sum(state_grid_squared)
+        self.weights[n] = nu.sum(state_grid_squared * nu.where(self.shell_index_grid != 0, 1, 0))
+        print self.norms[n], self.weights[n]
         for m in range(-l,l+1):
             ylm = self.ylms["%i,%i" % (l, m)]
             # The integration
@@ -386,7 +426,7 @@ class JelliumAnalysis:
     def greetings(self):
         print "\n*** Starting the angular momentum analysis. ***"
         print "The grid contains %i x %i x %i grid points" % (self.Nx, self.Ny, self.Nz)
-        print "The center of the expansion (in Ang): %0.2f,%0.2f,%0.2f" % tuple(self.origin * Bohr)
+        print "The center of the expansion (in Ang): %0.2f, %0.2f, %0.2f" % tuple(self.origin * Bohr)
         print "The radius of the expansion (in Ang): %0.2f" % (self.R_0 * Bohr)
         print "The analysis is performed on angular momentums:",
         for l in self.l_array:
@@ -396,19 +436,21 @@ class JelliumAnalysis:
 
     def write_to_file(self):
         f = open(self.filename, 'w')
-        print >> f, "The center of the expansion (in Ang): %0.2f,%0.2f,%0.2f" % tuple(self.origin * Bohr)
+        print >> f, "The center of the expansion (in Ang): %0.2f, %0.2f, %0.2f" % tuple(self.origin * Bohr)
         print >> f, "The radius of the expansion (in Ang): %0.2f" % (self.R_0 * Bohr)
         print >> f, "The shell thickness (in Ang): %0.2f" % (self.a * Bohr)
-        print >> f, "#state  energy    occ",
+        print >> f, "#state  energy(eV)   norm   weight     occ",
         for l in self.l_array:
-            print >> f, "%7s" % self.letters[l],
+            print >> f, "%6s" % self.letters[l],
         print >> f, ""
-        e = self.calc.st.get_eigenvalues()
+        e = self.calc.st.get_eigenvalues()*Hartree
         occ = self.calc.st.get_occupations()
+        w = self.weights
+        norms = self.norms
         for n in range(self.calc.st.norb):
-            print >> f, "%4i%10.4f%7.2f" % (n, e[n], occ[n]),
+            print >> f, "%5i %12.4f %7.4f %7.4f %7.4f" % (n, e[n], norms[n], w[n]/norms[n], occ[n]),
             for l in self.l_array:
-                print >> f, "%7.3f" % self.c_nl[n,l],
+                print >> f, "%6.3f" % self.c_nl[n,l],
             print >> f, ""
         f.close()
 
@@ -438,6 +480,6 @@ if __name__ == '__main__':
          h2.center(vacuum=4.1)
          h2.set_calculator(Calculator(SCC=True))
          h2.get_potential_energy()
-         JA = JelliumAnalysis(h2, maxl=2, R_0=10, a=0.3)
+         JA = JelliumAnalysis(h2, maxl=1, R_0=3, a=0.2)
          JA.run()
 
