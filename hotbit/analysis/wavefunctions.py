@@ -474,7 +474,6 @@ if __name__ == '__main__':
      import sys
      from ase import *
      from hotbit import Calculator
-     import pylab
      if sys.argv[1] == 'H2':
          h2 = Atoms('H2', ((0,0,0),(1,0,0)))
          h2.center(vacuum=4.1)
