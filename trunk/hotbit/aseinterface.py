@@ -145,12 +145,12 @@ class Calculator(Output):
         from copy import deepcopy
         return deepcopy(self)  
     
-    def set_text(self,out):
+    def set_text(self,txt):
         """ Set up the output file. """
-        if out is None:
+        if txt is None:
             self.txt=sys.stdout
         else:
-            self.txt=open(out,'a')
+            self.txt=open(txt,'a')
         
     def set(self,**kwargs):
         """ (Re-)Set calculator parameters, _before_ calculation. """
@@ -236,7 +236,7 @@ class Calculator(Output):
             
     def get_stress(self,atoms):
         self.solve_ground_state(atoms)
-        return None       
+        return None            
          
     def get_charge(self):
         return self.get('charge')
@@ -249,17 +249,46 @@ class Calculator(Output):
         self.solve_ground_state(atoms)
         return self.st.get_eigenvalues()*Hartree
     
-    def get_occupations(self,atoms):
-        self.solve_ground_state(atoms)
+    def get_occupations(self):
+        #self.solve_ground_state(atoms)
         return self.st.get_occupations()
         
     def get_band_structure_energy(self,atoms):
         self.solve_ground_state(atoms)
         return self.st.band_structure_energy()*Hartree
             
+            
     def get_coulomb_energy(self,atoms):
         self.solve_ground_state(atoms)
         return self.es.coulomb_energy()*Hartree
+    
+    
+    # some not implemented ASE-assumed methods
+    def get_fermi_level(self):
+        raise NotImplementedError
+        
+        
+    def calculation_required(self,atoms, quantities):
+        """ Check if a calculation is required. 
+        
+        Check if the quantities in the quantities list have already been calculated 
+        for the atomic configuration atoms. The quantities can be one or more of: 
+        'energy', 'forces', and 'stress'.
+        """
+        raise NotImplementedError
+
+
+    def set_atoms(self,atoms):
+        """ Initialize the calculator for given atomic system. """
+        if self.init==False:
+            self._initialize(atoms)    
+    
+    def get_occupation_numbers(self,kpt=0,spin=0):
+        raise NotImplementedError
+        
+        
+    def get_number_of_bands(self):
+        raise NotImplementedError  
                
 Hotbit=Calculator    
 

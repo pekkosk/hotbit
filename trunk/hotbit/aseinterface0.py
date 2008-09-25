@@ -76,9 +76,9 @@ class Calculator0(Output):
         self.verbose=verbose     
         self.version='3.0 fortran-based'   
         
-    def set_text(self,out):
+    def set_text(self,txt):
         """ Set up the output file. """
-        if out is None:
+        if txt is None:
             self.txt=sys.stdout
         else:
             self.txt=open(out,'a')
@@ -116,7 +116,7 @@ class Calculator0(Output):
             
     def read_until(self,string):
         while 1:
-            line=self.out.readline() #'' only at EOF 
+            line=self.txt.readline() #'' only at EOF 
             if line.find(string)>=0 or line=='': break
             if self.verbose: print>>self.txt,  '>',line,
             #print>>self.txt,  '>>>',string
@@ -148,7 +148,7 @@ class Calculator0(Output):
         self.greetings()  
                 
         print>>self.txt,  'Open hotbit pipes for communication...'
-        self.inp,self.out=popen2(self.command,'t')  
+        self.inp,self.txt=popen2(self.command,'t')  
         self.set_up=True
         self.atoms=atoms
         if clean:
@@ -244,7 +244,7 @@ class Calculator0(Output):
     def hotbit_fetch(self,atoms):
         self.read_until('hotbit > standard feed')
         while 1:
-            line=self.out.readline().split('=')
+            line=self.txt.readline().split('=')
             key=line[0].strip()
             if len(line)>1:
                 value=line[1]
@@ -259,27 +259,27 @@ class Calculator0(Output):
             elif key=='forces':
                 self.forces=[]
                 for atom in atoms:
-                    f1=vec([float(fi) for fi in self.out.readline().split()])
+                    f1=vec([float(fi) for fi in self.txt.readline().split()])
                     self.forces.append(vec(f1))
             elif key=='dq':
                 self.dq=[]
                 for atom in atoms:
-                    self.dq.append(float(self.out.readline()))
+                    self.dq.append(float(self.txt.readline()))
                 self.dq=npy.array(self.dq)
             elif key=='eigenvalues':
                 self.eigenvalues=[]
                 for i in range(self.el.get_nr_orbitals()):
-                    self.eigenvalues.append(float(self.out.readline()))
+                    self.eigenvalues.append(float(self.txt.readline()))
                 self.eigenvalues=npy.array(self.eigenvalues)                
             elif key=='occupations':
                 self.occupations=[]
                 for i in range(self.el.get_nr_orbitals()):
-                    self.occupations.append(float(self.out.readline()))
+                    self.occupations.append(float(self.txt.readline()))
                 self.occupations=npy.array(self.occupations)
             #elif key=='optical':
                 #self.optical=[]
                 #while 1:
-                    #line=self.out.readline()
+                    #line=self.txt.readline()
                     #if line.find('end optical')>=0: break
                     #x,f=line.split()
                     #self.optical.append([float(x),float(f)])

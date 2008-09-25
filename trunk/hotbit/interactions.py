@@ -110,7 +110,7 @@ class Interactions:
                      
     def greetings(self):
         """ Return the interaction specifications """
-        txt='Interactions:'
+        txt='Interactions:\n'
         shown=[]
         for ia in self.files:
             file=self.files[ia]
