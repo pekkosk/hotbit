@@ -65,25 +65,25 @@ def g(t1,t2):
    
 
 class SlaterKosterTable:
-    def __init__(self,ela,elb,out=None,timing=False):
+    def __init__(self,ela,elb,txt=None,timing=False):
         """ Given atoms as Element objects. 
         
         parameters:
         -----------
         ela, elb: element objects (KSAllElectron)
-        out: output file object or file name
+        txt: output file object or file name
         timing: output of timing summary after calculation
         """
         self.ela=ela
         self.elb=elb
         self.timing=timing
-        if out==None:
-            self.out=sys.stdout
+        if txt==None:
+            self.txt=sys.stdout
         else:
-            if type(out)==type(''):
-                self.out=open(out,'a')
+            if type(txt)==type(''):
+                self.txt=open(out,'a')
             else:
-                self.out=out                
+                self.txt=txt                
         self.comment=self.ela.get_comment()
         if ela.get_symbol()!=elb.get_symbol():
             self.nel=2
@@ -94,12 +94,12 @@ class SlaterKosterTable:
             self.nel=1
             self.pairs=[(ela,elb)]
             self.elements=[ela]
-        self.timer=Timer('SlaterKosterTable',self.out,timing)
+        self.timer=Timer('SlaterKosterTable',self.txt,timing)
                                         
-        print>>self.out, '\n\n\n\n'                                        
-        print>>self.out, '************************************************'
-        print>>self.out, 'Slater-Koster table construction for %2s and %2s' %(ela.get_symbol(),elb.get_symbol())
-        print>>self.out, '************************************************'
+        print>>self.txt, '\n\n\n\n'                                        
+        print>>self.txt, '************************************************'
+        print>>self.txt, 'Slater-Koster table construction for %2s and %2s' %(ela.get_symbol(),elb.get_symbol())
+        print>>self.txt, '************************************************'
         
     def __del__(self):
         self.timer.summary()          
@@ -182,7 +182,7 @@ class SlaterKosterTable:
         wf_range=0.0
         for el in self.elements:
             r=max( [el.wf_range(nl,fractional_limit) for nl in el.get_valence()] )
-            print>>self.out, 'wf range for %s=%10.5f' %(el.get_symbol(),r)
+            print>>self.txt, 'wf range for %s=%10.5f' %(el.get_symbol(),r)
             wf_range=max(r,wf_range)
         if wf_range>20:
             raise AssertionError('Wave function range >20 Bohr. Decrease wflimit?')
@@ -216,20 +216,20 @@ class SlaterKosterTable:
         if self.nel==1: self.tables=[nu.zeros((N,20))]
         else: self.tables=[nu.zeros((N,20)),nu.zeros((N,20))]
         
-        print>>self.out, 'Start making table...'
+        print>>self.txt, 'Start making table...'
         for Ri,R in enumerate(Rgrid):
             if R>2*self.wf_range: 
                 break
             grid, areas = self.make_grid(R,nt=ntheta,nr=nr)
             if  Ri==N-1 or nu.mod(Ri,N/10)==0:                    
-                    print>>self.out, 'R=%8.2f, %i grid points ...' %(R,len(grid))
+                    print>>self.txt, 'R=%8.2f, %i grid points ...' %(R,len(grid))
             for p,(e1,e2) in enumerate(self.pairs):
                 selected=select_integrals(e1,e2) 
                 if Ri==0:
-                    print>>self.out, 'R=%8.2f %s-%s, %i grid points, ' %(R,e1.get_symbol(),e2.get_symbol(),len(grid)),
-                    print>>self.out, 'integrals:', 
-                    for s in selected: print>>self.out, s[0],
-                    print>>self.out 
+                    print>>self.txt, 'R=%8.2f %s-%s, %i grid points, ' %(R,e1.get_symbol(),e2.get_symbol(),len(grid)),
+                    print>>self.txt, 'integrals:', 
+                    for s in selected: print>>self.txt, s[0],
+                    print>>self.txt 
                 
                 S,H,H2=self.calculate_mels(selected,e1,e2,R,grid,areas)
                 self.Hmax=max(self.Hmax,max(abs(H)))
@@ -237,12 +237,12 @@ class SlaterKosterTable:
                 self.tables[p][Ri,:10]=H
                 self.tables[p][Ri,10:]=S
         
-        print>>self.out, 'Maximum value for H=%.2g' %self.Hmax
-        print>>self.out, 'Maximum error for H=%.2g' %self.dH        
-        print>>self.out, '     Relative error=%.2g %%' %(self.dH/self.Hmax*100)
+        print>>self.txt, 'Maximum value for H=%.2g' %self.Hmax
+        print>>self.txt, 'Maximum error for H=%.2g' %self.dH        
+        print>>self.txt, '     Relative error=%.2g %%' %(self.dH/self.Hmax*100)
         self.timer.stop('calculate tables')  
         self.comment+='\n'+asctime()
-        self.out.flush()
+        self.txt.flush()
                     
                     
                     

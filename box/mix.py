@@ -217,6 +217,10 @@ def gauss_fct(x,mean=0.,sigma=1.):
     from numpy import sqrt,pi,exp
     return 1./sqrt(2*pi*sigma**2)*exp(-(x-mean)**2/(2*sigma**2) )
 
+def lorenzian(x,mean,width):
+    """ Return normalized Lorenzian with given mean and broadening. """
+    return (width/nu.pi)/((x-mean)**2+width**2)
+
 def broaden(x,y=None,width=0.05,function='gaussian',extend=True,N=200,a=None,b=None):
     """ 
     Broaden a peaked distribution (DOS,optical spectra,...).
@@ -237,7 +241,10 @@ def broaden(x,y=None,width=0.05,function='gaussian',extend=True,N=200,a=None,b=N
     if function=='gaussian':
         f=gauss_fct
         param={'mean':0.0,'sigma':width}
-    else:
+    elif function=='lorenzian':
+        f=lorenzian
+        param={'mean':0.0,'width':width}          
+    else:            
         raise NotImplementedError('function %s not implemented.' %function)
     if y==None:
         y=nu.ones_like(x)

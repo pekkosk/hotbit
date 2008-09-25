@@ -48,7 +48,7 @@ class BlackBox:
             write_atoms_dat(molecule,'atoms.dat')
             md_dat({'communicate':'yes','mdsteps':10000})
         print 'Opening BlackBox pipe for communication...'
-        self.inp,self.out=popen2(command,'t')    
+        self.inp,self.txt=popen2(command,'t')    
     
     def __del__(self):
         """ Close the pipe for the black box. """
@@ -65,7 +65,7 @@ class BlackBox:
         for pos in r:
             lines.append( mix.a2s(pos) )
         write_N_lines( self.inp,lines )
-        ef = read_N_lines( self.out )
+        ef = read_N_lines( self.txt )
         molecule.set_energy( float(ef[1]) )
         f=[]
         for line in ef[2:]:

@@ -183,10 +183,8 @@ class Atoms(ase_Atoms):
     def scale_positions(self,x):    
         """ Scale the whole system by x; also the unit cell. """
         self.set_cell(self.get_cell()*x,scale_atoms=True)
-        self.reduce_atoms_into_cell()    
+        self._reduce_atoms_into_cell()    
         
-    def list_properties(self):
-        assert NotImplementedError('is this simply correct??')
         
     def copy(self):
         """ Override ase atoms copy (not to get ase.Atoms type) """        
@@ -404,15 +402,20 @@ class Atoms(ase_Atoms):
             try:
                 tp=type(properties[0])
             except:
-                continue
-            if tp==type(1) or tp==type(1.0):
-                print>>f, 'SCALARS %s double 1\nLOOKUP_TABLE default' %property
-                for value in properties:
-                    print>>f, '%12.6f' %(value*1.0)
-            elif tp==type(vec([])) or tp==type([]):
+                continue            
+            if tp==type(vec([])) or tp==type([]):
                 print>>f, 'VECTORS %s double\n' %property
                 for value in properties:
                     print>>f, mix.a2s(value,fmt=fmt)
+            else:
+                try:
+                    x=float(properties[0])
+                except:
+                    continue                  
+                print>>f, 'SCALARS %s double 1\nLOOKUP_TABLE default' %property
+                for value in properties:
+                    print>>f, '%12.6f' %(value*1.0)
+            
             
         # Then data related to bonds
         print>>f, 'CELL_DATA %i' %nb

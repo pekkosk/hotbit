@@ -88,9 +88,28 @@ class MultipleSplineFunction:
     def get_range(self):    
         return self.x[0],self.x[-1]
         
-    def find_lower_index(self,x):
-        """ For given x, return i such that x_i<=x<x_i+1 """
-        return int( (x-self.xmin)/(self.xmax-self.xmin)*(self.n-1) )
+    def _find_bin_fast(self,x):
+        """ For given x, return i such that x_i<=x<x_i+1 
+        Make it fast, but rely on linear scale.
+        """
+        lo=int( (x-self.xmin)/(self.xmax-self.xmin)*(self.n-1) )
+        return lo,lo+1
+    
+    def _find_bin(self,x):
+        """ For given x, return i and i+1 such that x_i<=x<x_i+1 """
+        lo=0
+        hi=len(self.x)
+        while True:
+            if hi-lo>1:
+                k=(hi+lo)/2
+                if x<self.x[k]:
+                    hi=k
+                else:
+                    lo=k
+            else:
+                return lo, hi
+        raise AssertionError('Error in binding bin for %f' %x)
+                  
   
     def __call__(self,x,der=None):
         """ Return interpolated values for all functions.
@@ -108,12 +127,10 @@ class MultipleSplineFunction:
                 return nu.zeros((self.m,)),nu.zeros((self.m))
             else:
                 return nu.zeros((self.m,))
-            
-        
-        lo=self.find_lower_index(x)
-        hi=lo+1
+               
+        lo, hi = self._find_bin(x)
         xlo, xhi=self.x[lo], self.x[hi]
-        assert xlo<=x<xhi
+        assert xlo<=x<=xhi
         
         h=self.h
         a, b=(xhi-x)/h, (x-xlo)/h
@@ -123,7 +140,6 @@ class MultipleSplineFunction:
         y=a*ylo + b*yhi + ((a**3-a)*dlo+(b**3-b)*dhi)*(h**2)/6
         dy=(yhi-ylo)/h - (3*a**2-1)/6*h*dlo + (3*b**2-1)/6*h*dhi                
         
-          
         if der==None:
             return y,dy
         elif der==0:
@@ -694,17 +710,17 @@ class TrilinearInterpolation:
         self.grids=grids
         if self.grids==None:
             self.grids=vec([nu.arange(self.n[i]) for i in range(3)])*1.0
-        self.dg=vec([self.grids[i,1]-self.grids[i,0] for i in range(3)])*1.0
+        self.dg=vec([self.grids[i][1]-self.grids[i][0] for i in range(3)])*1.0
                 
     def __call__(self,r):
         """ Return the interpolated value at r. """
         for i in range(3):
-            assert self.grids[i,0]<=r[i]<=self.grids[i,-1]       
+            assert self.grids[i][0]<=r[i]<=self.grids[i][-1]       
 
         ind0=nu.floor((r/self.dg))
         # i,j,k grid point can never be a point at 'larger' side
         i,j,k=[int(min(ind0[i],self.n[i]-2)) for i in range(3)]
-        dx,dy,dz=[r[p]-self.grids[p,ind] for p,ind in zip(range(3),(i,j,k))]
+        dx,dy,dz=[r[p]-self.grids[p][ind] for p,ind in zip(range(3),(i,j,k))]
                 
         a=self.a
         i1=a[i,j,k]    *(1-dz)+a[i,j,k+1]*dz
@@ -726,7 +742,7 @@ class TrilinearInterpolation:
         """
         if gpts==None:
             gpts=self.n
-        R=vec([nu.linspace(0,self.grids[i,-1],gpts[i]) for i in range(3)])
+        R=vec([nu.linspace(0,self.grids[i][-1],gpts[i]) for i in range(3)])
         nx,ny,nz=(gpts[0],gpts[1],gpts[2])
         
         

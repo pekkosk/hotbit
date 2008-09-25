@@ -58,8 +58,8 @@ class KSAllElectron:
             else:                
                 exec 'self.%s=%s' %(key,self.args[key]) 
         
-        self.set_output(self.out)  
-        self.timer=Timer('KSAllElectron',self.out,enabled=self.timing)
+        self.set_output(self.txt)  
+        self.timer=Timer('KSAllElectron',self.txt,enabled=self.timing)
         self.timer.start('init')
         
         # element default data
@@ -101,12 +101,12 @@ class KSAllElectron:
         
         maxnodes=max( [n-l-1 for n,l,nl in self.list_states()] )        
         self.rmin, self.rmax, self.N=( 1E-2/self.Z, 100.0, (maxnodes+1)*self.nodegpts )
-        print>>self.out, 'max %i nodes, %i grid points' %(maxnodes,self.N)
+        print>>self.txt, 'max %i nodes, %i grid points' %(maxnodes,self.N)
         self.xgrid=nu.linspace(0,nu.log(self.rmax/self.rmin),self.N)
         self.rgrid=self.rmin*nu.exp(self.xgrid)
         self.grid=RadialGrid(self.rgrid)
         self.timer.stop('init')
-        print>>self.out, self.get_comment()
+        print>>self.txt, self.get_comment()
         self.solved=False
         
     def __getstate__(self):
@@ -118,15 +118,15 @@ class KSAllElectron:
         d.pop('out')
         return d
         
-    def set_output(self,out):
+    def set_output(self,txt):
         """ Set output channel and give greetings. """
-        if out==None:
-            self.out=sys.stdout
+        if txt==None:
+            self.txt=sys.stdout
         else:
-            self.out=open(out,'a')
-        print>>self.out, '*******************************************'
-        print>>self.out, 'Kohn-Sham all-electron calculation for %2s ' %self.symbol
-        print>>self.out, '*******************************************'
+            self.txt=open(out,'a')
+        print>>self.txt, '*******************************************'
+        print>>self.txt, 'Kohn-Sham all-electron calculation for %2s ' %self.symbol
+        print>>self.txt, '*******************************************'
         
         
     def calculate_energies(self,echo=False):
@@ -145,27 +145,27 @@ class KSAllElectron:
         self.confinement_energy=self.grid.integrate(self.conf*self.dens,use_dV=True)
         self.total_energy=self.bs_energy-self.Hartree_energy-self.vxc_energy+self.exc_energy
         if echo:
-            print>>self.out, '\n\nEnergetics:'
-            print>>self.out, '-------------'
-            print>>self.out, '\nsingle-particle energies'
-            print>>self.out, '------------------------'
+            print>>self.txt, '\n\nEnergetics:'
+            print>>self.txt, '-------------'
+            print>>self.txt, '\nsingle-particle energies'
+            print>>self.txt, '------------------------'
             for n,l,nl in self.list_states():
-                print>>self.out, '%s, energy %.15f' %(nl,self.enl[nl])
+                print>>self.txt, '%s, energy %.15f' %(nl,self.enl[nl])
                             
-            print>>self.out, '\nvalence orbital energies'
-            print>>self.out, '--------------------------'
+            print>>self.txt, '\nvalence orbital energies'
+            print>>self.txt, '--------------------------'
             for nl in atom_valence[self.symbol]:
-                print>>self.out, '%s, energy %.15f' %(nl,self.enl[nl])                            
+                print>>self.txt, '%s, energy %.15f' %(nl,self.enl[nl])                            
                 
-            print>>self.out, '\n'
-            print>>self.out, 'total energies:'
-            print>>self.out, '---------------'
-            print>>self.out, 'sum of eigenvalues:     %.15f' %self.bs_energy
-            print>>self.out, 'Hartree energy:         %.15f' %self.Hartree_energy
-            print>>self.out, 'vxc correction:         %.15f' %self.vxc_energy
-            print>>self.out, 'exchange + corr energy: %.15f' %self.exc_energy
-            print>>self.out, '----------------------------'
-            print>>self.out, 'total energy:           %.15f\n\n' %self.total_energy     
+            print>>self.txt, '\n'
+            print>>self.txt, 'total energies:'
+            print>>self.txt, '---------------'
+            print>>self.txt, 'sum of eigenvalues:     %.15f' %self.bs_energy
+            print>>self.txt, 'Hartree energy:         %.15f' %self.Hartree_energy
+            print>>self.txt, 'vxc correction:         %.15f' %self.vxc_energy
+            print>>self.txt, 'exchange + corr energy: %.15f' %self.exc_energy
+            print>>self.txt, '----------------------------'
+            print>>self.txt, 'total energy:           %.15f\n\n' %self.total_energy     
         self.timer.stop('energies')            
         
     def calculate_density(self):
@@ -239,7 +239,7 @@ class KSAllElectron:
         Solve the self-consistent potential. 
         """
         self.timer.start('solve ground state')
-        print>>self.out, '\nStart iteration...'
+        print>>self.txt, '\nStart iteration...'
         self.enl={}
         self.d_enl={}
         for n,l,nl in self.list_states():
@@ -269,22 +269,22 @@ class KSAllElectron:
                 break
             self.calculate_Hartree_potential()
             if nu.mod(it,10)==0:
-                print>>self.out, 'iter %3i, dn=%.1e>%.1e, max %i sp-iter' %(it,diff,self.convergence['density'],itmax)
+                print>>self.txt, 'iter %3i, dn=%.1e>%.1e, max %i sp-iter' %(it,diff,self.convergence['density'],itmax)
             if it==self.itmax-1:
                 if self.timing:
                     self.timer.summary()            
                 raise RuntimeError('Density not converged in %i iterations' %(it+1))
-            self.out.flush()            
+            self.txt.flush()            
         
         self.calculate_energies(echo=True)        
-        print>>self.out, 'converged in %i iterations' %it
-        print>>self.out, '%9.4f electrons, should be %9.4f' %(self.grid.integrate(self.dens,use_dV=True),self.nel)
+        print>>self.txt, 'converged in %i iterations' %it
+        print>>self.txt, '%9.4f electrons, should be %9.4f' %(self.grid.integrate(self.dens,use_dV=True),self.nel)
         for n,l,nl in self.list_states():
             self.Rnl_fct[nl]=Function('spline',self.rgrid,self.Rnlg[nl])
             self.unl_fct[nl]=Function('spline',self.rgrid,self.unlg[nl])
         self.timer.stop('solve ground state')                    
         self.timer.summary()    
-        self.out.flush()
+        self.txt.flush()
         self.solved=True
         
     
@@ -373,11 +373,11 @@ class KSAllElectron:
                 hist.append(eps)                                        
                 
                 if it>100:
-                    print>>self.out, 'Epsilon history for %s' %nl
+                    print>>self.txt, 'Epsilon history for %s' %nl
                     for h in hist:
                         print h
-                    print>>self.out, 'nl=%s, eps=%f' %(nl,eps)
-                    print>>self.out, 'max epsilon',epsmax
+                    print>>self.txt, 'nl=%s, eps=%f' %(nl,eps)
+                    print>>self.txt, 'max epsilon',epsmax
                     raise RuntimeError('Eigensolver out of iterations. Atom not stable?')                    
                              
             itmax=max(it,itmax)                
@@ -387,7 +387,7 @@ class KSAllElectron:
             d_enl_max=max(d_enl_max,self.d_enl[nl])
             self.enl[nl]=eps
             if self.verbose:
-                print>>self.out, '-- state %s, %i eigensolver iterations, e=%9.5f, de=%9.5f' %(nl,it,self.enl[nl],self.d_enl[nl])
+                print>>self.txt, '-- state %s, %i eigensolver iterations, e=%9.5f, de=%9.5f' %(nl,it,self.enl[nl],self.d_enl[nl])
                 
             assert nodes==nodes_nl
             assert u[1]>0.0 

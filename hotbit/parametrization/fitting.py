@@ -87,12 +87,12 @@ class RepulsiveFitting:
             elif der==1:
                 return sum( [d2[i]*(self.r_cut-r)**(i-1)*i*(-1) for i in range(1,self.order)] )                
                
-    def write_to_par(self,out=None,points=100,append=True):
+    def write_to_par(self,txt=None,points=100,append=True):
         """ Write Vrep into .par file, including comments. """
-        if out is None:
-            out='%s_%s.par' %(self.elm1,self.elm2)
+        if txt is None:
+            txt='%s_%s.par' %(self.elm1,self.elm2)
         mode=('w','a')[append]
-        o=open(out,mode)
+        o=open(txt,mode)
         print>>o, 'fitting='
         print>>o, self.comments
         print>>o, '\n\nrepulsion='
