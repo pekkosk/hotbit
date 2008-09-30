@@ -5,31 +5,26 @@
     P. Koskinen 21.1 2008 onwards
     
 """
-
-import os
-import sys
 import weakref
 
 import numpy as nu
 import ase
 from ase.units import Bohr, Hartree
 from box.timing import Timer
-
 from elements import Elements
 from interactions import Interactions
-#from interactions_old import Interactions
 from electrostatics import Electrostatics
 from repulsion import Repulsion
 from states import States
 from hotbit.output import Output
 import hotbit.auxil as aux
 import box.mix as mix
+
 vec=nu.array
 err=mix.error_exit
 Ha=27.2113956
 a0=0.529177
 f0=Ha/a0
-import time
 
 
          
@@ -63,9 +58,7 @@ class Calculator(Output):
                           * If elements['others']='default', use default parameters for all other
                             interactions than the ones specified. 
                             E.g. {'CH':'C_H.par','others':'default'}
-        """
-        
-        import os
+        """       
         from copy import copy
         defaults={'charge'            :0.0,\
                   'width'             :0.02,\
@@ -96,6 +89,7 @@ class Calculator(Output):
         self.notes=[]
         self.set_text(self.args['txt'])
         self.timer=Timer('hotbit calculator',self.get_output())
+       
         
     def __del__(self):
         if self.get('SCC'):
@@ -116,19 +110,20 @@ class Calculator(Output):
           
     def greetings(self):
         """ Simple greetings text """
-        import time
-        import os
+        from time import asctime
+        from os import uname
+        from os.path import abspath, curdir
         print>>self.txt,  '\n\n\n\n\n'
         print>>self.txt,  ' _           _    _     _ _'
         print>>self.txt,  '| |__   ___ | |_ | |__ |_| |_'
         print>>self.txt,  '|  _ \ / _ \|  _||  _ \| |  _|'
         print>>self.txt,  '| | | | ( ) | |_ | ( ) | | |_'
         print>>self.txt,  '|_| |_|\___/ \__|\____/|_|\__|',self.version
-        print>>self.txt,  'Date:',time.asctime()
-        dat=os.uname()
+        print>>self.txt,  'Date:',asctime()
+        dat=uname()
         print>>self.txt,  'Nodename:',dat[1]
         print>>self.txt,  'Arch:',dat[4]
-        print>>self.txt,  'Dir:',os.path.abspath(os.path.curdir)
+        print>>self.txt,  'Dir:',abspath(curdir)
         print>>self.txt,  'System:',self.el.get_name()
         print>>self.txt,  '       Charge=%4.1f' %self.args['charge']
         print>>self.txt,  '       Box: (Ang)', nu.array(self.el.get_box_lengths())*Bohr
@@ -140,15 +135,12 @@ class Calculator(Output):
     def out(self,text):
         print>>self.txt, text
         
-    def copy(self):
-        """ Return simple copy of this calculator. """
-        from copy import deepcopy
-        return deepcopy(self)  
     
     def set_text(self,txt):
         """ Set up the output file. """
         if txt is None:
-            self.txt=sys.stdout
+            from sys import stdout
+            self.txt=stdout
         else:
             self.txt=open(txt,'a')
         
@@ -186,6 +178,7 @@ class Calculator(Output):
         else:
             return self.args[arg]
         
+        
     def solve_ground_state(self,atoms):
         """ If atoms moved, solve electronic structure. """
         if not self.init:
@@ -195,8 +188,9 @@ class Calculator(Output):
         else:
             pass
                   
+                  
     def _initialize(self,atoms):
-        """ Initialization of hotbit. """                 
+        """ Initialization of hotbit. """  
         self.timer.start('initialization')
         self.el=Elements(self,atoms,self.timer,self.element_files,charge=self.args['charge'])
         self.ia=Interactions(self,self.timer,self.el,self.table_files)
@@ -214,6 +208,7 @@ class Calculator(Output):
         self.flush()
         self.timer.stop('initialization')
         
+        
     def get_potential_energy(self,atoms):
         """ Return the potential energy of present system. """
         self.solve_ground_state(atoms)
@@ -223,6 +218,7 @@ class Calculator(Output):
         erep=self.rep.get_repulsive_energy()
         self.timer.stop('energies')
         return ebs+ecoul+erep
+              
               
     def get_forces(self,atoms):
         """ Return the forces of present system. """
@@ -234,24 +230,30 @@ class Calculator(Output):
         self.timer.stop('forces')
         return (fbs+frep+fcoul)*(Hartree/Bohr)
             
+            
     def get_stress(self,atoms):
         self.solve_ground_state(atoms)
         return None            
          
+         
     def get_charge(self):
         return self.get('charge')
+    
     
     def get_dq(self,atoms):
         self.solve_ground_state(atoms)
         return self.st.get_dq()
     
+    
     def get_eigenvalues(self,atoms):
         self.solve_ground_state(atoms)
         return self.st.get_eigenvalues()*Hartree
     
+    
     def get_occupations(self):
         #self.solve_ground_state(atoms)
         return self.st.get_occupations()
+        
         
     def get_band_structure_energy(self,atoms):
         self.solve_ground_state(atoms)
@@ -282,6 +284,7 @@ class Calculator(Output):
         """ Initialize the calculator for given atomic system. """
         if self.init==False:
             self._initialize(atoms)    
+    
     
     def get_occupation_numbers(self,kpt=0,spin=0):
         raise NotImplementedError
