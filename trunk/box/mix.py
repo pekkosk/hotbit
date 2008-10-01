@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+
+# Copyright (C) 2008 NSC Jyvaskyla
+# Please see the accompanying LICENSE file for further information.
 '''
     A module containing miscellanous utility functions.
 

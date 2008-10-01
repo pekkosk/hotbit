@@ -1,3 +1,6 @@
+# Copyright (C) 2008 NSC Jyvaskyla
+# Please see the accompanying LICENSE file for further information.
+
 from scipy.linalg import eig
 import numpy as nu
 from hotbit.fortran.eigensolver import geig

@@ -1,3 +1,6 @@
+# Copyright (C) 2008 NSC Jyvaskyla
+# Please see the accompanying LICENSE file for further information.
+
 import numpy as nu
 from scipy.special import erf
 from hotbit import auxil

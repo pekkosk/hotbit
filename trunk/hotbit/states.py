@@ -1,3 +1,6 @@
+# Copyright (C) 2008 NSC Jyvaskyla
+# Please see the accompanying LICENSE file for further information.
+
 from solver import Solver
 from hotbit.fortran.misc import fortran_rho
 from hotbit.fortran.misc import fortran_rho0
