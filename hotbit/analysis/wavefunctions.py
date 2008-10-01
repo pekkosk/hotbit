@@ -290,50 +290,31 @@ class JelliumAnalysis:
         self.create_uniform_cubic_grid()
 
 
-
     def create_uniform_cubic_grid(self):
-        """ Create grid of a x a x a cubes. """
+        """
+        Creates a grid of a x a x a cubes, where the grid points
+        are in the center of the cubes. The grid is built so that
+        the origin of the expansion is one of the grid points.
+        """
         a = self.a
         self.dV = a**3
         cell = self.calc.el.get_box_lengths()
-        Nx = round(cell[0]/a)
-        self.Lx = Nx*a
-        Ny = round(cell[1]/a)
-        self.Ly = Ny*a
-        Nz = round(cell[2]/a)
-        self.Lz = Nz*a
-        self.dim = (Nx, Ny, Nz)
-        self.grid_points = [nu.arange(Nx)*a + a/2,
-                            nu.arange(Ny)*a + a/2,
-                            nu.arange(Nz)*a + a/2]
-
-        # force the given origin to be one of the grid points
-        # and find the closest one - a beautiful brute force solution
-        minimum = 1e10
-        for i, x in enumerate(self.grid_points[0]):
-            for j, y in enumerate(self.grid_points[1]):
-                for k, z in enumerate(self.grid_points[2]):
-                    vec = nu.array((x,y,z)) - self.origin
-                    norm = nu.linalg.norm(vec)
-                    if norm < minimum:
-                        minimum = norm
-                        new_origin = [x,y,z]
-        self.origin = nu.array(new_origin)
-
-
-        # Make sure that the expansion radius is not too large,
-        # ie, the max radius = the longest distance from the center
-        # of the expansion to the corners of the grid
-        x_min, x_max = self.grid_points[0][0], self.grid_points[0][-1]
-        y_min, y_max = self.grid_points[1][0], self.grid_points[1][-1]
-        z_min, z_max = self.grid_points[2][0], self.grid_points[2][-1]
-        R_min = float(1e10)
-        for x in [x_min, x_max]:
-            for y in [y_min, y_max]:
-                for z in [z_min, z_max]:
-                    R_min = min( R_min, nu.linalg.norm(nu.array((x,y,z)) - self.origin) )
-        if self.R_0 > R_min:
-            self.R_0 = R_min
+        self.grid_points = []
+        for d in range(3):
+            g = []
+            R = self.origin[d]
+            limits = [0, cell[d]]
+            for i, m in enumerate([-1,1]):
+                n = 0
+                while True:
+                    n += 1
+                    if nu.sign(-m)*( R + m*(n-0.5)*a - limits[i] ) > 0:
+                        g.append(R + m*n*a)
+                    else:
+                        break
+            g.sort()
+            self.grid_points.append(g)
+        self.dim = [len(axis) for axis in self.grid_points]
 
 
     def mark_grids(self):
