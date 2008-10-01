@@ -5,7 +5,6 @@ from box.data import data
 from ase import VelocityVerlet
 from ase import PickleTrajectory
 from ase.units import fs, Hartree
-import pylab as pl
 
 class TrajectoryRecording:
     def __init__(self,atoms,verbose=False):
@@ -138,6 +137,7 @@ def energy_conservation_plot(atoms,dts,total_time=100):
     total_time: total simulation time (in fs) for all simulations
                 (smaller time stepping makes more calculations)
     """
+    import pylab as pl
     R0=atoms.get_positions()
     dE=[]
     dU=[]
