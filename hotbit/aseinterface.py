@@ -1,8 +1,12 @@
+# Copyright (C) 2008 NSC Jyvaskyla
+# Please see the accompanying LICENSE file for further information.
+
 """
     ASE-calculator interface for HOTBIT.
     (Handy Open-source Tight-binding Tool)
     
-    P. Koskinen 21.1 2008 onwards
+
+    
     
 """
 import weakref

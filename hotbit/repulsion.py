@@ -1,3 +1,6 @@
+# Copyright (C) 2008 NSC Jyvaskyla
+# Please see the accompanying LICENSE file for further information.
+
 import numpy as nu
 from ase.units import Bohr,Hartree
 from box import mix
