@@ -519,7 +519,6 @@ class JelliumAnalysis:
         self.basis_functions_to_grid()
         self.analyse_states()
         self.write_to_file()
-        self.make_plot()
 
 
 if __name__ == '__main__':
@@ -533,3 +532,4 @@ if __name__ == '__main__':
          h2.get_potential_energy()
          JA = JelliumAnalysis(h2, maxl=1, R_0=3, a=0.4)
          JA.run()
+         JA.make_plot()
