@@ -2,7 +2,7 @@ from ase import *
 from box import Atoms
 from box import mix
 from hotbit import Calculator
-from hotbit import Calculator0
+#from hotbit import Calculator0
 from ase.units import Bohr, Hartree
 from hotbit.test.misc import default_param
 
