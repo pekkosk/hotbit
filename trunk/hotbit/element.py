@@ -164,14 +164,14 @@ class Element:
         return self.functions['Rnl'][nl]  
     
     
-    def v_effective(self,r):
+    def effective_potential(self,r):
         """ Return Kohn-Sham effective potential. """
-        return self.functions['v_effective'](r)
+        return self.functions['effective_potential'](r)
     
     
-    def confinement(self,r):
+    def confinement_potential(self,r):
         """ Return the confinement potential used to generate pseudo-atom. """
-        return self.functions['confinement'](r)
+        return self.functions['confinement_potential'](r)
         
         
     def _read_functions(self,file):
@@ -187,10 +187,10 @@ class Element:
             self.functions['unl'][nl]=Function('spline',m[:,0],m[:,1])
             self.functions['Rnl'][nl]=Function('spline',m[:,0],m[:,1]/m[:,0])                                    
             
-        m=find(o,'v_effective',fmt='matrix',default=default)  
-        self.functions['v_effective']=Function('spline',m[:,0],m[:,1])
-        m=find(o,'confinement',fmt='matrix',default=default)  
-        self.functions['confinement']=Function('spline',m[:,0],m[:,1])
+        m=find(o,'effective_potential',fmt='matrix',default=default)  
+        self.functions['effective_potential']=Function('spline',m[:,0],m[:,1])
+        m=find(o,'confinement_potential',fmt='matrix',default=default)  
+        self.functions['confinement_potential']=Function('spline',m[:,0],m[:,1])
         o.close()
         
     def write_to_file(self,file):

@@ -47,7 +47,7 @@ class LinearResponse:
             self.txt=sys.stdout
         else:
             self.txt=open(txt,'a')
-        self.timer=Timer('Linear Response',self.txt)   
+        self.timer=Timer('Linear Response',txt=self.txt)   
         self.timing=timing  
         self.done=False       
             

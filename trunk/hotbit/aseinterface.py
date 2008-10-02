@@ -89,7 +89,7 @@ class Calculator(Output):
         self.version='3.0 alpha' 
         self.notes=[]
         self.set_text(self.args['txt'])
-        self.timer=Timer('hotbit calculator',self.get_output())
+        self.timer=Timer('Hotbit',txt=self.get_output())
        
         
     def __del__(self):

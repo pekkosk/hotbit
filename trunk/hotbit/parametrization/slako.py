@@ -13,65 +13,15 @@ sqrt=math.sqrt
 pi=math.pi
 zeros=nu.zeros
 
-integrals =['dds','ddp','ddd','pds','pdp','pps','ppp','sds','sps','sss']
-angular_momentum={'s':0,'p':1,'d':2}
-
-def select_orbitals(val1,val2,integral):
-    """ 
-    Select orbitals from given valences to calculate given integral. 
-    e.g. ['2s','2p'],['4s','3d'],'sds' --> '2s' & '3d'
-    """
-    nl1=None
-    for nl in val1:
-        if nl[1]==integral[0]: nl1=nl
-    nl2=None
-    for nl in val2:
-        if nl[1]==integral[1]: nl2=nl
-    return nl1,nl2
-        
-        
-def select_integrals(e1,e2):
-    """ Return list of integrals (integral,nl1,nl2) to be done for element pair e1,e2. """
-    selected=[]
-    val1, val2 = e1.get_valence(), e2.get_valence()
-    for ii,integral in enumerate(integrals):
-        nl1, nl2=select_orbitals(val1,val2,integral)
-        if nl1==None or nl2==None:
-            continue
-        else:
-            selected.append( (integral,nl1,nl2) )
-    return selected                
-            
-        
-        
-def g(t1,t2):
-    """
-    Return the angle-dependent part of the two-center 
-    integral (it) with t1=theta_1 (atom at origin)
-    and t2=theta2 (atom at z=Rz). These dependencies
-    come after integrating analytically over phi.
-    """
-    c1, c2, s1, s2=cos(t1), cos(t2), sin(t1), sin(t2)   
-    return nu.array([5.0/8*(3*c1**2-1)*(3*c2**2-1),\
-            15.0/4*s1*c1*s2*c2,\
-            15.0/16*s1**2*s2**2,\
-            sqrt(15.0)/4*c1*(3*c2**2-1),\
-            sqrt(45.0)/4*s1*s2*c2,\
-            3.0/2*c1*c2,\
-            3.0/4*s1*s2,\
-            sqrt(5.0)/4*(3*c2**2-1),\
-            sqrt(3.0)/2*c2,\
-            0.5])
-   
-
 class SlaterKosterTable:
     def __init__(self,ela,elb,txt=None,timing=False):
-        """ Given atoms as Element objects. 
-        
+        """ Construct Slater-Koster table for given elements.
+                
         parameters:
         -----------
-        ela, elb: element objects (KSAllElectron)
-        txt: output file object or file name
+        ela:    element objects (KSAllElectron or Element)
+        elb:    element objects (KSAllElectron or Element)    
+        txt:    output file object or file name
         timing: output of timing summary after calculation
         """
         self.ela=ela
@@ -81,7 +31,7 @@ class SlaterKosterTable:
             self.txt=sys.stdout
         else:
             if type(txt)==type(''):
-                self.txt=open(out,'a')
+                self.txt=open(txt,'a')
             else:
                 self.txt=txt                
         self.comment=self.ela.get_comment()
@@ -94,7 +44,7 @@ class SlaterKosterTable:
             self.nel=1
             self.pairs=[(ela,elb)]
             self.elements=[ela]
-        self.timer=Timer('SlaterKosterTable',self.txt,timing)
+        self.timer=Timer('SlaterKosterTable',txt=self.txt,enabled=timing)
                                         
         print>>self.txt, '\n\n\n\n'                                        
         print>>self.txt, '************************************************'
@@ -181,7 +131,7 @@ class SlaterKosterTable:
         self.timer.start('define ranges')
         wf_range=0.0
         for el in self.elements:
-            r=max( [el.wf_range(nl,fractional_limit) for nl in el.get_valence()] )
+            r=max( [el.wf_range(nl,fractional_limit) for nl in el.get_valence_orbitals()] )
             print>>self.txt, 'wf range for %s=%10.5f' %(el.get_symbol(),r)
             wf_range=max(r,wf_range)
         if wf_range>20:
@@ -191,8 +141,7 @@ class SlaterKosterTable:
         
         
     def run(self,R1,R2,N,ntheta=150,nr=50,wflimit=1E-7):
-        """ 
-        Calculate the table. No output.
+        """ Calculate the Slater-Koster table. 
          
         parameters:
         ------------
@@ -286,8 +235,8 @@ class SlaterKosterTable:
             t1, t2=arccos(z/r1), arccos((z-R)/r2)
             radii[i,:]=[r1,r2]
             gphi[i,:]=g(t1,t2)
-            v1[i]=e1.v_effective(r1)-e1.confinement(r1) 
-            v2[i]=e2.v_effective(r2)-e2.confinement(r2) 
+            v1[i]=e1.effective_potential(r1)-e1.confinement_potential(r1) 
+            v2[i]=e2.effective_potential(r2)-e2.confinement_potential(r2) 
         self.timer.stop('prelude')                             
         
         # calculate all selected integrals
@@ -304,8 +253,8 @@ class SlaterKosterTable:
                 
                 S+= Rnl1*Rnl2*aux 
                 H+= Rnl1*( -0.5*ddunl2/r2 + (v1[i]+v2[i]+l2*(l2+1)/(2*r2**2))*Rnl2 )*aux
-                H2+= Rnl1*Rnl2*aux*( v2[i]-e1.confinement(r1) )
-            H2+=e1.get_eigenvalue(nl1)*S 
+                H2+= Rnl1*Rnl2*aux*( v2[i]-e1.confinement_potential(r1) )
+            H2+=e1.get_epsilon(nl1)*S 
             Sl[index]=S
             Hl[index]=H
             H2l[index]=H2
@@ -441,6 +390,60 @@ class SlaterKosterTable:
         self.timer.stop('make grid')            
         return grid,area
         
+        
+        
+        
+integrals =['dds','ddp','ddd','pds','pdp','pps','ppp','sds','sps','sss']
+angular_momentum={'s':0,'p':1,'d':2}
+
+
+def select_orbitals(val1,val2,integral):
+    """ 
+    Select orbitals from given valences to calculate given integral. 
+    e.g. ['2s','2p'],['4s','3d'],'sds' --> '2s' & '3d'
+    """
+    nl1=None
+    for nl in val1:
+        if nl[1]==integral[0]: nl1=nl
+    nl2=None
+    for nl in val2:
+        if nl[1]==integral[1]: nl2=nl
+    return nl1,nl2
+        
+        
+def select_integrals(e1,e2):
+    """ Return list of integrals (integral,nl1,nl2) to be done for element pair e1,e2. """
+    selected=[]
+    val1, val2 = e1.get_valence_orbitals(), e2.get_valence_orbitals()
+    for ii,integral in enumerate(integrals):
+        nl1, nl2=select_orbitals(val1,val2,integral)
+        if nl1==None or nl2==None:
+            continue
+        else:
+            selected.append( (integral,nl1,nl2) )
+    return selected                
+            
+        
+        
+def g(t1,t2):
+    """
+    Return the angle-dependent part of the two-center 
+    integral (it) with t1=theta_1 (atom at origin)
+    and t2=theta2 (atom at z=Rz). These dependencies
+    come after integrating analytically over phi.
+    """
+    c1, c2, s1, s2=cos(t1), cos(t2), sin(t1), sin(t2)   
+    return nu.array([5.0/8*(3*c1**2-1)*(3*c2**2-1),\
+            15.0/4*s1*c1*s2*c2,\
+            15.0/16*s1**2*s2**2,\
+            sqrt(15.0)/4*c1*(3*c2**2-1),\
+            sqrt(45.0)/4*s1*s2*c2,\
+            3.0/2*c1*c2,\
+            3.0/4*s1*s2,\
+            sqrt(5.0)/4*(3*c2**2-1),\
+            sqrt(3.0)/2*c2,\
+            0.5])
+           
         
 if __name__=='__main__':
     print select_orbital2(['2s','2p'],['4s','3d'],'sss')

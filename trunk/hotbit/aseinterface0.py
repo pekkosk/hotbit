@@ -136,7 +136,7 @@ class Calculator0(Output):
     def _set_up_calc(self,atoms,clean=False):
         """ Make atoms.dat file for setting up hotbit. """
         self.set_text(self.args['txt'])
-        self.timer=Timer('hotbit fortran',self.txt)
+        self.timer=Timer('hotbit fortran',txt=self.txt)
         from os import popen2
         if self.command==None:
             self.command=os.environ.get('HOTBIT_EXE')
