@@ -1,5 +1,5 @@
 import os
-tests=['atom_dimer.py','standard_set.py','forces.py']
+tests=['atom_dimer.py','standard_set.py','forces.py','parametrization.py']
 
 for test in tests:
     try:

@@ -137,7 +137,7 @@ class SlaterKosterTable:
         f.close()
     
     def plot(self,screen=False):
-        """ Plot table. """
+        """ Plot the Slater-Koster table. """
         pl.rc('figure.subplot',wspace=0.0001)
         pl.rc('figure.subplot',hspace=0.0001)
         mx=max(1,self.tables[0].max())

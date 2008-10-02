@@ -3,10 +3,7 @@
 
 """
     ASE-calculator interface for HOTBIT.
-    (Handy Open-source Tight-binding Tool)
-    
-
-    
+    (Handy Open-Source Tight-Binding Tool)
     
 """
 import weakref

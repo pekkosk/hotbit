@@ -294,7 +294,8 @@ def find_value(inp,key,fmt='default',default=None,position='start'):
     Usage: value_string=find_key(f,key)
            value_string_list=find_key(f,key,fmt='default')
     
-    Input:
+    Parameters:
+    -----------
       inp - file object or file name
       key  - key string (corresponding to 'key=value')
       fmt  - the format of the value:
@@ -303,6 +304,7 @@ def find_value(inp,key,fmt='default',default=None,position='start'):
              'onestr'  = return the whole line from the same line as one string
              'matrix'  = return a matrix coming after key as float
              'strings' = return the non-empty lines coming after the key as str
+             'lines'   = return the following non-empty lines as one string (with \n's)
              'bool'    = interpret the line as boolean
              'test'    = return True if key found, otherwise False
        default - returned value if key not found
@@ -442,6 +444,7 @@ def read(file,commentchar='#',fmt='array'):
         
         - 'array' -- return two-dimensional numpy array
         - 'string' -- return the set as a list of strings
+        - 'lines' -- return following non-empty lines as one string
     """
     from os.path import isfile
     if fmt=='array': from numpy import array
@@ -464,7 +467,7 @@ def read(file,commentchar='#',fmt='array'):
             r.append([float(x) for x in line.split()])
         elif fmt=='string':
             if line[-1]=='\n': line=line[:-1]
-            r.append(line)
+            r.append(line)       
         else: error_exit('[mix.read] Invalid format.')
         col = cl
         start=False
@@ -472,8 +475,11 @@ def read(file,commentchar='#',fmt='array'):
     if r==[]: return None
     if fmt=='array': 
         return array(r)
+    elif fmt=='lines':
+        return '\n'.join(r)
     else: 
         return r
+    
 
 def write(file,a,fmt='%g'):
     """

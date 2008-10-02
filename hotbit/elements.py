@@ -90,9 +90,9 @@ class Elements:
             el=self.elements[symb]
             atomorb=[]
             self.first_orbitals.append(self.norb)
-            for k,(ao,e) in enumerate(zip(el.get_orbitals(),el.get_energies())):
+            for k,(ao,e) in enumerate(zip(el.get_orbital_types(),el.get_onsite_energies())):
                 self.norb+=1
-                Rnl=el.get_Rnl(ao)
+                Rnl=el.get_Rnl_function(ao)
                 atomorb.append({'atom':i,'symbol':symb,'orbital':ao,\
                                 'index':self.norb-1,'energy':e,'atomindex':k,'Rnl':Rnl})
             self.nr_orbitals.append(len(atomorb))                                
@@ -100,7 +100,7 @@ class Elements:
             self.orb.extend(atomorb)           
             
         # number of valence electrons on atoms and the total number of electrons           
-        self.nr_of_valences=nu.array( [self.elements[symb].get_valence() for symb in self.symbols] )
+        self.nr_of_valences=nu.array( [self.elements[symb].get_valence_number() for symb in self.symbols] )
         self.electrons=self.get_valences().sum()-self.charge            
          
         # set list of element pairs         
