@@ -7,8 +7,8 @@ import numpy as nu
 class Timer:
     """ Class for making timing in nested fashion. 
     
-    out=open(...)
-    tm=Timer('main program',out)
+    txt=open(...)
+    tm=Timer('main program',txt)
     ...
     tm.start('sub')
     tm.stop('sub')
@@ -26,15 +26,28 @@ class Timer:
     Cannot be used to recursive functions.
     """
     
-    def __init__(self,label,out,level=0,enabled=True):
-        """ Init process timer with given label and output. level refers to deepness of nesting. 
+    def __init__(self,label,level=0,txt=None,enabled=True):
+        """ Init process timer with given label and output. 
+        
+        Parameters:
+        -----------
+        label:      label for process (e.g. 'integration')
+        
+         
+       
+        
+        level refers to deepness of nesting. 
         
         If not enabled, disable all timing stuff (start,stop,summary) for speeding up.        
         """
         self.label=label
         self.timers=[]
         self.first=time()
-        self.out=out
+        if txt==None:
+            from sys import stdout
+            self.txt=stdout
+        else:
+            self.txt=txt            
         self.level=level
         self.running=False
         self.enabled=enabled
@@ -105,7 +118,7 @@ class Timer:
                  raise AssertionError('Timer %s cannot make running child timers; itself is not running!' %self.label)
             if tr==None:
                 outmost=self.get_outmost_running()
-                tr=Timer(label,self.out,outmost.get_level()+1)    
+                tr=Timer(label,txt=self.txt,level=outmost.get_level()+1)    
                 outmost.add_subtimer(tr)
             if tr.is_running():
                 raise AssertionError('Timer %s is already running!' %label)                
@@ -166,15 +179,15 @@ class Timer:
         dict={}
         dt, txt, self.dict=self.get_summary(total,total,dict)
                 
-        print>>self.out, '\nTiming:'
-        print>>self.out, '            label                    time     calls    %sub  %covered   %tot'
-        print>>self.out, '-'*79
-        print>>self.out, txt,
-        print>>self.out, '-'*79
-        print>>self.out, 'total time %12.3f' %total
-        print>>self.out, asctime()
+        print>>self.txt, '\nTiming:'
+        print>>self.txt, '            label                    time     calls    %sub  %covered   %tot'
+        print>>self.txt, '-'*79
+        print>>self.txt, txt,
+        print>>self.txt, '-'*79
+        print>>self.txt, 'total time %12.3f' %total
+        print>>self.txt, asctime()
         self.smry=True
-        self.out.flush()
+        self.txt.flush()
                 
 
 
@@ -207,43 +220,5 @@ class OneTimer:
         return len(self.durations)
         
 
-#class Timer:
-    #def __init__(self,label,out):
-        #self.label=label
-        #self.procs={}
-        #self.t0=time.time()
-        #self.out=out
-    
-    #def start(self,key):
-        #""" Start process with given key. """        
-        #if key not in self.procs:
-            #self.procs[key]=[OneTimer(key),{}]
-        #for k2 in self.procs:
-            #assert not self.procs[key].is_running()
-        #self.procs[key].start()
-        
-    #def stop(self,key):
-        #""" Stop process with given key. """
-        #self.procs[key].stop()
-        
-    #def __del__(self):
-        #self.summary()
-        
-    #def summary(self):
-        #self.t1=time.time()
-        #total=self.t1-self.t0        
-            
-        #print>>self.out, '\nTiming:'
-        #print>>self.out, '-'*79
-        #for key in self.procs:
-            #dt=self.procs[key].get_time()
-            #calls=self.procs[key].get_calls()
-            #procent=dt/total*100.0
-            #x=int(procent*0.3)
-            #bar='|'+'-'*x+'|'
-            #print>>self.out, '%25s %12.3f (%5.1f %%) %5i %s' %(key,dt,procent,calls,bar)
-        #print>>self.out, '-'*79
-        #print>>self.out, 'total time %12.3f' %total
-        #print>>self.out, time.asctime()
-            
+          
             

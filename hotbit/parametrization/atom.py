@@ -65,7 +65,7 @@ class KSAllElectron:
         self.nodegpts=nodegpts
         self.mix=mix
         self.timing=timing       
-        self.timer=Timer('KSAllElectron',self.txt,enabled=self.timing)
+        self.timer=Timer('KSAllElectron',txt=self.txt,enabled=self.timing)
         self.timer.start('init')
         
         # element data
@@ -505,7 +505,7 @@ class KSAllElectron:
     
     
     def write_functions(self,file,only_valence=True):
-        """ Write functions (unl,v_effective,...) into file (only valence functions by default). """
+        """ Append functions (unl,v_effective,...) into file (only valence functions by default). """
         if not self.solved:
             raise AssertionError('run calculations first.')
         if only_valence:
