@@ -1,8 +1,6 @@
 import numpy as nu
 import pylab as pl
 from scipy.integrate import odeint
-from box.data import atom_occupations
-from box.data import atom_valence
 from box.data import data
 from copy import copy
 from box.interpolation import Function 
@@ -16,69 +14,77 @@ pi=math.pi
 log=math.log
 
 class KSAllElectron:
-    def __init__(self,symbol,**kwargs):
+    def __init__(self,symbol,
+                      configuration={},
+                      valence=[],
+                      confinement=None,
+                      xc='PW92',
+                      convergence={'density':1E-7,'energies':1E-7},        
+                      nodegpts=500,
+                      mix=0.2,
+                      itmax=200,  
+                      timing=False,
+                      verbose=False,
+                      txt=None):       
         """ 
-        KS_Atom('H',occu={'1s':1},confinement={'mode':'frauenheim','r0':1.234},valence=['1s'] 
+        Make Kohn-Sham all-electron calculation for given atom.
         
-        occu: e.g. {'2s':2,'2p':2}. Overrides (for given orbitals) default occupations and valence from box.data.
-        valence: list of valence orbitals, e.g. ['2s','2p']. Overrides default occupations from box.data.
-        etol: sp energy tolerance for eigensolver
-        grid: RadialGrid class object. Default: ...
-        convergence: if integrated |density-density_old|<convergence, density is converged
-        itmax: maximum number of iterations for self-consistency.
-        mix: effective potential mixing constant
-        timing: output of timing summary (default=False)
+        Examples:
+        ---------
+        atom=KSAllElectron('C')
+        atom=KSAllElectron('C',confinement={'mode':'frauenheim','r0':1.234})
+        atom.run()
+        
+        Parameters:
+        -----------
+        symbol:         chemical symbol
+        configuration:  e.g. {'2s':2,'2p':2}. Overrides (for orbitals given in dict) default 
+                        configuration from box.data.
+        valence:        valence orbitals, e.g. ['2s','2p']. Overrides default valence from box.data.
+        confinement:    additional confining potential (see ConfinementPotential class)
+        etol:           sp energy tolerance for eigensolver (Hartree)
+        convergence:    convergence criterion dictionary
+                        * density: max change for integrated |n_old-n_new| 
+                        * energies: max change in single-particle energy (Hartree)
+        nodegpts:       total number of grid points is nodegpts times the max number 
+                        of antinodes for all orbitals
+        mix:            effective potential mixing constant
+        itmax:          maximum number of iterations for self-consistency.
+        timing:         output of timing summary 
+        verbose:        increase verbosity during iterations
+        txt:            output file name 
         """
         self.symbol=symbol
-        
-        self.args={ 'occu':{},\
-                    'valence':[],\
-                    'confinement':None,\
-                    'xc':'PW92',\
-                    'convergence':{'density':1E-7,'energies':1E-7},\
-                    'out':None,\
-                    'itmax':200,\
-                    'verbose':False,\
-                    'nodegpts':500,\
-                    'mix':0.4,\
-                    'timing':False }
-                
-        for key in kwargs:
-            if key not in self.args:
-                raise AssertionError('Keyword %s not allowed' %key)                
-        
-        if 'convergence' in kwargs:
-            self.args['convergence'].update( kwargs['convergence'] )
-            kwargs.pop('convergence')
-        self.args.update(kwargs)
-        
-        for key in self.args:
-            if type(self.args[key])==type(''):
-                exec 'self.%s="%s"' %(key,self.args[key]) 
-            else:                
-                exec 'self.%s=%s' %(key,self.args[key]) 
-        
-        self.set_output(self.txt)  
+        self.valence=valence
+        self.confinement=confinement
+        self.xc=xc
+        self.convergence=convergence
+        self.set_output(txt)
+        self.itmax=itmax
+        self.verbose=verbose
+        self.nodegpts=nodegpts
+        self.mix=mix
+        self.timing=timing       
         self.timer=Timer('KSAllElectron',self.txt,enabled=self.timing)
         self.timer.start('init')
         
-        # element default data
-        self.data=copy(data[self.symbol])
+        # element data
+        self.data=copy( data[self.symbol] )
         self.Z=self.data['Z']
-        self.valence=copy(atom_valence[self.symbol])
-        if self.args['valence']!=[]:
-            self.valence=self.args['valence']
-        self.occu=atom_occupations[self.symbol].copy()
-        nel_neutral=sum([self.occu[key] for key in self.occu])
+        if self.valence == []:
+            self.valence = copy( data[self.symbol]['valence_orbitals'] )
         
         # ... more specific
-        self.occu.update(self.args['occu'])
+        self.occu = copy( data[self.symbol]['configuration'] )
+        nel_neutral = self.Z
+        assert sum([self.occu[key] for key in self.occu]) == nel_neutral
+        self.occu.update( configuration )
         self.nel=sum([self.occu[key] for key in self.occu])
         self.charge=nel_neutral-self.nel
         if self.confinement==None:
-            self.confinement=ConfinementPotential('none')
+            self.confinement_potential=ConfinementPotential('none')
         else:
-            self.confinement=ConfinementPotential(**self.confinement)            
+            self.confinement_potential=ConfinementPotential(**self.confinement)            
         self.conf=None      
         self.nucl=None      
         self.exc=None
@@ -88,7 +94,6 @@ class KSAllElectron:
             raise NotImplementedError('Not implemented xc functional: %s' %xc)
         
         # technical stuff
-        self.mix=0.2
         self.maxl=9
         self.maxn=9
         self.plotr={}
@@ -123,7 +128,7 @@ class KSAllElectron:
         if txt==None:
             self.txt=sys.stdout
         else:
-            self.txt=open(out,'a')
+            self.txt=open(txt,'a')
         print>>self.txt, '*******************************************'
         print>>self.txt, 'Kohn-Sham all-electron calculation for %2s ' %self.symbol
         print>>self.txt, '*******************************************'
@@ -154,7 +159,7 @@ class KSAllElectron:
                             
             print>>self.txt, '\nvalence orbital energies'
             print>>self.txt, '--------------------------'
-            for nl in atom_valence[self.symbol]:
+            for nl in data[self.symbol]['valence_orbitals']:
                 print>>self.txt, '%s, energy %.15f' %(nl,self.enl[nl])                            
                 
             print>>self.txt, '\n'
@@ -167,6 +172,7 @@ class KSAllElectron:
             print>>self.txt, '----------------------------'
             print>>self.txt, 'total energy:           %.15f\n\n' %self.total_energy     
         self.timer.stop('energies')            
+        
         
     def calculate_density(self):
         """ Calculate the radial electron density.; sum_nl |Rnl(r)|**2/(4*pi) """
@@ -225,6 +231,7 @@ class KSAllElectron:
         self.timer.stop('veff')
         return self.nucl + self.Hartree + self.vxc + self.conf        
     
+    
     def guess_density(self):
         """ Guess initial density. """
         r2=0.02*self.Z # radius at which density has dropped to half; improve this!
@@ -249,7 +256,7 @@ class KSAllElectron:
         N=self.grid.get_N()
         
         # make confinement and nuclear potentials; intitial guess for veff
-        self.conf=array([self.confinement(r) for r in self.rgrid])
+        self.conf=array([self.confinement_potential(r) for r in self.rgrid])
         self.nucl=array([self.V_nuclear(r) for r in self.rgrid])
         self.veff=self.nucl+self.conf
         
@@ -393,30 +400,7 @@ class KSAllElectron:
             assert u[1]>0.0 
         self.timer.stop('eigenstates')
         return d_enl_max, itmax                                  
-              
-              
-    def guess_epsilon(self,epsilon=None,nodes=None,nodes_nl=None,nl=None,init=False,iteration=None):
-        """ Guess next single-particle energy. """
-        if init:
-            if iteration<3:
-                (n,l)=orbit_transform(nl,string=False)
-                self.high=[2*self.Z**2/n**2,100]
-                self.low=[-self.high[0],-1]
-                eps=-0.5*self.Z**2/n**2
-            else:
-                eps=self.enl[nl]
-                self.high=[self.enl[nl]+3*self.d_enl[nl],100]
-                self.low=[self.enl[nl]-3*self.d_enl[nl],0]
-            return eps
-        elif epsilon!=None:    
-            if nodes>nodes_nl:
-                self.high=[epsilon,nodes]
-            elif nodes<=nodes_nl:
-                self.low=[epsilon,nodes]
-            if self.high[1]<=self.low[1]:
-                raise RuntimeError('Bracketing eigenvalue failed. Use larger tolerances.')
-            return 0.5*(self.low[0]+self.high[0])
-               
+            
         
     def plot_Rnl(self,screen=False,r=False):
         """ Plot radial wave functions with matplotlib. 
@@ -442,12 +426,14 @@ class KSAllElectron:
         else:
             pl.savefig('%s_KSatom.png' %self.symbol)
             
+            
     def wf_range(self,nl,fractional_limit=1E-7):
         """ Return the maximum r for which |R(r)|<fractional_limit*max(|R(r)|) """
         wfmax=max(abs(self.Rnlg[nl]))
         for r,wf in zip(self.rgrid[-1::-1],self.Rnlg[nl][-1::-1]):
             if wf>fractional_limit*wfmax: 
                 return r
+        
         
     def list_states(self):
         """ List all potential states {(n,l,'nl')}. """
@@ -459,47 +445,57 @@ class KSAllElectron:
                     states.append((n,l,nl))
         return states
                 
+                
     def get_energy(self):
         return self.total_energy                
                     
-    def get_eigenvalue(self,nl):
+                    
+    def get_epsilon(self,nl):
         """ get_eigenvalue('2p') or get_eigenvalue((2,1)) """
         nls=orbit_transform(nl,string=True)
         if not self.solved:
             raise AssertionError('run calculations first.')
         return self.enl[nls]
     
-    def v_effective(self,r,der=0):
-        """ Return effective potential at r. """
+    
+    def effective_potential(self,r,der=0):
+        """ Return effective potential at r or its derivatives. """
         if self.veff_fct==None:
             self.veff_fct=Function('spline',self.rgrid,self.veff)
         return self.veff_fct(r,der=der)
         
+        
     def get_radial_density(self):
         return self.rgrid,self.dens        
+        
         
     def Rnl(self,r,nl,der=0):
         """ Rnl(r,'2p') or Rnl(r,(2,1))"""
         nls=orbit_transform(nl,string=True)
         return self.Rnl_fct[nls](r,der=der)
         
+        
     def unl(self,r,nl,der=0):
         """ unl(r,'2p')=Rnl(r,'2p')/r or unl(r,(2,1))..."""
         nls=orbit_transform(nl,string=True)
         return self.unl_fct[nls](r,der=der)
         
-    def get_valence(self):
+        
+    def get_valence_orbitals(self):
         """ Get list of valence orbitals, e.g. ['2s','2p'] """
         return self.valence
+    
     
     def get_symbol(self):
         """ Return atom's chemical symbol. """
         return self.symbol
         
+        
     def get_comment(self):
         """ One-line comment, e.g. 'H, charge=0, frauenheim, r0=4' """
-        comment='%s xc=%s charge=%.1f conf:%s' %(self.symbol,self.xc,float(self.charge),self.confinement.get_comment())
+        comment='%s xc=%s charge=%.1f conf:%s' %(self.symbol,self.xc,float(self.charge),self.confinement_potential.get_comment())
         return comment
+    
     
     def get_valence_energies(self):
         """ Return list of valence energies, e.g. ['2s','2p'] --> [-39.2134,-36.9412] """
@@ -507,8 +503,6 @@ class KSAllElectron:
             raise AssertionError('run calculations first.')
         return [(nl,self.enl[nl]) for nl in self.valence]
     
-    def get_valence_l(self):
-        pass
     
     def write_functions(self,file,only_valence=True):
         """ Write functions (unl,v_effective,...) into file (only valence functions by default). """
@@ -654,80 +648,7 @@ class RadialGrid:
             return ((f[0:self.N-1]+f[1:self.N])*self.dr).sum()*0.5
         
                     
-    
-class RadialGrid0:
-    def __init__(self,grid):
-        """ 
-        mode
-        ----
-        
-        rmin                                                        rmax
-        r[0]     r[1]      r[2]            ...                     r[N-1] grid
-        I----'----I----'----I----'----I----'----I----'----I----'----I
-           r0[0]     r0[1]     r0[2]       ...              r0[N-2]       r0grid
-           dV[0]     dV[1]     dV[2]       ...              dV[N-2]       dV
-           
-           dV[i] is volume element of shell between r[i] and r[i+1]
-        """
-        
-        rmin, rmax=grid[0], grid[-1]
-        N=len(grid)
-        self.N=N
-        self.grid=grid
-        self.dr=self.grid[1:N]-self.grid[0:N-1]
-        self.r0=self.grid[0:N-1]+self.dr/2
-        # first dV is sphere (treat separately), others are shells 
-        self.dV_sphere=4.0/3*nu.pi*self.grid[0]**3 
-        self.dr_sphere=self.grid[0]
-        self.dV=nu.zeros_like(self.r0)
-        self.dV[0:N-1]=4.0/3*nu.pi*(self.grid[1:N]**3-self.grid[0:N-1]**3)
-        
-        self.r4=self.grid[1:N]**4-self.grid[0:N-1]**4
-        self.r3=self.grid[1:N]**3-self.grid[0:N-1]**3
 
-    def get_grid(self):
-        """ Return the whole radial grid. """
-        return self.grid
-
-    def get_N(self):
-        """ Return the number of grid points. """
-        return self.N
-        
-    def get_drgrid(self):
-        """ Return the grid spacings (array of length N-1). """
-        return self.dr
-        
-    def get_r0grid(self):
-        """ Return the mid-points between grid spacings (array of length N-1). """
-        return self.r0
-    
-    def get_dvolumes(self):
-        """ Return dV(r)'s=4*pi*r**2*dr. """
-        return self.dV
-        
-    def plot(self,screen=True):
-        rgrid=self.get_grid()
-        pl.scatter(range(len(rgrid)),rgrid)
-        if screen: pl.show()       
-         
-    def integrate(self,f,use_dV=False):
-        """ 
-        Integrate function f (given with N grid points).
-        int_rmin^rmax f*dr (use_dv=False) or int_rmin^rmax*f dV (use_dV=True)
-        """
-        if use_dV:
-            #print self.dV_sphere*f[0],((f[0:self.N-1]+f[1:self.N])*self.dV).sum()*0.5
-            #return self.dV_sphere*f[0] + ((f[0:self.N-1]+f[1:self.N])*self.dV).sum()*0.5
-            slopes=(f[1:self.N]-f[0:self.N-1])/self.dr
-            #print self.dV_sphere*f[0],4*nu.pi*( f[0:self.N-1]*self.r3/3+0.25*slopes*self.r4-slopes*self.grid[0:self.N-1]/3*self.r3 ).sum()
-            return self.dV_sphere*f[0] + 4*nu.pi*( f[0:self.N-1]*self.r3/3+0.25*slopes*self.r4-slopes*self.grid[0:self.N-1]/3*self.r3 ).sum()
-        else:
-            #print self.dr_sphere*f[0],((f[0:self.N-1]+f[1:self.N])*self.dr).sum()*0.5
-            return self.dr_sphere*f[0] + ((f[0:self.N-1]+f[1:self.N])*self.dr).sum()*0.5
-        
-        
-        
-        
 class ConfinementPotential:
     def __init__(self,mode,**kwargs):
         self.mode=mode
@@ -759,6 +680,7 @@ class ConfinementPotential:
 
 class XC_PW92:
     def __init__(self):
+        """ The Perdew-Wang 1992 LDA exchange-correlation functional. """
         self.small=1E-90
         self.a1 = 0.21370
         self.c0 = 0.031091
@@ -817,21 +739,5 @@ def orbit_transform(nl,string):
         n=int(nl[0])
         return (n,l)  # '2p'->(2,1)
         
-            
-    
 
-
-#occupations={'H':{'1s':1}}
-#valence={'H':['1s']}
-
-  
-#def get_density_FWHM
-#def calculate_ionization_energy
-#def calculate_electron_affinity
-#def calculate_hubbard_U
-
-
- 
-        
-    
     

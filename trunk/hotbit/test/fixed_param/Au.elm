@@ -1,10 +1,10 @@
-symbol=Au
-Z=   79
-m=      196.970
-valence=     11.0
-orbitals=     9
-energies=  -0.2149 -0.0096 -0.0096 -0.0096 -0.2537 -0.2537 -0.2537 -0.2537 -0.2537
+symbol = Au
+epsilon_6s = -0.2149
+epsilon_6p = -0.0096
+epsilon_5d = -0.2537  
 U=      0.25
 FWHM=   5.0
 vib=    190
 dnn=    5.452
+comment =
+Scalar-relativistic gold
