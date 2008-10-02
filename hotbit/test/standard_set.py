@@ -1,5 +1,5 @@
 from hotbit import Calculator 
-from hotbit import Calculator0
+#from hotbit import Calculator0
 from ase import *
 from ase.data.molecules import molecule
 from hotbit.test.misc import default_param
