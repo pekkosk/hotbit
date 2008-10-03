@@ -1,26 +1,32 @@
 # Copyright (C) 2008 NSC Jyvaskyla
 # Please see the accompanying LICENSE file for further information.
+#
+# Experimental data * mass, R_cov (2008 data), R_vdw, EA from www.webelements.com
+#                   * IE from gElemental 1.2.0
+#
+from numpy import nan
 
 data={}
-data['H'] ={'Z':1, 'symbol':'H', 'name':'hydrogen', 'mass':1.00797,  'R_cov':0.37,'R_vdw':1.2,'IE': 'EA' }            
+
+data['H'] ={'Z':1, 'symbol':'H', 'name':'hydrogen', 'mass': 1.0079,  'R_cov':0.31,'R_vdw':1.20,'IE':0.0135,'EA':72.27 }            
 data['He']={'Z':2, 'symbol':'He'}
 data['Li']={'Z':3, 'symbol':'Li'}
 data['Be']={'Z':4, 'symbol':'Be'}
 data['B'] ={'Z':5, 'symbol':'B'}
-data['C'] ={'Z':6, 'symbol':'C', 'name':'carbon',   'mass':12.01115, 'R_cov':0.77,'R_vdw':1.7 }            
-data['N'] ={'Z':7, 'symbol':'N', 'name':'nitrogen', 'mass':14.0067,  'R_cov':0.75,'R_vdw':1.55}            
-data['O'] ={'Z':8, 'symbol':'O', 'name':'oxygen',   'mass':15.9994,  'R_cov':0.73,'R_vdw':1.52}            
+data['C'] ={'Z':6, 'symbol':'C', 'name':'carbon',   'mass':12.0107,  'R_cov':0.76,'R_vdw':1.70,'IE':11.256,'EA':1.594}            
+data['N'] ={'Z':7, 'symbol':'N', 'name':'nitrogen', 'mass':14.0067,  'R_cov':0.71,'R_vdw':1.55,'IE':14.527,'EA':0.072}            
+data['O'] ={'Z':8, 'symbol':'O', 'name':'oxygen',   'mass':15.9994,  'R_cov':0.66,'R_vdw':1.52,'IE':13.612,'EA':1.460}            
 data['F'] ={'Z':9, 'symbol':'F'}
 data['Ne']={'Z':10,'symbol':'Ne'}
-data['Na']={'Z':11,'symbol':'Na','name':'sodium',   'mass':22.9898,  'R_cov':1.54,'R_vdw':2.27}           
-data['Mg']={'Z':12,'symbol':'Mg','name':'magnesium','mass':24.305,   'R_cov':1.41,'R_vdw':1.73}                        
-data['Cl']={'Z':17,'symbol':'Cl','name':'chlorine', 'mass':35.453,   'R_cov':1.02,'R_vdw':1.75}            
+data['Na']={'Z':11,'symbol':'Na','name':'sodium',   'mass':22.9898,  'R_cov':1.66,'R_vdw':2.27,'IE':5.136, 'EA':0.547}           
+data['Mg']={'Z':12,'symbol':'Mg','name':'magnesium','mass':24.3050,  'R_cov':1.41,'R_vdw':1.73,'IE':7.642, 'EA':0.000}                        
+data['Cl']={'Z':17,'symbol':'Cl','name':'chlorine', 'mass':35.4530,  'R_cov':1.02,'R_vdw':1.75,'IE':12.962,'EA':3.615}            
 data['Ar']={'Z':18,'symbol':'Ar'}
-data['K'] ={'Z':19,'symbol':'K', 'name':'potassium','mass':39.102,   'R_cov':2.03,'R_vdw':2.75}             
-data['Ti']={'Z':22,'symbol':'Ti','name':'titanium', 'mass':47.90,    'R_cov':1.36,'R_vdw':2.00}            
+data['K'] ={'Z':19,'symbol':'K', 'name':'potassium','mass':39.0983,  'R_cov':2.03,'R_vdw':2.75,'IE':4.338, 'EA':0.501}             
+data['Ti']={'Z':22,'symbol':'Ti','name':'titanium', 'mass':47.8760,  'R_cov':1.60,'R_vdw':2.15,'IE':6.825, 'EA':0.078}            
 data['Kr']={'Z':36,'symbol':'Kr'}
 data['Xe']={'Z':54,'symbol':'Xe'}
-data['Au']={'Z':79,'symbol':'Au','name':'gold',     'mass':196.967,  'R_cov':1.44,'R_vdw':1.66}                    
+data['Au']={'Z':79,'symbol':'Au','name':'gold',     'mass':196.9666, 'R_cov':1.36,'R_vdw':1.66,'IE':9.221, 'EA':2.308}                    
                         
 # update with valence orbital data                        
 valence_orbitals={}
