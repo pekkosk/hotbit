@@ -4,8 +4,6 @@ epsilon_6p=-0.0096
 epsilon_5d=-0.2537
 U=      0.25
 FWHM=   5.0
-vib=    190
-dnn=    5.452
 comment=
 Scalar-Relativistic gold (r0=5.04 Bohr) with Berkeley code (j-averaged ang.mom.)
 
