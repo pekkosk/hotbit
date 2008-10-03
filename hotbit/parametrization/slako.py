@@ -131,7 +131,7 @@ class SlaterKosterTable:
         self.timer.start('define ranges')
         wf_range=0.0
         for el in self.elements:
-            r=max( [el.wf_range(nl,fractional_limit) for nl in el.get_valence_orbitals()] )
+            r=max( [el.get_wf_range(nl,fractional_limit) for nl in el.get_valence_orbitals()] )
             print>>self.txt, 'wf range for %s=%10.5f' %(el.get_symbol(),r)
             wf_range=max(r,wf_range)
         if wf_range>20:

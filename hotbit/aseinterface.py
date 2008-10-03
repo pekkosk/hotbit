@@ -93,6 +93,7 @@ class Calculator(Output):
        
         
     def __del__(self):
+        """ Delete calculator -> timing summary. """
         if self.get('SCC'):
             try:
                 print>>self.txt, self.st.solver.get_iteration_info()
@@ -107,6 +108,7 @@ class Calculator(Output):
         self.close_output()
         
     def add_note(self,note):
+        """ Add warning (etc) note to be printed in log file end. """
         self.notes.append(note)        
           
     def greetings(self):

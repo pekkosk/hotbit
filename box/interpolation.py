@@ -243,10 +243,14 @@ class SplineFunction:
         self.M=len(y)
         
     def __call__(self,x,der=0):
+        """ Return der'th derivative of f(x) 
+        
+        Return zero if x beyond the original grid range.
         """
-        Return der'th derivative of f(x) 
-        """
-        return splev(x,self.tck,der=der)
+        if x<self.x[0] or self.x[-1]<x:
+            return 0.0
+        else:
+            return splev(x,self.tck,der=der)
     
     def get_range(self):
         return (self.x[0],self.x[-1])
