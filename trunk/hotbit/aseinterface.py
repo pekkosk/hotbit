@@ -7,7 +7,6 @@
     
 """
 import numpy as nu
-import ase
 from ase.units import Bohr, Hartree
 from box.timing import Timer
 from elements import Elements
@@ -18,8 +17,6 @@ from states import States
 from hotbit.output import Output
 import box.mix as mix
 
-vec=nu.array
-err=mix.error_exit
          
     
 class Calculator(Output):

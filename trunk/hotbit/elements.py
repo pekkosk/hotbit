@@ -3,8 +3,6 @@ from box import Atoms
 import numpy as nu
 import hotbit.auxil as aux
 import box.mix as mix
-vec=nu.array
-err=mix.error_exit
 from numpy.linalg.linalg import norm
 from ase.units import Hartree,Bohr
 from os import environ
