@@ -190,21 +190,23 @@ def IP_EA(symb,remove_orb,add_orb,remove,add):
     Fit second order curve for 3 points and return IP and EA for full
     electron adding and removal.             
     """
-    from box.data import atom_occupations
+    #from box.data import atom_occupations
     # neutral atom
     atom=KSAllElectron(symb)
     atom.run()
+    occu_remove=atom.occu.copy()
+    occu_add=atom.occu.copy()
     e0=atom.get_energy()
     # remove electrons -> positive ion
-    occu=atom_occupations[symb].copy()
-    occu[remove_orb]-=remove
-    ep=KSAllElectron(symb,occu=occu)
+    #occu=atom_occupations[symb].copy()
+    occu_remove[remove_orb]-=remove
+    ep=KSAllElectron(symb,configuration=occu_remove)
     ep.run()
     ep=ep.get_energy()-e0
     # add electrons -> negative ion
-    occu=atom_occupations[symb].copy()
-    occu[add_orb]+=add
-    en=KSAllElectron(symb,occu=occu)
+    #occu=atom_occupations[symb].copy()
+    occu_add[add_orb]+=add
+    en=KSAllElectron(symb,configuration=occu_add)
     en.run()
     en=en.get_energy()-e0
     # e(x)=e0+c1*x+c2*x**2 =energy as a function of additional electrons

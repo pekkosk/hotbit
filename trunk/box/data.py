@@ -20,6 +20,7 @@ data['F'] ={'Z':9, 'symbol':'F'}
 data['Ne']={'Z':10,'symbol':'Ne'}
 data['Na']={'Z':11,'symbol':'Na','name':'sodium',   'mass':22.9898,  'R_cov':1.66,'R_vdw':2.27,'IE':5.136, 'EA':0.547}           
 data['Mg']={'Z':12,'symbol':'Mg','name':'magnesium','mass':24.3050,  'R_cov':1.41,'R_vdw':1.73,'IE':7.642, 'EA':0.000}                        
+data['S'] ={'Z':16, 'symbol':'S', 'name':'sulfur', 'mass':32.065, 'R_cov':1.02}
 data['Cl']={'Z':17,'symbol':'Cl','name':'chlorine', 'mass':35.4530,  'R_cov':1.02,'R_vdw':1.75,'IE':12.962,'EA':3.615}            
 data['Ar']={'Z':18,'symbol':'Ar'}
 data['K'] ={'Z':19,'symbol':'K', 'name':'potassium','mass':39.0983,  'R_cov':2.03,'R_vdw':2.75,'IE':4.338, 'EA':0.501}             
@@ -42,6 +43,7 @@ valence_orbitals['F'] =['2s','2p']
 valence_orbitals['Ne']=['2s','2p']
 valence_orbitals['Na']=['3s','3p']
 valence_orbitals['Mg']=['3s','3p']
+valence_orbitals['S'] =['3s','3p']
 valence_orbitals['Cl']=['3s','3p']
 valence_orbitals['Ar']=[]
 valence_orbitals['Ti']=['3d','4s','4p']
@@ -67,6 +69,7 @@ aux=[ ['H', '',{'1s':1}],\
       # third row
       ['Na','Ne',{'3s':1,'3p':0}],\
       ['Mg','Ne',{'3s':2,'3p':0}],\
+      ['S', 'Ne',{'3s':2,'3p':4}],\
       ['Cl','Ne',{'3s':2,'3p':5}],\
       ['Ar','Ne',{'3s':2,'3p':6}],\
       # fourth row
