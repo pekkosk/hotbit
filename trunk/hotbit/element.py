@@ -174,6 +174,16 @@ class Element:
         return self.functions['confinement_potential'](r)
         
         
+    def get_wf_range(self,nl,fractional_limit=1E-7):
+        """ Return the maximum r for which |R(r)|<fractional_limit*max(|R(r)|) """
+        rgrid=nu.linspace(1,20,200)
+        rnl=nu.array([self.Rnl(r,nl) for r in rgrid])
+        wfmax=max(abs(rnl))
+        for r,wf in zip(rgrid[-1::-1],rnl[-1::-1]):
+            if abs(wf)>fractional_limit*wfmax: 
+                return r
+                
+        
     def _read_functions(self,file):
         """ 
         Read radial wave functions (R=u/r), self-consistent potentials, 

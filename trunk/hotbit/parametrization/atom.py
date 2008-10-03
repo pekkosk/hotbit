@@ -427,11 +427,11 @@ class KSAllElectron:
             pl.savefig('%s_KSatom.png' %self.symbol)
             
             
-    def wf_range(self,nl,fractional_limit=1E-7):
+    def get_wf_range(self,nl,fractional_limit=1E-7):
         """ Return the maximum r for which |R(r)|<fractional_limit*max(|R(r)|) """
         wfmax=max(abs(self.Rnlg[nl]))
         for r,wf in zip(self.rgrid[-1::-1],self.Rnlg[nl][-1::-1]):
-            if wf>fractional_limit*wfmax: 
+            if abs(wf)>fractional_limit*wfmax: 
                 return r
         
         
