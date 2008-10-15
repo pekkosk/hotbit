@@ -52,7 +52,10 @@ class RepulsiveFitting:
         
         
     def write_to_par(self,txt=None,points=100,append=True):
-        """ Append Vrep into par-file, including comments. """
+        """ Append Vrep into par-file, including comments. 
+        
+        POISTETAAN. Liittyy fortran-versioon.
+        """
         if txt is None:
             txt='%s_%s.par' %(self.elm1,self.elm2)
         mode=('w','a')[append]
@@ -147,10 +150,21 @@ class RepulsiveFitting:
         self.reduce_atoms_into_cell()
         
         
+    def solve_ground_state(atoms,charge):
+        """
+        vähän kuten get_energy
+                
+        """
+        #...
+        return calc
+    
+        
     def get_energy(self,atoms,charge,forces=False):
         """
         Calculate energy (or forces) for given structure with given charge
         and given parameters (elements & tables as well).
+        
+        MUUTETAAN.(poistetaan?)
         """
         from copy import deepcopy, copy
         if type(atoms)==type(''):
@@ -189,6 +203,9 @@ class RepulsiveFitting:
         """ 
         Return the repulsive forces for atoms using given
         vrep(r) function for present element pairs.
+        
+        POISTETAAN: käytä calc:n 
+        calc.rep.get_repulsive_forces()
         """
         raise NotImplementedError('No idea if this works, check!')
         
@@ -222,11 +239,14 @@ class RepulsiveFitting:
         dimer=Atoms(symbols=[self.sym1,self.sym2],\
                     positions=[(0,0,0),(self.r_dimer,0,0)],\
                     pbc=False,cell=[100,100,100])
-        self.use_scalable_system(dimer,0.0,weight,comment='dimer at %.4f %s' %(self.r_dimer,chr(197)))
+        self.append_scalable_system(dimer,0.0,weight,comment='dimer at %.4f %s' %(self.r_dimer,chr(197)))
         
         
     def append_scalable_system(self,system,charge,weight,comment=None):
-        """ Use scalable equilibrium (DFT) system in repulsion fitting. """
+        """ Use scalable equilibrium (DFT) system in repulsion fitting. 
+        
+        TARKISTA. (KÄYTÄ VOIMIA SUORAAN?)
+        """
         if type(system)==type(''):
             atoms=read(file)
             name=file
@@ -257,6 +277,8 @@ class RepulsiveFitting:
         be the repulsive energy between given bonds! Beware of 
         the dependency on other repulsive potentials (fitting should
         depend only on the electronic part).
+        
+        UUSIKSI.
         """
         raise NotImplementedError('should (might) work; check!!')
     
@@ -293,6 +315,8 @@ class RepulsiveFitting:
         from the TB calculation for the atoms in 'relaxed' list
         is the repulsion to be fitted. If relaxed is None, all
         the residual force is minimized for all atoms.
+        
+        TARKISTETTAVA.
         """
         from copy import copy
         raise NotImplementedError('still to be checked')

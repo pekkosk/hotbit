@@ -231,8 +231,18 @@ class FastSplineFunction:
 
 
 class SplineFunction:
-    def __init__(self,x,y,k=3,s=0):
-        """ Simple B-spline function; order k is cubic by default. """        
+    def __init__(self,x,y,k=3,s=0,name=None):
+        """ Simple B-spline function; order k is cubic by default. 
+        
+        Parameters:
+        -----------
+        x:  x-grid
+        y:  y-values for given x-grid points
+        k:  order of spline (cubic by default)
+        s:  smoothness parameters (means exact reproduction of x,y values)
+        name: name of the function
+        
+        """        
         if s==-1:
             s=len(x)-nu.sqrt(2.0*len(x))
         self.tck=splrep(x,y,s=s,k=k)
@@ -241,6 +251,7 @@ class SplineFunction:
         self.a=x[0]
         self.b=x[-1]
         self.M=len(y)
+        self.name=name
         
     def __call__(self,x,der=0):
         """ Return der'th derivative of f(x) 
@@ -251,6 +262,10 @@ class SplineFunction:
             return 0.0
         else:
             return splev(x,self.tck,der=der)
+        
+    def get_name(self):
+        """ Return the name of the function. """
+        return self.name        
     
     def get_range(self):
         return (self.x[0],self.x[-1])

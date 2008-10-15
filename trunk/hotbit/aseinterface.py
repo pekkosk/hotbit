@@ -23,7 +23,8 @@ class Calculator(Output):
     """
     ASE-calculator frontend for HOTBIT calculations.
     """
-    def __init__(self,elements=None,
+    def __init__(self,parameters=None,
+                      elements=None,
                       tables=None,
                       verbose=True,
                       charge=0.0,
@@ -41,9 +42,14 @@ class Calculator(Output):
         
         Parameters:
         -----------
-        elements          Dictionary for elements used, e.g. {'H':'H_custom.elm','C':'/../C.elm'}
+        parameters:       The directory for parametrizations. If parameters==None, use
+                          HOTBIT_PARAMETERS environment variable. Parametrizations given
+                          by 'elements' and 'tables' keywords override parametrizations
+                          in this directory.
+         
+        elements:         Dictionary for elements used, e.g. {'H':'H_custom.elm','C':'/../C.elm'}
                           Items can also be elements directly: {'H':H} (with H being type Element)
-                          * If elements==None, use default element info (from HOTBIT_PARAMETERS).
+                          * If elements==None, use element info from default directory.
                           * If elements['others']=='default', use default parameters for all other
                             elements than the ones specified. E.g. {'H':'H.elm','others':'default'}
                             (otherwise all elements present have to be specified excplicitly).
@@ -66,9 +72,11 @@ class Calculator(Output):
         verbose_SCC       Increase verbosity for SCC iterations.
         """       
         from copy import copy
+        import os
         
         if gamma_cut!=None: gamma_cut=gamma_cut/Bohr                          
-        self.args={ 'elements':elements,
+        self.args={ 'parameters':parameters,
+                    'elements':elements,
                     'tables':tables,
                     'verbose':verbose,
                     'charge':charge,
@@ -82,6 +90,9 @@ class Calculator(Output):
                     'txt':txt,
                     'verbose_SCC':verbose_SCC}                    
             
+        if parameters!=None:
+            os.environ.data['HOTBIT_PARAMETERS']=parameters
+                        
         self.init=False
         self.element_files=elements
         self.table_files=tables    
@@ -91,6 +102,12 @@ class Calculator(Output):
         self.set_text(self.args['txt'])
         self.timer=Timer('Hotbit',txt=self.get_output())
        
+       
+    def set(self,key,value):       
+        if self.init==True or key not in ['charge']:
+            raise AssertionError('Parameters cannot be set after initialization.')
+        self.__dict__[key]=value
+        
         
     def __del__(self):
         """ Delete calculator -> timing summary. """
@@ -119,13 +136,14 @@ class Calculator(Output):
         from os import environ
         
         revision=popen('svnversion %s' %environ.get('HOTBIT_DIR') ).readline()
-        self.version='0.1.%s' %revision
+        self.version='0.1 (svn=%s)' %revision[:-1]
         print>>self.txt,  '\n\n\n\n\n'
         print>>self.txt,  ' _           _    _     _ _'
         print>>self.txt,  '| |__   ___ | |_ | |__ |_| |_'
         print>>self.txt,  '|  _ \ / _ \|  _||  _ \| |  _|'
         print>>self.txt,  '| | | | ( ) | |_ | ( ) | | |_'
         print>>self.txt,  '|_| |_|\___/ \__|\____/|_|\__|  ver.',self.version
+        print>>self.txt,  'Distributed under GNU GPL; see %s' %environ.get('HOTBIT_DIR')+'/LICENSE'
         print>>self.txt,  'Date:',asctime()
         dat=uname()
         print>>self.txt,  'Nodename:',dat[1]
@@ -173,12 +191,12 @@ class Calculator(Output):
     def _initialize(self,atoms):
         """ Initialization of hotbit. """  
         self.timer.start('initialization')
+        self.init=True
         self.el=Elements(self,atoms,self.timer,self.element_files,charge=self.args['charge'])
         self.ia=Interactions(self,self.timer,self.el,self.table_files)
         self.es=Electrostatics(self,self.timer)
         self.st=States(self,self.timer,self.el,self.ia)
         self.rep=Repulsion(self,self.timer,self.el,self.ia)
-        self.init=True
         self.set_enabled=False
         self.pbc=atoms.get_pbc()
         self.greetings()

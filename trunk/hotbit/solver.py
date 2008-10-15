@@ -19,7 +19,7 @@ class Solver:
         self.limit=calc.get('convergence')
         self.beta=calc.get('mixing_constant')
         self.es=calc.es
-        self.verbose=calc.get('verbose_SCC')
+        self.verbose=calc.get('verbose')
         self.iterations=None
         self.iter_history=[]
         
@@ -35,7 +35,7 @@ class Solver:
         avg, mx, mn=nu.mean(self.iter_history), min(self.iter_history), max(self.iter_history)
         return 'Solved %i times; Iterations: avg %.1f, max %i, min %i' %(len(self.iter_history),avg,mx,mn)
         
-    def get_states(self,st,dq,H0,S):
+    def get_states(self,st,dq,H0,S,count):
         """ Solve the (non)SCC generalized eigenvalue problem. """
         self.es=self.calc.es
         self.norb=len(self.calc.el)
@@ -55,6 +55,7 @@ class Solver:
             dq_out=st.get_dq()
             done,dq=mixer(dq,dq_out)
             if self.verbose:
+                
                 mixer.echo()
             if done: 
                 self.iterations=i
