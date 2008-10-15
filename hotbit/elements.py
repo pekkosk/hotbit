@@ -159,8 +159,12 @@ class Elements:
                     
         self.timer.stop('geometry')            
         
+        
     def is_solved(self,atoms):
         """ Return True if ground state is solved for current positions. """
+        if atoms.get_chemical_symbols()!=self.atoms.get_chemical_symbols():
+            atoms2=Atoms(atoms) 
+            raise RuntimeError('Calculator initialized for %s. Create new calculator for %s.' %(self.atoms.get_name(),atoms2.get_name() ))
         self.atoms=Atoms(atoms) # this is stupid; change it ASAP
         if self.solved_positions==None:
             self.update_geometry()
