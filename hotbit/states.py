@@ -46,7 +46,7 @@ class States:
         dq=self.guess_dq()
         self.norb=self.el.get_nr_orbitals()
         self.H0, self.S, self.dH0, self.dS=self.ia.get_matrices()
-        self.e, self.wf=self.solver.get_states(self,dq,self.H0,self.S)
+        self.e, self.wf=self.solver.get_states(self,dq,self.H0,self.S,self.count)
         self.el.set_solved()
         self.large_update()
         self.count+=1
