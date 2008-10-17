@@ -21,7 +21,7 @@ class RepulsiveFitting:
         order:
         calc:
         """ 
-        raise NotImplementedError('Not yet consistently implemented; however, you may comment this exception to play around.')
+        #raise NotImplementedError('Not yet consistently implemented; however, you may comment this exception to play around.')
         self.elm1=Element(rep[0])
         self.elm2=Element(rep[1])
         self.sym1=self.elm1.get_symbol()
@@ -92,7 +92,8 @@ class RepulsiveFitting:
         pl.xlabel('$r (\AA)$')
         pl.plot(r,vp,label='$V_{rep}(r)$')
         for s in self.deriv:
-            pl.scatter( [s[0]],[s[1]],s=100*s[2],label=s[3])
+            #pl.scatter( [s[0]],[s[1]],s=100*s[2],label=s[3])
+            pl.scatter( [s[0]],[s[1]],s=100*s[2],c=s[3],label=s[4])
         pl.axvline(x=self.r_cut,c='r',ls=':')
         pl.xlim(xmin=rmin)
         pl.ylim(ymin=self(rmin,der=1))
@@ -150,15 +151,24 @@ class RepulsiveFitting:
         self.reduce_atoms_into_cell()
         
         
-    def solve_ground_state(atoms,charge):
+    def solve_ground_state(self, atoms, charge=0):
         """
-        vähän kuten get_energy
+        vahan kuten get_energy
                 
         """
-        #...
-        return calc
-    
-        
+        from copy import copy
+        calc = copy(self.calc)
+        calc.set("charge",charge)
+        atoms.set_calculator(calc)
+        try:
+            # FIXME make these output to file also
+            atoms.get_potential_energy()
+            return calc
+        except Exception, ex:
+            del(calc)
+            raise Exception(ex)
+
+
     def get_energy(self,atoms,charge,forces=False):
         """
         Calculate energy (or forces) for given structure with given charge
@@ -180,8 +190,188 @@ class RepulsiveFitting:
             res=atms.get_potential_energy()
         #calc.finalize()
         return res
-        
-        
+
+
+    def mirror(self, array):
+        ret = nu.zeros(len(array))
+        for i, v in enumerate(array):
+            ret[-1-i]=v
+        return ret
+
+
+    def energy_curve(self, dft_traj, elA, elB, **kwargs):
+        """
+        Calculates the V'rep(r) from a given DFT ase-trajectory for elements
+        A and B:
+
+                    E'_DFT(R) - E'_BS(R)
+        V'rep(R) =  ------------------ ,
+                            N
+
+        where R is the distance between the elements in the system and
+              N is the number of different A-B pairs that are taken
+              into account.
+        """
+        # FIXME crashes if the dftb calculation does not converge
+        import scipy
+        import pylab
+        from ase.io.trajectory import PickleTrajectory
+        from ase import Atoms
+        from copy import copy
+        from box.interpolation import SplineFunction
+
+        if not 'N' in kwargs:
+            raise ExceptionError("You must define the number of pairs!")
+        if not 'separating_distance' in kwargs:
+            kwargs['separating_distance'] = 3.0
+        if not 'h' in kwargs:
+            kwargs['h'] = 1e-6
+        traj = PickleTrajectory(dft_traj)
+        R, E_dft = self.process_trajectory(traj, elA, elB, **kwargs)
+        E_bs = nu.zeros(len(E_dft))
+        M = 0
+        if 'frames' in kwargs:
+            frames = kwargs['frames']
+        else:
+            frames = len(E_dft)
+        for i in range(frames):
+            try:
+                atoms=copy(traj[i])
+                calc = self.solve_ground_state(atoms)
+                E_bs[i] = calc.get_potential_energy(atoms)
+                del(calc)
+                M = i+1
+            except Exception, ex:
+                print ex
+                print "Could not converge after %ith point." % M
+                break
+        traj.close()
+        N = kwargs['N']
+        if R[1] - R[0] < 0:
+            R = self.mirror(R)
+            E_dft = self.mirror(E_dft)
+            E_bs = self.mirror(E_bs)
+        vrep = SplineFunction(R[:M], (E_dft[:M] - E_bs[:M])/N)
+
+        if not 'color' in kwargs:
+            color = 'b'
+        else:
+            color = kwargs['color']
+        if not 'label' in kwargs:
+            label = ''
+        else:
+            label = kwargs['label']
+        for i, r in enumerate(R[:M]):
+            if i > 0:
+                label='_nolegend_'
+            self.append_point([r, vrep(r,der=1), 1, color, label], comment="Point from energy curve fitting")
+        if 'plot' in kwargs and kwargs['plot']:
+            pylab.plot(R[:M], E_dft[:M], label='DFT')
+            pylab.plot(R[:M], E_bs[:M], label='DFTB-Vrep')
+            pylab.plot(R[:M], vrep(R[:M]), label="Fitted repulsion")
+            pylab.plot(R[:M], vrep(R[:M], der=1), label="Derivative of the repulsion")
+            pylab.plot(R[1:M-1], vrep(R[1:M-1],der=1), 'o', label="Added points")
+            xmin, xmax, ymin, ymax = pylab.axis()
+            pylab.plot((self.r_dimer, self.r_dimer),(ymin,ymax))
+            pylab.legend()
+            pylab.show()
+
+
+    def process_trajectory(self, traj, elA, elB, **kwargs):
+        """
+        Check each frame in trajectory, make sure that the trajectory
+        is suitable for repulsion fitting for the elements A and B.
+        Finally returns the bond lenggths of elements A and B and
+        the DFT energy in each image.
+        """
+        from copy import copy
+
+        E_dft = nu.zeros(len(traj))
+        R = nu.zeros(len(traj))
+        self.assert_fixed_bond_lengths_except(traj, elA, elB, **kwargs)
+        for i, image in enumerate(traj):
+            atoms = copy(Atoms(image))
+            r = self.get_distance_of_elements(elA, elB, atoms, **kwargs)
+            E_dft[i] = image.get_total_energy()
+            R[i] = r
+        return R, nu.array(E_dft)
+
+
+    def assert_fixed_bond_lengths_except(self, t, elA, elB, **kwargs):
+        """
+        Makes sure that all the element pairs expect pairs A-B are the same 
+        or larger than the defined limit in all configurations.
+        """
+        separating_distance = kwargs['separating_distance']
+        h = kwargs['h']
+
+        fixed_pairs = []
+        fixed_lengths = []
+        long_pairs = []
+        atoms = t[0]
+        for i in range(len(atoms)):
+            for j in range(i,len(atoms)):
+                a = atoms[i]
+                b = atoms[j]
+                dL = nu.linalg.norm(a.position-b.position)
+                if ( a.symbol == elA and b.symbol == elB ) or \
+                   ( a.symbol == elB and b.symbol == elA ):
+                     # this bond length is allowed to vary
+                     pass
+                elif dL > separating_distance:
+                    long_pairs.append([i,j])
+                else:
+                    fixed_pairs.append([i,j])
+                    fixed_lengths.append(dL)
+        for k in range(1, len(t)):
+            atoms = t[k]
+            for i in range(len(atoms)):
+                for j in range(i,len(atoms)):
+                    a = atoms[i]
+                    b = atoms[j]
+                    dL = nu.linalg.norm(a.position-b.position)
+                    if [i,j] in fixed_pairs:
+                        index = fixed_pairs.index([i,j])
+                        if nu.abs(dL - fixed_lengths[index]) > h:
+                            raise AssertionError("Fixed bond length vary too much in the trajectory: atoms %i and %i." % (i, j))
+                    if [i,j] in long_pairs:
+                        if dL < separating_distance:
+                            raise AssertionError("Long bond goes below the separating limit: atoms %i and %i." % (i, j))
+
+
+    def get_distance_of_elements(self, elA, elB, positions, **kwargs):
+        """
+        Calculates the distances of element pairs A-B that are closer to
+        each other than the defined limit and makes sure that the distances
+        are equal.
+        """
+        separating_distance = kwargs['separating_distance']
+        h = kwargs['h']
+        N = kwargs['N']
+
+        R = None
+        for i in range(len(positions)):
+            for j in range(i, len(positions)):
+                a = positions[i]
+                b = positions[j]
+                if ( a.symbol == elA and b.symbol == elB ) or \
+                   ( a.symbol == elB and b.symbol == elA ):
+                    if R == None:
+                        R = [nu.linalg.norm(a.position - b.position)]
+                    else:
+                        R.append(nu.linalg.norm(a.position - b.position))
+        R.sort()
+        R_min = R[0]
+        for i in range(N):
+            if R[i] - R[0] > h:
+                raise AssertionError("Element pairs have too much difference in their relative distances.")
+        for r in R[N:]:
+            if r < separating_distance:
+                raise AssertionError("Element pairs are too close to each other.")
+#        if nu.any(R-R_min > h) or nu.any(R-R_min < separating_distance):
+        return nu.average(R[:N])
+
+
     def fitting_function(self,d):
         """ Minimize this function in the fitting. """
         chi2=0.0
@@ -204,7 +394,7 @@ class RepulsiveFitting:
         Return the repulsive forces for atoms using given
         vrep(r) function for present element pairs.
         
-        POISTETAAN: käytä calc:n 
+        POISTETAAN: kayta calc:n 
         calc.rep.get_repulsive_forces()
         """
         raise NotImplementedError('No idea if this works, check!')
@@ -228,7 +418,7 @@ class RepulsiveFitting:
     #       Fitting methods
     #             
     def append_point(self,data,comment=None):
-        """ Add point to vrep'-fitting: data=[r,v',w,info] """
+        """ Add point to vrep'-fitting: data=[r,v',w,color,info] """
         self.deriv.append(data)
         if comment is not None:
             self.add_fitting_comment(comment)           
@@ -245,7 +435,7 @@ class RepulsiveFitting:
     def append_scalable_system(self,system,charge,weight,comment=None):
         """ Use scalable equilibrium (DFT) system in repulsion fitting. 
         
-        TARKISTA. (KÄYTÄ VOIMIA SUORAAN?)
+        TARKISTA. (KAYTA VOIMIA SUORAAN?)
         """
         if type(system)==type(''):
             atoms=read(file)
