@@ -192,13 +192,6 @@ class RepulsiveFitting:
         return res
 
 
-    def mirror(self, array):
-        ret = nu.zeros(len(array))
-        for i, v in enumerate(array):
-            ret[-1-i]=v
-        return ret
-
-
     def energy_curve(self, dft_traj, elA, elB, **kwargs):
         """
         Calculates the V'rep(r) from a given DFT ase-trajectory for elements
@@ -247,10 +240,6 @@ class RepulsiveFitting:
                 break
         traj.close()
         N = kwargs['N']
-        if R[1] - R[0] < 0:
-            R = self.mirror(R)
-            E_dft = self.mirror(E_dft)
-            E_bs = self.mirror(E_bs)
         vrep = SplineFunction(R[:M], (E_dft[:M] - E_bs[:M])/N)
 
         if not 'color' in kwargs:
@@ -294,6 +283,9 @@ class RepulsiveFitting:
             r = self.get_distance_of_elements(elA, elB, atoms, **kwargs)
             E_dft[i] = image.get_total_energy()
             R[i] = r
+        indices = R.argsort()
+        R = R[indices]
+        E_dft = E_dft[indices]
         return R, nu.array(E_dft)
 
 
