@@ -213,14 +213,14 @@ class RepulsiveFitting:
         from copy import copy
         from box.interpolation import SplineFunction
 
-        if not 'N' in kwargs:
-            raise ExceptionError("You must define the number of pairs!")
         if not 'separating_distance' in kwargs:
             kwargs['separating_distance'] = 3.0
         if not 'h' in kwargs:
-            kwargs['h'] = 1e-6
+            kwargs['h'] = 1e-5
+        if not 'weight' in kwargs:
+            kwargs['weight'] = 1.0
         traj = PickleTrajectory(dft_traj)
-        R, E_dft = self.process_trajectory(traj, elA, elB, **kwargs)
+        R, E_dft, N = self.process_trajectory(traj, elA, elB, **kwargs)
         E_bs = nu.zeros(len(E_dft))
         M = 0
         if 'frames' in kwargs:
@@ -239,7 +239,6 @@ class RepulsiveFitting:
                 print "Could not converge after %ith point." % M
                 break
         traj.close()
-        N = kwargs['N']
         vrep = SplineFunction(R[:M], (E_dft[:M] - E_bs[:M])/N)
 
         if not 'color' in kwargs:
@@ -253,7 +252,7 @@ class RepulsiveFitting:
         for i, r in enumerate(R[:M]):
             if i > 0:
                 label='_nolegend_'
-            self.append_point([r, vrep(r,der=1), 1, color, label], comment="Point from energy curve fitting")
+            self.append_point([r, vrep(r,der=1), kwargs['weight'], color, label], comment="Point from energy curve fitting")
         if 'plot' in kwargs and kwargs['plot']:
             pylab.plot(R[:M], E_dft[:M], label='DFT')
             pylab.plot(R[:M], E_bs[:M], label='DFTB-Vrep')
@@ -270,7 +269,7 @@ class RepulsiveFitting:
         """
         Check each frame in trajectory, make sure that the trajectory
         is suitable for repulsion fitting for the elements A and B.
-        Finally returns the bond lenggths of elements A and B and
+        Finally returns the bond lengths of elements A and B and
         the DFT energy in each image.
         """
         from copy import copy
@@ -280,13 +279,13 @@ class RepulsiveFitting:
         self.assert_fixed_bond_lengths_except(traj, elA, elB, **kwargs)
         for i, image in enumerate(traj):
             atoms = copy(Atoms(image))
-            r = self.get_distance_of_elements(elA, elB, atoms, **kwargs)
+            r, N = self.get_distance_of_elements(elA, elB, atoms, **kwargs)
             E_dft[i] = image.get_total_energy()
             R[i] = r
         indices = R.argsort()
         R = R[indices]
         E_dft = E_dft[indices]
-        return R, nu.array(E_dft)
+        return R, E_dft, N
 
 
     def assert_fixed_bond_lengths_except(self, t, elA, elB, **kwargs):
@@ -306,15 +305,13 @@ class RepulsiveFitting:
                 a = atoms[i]
                 b = atoms[j]
                 dL = nu.linalg.norm(a.position-b.position)
-                if ( a.symbol == elA and b.symbol == elB ) or \
-                   ( a.symbol == elB and b.symbol == elA ):
-                     # this bond length is allowed to vary
-                     pass
-                elif dL > separating_distance:
-                    long_pairs.append([i,j])
-                else:
-                    fixed_pairs.append([i,j])
-                    fixed_lengths.append(dL)
+                if not (( a.symbol == elA and b.symbol == elB ) or \
+                       ( a.symbol == elB and b.symbol == elA )):
+                    if dL > separating_distance:
+                        long_pairs.append([i,j])
+                    else:
+                        fixed_pairs.append([i,j])
+                        fixed_lengths.append(dL)
         for k in range(1, len(t)):
             atoms = t[k]
             for i in range(len(atoms)):
@@ -339,29 +336,26 @@ class RepulsiveFitting:
         """
         separating_distance = kwargs['separating_distance']
         h = kwargs['h']
-        N = kwargs['N']
 
-        R = None
+        R = []
         for i in range(len(positions)):
             for j in range(i, len(positions)):
                 a = positions[i]
                 b = positions[j]
                 if ( a.symbol == elA and b.symbol == elB ) or \
                    ( a.symbol == elB and b.symbol == elA ):
-                    if R == None:
-                        R = [nu.linalg.norm(a.position - b.position)]
-                    else:
-                        R.append(nu.linalg.norm(a.position - b.position))
+                    R.append(nu.linalg.norm(a.position - b.position))
         R.sort()
+        R = nu.array(R)
         R_min = R[0]
+        N = nu.sum(nu.where(nu.abs(R - R_min) < h, 1, 0))
         for i in range(N):
             if R[i] - R[0] > h:
                 raise AssertionError("Element pairs have too much difference in their relative distances.")
         for r in R[N:]:
             if r < separating_distance:
                 raise AssertionError("Element pairs are too close to each other.")
-#        if nu.any(R-R_min > h) or nu.any(R-R_min < separating_distance):
-        return nu.average(R[:N])
+        return nu.average(R[:N]), N
 
 
     def fitting_function(self,d):
