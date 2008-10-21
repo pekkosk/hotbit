@@ -163,10 +163,10 @@ class RepulsiveFitting:
         try:
             # FIXME make these output to file also
             atoms.get_potential_energy()
-            return calc
-        except Exception, ex:
+        except Exception:
             del(calc)
-            raise Exception(ex)
+            calc = None
+        return calc
 
 
     def get_energy(self,atoms,charge,forces=False):
@@ -220,7 +220,7 @@ class RepulsiveFitting:
         if not 'weight' in kwargs:
             kwargs['weight'] = 1.0
         traj = PickleTrajectory(dft_traj)
-        R, E_dft, N = self.process_trajectory(traj, elA, elB, **kwargs)
+        R, E_dft, indices, N = self.process_trajectory(traj, elA, elB, **kwargs)
         E_bs = nu.zeros(len(E_dft))
         M = 0
         if 'frames' in kwargs:
@@ -228,16 +228,14 @@ class RepulsiveFitting:
         else:
             frames = len(E_dft)
         for i in range(frames):
-            try:
-                atoms=copy(traj[i])
-                calc = self.solve_ground_state(atoms)
+            atoms=copy(traj[indices[i]])
+            calc = self.solve_ground_state(atoms)
+            if calc == None:
+                break
+            else:
                 E_bs[i] = calc.get_potential_energy(atoms)
                 del(calc)
                 M = i+1
-            except Exception, ex:
-                print ex
-                print "Could not converge after %ith point." % M
-                break
         traj.close()
         vrep = SplineFunction(R[:M], (E_dft[:M] - E_bs[:M])/N)
 
@@ -285,7 +283,7 @@ class RepulsiveFitting:
         indices = R.argsort()
         R = R[indices]
         E_dft = E_dft[indices]
-        return R, E_dft, N
+        return R, E_dft, indices, N
 
 
     def assert_fixed_bond_lengths_except(self, t, elA, elB, **kwargs):
