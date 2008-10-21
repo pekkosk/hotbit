@@ -8,7 +8,7 @@ from box.md import microcanonical, energy_conservation
 from ase.units import fs
 import sys
            
-systems=['H2COH','AuC']          
+systems=['AuC','H2COH']          
 
 #default_param['convergence']=1E-5
 #default_param['Anderson_memory']=3
@@ -19,13 +19,15 @@ for SCC in [False,True]:
         print '    ... forces for %s, SCC=' %system, SCC         
         calc=Calculator(verbose=True,SCC=True,txt='forces.cal',**default_param)
         atoms=molecule(system)
+        #view(atoms)
         atoms.center(vacuum=5)
-        atoms[0].z+=0.2
+        atoms[0].x+=0.1
         atoms=Atoms(atoms)
         atoms.set_calculator(calc)
         sys.stdout.flush()
-        rec, de, du=energy_conservation(atoms,dt=0.2*fs,steps=50)
+        rec, de, du=energy_conservation(atoms,dt=0.2,steps=100)
         calc.__del__()
+        #print de,du,de/du
         assert de/du<0.01
         
     

@@ -182,7 +182,12 @@ class Calculator(Output):
         """ If atoms moved, solve electronic structure. """
         if not self.init:
             self._initialize(atoms)
-        if not self.el.is_solved(atoms):
+                    
+        #print 'required?',self.el.calculation_required(atoms,'ground state')
+        #print atoms.get_positions()[1]
+        #print self.el.atoms.get_positions()[1]
+        if self.el.calculation_required(atoms,'ground state'):
+            self.el.set_atoms(atoms)
             self.st.solve()
         else:
             pass
@@ -199,6 +204,7 @@ class Calculator(Output):
         self.rep=Repulsion(self,self.timer,self.el,self.ia)
         self.set_enabled=False
         self.pbc=atoms.get_pbc()
+        self.el.update_geometry()
         self.greetings()
         if self.get('SCC') and nu.any(self.pbc) and self.get('gamma_cut')==None:
             raise NotImplementedError('SCC not implemented for periodic systems yet (see parameter gamma_cut).')
@@ -264,24 +270,28 @@ class Calculator(Output):
         return self.es.coulomb_energy()*Hartree
     
     
+    #def calculation_required(self,atoms,quantities):
+        #""" Check if a calculation is required. 
+        
+        #Check if the quantities in the quantities list have already been calculated 
+        #for the atomic configuration atoms. The quantities can be one or more of: 
+        #'ground state', 'energy', 'forces', and 'stress'.
+        #"""
+        #return self.el.calculation_required(atoms,quantities)
+        
+    
     # some not implemented ASE-assumed methods
     def get_fermi_level(self):
         raise NotImplementedError
         
-        
-    def calculation_required(self,atoms, quantities):
-        """ Check if a calculation is required. 
-        
-        Check if the quantities in the quantities list have already been calculated 
-        for the atomic configuration atoms. The quantities can be one or more of: 
-        'energy', 'forces', and 'stress'.
-        """
-        raise NotImplementedError
-
 
     def set_atoms(self,atoms):
         """ Initialize the calculator for given atomic system. """
-        if self.init==False:
+        if self.init==True and atoms.get_chemical_symbols()!=self.el.atoms.get_chemical_symbols():
+            atoms2=Atoms(atoms)
+            raise RuntimeError('Calculator initialized for %s. Create new calculator for %s.'
+                               %(self.el.atoms.get_name(),atoms2.get_name() ))
+        else:                               
             self._initialize(atoms)    
     
     

@@ -41,16 +41,18 @@ class States:
         else:                  # linear extrapolation
             return self.prev_dq[0] + (self.prev_dq[0]-self.prev_dq[1])
         
+        
     def solve(self):
         self.timer.start('solve')
         dq=self.guess_dq()
         self.norb=self.el.get_nr_orbitals()
         self.H0, self.S, self.dH0, self.dS=self.ia.get_matrices()
         self.e, self.wf=self.solver.get_states(self,dq,self.H0,self.S,self.count)
-        self.el.set_solved()
+        self.el.set_solved('ground state')
         self.large_update()
         self.count+=1
         self.timer.stop('solve')
+    
     
     def update(self,e,wf):
         """ Update all essential stuff from given wave functions. """
@@ -66,6 +68,7 @@ class States:
             self.dq=self.mulliken()
             self.es.set_dq(self.dq)
         self.timer.stop('update')       
+        
         
     def large_update(self):
         """ Update stuff from eigenstates needed later for forces etc. """

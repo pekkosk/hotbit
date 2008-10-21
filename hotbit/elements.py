@@ -53,7 +53,8 @@ class Elements:
         if elements!=None:
             self.files.update(elements)    
         self._initialize()  
-        self.solved_positions=None
+        self.solved={'ground state':None,'energy':None,'forces':None,'stress':None}
+            
             
     def set_cutoffs(self,cutoffs):
         """ Set the maximum interaction cutoffs (dict of ranges for element pair SlaKo tables). """
@@ -62,11 +63,14 @@ class Elements:
         for key in self.cut:
             self.maxcut=max(self.maxcut,self.cut[key])
         
+        
     def get_name(self):
         return self.atoms.get_name()
                                           
+                                          
     def __len__(self):
         return len(self.symbols)
+                    
                     
     def _initialize(self):
         """ Initialize element objects, orbital tables etc. Do it only once."""
@@ -113,8 +117,8 @@ class Elements:
         self.atom_orb_indices2=nu.zeros((self.N,9),int)-1
         for i,noi in enumerate(self.nr_orbitals):
             self.atom_orb_indices2[i,:noi]=self.atom_orb_indices[i]
-            
                     
+            
                     
     def update_geometry(self):
         """ Update all properties related to geometry (calculate once/geometry) 
@@ -129,7 +133,7 @@ class Elements:
         for property in properties:
             self.ia_pairs[property]=[]
         self.cut=self.calc.ia.get_cutoffs() 
-                                                          
+                                                                                            
         for i in range(self.N):
             for j in range(i,self.N):
                 dist=self.distance(i,j)
@@ -146,7 +150,7 @@ class Elements:
                     oi, oj=self.atom_orb_indices[i], self.atom_orb_indices[j]                                               
                     for key,value in zip(properties,[i,j,si,sj,r,dist,rhat,ri,rj,o1i,o1j,noi,noj,oi,oj]):
                         self.ia_pairs[key].append(value)
-                    
+                                        
         # setup a table which orbitals are interacting                        
         self.ia_orbitals=nu.zeros((self.norb,self.norb),int)
         self.nr_ia_orbitals=nu.zeros((self.norb,),int)
@@ -155,29 +159,45 @@ class Elements:
             for orbi in oi:
                 ni=self.nr_ia_orbitals[orbi]
                 self.ia_orbitals[orbi,ni:ni+noj]=oj                    
-                self.nr_ia_orbitals[orbi]+=noj
-                    
+                self.nr_ia_orbitals[orbi]+=noj                  
         self.timer.stop('geometry')            
         
         
-    def is_solved(self,atoms):
-        """ Return True if ground state is solved for current positions. """
-        if atoms.get_chemical_symbols()!=self.atoms.get_chemical_symbols():
-            atoms2=Atoms(atoms) 
-            raise RuntimeError('Calculator initialized for %s. Create new calculator for %s.' %(self.atoms.get_name(),atoms2.get_name() ))
-        self.atoms=Atoms(atoms) # this is stupid; change it ASAP
-        if self.solved_positions==None:
-            self.update_geometry()
-            return False
-        for r0,r in zip(self.solved_positions,atoms.get_positions()):
-            if abs(r0-r).max()>1E-14:
-                self.update_geometry()
-                return False
-        return True
+    def calculation_required(self,atoms,quantities):
+        """ Return True if quantities are solved for atoms. 
+        
+        The quantities can be one or more of: 'ground state', 'energy', 'forces', and 'stress'.
+        """
+        if not isinstance(quantities,(list,tuple)):
+            quantities=[quantities]
             
-    def set_solved(self):
-        """ Ground state is solved for current positions. """
-        self.solved_positions=self.atoms.get_positions()
+        if self.solved['ground state']==None:
+            return True
+        
+        # check that all quantities have been solved for identical atoms
+        for quantity in quantities:
+            solved_atoms=self.solved[quantity]
+            if solved_atoms==None: 
+                return True
+            elif not atoms.identical_to(solved_atoms):
+                return True                                              
+        return False           
+         
+         
+    def set_atoms(self,atoms):
+        """ Set the atoms object ready for calculations. """
+        if not atoms.identical_to(self.atoms):
+            self.atoms=Atoms(atoms)
+            self.update_geometry()
+                        
+            
+    def set_solved(self,quantities):
+        """ Set quantities solved for current atoms. """
+        if not isinstance(quantities,(list,tuple)):
+            quantities=[quantities]
+        for quantity in quantities:
+            self.solved[quantity]=self.atoms.copy()            
+        
             
     def greetings(self):
         """ Return documentation for elements from .elm files. """
