@@ -107,6 +107,7 @@ def microcanonical(atoms,dt=1.0,steps=100,output=1,name=None,verbose=False):
     md.run(steps)    
     return rec
     
+    
 def energy_conservation(atoms,dt=1.0,steps=100,name=None,verbose=False):
     """ Make microcanonical simulation, check energy conservation. 
     
@@ -125,6 +126,7 @@ def energy_conservation(atoms,dt=1.0,steps=100,name=None,verbose=False):
     de=nu.sqrt( nu.var(etot) )
     du=nu.sqrt( nu.var(epot) )
     return rec, de, du
+    
     
 def energy_conservation_plot(atoms,dts,total_time=100):
     """ Make set of NVE simulations with different time steps and plot errors. 

@@ -78,6 +78,7 @@ def graphene(n1,n2,R):
     """
     a1=vec([R*nu.cos(pi/6)*2,0.,0.])
     a2=0.5*a1 + vec([0.,1.5*R,0.])
+    assert n2%2==0
         
     r=[]
     for i1 in range(n1):
@@ -85,11 +86,12 @@ def graphene(n1,n2,R):
             corner = i1*a1+i2*a2
             r.append(corner)
             r.append(corner+a1+vec([0.0,R,0.0]))
-    cell=(n1*a1,n2*a2,1.0)
-    #elements=['C']*len(r)
-    print cell
-    return Atoms('C'*len(r),r,cell=cell)
-    #return vec(r),cell,elements
+                
+    cell=( n1*a1[0], n2*a2[1], 0 )                
+    atoms=Atoms('C'*len(r),positions=r,cell=cell)
+    atoms.center(vacuum=5,axis=2)
+    atoms.set_pbc((True,True,False))
+    return atoms
                          
 def armchair_ribbon(n1,n2,R):
     """

@@ -8,6 +8,7 @@ from box.data import data
 from ase import units
 from ase import Atom as ase_Atom
 from ase import Atoms as ase_Atoms
+from copy import copy
 vec=npy.array
 
 
@@ -135,13 +136,13 @@ class Atoms(ase_Atoms):
             raise NotImplementedError('Why not use mic?')
         R=self.positions
         if type(ri)==type(1):
-            Ri=R[ri]
+            Ri=R[ri].copy()
         else:
-            Ri=ri
+            Ri=ri.copy()
         if rj==None:
             Rj=None
         elif type(rj)==type(1):
-            Rj=R[rj]
+            Rj=R[rj].copy()
         else:
             Rj=rj                                    
             
