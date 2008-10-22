@@ -20,13 +20,13 @@ class RepulsiveFitting:
         r_dimer:
         order:
         calc:
-        """ 
+        """
         #raise NotImplementedError('Not yet consistently implemented; however, you may comment this exception to play around.')
         self.elm1=Element(rep[0])
         self.elm2=Element(rep[1])
         self.sym1=self.elm1.get_symbol()
         self.sym2=self.elm2.get_symbol()
-        self.r_dimer=r_dimer    
+        self.r_dimer=r_dimer
         self.r_cut=r_cut                    # the cutoff radius
         self.r_small=r_dimer*0.5            # use ZBL repulsion for r<r_small
         self.order=order                    # order of Vrep polynomial 
@@ -40,17 +40,16 @@ class RepulsiveFitting:
 
         print 'r_dimer      =',r_dimer
         print '1.5 x r_dimer=',1.5*r_dimer
-            
-            
-            
+
+
     def __call__(self,r,der=0):
         """ Return V_rep(r) or V_rep'(r) """
         if self.v is None:
             return self.parametric_potential(r,self.param,der=der)
         else:
-            self.v(r,der=der)         
-        
-        
+            self.v(r,der=der)
+
+
     def write_to_par(self,txt=None,points=100,append=True):
         """ Append Vrep into par-file, including comments. 
         
@@ -205,7 +204,6 @@ class RepulsiveFitting:
               N is the number of different A-B pairs that are taken
               into account.
         """
-        # FIXME crashes if the dftb calculation does not converge
         import scipy
         import pylab
         from ase.io.trajectory import PickleTrajectory
@@ -222,22 +220,17 @@ class RepulsiveFitting:
         traj = PickleTrajectory(dft_traj)
         R, E_dft, indices, N = self.process_trajectory(traj, elA, elB, **kwargs)
         E_bs = nu.zeros(len(E_dft))
-        M = 0
-        if 'frames' in kwargs:
-            frames = kwargs['frames']
-        else:
-            frames = len(E_dft)
-        for i in range(frames):
+        usable_frames = []
+        for i in range(len(traj)):
             atoms=copy(traj[indices[i]])
             calc = self.solve_ground_state(atoms)
-            if calc == None:
-                break
-            else:
+            if calc != None:
                 E_bs[i] = calc.get_potential_energy(atoms)
                 del(calc)
-                M = i+1
+                usable_frames.append(i)
         traj.close()
-        vrep = SplineFunction(R[:M], (E_dft[:M] - E_bs[:M])/N)
+        M = usable_frames
+        vrep = SplineFunction(R[M], (E_dft[M] - E_bs[M])/N)
 
         if not 'color' in kwargs:
             color = 'b'
@@ -247,20 +240,10 @@ class RepulsiveFitting:
             label = ''
         else:
             label = kwargs['label']
-        for i, r in enumerate(R[:M]):
+        for i, r in enumerate(R[M]):
             if i > 0:
                 label='_nolegend_'
             self.append_point([r, vrep(r,der=1), kwargs['weight'], color, label], comment="Point from energy curve fitting")
-        if 'plot' in kwargs and kwargs['plot']:
-            pylab.plot(R[:M], E_dft[:M], label='DFT')
-            pylab.plot(R[:M], E_bs[:M], label='DFTB-Vrep')
-            pylab.plot(R[:M], vrep(R[:M]), label="Fitted repulsion")
-            pylab.plot(R[:M], vrep(R[:M], der=1), label="Derivative of the repulsion")
-            pylab.plot(R[1:M-1], vrep(R[1:M-1],der=1), 'o', label="Added points")
-            xmin, xmax, ymin, ymax = pylab.axis()
-            pylab.plot((self.r_dimer, self.r_dimer),(ymin,ymax))
-            pylab.legend()
-            pylab.show()
 
 
     def process_trajectory(self, traj, elA, elB, **kwargs):
@@ -414,33 +397,36 @@ class RepulsiveFitting:
                     positions=[(0,0,0),(self.r_dimer,0,0)],\
                     pbc=False,cell=[100,100,100])
         self.append_scalable_system(dimer,0.0,weight,comment='dimer at %.4f %s' %(self.r_dimer,chr(197)))
-        
-        
-    def append_scalable_system(self,system,charge,weight,comment=None):
-        """ Use scalable equilibrium (DFT) system in repulsion fitting. 
-        
-        TARKISTA. (KAYTA VOIMIA SUORAAN?)
-        """
+
+
+    def append_scalable_system(self,system,charge,weight,color='b',comment=None):
+        """ Use scalable equilibrium (DFT) system in repulsion fitting. """
+        raise NotImplementedError('Not implemented correctly')
         if type(system)==type(''):
-            atoms=read(file)
-            name=file
+            from ase import read
+            atoms=read(system)
+            name=system
         else:
             atoms=system
             name=atoms.get_name()
+        forces = self.calc.get_forces(atoms)
+        for vec_f in forces:
+            if nu.linalg.norm(vec_f) > 0.05:
+                raise Exception("System is not in an equilibrium!")
         x=self.scale
-        r=atoms.mean_bond_length()        
-        bonds=atoms.number_of_bonds()        
+        r=atoms.mean_bond_length()
+        bonds=atoms.number_of_bonds()
         e1=self.get_energy(atoms,charge)
         atoms.scale_positions(x)
-        e2=self.get_energy(atoms,charge)   
-        
+        e2=self.get_energy(atoms,charge)
+
         dEdr=(e2-e1)/(x*r-r)
-        self.add_point([r,-dEdr/bonds,weight,name])
+        self.append_point([r,-dEdr/bonds,weight,color,name])
         if comment is None:
             comment='scalable %s' %name
-        self.add_fitting_comment(comment)                    
-    
-    
+        self.add_fitting_comment(comment)
+
+
     def append_energy_curve(traj,edft,charge,bonds,weight):
         """ 
         Fit V_rep'(r) into energy curve E(r) in given trajectory.

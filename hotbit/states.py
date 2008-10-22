@@ -47,11 +47,15 @@ class States:
         dq=self.guess_dq()
         self.norb=self.el.get_nr_orbitals()
         self.H0, self.S, self.dH0, self.dS=self.ia.get_matrices()
-        self.e, self.wf=self.solver.get_states(self,dq,self.H0,self.S,self.count)
-        self.el.set_solved('ground state')
-        self.large_update()
-        self.count+=1
-        self.timer.stop('solve')
+        try:
+            self.e, self.wf=self.solver.get_states(self,dq,self.H0,self.S,self.count)
+            self.el.set_solved('ground state')
+            self.large_update()
+            self.count+=1
+            self.timer.stop('solve')
+        except Exception, ex:
+            self.timer.stop('solve')
+            raise Exception(ex)
     
     
     def update(self,e,wf):
