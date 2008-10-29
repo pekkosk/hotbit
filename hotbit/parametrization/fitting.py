@@ -30,8 +30,6 @@ class RepulsiveFitting:
         self.r_cut=r_cut                    # the cutoff radius
         self.r_small=r_dimer*0.5            # use ZBL repulsion for r<r_small
         self.order=order                    # order of Vrep polynomial 
-        self.param=nu.zeros(order,float)
-        self.param[2]=10                    # initial guess...
         self.deriv=[]
         self.comments=''
         self.scale=1.025                    # scaling factor for scalable systems
@@ -350,9 +348,13 @@ class RepulsiveFitting:
         return chi2
         
 
-    def fit(self):
+    def fit(self, r_cut):
         """ Fit V_rep(r) into points {r,V_rep'(r)}. """
         from scipy.optimize import fmin
+        self.r_cut = r_cut
+        self.param=nu.zeros(self.order,float)
+        self.param[2]=10                    # initial guess...
+        print "Fitting with r_cut=%0.6f..." % r_cut
         self.param = fmin(self.fitting_function,self.param)
     
     
@@ -401,7 +403,7 @@ class RepulsiveFitting:
 
     def append_scalable_system(self,system,charge,weight,color='b',comment=None):
         """ Use scalable equilibrium (DFT) system in repulsion fitting. """
-        raise NotImplementedError('Not implemented correctly')
+        #raise NotImplementedError('Not implemented correctly')
         if type(system)==type(''):
             from ase import read
             atoms=read(system)
@@ -409,16 +411,16 @@ class RepulsiveFitting:
         else:
             atoms=system
             name=atoms.get_name()
-        forces = self.calc.get_forces(atoms)
-        for vec_f in forces:
-            if nu.linalg.norm(vec_f) > 0.05:
-                raise Exception("System is not in an equilibrium!")
+        #forces = self.calc.get_forces(atoms)
+        #for vec_f in forces:
+        #    if nu.linalg.norm(vec_f) > 0.05:
+        #        raise Exception("System is not in an equilibrium!")
         x=self.scale
         r=atoms.mean_bond_length()
         bonds=atoms.number_of_bonds()
-        e1=self.get_energy(atoms,charge)
+        e1=self.solve_ground_state(atoms,charge).get_potential_energy(atoms)
         atoms.scale_positions(x)
-        e2=self.get_energy(atoms,charge)
+        e2=self.solve_ground_state(atoms,charge).get_potential_energy(atoms)
 
         dEdr=(e2-e1)/(x*r-r)
         self.append_point([r,-dEdr/bonds,weight,color,name])
@@ -490,10 +492,17 @@ class RepulsiveFitting:
         #minimize residuals -> vrep'          
         #r
         #vrep(r,der=1)
-        
-    
- 
-    
-    
-    
-        
+
+
+    def write_fitting_data(self, filename):
+        import pickle
+        f = open(filename,'w')
+        pickle.dump(self.deriv, f)
+        f.close()
+
+
+    def load_fitting_data(self, filename):
+        import pickle
+        f = open(filename,'r')
+        self.deriv = pickle.load(f)
+        f.close()
