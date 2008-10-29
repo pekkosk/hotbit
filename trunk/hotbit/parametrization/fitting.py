@@ -323,6 +323,8 @@ class RepulsiveFitting:
             kwargs['h'] = 1e-5
         if not 'weight' in kwargs:
             kwargs['weight'] = 1.0
+        if 'charge' in kwargs:
+            raise NotImplementedError('Charge cannot be changed.')
         traj = PickleTrajectory(dft_traj)
         R, E_dft, N = self.process_trajectory(traj, elA, elB, **kwargs)
         E_bs = nu.zeros(len(E_dft))
