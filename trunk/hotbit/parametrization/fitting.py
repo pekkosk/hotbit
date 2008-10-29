@@ -189,7 +189,103 @@ class RepulsiveFitting:
         return res
 
 
-    def energy_curve(self, dft_traj, elA, elB, **kwargs):
+
+    def fitting_function(self,d):
+        """ Minimize this function in the fitting. """
+        chi2=0.0
+        for point in self.deriv:
+            r=point[0]
+            vp=point[1]
+            w=point[2]
+            chi2+=(vp-self.parametric_potential(r,d,der=1))**2*w
+        return chi2
+        
+
+    def fit(self, r_cut):
+        """ Fit V_rep(r) into points {r,V_rep'(r)}. """
+        from scipy.optimize import fmin
+        self.r_cut = r_cut
+        self.param=nu.zeros(self.order,float)
+        self.param[2]=10                    # initial guess...
+        print "Fitting with r_cut=%0.6f..." % r_cut
+        self.param = fmin(self.fitting_function,self.param)
+    
+    
+    def repulsion_forces(self,atoms,vrep):
+        """ 
+        Return the repulsive forces for atoms using given
+        vrep(r) function for present element pairs.
+        
+        POISTETAAN: kayta calc:n 
+        calc.rep.get_repulsive_forces()
+        """
+        raise NotImplementedError('No idea if this works, check!')
+        
+        n=len(atoms)
+        forces=nu.empty((n,3))
+        els=atoms.get_chemical_symbols()
+        
+        for i in range(n):
+            for j in range(i,n):
+                if (els[i],els[j]) is (self.elm1,self.elm2) or \
+                   (els[j],els[i]) is (self.elm1,self.elm2):
+                    rij=atoms.vector(i,j)
+                    r=nu.linalg.norm(rij)
+                    force=vrep(r,der=1)*rij/r
+                    forces[i,:]=force
+                    forces[j,:]=-force
+        return forces
+                    
+    #
+    #       Fitting methods
+    #             
+    def append_point(self,data,comment=None):
+        """ Add point to vrep'-fitting: data=[r,v',w,color,info] """
+        self.deriv.append(data)
+        if comment is not None:
+            self.add_fitting_comment(comment)
+           
+           
+    def append_dimer(self,weight):
+        """ Use dimer bond length in fitting. """
+        dimer=Atoms(symbols=[self.sym1,self.sym2],\
+                    positions=[(0,0,0),(self.r_dimer,0,0)],\
+                    pbc=False,cell=[100,100,100])
+        self.append_scalable_system(dimer,0.0,weight,name='dimer bond length',comment='dimer at %.4f %s' %(self.r_dimer,chr(197)))
+
+
+    def append_scalable_system(self,system,charge,weight,color='#71FB00',name=None,comment=None):
+        """ Use scalable equilibrium (DFT) system in repulsion fitting. """
+        #raise NotImplementedError('Not implemented correctly')
+        if type(system)==type(''):
+            from ase import read
+            atoms=Atoms(read(system))
+            atoms.center(vacuum=10)
+            if name == None:
+                name=system+'_scalable'
+        else:
+            atoms=system
+            if name == None:
+                name=atoms.get_name()+'_scalable'
+        #forces = self.calc.get_forces(atoms)
+        #for vec_f in forces:
+        #    if nu.linalg.norm(vec_f) > 0.05:
+        #        raise Exception("System is not in an equilibrium!")
+        x=self.scale
+        r=atoms.mean_bond_length()
+        bonds=atoms.number_of_bonds()
+        e1=self.solve_ground_state(atoms,charge).get_potential_energy(atoms)
+        atoms.scale_positions(x)
+        e2=self.solve_ground_state(atoms,charge).get_potential_energy(atoms)
+
+        dEdr=(e2-e1)/(x*r-r)
+        self.append_point([r,-dEdr/bonds,weight,color,name])
+        if comment is None:
+            comment='scalable %s' %name
+        self.add_fitting_comment(comment)
+
+
+    def append_energy_curve(self, dft_traj, elA, elB, **kwargs):
         """
         Calculates the V'rep(r) from a given DFT ase-trajectory for elements
         A and B:
@@ -201,6 +297,18 @@ class RepulsiveFitting:
         where R is the distance between the elements in the system and
               N is the number of different A-B pairs that are taken
               into account.
+
+        acceptable keyword arguments:
+        color:               Color that is used in the fitting plot.
+        label:               Name that is used in the fitting plot.
+        weight:              Weight given for the points calculated
+                             from this system (default=1).
+        separating_distance: If distance between two elements is larger
+                             than this, it is assumed that their
+                             interaction can be neglected.
+        h:                   The deviation that is allowed in the bond
+                             length between the element pairs that should
+                             have exactly the same bond length.
         """
         import scipy
         import pylab
@@ -216,19 +324,27 @@ class RepulsiveFitting:
         if not 'weight' in kwargs:
             kwargs['weight'] = 1.0
         traj = PickleTrajectory(dft_traj)
-        R, E_dft, indices, N = self.process_trajectory(traj, elA, elB, **kwargs)
+        R, E_dft, N = self.process_trajectory(traj, elA, elB, **kwargs)
         E_bs = nu.zeros(len(E_dft))
         usable_frames = []
         for i in range(len(traj)):
-            atoms=copy(traj[indices[i]])
+            atoms=copy(traj[i])
             calc = self.solve_ground_state(atoms)
             if calc != None:
                 E_bs[i] = calc.get_potential_energy(atoms)
                 del(calc)
                 usable_frames.append(i)
         traj.close()
-        M = usable_frames
-        vrep = SplineFunction(R[M], (E_dft[M] - E_bs[M])/N)
+        # use only frames where DFTB-calculation converged
+        R = R[usable_frames]
+        E_dft = E_dft[usable_frames]
+        E_bs = E_bs[usable_frames]
+        # sort the radii and corresponding energies to ascending order
+        indices = R.argsort()
+        R = R[indices]
+        E_dft = E_dft[indices]
+        E_bs = E_bs[indices]
+        vrep = SplineFunction(R, (E_dft - E_bs)/N)
 
         if not 'color' in kwargs:
             color = 'b'
@@ -238,7 +354,7 @@ class RepulsiveFitting:
             label = ''
         else:
             label = kwargs['label']
-        for i, r in enumerate(R[M]):
+        for i, r in enumerate(R):
             if i > 0:
                 label='_nolegend_'
             self.append_point([r, vrep(r,der=1), kwargs['weight'], color, label], comment="Point from energy curve fitting")
@@ -255,16 +371,16 @@ class RepulsiveFitting:
 
         E_dft = nu.zeros(len(traj))
         R = nu.zeros(len(traj))
+        N = nu.zeros(len(traj))
         self.assert_fixed_bond_lengths_except(traj, elA, elB, **kwargs)
         for i, image in enumerate(traj):
             atoms = copy(Atoms(image))
-            r, N = self.get_distance_of_elements(elA, elB, atoms, **kwargs)
+            r, n = self.get_distance_of_elements(elA, elB, atoms, **kwargs)
             E_dft[i] = image.get_total_energy()
             R[i] = r
-        indices = R.argsort()
-        R = R[indices]
-        E_dft = E_dft[indices]
-        return R, E_dft, indices, N
+            N[i] = n
+        assert nu.all(N==N[0])
+        return R, E_dft, N[0]
 
 
     def assert_fixed_bond_lengths_except(self, t, elA, elB, **kwargs):
@@ -328,146 +444,51 @@ class RepulsiveFitting:
         R = nu.array(R)
         R_min = R[0]
         N = nu.sum(nu.where(nu.abs(R - R_min) < h, 1, 0))
-        for i in range(N):
-            if R[i] - R[0] > h:
-                raise AssertionError("Element pairs have too much difference in their relative distances.")
         for r in R[N:]:
             if r < separating_distance:
                 raise AssertionError("Element pairs are too close to each other.")
         return nu.average(R[:N]), N
 
 
-    def fitting_function(self,d):
-        """ Minimize this function in the fitting. """
-        chi2=0.0
-        for point in self.deriv:
-            r=point[0]
-            vp=point[1]
-            w=point[2]
-            chi2+=(vp-self.parametric_potential(r,d,der=1))**2*w
-        return chi2
-        
-
-    def fit(self, r_cut):
-        """ Fit V_rep(r) into points {r,V_rep'(r)}. """
-        from scipy.optimize import fmin
-        self.r_cut = r_cut
-        self.param=nu.zeros(self.order,float)
-        self.param[2]=10                    # initial guess...
-        print "Fitting with r_cut=%0.6f..." % r_cut
-        self.param = fmin(self.fitting_function,self.param)
-    
-    
-    def repulsion_forces(self,atoms,vrep):
-        """ 
-        Return the repulsive forces for atoms using given
-        vrep(r) function for present element pairs.
-        
-        POISTETAAN: kayta calc:n 
-        calc.rep.get_repulsive_forces()
-        """
-        raise NotImplementedError('No idea if this works, check!')
-        
-        n=len(atoms)
-        forces=nu.empty((n,3))
-        els=atoms.get_chemical_symbols()
-        
-        for i in range(n):
-            for j in range(i,n):
-                if (els[i],els[j]) is (self.elm1,self.elm2) or \
-                   (els[j],els[i]) is (self.elm1,self.elm2):
-                    rij=atoms.vector(i,j)
-                    r=nu.linalg.norm(rij)
-                    force=vrep(r,der=1)*rij/r
-                    forces[i,:]=force
-                    forces[j,:]=-force
-        return forces
-                    
-    #
-    #       Fitting methods
-    #             
-    def append_point(self,data,comment=None):
-        """ Add point to vrep'-fitting: data=[r,v',w,color,info] """
-        self.deriv.append(data)
-        if comment is not None:
-            self.add_fitting_comment(comment)           
-           
-           
-    def append_dimer(self,weight): 
-        """ Use dimer bond length in fitting. """
-        dimer=Atoms(symbols=[self.sym1,self.sym2],\
-                    positions=[(0,0,0),(self.r_dimer,0,0)],\
-                    pbc=False,cell=[100,100,100])
-        self.append_scalable_system(dimer,0.0,weight,comment='dimer at %.4f %s' %(self.r_dimer,chr(197)))
+#    def append_energy_curve(traj,edft,charge,bonds,weight):
+#        """ 
+#        Fit V_rep'(r) into energy curve E(r) in given trajectory.
+#        
+#        Bonds are the atom index pairs (starting from zero) defining
+#        the bonds that change (and should all be equal). Whatever the
+#        system is, the ONLY missing energy contribution should thus
+#        be the repulsive energy between given bonds! Beware of 
+#        the dependency on other repulsive potentials (fitting should
+#        depend only on the electronic part).
+#        
+#        UUSIKSI.
+#        """
+#        raise NotImplementedError('should (might) work; check!!')
+#    
+#        trajectory=Atoms(traj)
+#        name=trajectory[0].get_name()
+#        n=len(trajectory)
+#        ebs=[]
+#        nb=len(bonds)
+#        rl=[]
+#        # construct edft(r) function
+#        for i,atoms in enumerate(trajectory):
+#            ebs.append( self.get_energy(atoms,charge) )
+#            lengths=[atoms.distance(b[0],b[1]) for b in bonds]
+#            if max(lengths)-min(lengths)<1E-6:
+#                print 'bond lengths:',lengths
+#                raise ValueError('bond lengths vary too much.')
+#            rl.append(nu.average(nu.array(lengths)))
+#            
+#        # now edft(r)=ebs(r)+nb*vrep(r); make vrep(r) and get vrep'(r)
+#        vrep=[(edft[i]-ebs[i])/nb for i in range(n)]
+#        v=SplineFunction(rl,vrep)
+#        for r in rl:
+#            self.add_point([r,v(r,der=1),weight/n,name],\
+#                 comment='energy curve %s' %name)
+#        raise NotImplementedError('should (might) work; check!!')
 
 
-    def append_scalable_system(self,system,charge,weight,color='b',comment=None):
-        """ Use scalable equilibrium (DFT) system in repulsion fitting. """
-        #raise NotImplementedError('Not implemented correctly')
-        if type(system)==type(''):
-            from ase import read
-            atoms=read(system)
-            name=system
-        else:
-            atoms=system
-            name=atoms.get_name()
-        #forces = self.calc.get_forces(atoms)
-        #for vec_f in forces:
-        #    if nu.linalg.norm(vec_f) > 0.05:
-        #        raise Exception("System is not in an equilibrium!")
-        x=self.scale
-        r=atoms.mean_bond_length()
-        bonds=atoms.number_of_bonds()
-        e1=self.solve_ground_state(atoms,charge).get_potential_energy(atoms)
-        atoms.scale_positions(x)
-        e2=self.solve_ground_state(atoms,charge).get_potential_energy(atoms)
-
-        dEdr=(e2-e1)/(x*r-r)
-        self.append_point([r,-dEdr/bonds,weight,color,name])
-        if comment is None:
-            comment='scalable %s' %name
-        self.add_fitting_comment(comment)
-
-
-    def append_energy_curve(traj,edft,charge,bonds,weight):
-        """ 
-        Fit V_rep'(r) into energy curve E(r) in given trajectory.
-        
-        Bonds are the atom index pairs (starting from zero) defining
-        the bonds that change (and should all be equal). Whatever the
-        system is, the ONLY missing energy contribution should thus
-        be the repulsive energy between given bonds! Beware of 
-        the dependency on other repulsive potentials (fitting should
-        depend only on the electronic part).
-        
-        UUSIKSI.
-        """
-        raise NotImplementedError('should (might) work; check!!')
-    
-        trajectory=Atoms(traj)
-        name=trajectory[0].get_name()
-        n=len(trajectory)
-        ebs=[]
-        nb=len(bonds)
-        rl=[]
-        # construct edft(r) function
-        for i,atoms in enumerate(trajectory):
-            ebs.append( self.get_energy(atoms,charge) )
-            lengths=[atoms.distance(b[0],b[1]) for b in bonds]
-            if max(lengths)-min(lengths)<1E-6:
-                print 'bond lengths:',lengths
-                raise ValueError('bond lengths vary too much.')
-            rl.append(nu.average(nu.array(lengths)))
-            
-        # now edft(r)=ebs(r)+nb*vrep(r); make vrep(r) and get vrep'(r)
-        vrep=[(edft[i]-ebs[i])/nb for i in range(n)]
-        v=SplineFunction(rl,vrep)
-        for r in rl:
-            self.add_point([r,v(r,der=1),weight/n,name],\
-                 comment='energy curve %s' %name)
-        raise NotImplementedError('should (might) work; check!!')
-    
-    
     def append_equilibrium_structure(atoms,relaxed=None):
         """
         Fit V_rep'(r) into given equilibrium (DFT) structure.
@@ -498,6 +519,11 @@ class RepulsiveFitting:
         import pickle
         f = open(filename,'w')
         pickle.dump(self.deriv, f)
+        f.close()
+        f = open(filename[:-4]+'_human_readable'+filename[-4:],'w')
+        print >> f, "# %0.6s %0.6s %0.6s %0.6s" % ('R', 'V', 'weight','info')
+        for data in self.deriv:
+            print >> f, "%0.6f %0.6f %0.3f # %s" % (data[0], data[1], data[2], data[4])
         f.close()
 
 
