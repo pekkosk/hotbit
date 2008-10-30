@@ -148,14 +148,15 @@ class RepulsiveFitting:
         self.reduce_atoms_into_cell()
         
         
-    def solve_ground_state(self, atoms, charge=0):
+    def solve_ground_state(self, atoms, charge=None):
         """
         vahan kuten get_energy
                 
         """
         from copy import copy
         calc = copy(self.calc)
-        calc.set("charge",charge)
+        if charge != None:
+            calc.set("charge",charge)
         atoms.set_calculator(calc)
         try:
             # FIXME make these output to file also
@@ -323,15 +324,15 @@ class RepulsiveFitting:
             kwargs['h'] = 1e-5
         if not 'weight' in kwargs:
             kwargs['weight'] = 1.0
-        if 'charge' in kwargs:
-            raise NotImplementedError('Charge cannot be changed.')
+        if not 'charge' in kwargs:
+            kwargs['charge'] = None
         traj = PickleTrajectory(dft_traj)
         R, E_dft, N = self.process_trajectory(traj, elA, elB, **kwargs)
         E_bs = nu.zeros(len(E_dft))
         usable_frames = []
         for i in range(len(traj)):
             atoms=copy(traj[i])
-            calc = self.solve_ground_state(atoms)
+            calc = self.solve_ground_state(atoms, kwargs['charge'])
             if calc != None:
                 E_bs[i] = calc.get_potential_energy(atoms)
                 del(calc)

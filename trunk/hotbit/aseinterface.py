@@ -75,20 +75,20 @@ class Calculator(Output):
         import os
         
         if gamma_cut!=None: gamma_cut=gamma_cut/Bohr                          
-        self.args={ 'parameters':parameters,
-                    'elements':elements,
-                    'tables':tables,
-                    'verbose':verbose,
-                    'charge':charge,
-                    'width':width/Hartree,
-                    'SCC':SCC,
-                    'convergence':convergence,
-                    'mixing_constant':mixing_constant,
-                    'Anderson_memory':Anderson_memory,
-                    'maxiter':maxiter,
-                    'gamma_cut':gamma_cut,
-                    'txt':txt,
-                    'verbose_SCC':verbose_SCC}                    
+        self.__dict__={ 'parameters':parameters,
+                        'elements':elements,
+                        'tables':tables,
+                        'verbose':verbose,
+                        'charge':charge,
+                        'width':width/Hartree,
+                        'SCC':SCC,
+                        'convergence':convergence,
+                        'mixing_constant':mixing_constant,
+                        'Anderson_memory':Anderson_memory,
+                        'maxiter':maxiter,
+                        'gamma_cut':gamma_cut,
+                        'txt':txt,
+                        'verbose_SCC':verbose_SCC}                    
             
         if parameters!=None:
             os.environ.data['HOTBIT_PARAMETERS']=parameters
@@ -99,7 +99,7 @@ class Calculator(Output):
         self.verbose=verbose     
         self.set_enabled=True
         self.notes=[]
-        self.set_text(self.args['txt'])
+        self.set_text(self.txt)
         self.timer=Timer('Hotbit',txt=self.get_output())
        
        
@@ -150,7 +150,7 @@ class Calculator(Output):
         print>>self.txt,  'Arch:',dat[4]
         print>>self.txt,  'Dir:',abspath(curdir)
         print>>self.txt,  'System:',self.el.get_name()
-        print>>self.txt,  '       Charge=%4.1f' %self.args['charge']
+        print>>self.txt,  '       Charge=%4.1f' % self.charge
         print>>self.txt,  '       Box: (Ang)', nu.array(self.el.get_box_lengths())*Bohr
         print>>self.txt,  '       PBC:',self.pbc
         print>>self.txt, self.el.greetings()
@@ -173,9 +173,9 @@ class Calculator(Output):
        
     def get(self,arg=None):
         if arg==None:
-            return self.args
+            return self.__dict__
         else:
-            return self.args[arg]
+            return self.__dict__[arg]
         
         
     def solve_ground_state(self,atoms):
@@ -197,7 +197,7 @@ class Calculator(Output):
         """ Initialization of hotbit. """  
         self.timer.start('initialization')
         self.init=True
-        self.el=Elements(self,atoms,self.timer,self.element_files,charge=self.args['charge'])
+        self.el=Elements(self,atoms,self.timer,self.element_files,charge=self.charge)
         self.ia=Interactions(self,self.timer,self.el,self.table_files)
         self.es=Electrostatics(self,self.timer)
         self.st=States(self,self.timer,self.el,self.ia)
