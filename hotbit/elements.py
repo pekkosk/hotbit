@@ -171,22 +171,22 @@ class Elements:
         if not isinstance(quantities,(list,tuple)):
             quantities=[quantities]
             
-        if self.solved['ground state']==None:
+        if type(self.solved['ground state']) == type(None):
             return True
         
         # check that all quantities have been solved for identical atoms
         for quantity in quantities:
             solved_atoms=self.solved[quantity]
-            if solved_atoms==None: 
+            if type(solved_atoms) == type(None):
                 return True
-            elif not atoms.identical_to(solved_atoms):
+            elif not atoms == solved_atoms:
                 return True                                              
         return False           
          
          
     def set_atoms(self,atoms):
         """ Set the atoms object ready for calculations. """
-        if not atoms.identical_to(self.atoms):
+        if type(atoms) == type(None) or not atoms == self.atoms:
             self.atoms=Atoms(atoms)
             self.update_geometry()
                         
