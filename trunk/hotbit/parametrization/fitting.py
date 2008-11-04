@@ -436,8 +436,8 @@ class RepulsiveFitting:
         h = kwargs['h']
 
         R = []
-        for i in range(len(positions)):
-            for j in range(i, len(positions)):
+        for i in range(len(positions)-1):
+            for j in range(i+1, len(positions)):
                 a = positions[i]
                 b = positions[j]
                 if ( a.symbol == elA and b.symbol == elB ) or \
