@@ -61,7 +61,7 @@ class RepulsiveFitting:
         print>>o, self.comments
         print>>o, '\n\nrepulsion='
         for r in nu.linspace(0.1,self.r_cut,points):
-            print>>o, r,self(r)
+            print>>o, r/Bohr, self(r)/Hartree
         o.close()        
         
         
@@ -344,9 +344,9 @@ class RepulsiveFitting:
         E_bs = E_bs[usable_frames]
         # sort the radii and corresponding energies to ascending order
         indices = R.argsort()
-        R = R[indices]/Bohr
-        E_dft = E_dft[indices]/Hartree
-        E_bs = E_bs[indices]/Hartree
+        R = R[indices]
+        E_dft = E_dft[indices]
+        E_bs = E_bs[indices]
         vrep = SplineFunction(R, (E_dft - E_bs)/N)
 
         if not 'color' in kwargs:
