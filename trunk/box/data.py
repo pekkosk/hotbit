@@ -46,12 +46,14 @@ valence_orbitals['Mg']=['3s','3p']
 valence_orbitals['S'] =['3s','3p']
 valence_orbitals['Cl']=['3s','3p']
 valence_orbitals['Ar']=[]
+valence_orbitals['K']=['4s','4p']
 valence_orbitals['Ti']=['3d','4s','4p']
 valence_orbitals['Kr']=[]
 valence_orbitals['Xe']=[]
 valence_orbitals['Au']=['6s','6p','5d']
 for key in valence_orbitals:
     data[key]['valence_orbitals']=valence_orbitals[key]
+
 
 
 # Set electronic configurations (orbital occupations)
@@ -73,6 +75,7 @@ aux=[ ['H', '',{'1s':1}],\
       ['Cl','Ne',{'3s':2,'3p':5}],\
       ['Ar','Ne',{'3s':2,'3p':6}],\
       # fourth row
+      ['K', 'Ar',{'4s':1,'4p':0}],\
       ['Ti','Ar',{'3d':2,'4s':2,'4p':0}],\
       ['Kr','Ar',{'3d':10,'4s':2,'4p':6}],\
       # fifth row
@@ -92,7 +95,7 @@ for key in configurations:
     config=configurations[key]    
     data[key]['configuration']=config
     data[key]['valence_number']=sum( [config[orbital] for orbital in data[key]['valence_orbitals']] )
-    
+        
 if __name__=='__main__':    
     for symbol in data:
         print 'X'*40

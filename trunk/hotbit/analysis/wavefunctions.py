@@ -194,21 +194,68 @@ def angular(r,wf):
 
 
 class WaveFunctions:
-    def __init__(self,atoms,mesh=(20,20,20)):
-        """ Wave functions into real grid object. 
+    def __init__(self,atoms,dr=0.2):
+        """ Wave functions into real grid.
         
         parameters:
         -----------
-        mesh: x,y,and z divisions for the grid
+        dr: (approximate) grid spacing.
         """
         calc=atoms.get_calculator()
         self.atoms=atoms
         self.calc=calc
         self.el=calc.el
         self.st=calc.st
-        cell=self.atoms.get_cell()
-        self.L=nu.array([cell[0,0],cell[1,1],cell[2,2]])
-        self.N=mesh
+        self.L=self.atoms.get_cell().diagonal()
+        self.N=ceil(self.L/dr)
+        self.grid=[]
+        for i in range(3):
+            self.grid.append( nu.linspace(0,self.L[i],self.N[i]) )
+        self.dr=self.L/self.N
+        self.dV=prod(self.dr)
+        
+        
+    def get_wf(self,i):
+        """ Return wave function i on given grid. """
+        wf=self.st.wf[:,i].copy()
+        orbs=self.el.orbitals()
+        wfg=nu.zeros(self.N,type(wf))
+        for orb,c in zip(orbs,wf):
+            symb, orbtype, Rnl=orb['symbol'], orb['orbital'], orb['Rnl']
+            assert abs(Rnl(5.0))>1E-9
+            for i,x in enumerate(self.grid[0]):
+                for j,y in enumerate(self.grid[1]):
+                    for k,z in enumerate(self.grid[2]):
+                        r0=nu.array([x,y,z])
+                        r=self.el.vector(orb['atom'],rj=r0)
+                        wfg[i,j,k] += c*Rnl(mix.norm(r))*angular(r,orbtype)                 
+        return wfg   
+                    
+                    
+    def get_wf_pseudo_density(self,i):
+        """ Return the density from localized pseudo wave functions for state i."""
+        rho=abs(self.get_wf(i))**2                     
+        rho/=float(rho.flatten().sum()*self.dV) #ensure normalization
+        return rho
+                                         
+                                         
+    def get_pseudo_density(self):
+        """ Return the valence electron density from pseudo wave functions."""
+        rho=None
+        for i,f in enumerate(self.st.f):
+            if f<1E-4: break
+            rhoi = self.get_wf_pseudo_density(i)
+            if rho==None: rho = rhoi*float(f)
+            else: 
+                rho+=rhoi*float(f)
+        return rho            
+                
+            
+        rho=self.get_wf(i)                                         
+        rho*=rho.conjugate()
+        rho/=rho.flatten().sum() #ensure normalization
+        return rho
+        
         
     def write_vtk(self,i,fname=None):
         """ Write .vtk file of wave function with *index* i. """
@@ -226,7 +273,8 @@ class WaveFunctions:
                         r0=nu.array([x,y,z])
                         r=self.el.vector(orb['atom'],rj=r0)
                         wfg[i,j,k]+=c*Rnl(mix.norm(r))*angular(r,orbtype)
-        box.vtk.rectilinear_vtk(grid,wfg,fname)        
+        box.vtk.rectilinear_vtk(grid,wfg,fname)                                
+        
 
 
 class JelliumAnalysis:
@@ -401,6 +449,7 @@ class JelliumAnalysis:
                     pickle.dump(values, f)
                     f.close()
             self.basis_functions[orb['index']] = values
+
 
 
     def analyse_states(self):

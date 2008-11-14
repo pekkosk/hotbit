@@ -504,8 +504,16 @@ class KSAllElectron:
         return [(nl,self.enl[nl]) for nl in self.valence]
     
     
-    def write_functions(self,file,only_valence=True):
-        """ Append functions (unl,v_effective,...) into file (only valence functions by default). """
+    def write_functions(self,file,only_valence=True,step=1):
+        """ Append functions (unl,v_effective,...) into file (only valence functions by default). 
+        
+        Parameters:
+        -----------
+        file: output file name (e.g. XX.elm)
+        only_valence: output of only valence orbitals
+        step: step size for output grid
+        
+        """
         if not self.solved:
             raise AssertionError('run calculations first.')
         if only_valence:
@@ -515,14 +523,14 @@ class KSAllElectron:
         o=open(file,'a')
         for nl in orbitals:
             print>>o, '\n\nu_%s=' %nl
-            for r,u in zip(self.rgrid,self.unlg[nl]):
+            for r,u in zip(self.rgrid[::step],self.unlg[nl][::step]):
                 print>>o, r,u
             
         print>>o,'\n\nv_effective='
-        for r,ve in zip(self.rgrid,self.veff):
+        for r,ve in zip(self.rgrid[::step],self.veff[::step]):
                 print>>o, r,ve        
         print>>o,'\n\nconfinement='
-        for r,vc in zip(self.rgrid,self.conf):
+        for r,vc in zip(self.rgrid[::step],self.conf[::step]):
                 print>>o, r,vc
         print>>o,'\n\n'
         

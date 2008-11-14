@@ -48,6 +48,8 @@ class States:
         self.norb=self.el.get_nr_orbitals()
         self.H0, self.S, self.dH0, self.dS=self.ia.get_matrices()
         try:
+            if self.SCC:
+                self.es.construct_tables()
             self.e, self.wf=self.solver.get_states(self,dq,self.H0,self.S,self.count)
             self.el.set_solved('ground state')
             self.large_update()
