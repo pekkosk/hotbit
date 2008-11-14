@@ -12,6 +12,7 @@ from box.timing import Timer
 from elements import Elements
 from interactions import Interactions
 from electrostatics import Electrostatics
+from environment import Environment
 from repulsion import Repulsion
 from states import States
 from hotbit.output import Output
@@ -108,6 +109,10 @@ class Calculator(Output):
             raise AssertionError('Parameters cannot be set after initialization.')
         self.__dict__[key]=value
         
+    def get_atoms(self):
+        """ Return the current atoms object. """
+        return self.el.atoms        
+        
         
     def __del__(self):
         """ Delete calculator -> timing summary. """
@@ -202,6 +207,7 @@ class Calculator(Output):
         self.es=Electrostatics(self,self.timer)
         self.st=States(self,self.timer,self.el,self.ia)
         self.rep=Repulsion(self,self.timer,self.el,self.ia)
+        self.env=Environment(self)
         self.set_enabled=False
         self.pbc=atoms.get_pbc()
         self.el.update_geometry()

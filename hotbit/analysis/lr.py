@@ -92,7 +92,7 @@ class LinearResponse:
         self.timer.start('setup matrix')
         dim=len(de)
         print>>self.txt, 'Dimension %i. ' %dim,
-        if not 0<=dim<100000:
+        if not 0<dim<100000:
             raise RuntimeError('Coupling matrix too large or small (%i)' %dim)
         r=self.el.get_positions()            
         transfer_q=nu.array([self.st.mulliken_transfer(ph[0],ph[1]) for ph in particle_holes])

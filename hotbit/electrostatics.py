@@ -63,12 +63,18 @@ class Electrostatics:
         if dq!=None:
             self.set_dq(dq)        
         H1=nu.zeros((self.norb,self.norb))        
-        gp=self.gamma_potential
         
+        gp=self.gamma_potential
+        ext=self.ext
         for i,j,o1i,o1j,noi,noj in self.pairs:
+            # internal electrostatics
             phi_ij=(-1)*(gp[i]+gp[j])/2
             H1[o1i:o1i+noi,o1j:o1j+noj]=phi_ij
             H1[o1j:o1j+noj,o1i:o1i+noi]=phi_ij
+            # external electrostatics
+            ext_ij=(-1)*(ext[i]+ext[j])/2
+            H1[o1i:o1i+noi,o1j:o1j+noj]+=ext_ij
+            H1[o1j:o1j+noj,o1i:o1i+noi]+=ext_ij    
     
         self.timer.stop('electrostatic H')                        
         self.H1=H1                               
@@ -97,6 +103,7 @@ class Electrostatics:
                 dg[i,j,:]=self.gamma(i,j,der=1)
                 dg[j,i,:]=-dg[i,j,:]
         self.gamma_table, self.gamma_der=g, dg            
+        self.ext = [self.calc.env.phi(i) for i in range(self.N)]
         self.timer.stop('es tables')
             
     def gamma(self,i,j,der=0):

@@ -696,6 +696,7 @@ class BilinearInterpolation:
         i,j=(nu.floor(x/self.dx),nu.floor(y/self.dx))
         i,j=(min(i,self.nx-2),min(j,self.ny-2))
         dx,dy=((x%self.dx)/self.dx,(y%self.dy)/self.dy)
+        raise NotImplementedError('Check that dx=0...1 and not something else.')
         
         a=self.a
         return a[i,j] *(1-dx)*(1-dy)+a[i+1,j]*dx*(1-dy)+\
@@ -737,10 +738,12 @@ class TrilinearInterpolation:
             assert self.grids[i][0]<=r[i]<=self.grids[i][-1]       
 
         ind0=nu.floor((r/self.dg))
+        dx0,dy0,dz0=[self.grids[i][1]-self.grids[i][0] for i in range(3)]
         # i,j,k grid point can never be a point at 'larger' side
         i,j,k=[int(min(ind0[i],self.n[i]-2)) for i in range(3)]
         dx,dy,dz=[r[p]-self.grids[p][ind] for p,ind in zip(range(3),(i,j,k))]
-                
+        dx,dy,dz=(dx/dx0, dy/dy0, dz/dz0)
+                            
         a=self.a
         i1=a[i,j,k]    *(1-dz)+a[i,j,k+1]*dz
         i2=a[i,j+1,k]  *(1-dz)+a[i,j+1,k+1]*dz
@@ -748,12 +751,12 @@ class TrilinearInterpolation:
         j2=a[i+1,j+1,k]*(1-dz)+a[i+1,j+1,k+1]*dz
         w1=i1*(1-dy)+i2*dy
         w2=j1*(1-dy)+j2*dy
+        return w1*(1-dx)+w2*dx     
 
-        return w1*(1-dx)+w2*dx        
         
     def write_vtk(self,name='trilinear',gpts=None):
         """ 
-        Write date into vtk file with given number of grid points. 
+        Write data into vtk file with given number of grid points. 
         
         Parameters:
         gpts - number of grid points to all directions. Default
@@ -761,7 +764,7 @@ class TrilinearInterpolation:
         """
         if gpts==None:
             gpts=self.n
-        R=vec([nu.linspace(0,self.grids[i][-1],gpts[i]) for i in range(3)])
+        R=[nu.linspace(0,self.grids[i][-1],gpts[i]) for i in range(3)]
         nx,ny,nz=(gpts[0],gpts[1],gpts[2])
         
         
@@ -785,7 +788,6 @@ class TrilinearInterpolation:
             for j in range(ny):
                 for i in range(nx):
                     r=vec([R[0][i],R[1][j],R[2][k]])
-                    print r
                     print>>of, self(r)
         of.close()
         

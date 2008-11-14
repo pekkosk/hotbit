@@ -14,7 +14,7 @@ for system,e in zip(systems,energies):
     atoms.center(vacuum=10)
     atoms.set_pbc(False)    
     if e==0:
-        calc=Calculator0(verbose=True,SCC=True,txt='standard.cal',**default_param)
+        calc=Calculator0(verbose=True,SCC=False,txt='standard.cal',**default_param)
         atoms.set_calculator(calc)
         print 'new system',system,atoms.get_potential_energy()
         sys.exit(0)        

@@ -408,6 +408,7 @@ class Atoms(ase_Atoms):
             except:
                 continue            
             if tp==type(vec([])) or tp==type([]):
+                if not isinstance(properties[0],(int,float)): continue
                 print>>f, 'VECTORS %s double\n' %property
                 for value in properties:
                     print>>f, mix.a2s(value,fmt=fmt)

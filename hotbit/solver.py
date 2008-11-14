@@ -19,6 +19,7 @@ class Solver:
         self.limit=calc.get('convergence')
         self.beta=calc.get('mixing_constant')
         self.es=calc.es
+        self.norb=len(self.calc.el)
         self.verbose=calc.get('verbose')
         self.iterations=None
         self.iter_history=[]
@@ -35,14 +36,44 @@ class Solver:
         avg, mx, mn=nu.mean(self.iter_history), min(self.iter_history), max(self.iter_history)
         return 'Solved %i times; Iterations: avg %.1f, max %i, min %i' %(len(self.iter_history),avg,mx,mn)
         
+    #def get_states(self,st,dq,H0,S,count):
+        #""" Solve the (non)SCC generalized eigenvalue problem. """
+        #self.es=self.calc.es
+        #self.norb=len(self.calc.el)
+        #if self.SCC:
+            #self.es.construct_tables()
+        #if True:
+            #mixer=AndersonMixer(self.beta,self.mmax,self.limit,chop=0.2)
+        #for i in range(self.maxiter):
+            #if self.SCC:
+                #H=H0+self.es.construct_H1(dq)*S
+            #else:
+                #H=H0
+            #e,wf=self.solve(H,S)
+            #st.update(e,wf)
+            #if not self.SCC:
+                #break
+            #dq_out=st.get_dq()
+            #done,dq=mixer(dq,dq_out)
+            
+            #if self.verbose:
+                #mixer.echo()
+            #if done: 
+                #self.iterations=i
+                #self.iter_history.append(i)
+                #break
+            #if i==self.maxiter-1:
+                #mixer.out_of_iterations(self.calc.get_output())
+                #raise RuntimeError('Out of iterations.')
+        #if self.verbose:
+            #mixer.final_echo()
+        #return st.e,st.wf            
+        
     def get_states(self,st,dq,H0,S,count):
         """ Solve the (non)SCC generalized eigenvalue problem. """
         self.es=self.calc.es
         self.norb=len(self.calc.el)
-        if self.SCC:
-            self.es.construct_tables()
-        if True:
-            mixer=AndersonMixer(self.beta,self.mmax,self.limit,chop=0.2)
+        mixer=AndersonMixer(self.beta,self.mmax,self.limit,chop=0.2)
         for i in range(self.maxiter):
             if self.SCC:
                 H=H0+self.es.construct_H1(dq)*S
