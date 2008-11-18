@@ -398,8 +398,8 @@ class RepulsiveFitting:
         fixed_lengths = []
         long_pairs = []
         atoms = t[0]
-        for i in range(len(atoms)):
-            for j in range(i,len(atoms)):
+        for i in range(len(atoms)-1):
+            for j in range(i+1,len(atoms)):
                 a = atoms[i]
                 b = atoms[j]
                 dL = nu.linalg.norm(a.position-b.position)
@@ -412,8 +412,8 @@ class RepulsiveFitting:
                         fixed_lengths.append(dL)
         for k in range(1, len(t)):
             atoms = t[k]
-            for i in range(len(atoms)):
-                for j in range(i,len(atoms)):
+            for i in range(len(atoms)-1):
+                for j in range(i+1,len(atoms)):
                     a = atoms[i]
                     b = atoms[j]
                     dL = nu.linalg.norm(a.position-b.position)
