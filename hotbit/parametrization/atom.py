@@ -3,7 +3,7 @@ import pylab as pl
 from scipy.integrate import odeint
 from box.data import data
 from copy import copy
-from box.interpolation import Function 
+from box.interpolation import Function, SplineFunction
 import sys
 from box.timing import Timer
 from time import asctime
@@ -20,6 +20,7 @@ class KSAllElectron:
                       confinement=None,
                       xc='PW92',
                       convergence={'density':1E-7,'energies':1E-7},        
+                      ScR=False,
                       nodegpts=500,
                       mix=0.2,
                       itmax=200,  
@@ -46,6 +47,7 @@ class KSAllElectron:
         convergence:    convergence criterion dictionary
                         * density: max change for integrated |n_old-n_new| 
                         * energies: max change in single-particle energy (Hartree)
+        ScR:            Use scalar relativistic corrections
         nodegpts:       total number of grid points is nodegpts times the max number 
                         of antinodes for all orbitals
         mix:            effective potential mixing constant
@@ -59,6 +61,7 @@ class KSAllElectron:
         self.confinement=confinement
         self.xc=xc
         self.convergence=convergence
+        self.ScR = ScR
         self.set_output(txt)
         self.itmax=itmax
         self.verbose=verbose
@@ -266,6 +269,9 @@ class KSAllElectron:
         
         for it in range(self.itmax):
             self.veff=self.mix*self.calculate_veff()+(1-self.mix)*self.veff
+            if self.ScR:
+                veff = SplineFunction(self.rgrid, self.veff)
+                self.dveff = array([veff(r, der=1) for r in self.rgrid])
             d_enl_max, itmax=self.solve_eigenstates(it)
             
             dens0=self.dens.copy()
@@ -293,8 +299,8 @@ class KSAllElectron:
         self.timer.summary()    
         self.txt.flush()
         self.solved=True
-        
-    
+
+
     def solve_eigenstates(self,iteration,itmax=100):
         """ 
         Solve the eigenstates for given effective potential.
@@ -307,7 +313,7 @@ class KSAllElectron:
         u''(x) - u'(x) + c0(x(r))*u(r) = 0
         """
         self.timer.start('eigenstates')
-        
+
         rgrid=self.rgrid
         xgrid=self.xgrid
         dx=xgrid[1]-xgrid[0]
@@ -316,46 +322,46 @@ class KSAllElectron:
         c1=-nu.ones(N)
         d_enl_max=0.0
         itmax=0
-        
+
         for n,l,nl in self.list_states():
             nodes_nl=n-l-1
             if iteration==0:
-                eps=-1.0*self.Z**2/n**2           
-                
+                eps=-1.0*self.Z**2/n**2
+
             else:
-                eps=self.enl[nl]                
-                
-            if iteration<=3:                
+                eps=self.enl[nl]
+
+            if iteration<=3:
                 delta=0.5*self.Z**2/n**2  #previous!!!!!!!!!!                
             else:
-                delta=self.d_enl[nl]                
+                delta=self.d_enl[nl]
 
-            direction='none'            
-            epsmax=self.veff[-1]-l*(l+1)/(2*self.rgrid[-1]**2)            
+            direction='none'
+            epsmax=self.veff[-1]-l*(l+1)/(2*self.rgrid[-1]**2)
             it=0
-            u=nu.zeros(N) 
-            hist=[] 
-            
-            while True:  
+            u=nu.zeros(N)
+            hist=[]
+
+            while True:
                 eps0=eps
-                c0=-2*( 0.5*l*(l+1)+self.rgrid**2*(self.veff-eps) )
-                                
+                c0, c1, c2 = self.construct_coefficients(l, eps)
+
                 # boundary conditions for integration from analytic behaviour (unscaled)
                 # u(r)~r**(l+1)   r->0
                 # u(r)~exp( -sqrt(c0(r)) ) (set u[-1]=1 and use expansion to avoid overflows)
                 u[0:2]=rgrid[0:2]**(l+1)
-                                        
+
                 if not(c0[-2]<0 and c0[-1]<0):
                     pl.plot(c0)
                     pl.show()
-                   
+
                 assert c0[-2]<0 and c0[-1]<0
-                                
+
                 u, nodes, A, ctp=shoot(u,dx,c2,c1,c0,N)
                 it+=1
-                norm=self.grid.integrate(u**2)                
+                norm=self.grid.integrate(u**2)
                 u=u/sqrt(norm)
-                                
+
                 if nodes>nodes_nl:
                     # decrease energy
                     if direction=='up': delta/=2
@@ -369,25 +375,25 @@ class KSAllElectron:
                 elif nodes==nodes_nl:
                     shift=-0.5*A/(rgrid[ctp]*norm)
                     if abs(shift)<1E-8: #convergence
-                        break                    
+                        break
                     if shift>0:
                         direction='up'
                     elif shift<0:
                         direction='down'
-                    eps+=shift  
+                    eps+=shift
                 if eps>epsmax:
-                    eps=0.5*(epsmax+eps0) 
-                hist.append(eps)                                        
-                
+                    eps=0.5*(epsmax+eps0)
+                hist.append(eps)
+
                 if it>100:
                     print>>self.txt, 'Epsilon history for %s' %nl
                     for h in hist:
                         print h
                     print>>self.txt, 'nl=%s, eps=%f' %(nl,eps)
                     print>>self.txt, 'max epsilon',epsmax
-                    raise RuntimeError('Eigensolver out of iterations. Atom not stable?')                    
-                             
-            itmax=max(it,itmax)                
+                    raise RuntimeError('Eigensolver out of iterations. Atom not stable?')
+
+            itmax=max(it,itmax)
             self.unlg[nl]=u
             self.Rnlg[nl]=self.unlg[nl]/self.rgrid
             self.d_enl[nl]=abs(eps-self.enl[nl])
@@ -395,13 +401,27 @@ class KSAllElectron:
             self.enl[nl]=eps
             if self.verbose:
                 print>>self.txt, '-- state %s, %i eigensolver iterations, e=%9.5f, de=%9.5f' %(nl,it,self.enl[nl],self.d_enl[nl])
-                
+
             assert nodes==nodes_nl
-            assert u[1]>0.0 
+            assert u[1]>0.0
         self.timer.stop('eigenstates')
-        return d_enl_max, itmax                                  
-            
-        
+        return d_enl_max, itmax
+
+
+    def construct_coefficients(self, l, eps):
+        c = 137.036
+        c2 = nu.ones(self.N)
+        if self.ScR == False:
+            c0 = -2*( 0.5*l*(l+1)+self.rgrid**2*(self.veff-eps) )
+            c1 = -nu.ones(self.N)
+        else:
+            # from Paolo Giannozzi: Notes on pseudopotential generation
+            ScR_mass = array([1 + 0.5*(eps-V)/c**2 for V in self.veff])
+            c0 = -l*(l+1) - 2*ScR_mass*self.rgrid**2*(self.veff-eps) - self.dveff*self.rgrid/(2*ScR_mass*c**2)
+            c1 = self.rgrid*self.dveff/(2*ScR_mass*c**2) - 1
+        return c0, c1, c2
+
+
     def plot_Rnl(self,screen=False,r=False):
         """ Plot radial wave functions with matplotlib. 
         r: plot as a function of r or grid points
