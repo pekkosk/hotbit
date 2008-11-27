@@ -109,6 +109,8 @@ class KSAllElectron:
         
         maxnodes=max( [n-l-1 for n,l,nl in self.list_states()] )        
         self.rmin, self.rmax, self.N=( 1E-2/self.Z, 100.0, (maxnodes+1)*self.nodegpts )
+        if self.ScR:
+            print >> self.txt, 'Using scalar relativistic corrections.'
         print>>self.txt, 'max %i nodes, %i grid points' %(maxnodes,self.N)
         self.xgrid=nu.linspace(0,nu.log(self.rmax/self.rmin),self.N)
         self.rgrid=self.rmin*nu.exp(self.xgrid)
