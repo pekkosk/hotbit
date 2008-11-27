@@ -286,7 +286,7 @@ class RepulsiveFitting:
         self.add_fitting_comment(comment)
 
 
-    def append_energy_curve(self, dft_traj, elA, elB, **kwargs):
+    def append_energy_curve(self, dft_traj, **kwargs):
         """
         Calculates the V'rep(r) from a given DFT ase-trajectory for elements
         A and B:
@@ -327,7 +327,7 @@ class RepulsiveFitting:
         if not 'charge' in kwargs:
             kwargs['charge'] = None
         traj = PickleTrajectory(dft_traj)
-        R, E_dft, N = self.process_trajectory(traj, elA, elB, **kwargs)
+        R, E_dft, N = self.process_trajectory(traj, self.sym1, self.sym2, **kwargs)
         E_bs = nu.zeros(len(E_dft))
         usable_frames = []
         for i in range(len(traj)):
