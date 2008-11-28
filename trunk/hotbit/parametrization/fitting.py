@@ -9,7 +9,7 @@ from box.interpolation import Function
 
 class RepulsiveFitting:
     
-    def __init__(self,rep,r_cut=None,r_dimer=None,order=8,calc=None):
+    def __init__(self,rep,r_cut=None,r_dimer=None,order=8,calc=None,maxiter=None):
         """
         Fit the short-range repulsive potential.
         
@@ -35,6 +35,7 @@ class RepulsiveFitting:
         self.scale=1.025                    # scaling factor for scalable systems
         self.calc=calc
         self.v=None
+        self.maxiter=maxiter
 
         print 'r_dimer      =',r_dimer
         print '1.5 x r_dimer=',1.5*r_dimer
@@ -209,7 +210,7 @@ class RepulsiveFitting:
         self.param=nu.zeros(self.order,float)
         self.param[2]=10                    # initial guess...
         print "Fitting with r_cut=%0.6f..." % r_cut
-        self.param = fmin(self.fitting_function,self.param)
+        self.param = fmin(self.fitting_function,self.param,maxiter=self.maxiter, maxfun=self.maxiter)
     
     
     def repulsion_forces(self,atoms,vrep):
