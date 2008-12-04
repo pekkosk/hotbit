@@ -140,10 +140,10 @@ class RepulsiveFitting:
             if der==0:
                 return sum( [d2[i]*(self.r_cut-r)**i for i in range(self.order)] )
             elif der==1:
-                return sum( [d2[i]*(self.r_cut-r)**(i-1)*i*(-1) for i in range(1,self.order)] )                
-               
- 
-    def scale_positions(self,x,cell=False):   
+                return sum( [d2[i]*(self.r_cut-r)**(i-1)*i*(-1) for i in range(1,self.order)] )
+
+
+    def scale_positions(self,x,cell=False):
         """ Scale the whole system by x; also the unit cell. """
         self.set_cell(self.get_cell()*x,fix=False)
         self.reduce_atoms_into_cell()
@@ -211,8 +211,78 @@ class RepulsiveFitting:
         self.param[2]=10                    # initial guess...
         print "Fitting with r_cut=%0.6f..." % r_cut
         self.param = fmin(self.fitting_function,self.param,maxiter=self.maxiter, maxfun=self.maxiter)
-    
-    
+
+
+    def fit2(self, r_cut):
+        """
+        Fit first derivative of 2nd order polynomial p(x)
+        into points {r,V_rep'(r)}. The result is used as an initial
+        guess in fitting the derivative of 3rd order p(x).
+        Finally Nth order p(x) is given as an initial guess
+        to the final fitting procedure.
+        """
+        self.r_cut = r_cut
+        from scipy.optimize import fmin
+        N = 5
+        params = nu.zeros(2, float)
+        for o in range(N-1):
+            p = nu.zeros(len(params) + 1)
+            p[:-1] = params
+            params = p
+            params = fmin(self.fitting_function2, params)
+        self.param=nu.zeros(self.order,float)
+        self.param[0:N+1] = params
+        self.param = fmin(self.fitting_function,self.param,maxiter=self.maxiter, maxfun=self.maxiter)
+
+
+    def fitting_function2(self,d):
+        """
+        Minimize this function in the fitting. The derivative of
+        the polynomial should fit well to the points, it must be
+        zero at r=r_cut and it should be relatively smooth curve.
+        """
+        ret = 0.0
+        d[0] = 0
+        d[1] = 0
+        for point in self.deriv:
+            r = point[0]
+            dv = point[1]
+            w = point[2]
+            ret += ( dv-self.polynomial(r,d,der=1) )**2*w
+        ret += self.curvature_penalty(d)
+        return ret
+
+
+    def polynomial(self, r, d, der=0):
+        """
+                                                 N                     
+        Return the value of a polynomial p(r) = sum d[i]*(r_cut - r)**i
+                                                i=0                    
+        at point r.
+        """
+        r0 = self.r_cut
+        if r>r0 or r<0:
+            return 0.0
+        if der == 0:
+            return sum([d[i]*(r0-r)**i for i in range(len(d))])
+        if der == 1:
+            return sum([d[i]*(r0-r)**(i-1)*i*(-1) for i in range(1,len(d))])
+        raise NotImplementedError("Only first derivative is available")
+
+
+    def curvature_penalty(self, d):
+        """
+        Return a value between zero and +\infty that somehow describes
+        the curvature of the polynomial (zero == straigth line)
+        """
+        rg = nu.linspace(0, self.r_cut, 100)
+        ret = 0
+        for i, r in enumerate(rg):
+            if 1 <= i <= len(rg)-2:
+                ret += ( (self.polynomial(rg[i+1],d) - 2*self.polynomial(r,d) + self.polynomial(rg[i-1],d)) / (rg[i+1]-rg[i])**2 )**2
+        return ret/len(rg)
+
+
     def repulsion_forces(self,atoms,vrep):
         """ 
         Return the repulsive forces for atoms using given
