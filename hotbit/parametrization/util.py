@@ -175,7 +175,8 @@ def tail_smoothening(x,y):
     return y            
             
 def IP_EA(symb,remove_orb,add_orb,remove,add):
-    """ Return ionization potential and electron affinity for given atom. 
+    """ Return ionization potential and electron affinity for given atom,
+        and the valence energies of neutral atom.
     
     parameters: 
     -----------
@@ -191,30 +192,36 @@ def IP_EA(symb,remove_orb,add_orb,remove,add):
     electron adding and removal.             
     """
     #from box.data import atom_occupations
+    atom=KSAllElectron(symb, txt='-')
+
+    # add electrons -> negative ion
+    #occu=atom_occupations[symb].copy()
+    occu_add=atom.occu.copy()
+    occu_add[add_orb]+=add
+    ea=KSAllElectron(symb,configuration=occu_add)
+    ea.run()
+
     # neutral atom
     atom=KSAllElectron(symb)
     atom.run()
-    occu_remove=atom.occu.copy()
-    occu_add=atom.occu.copy()
-    e0=atom.get_energy()
+    valence_energies = atom.get_valence_energies()
+
     # remove electrons -> positive ion
     #occu=atom_occupations[symb].copy()
+    occu_remove=atom.occu.copy()
     occu_remove[remove_orb]-=remove
-    ep=KSAllElectron(symb,configuration=occu_remove)
-    ep.run()
-    ep=ep.get_energy()-e0
-    # add electrons -> negative ion
-    #occu=atom_occupations[symb].copy()
-    occu_add[add_orb]+=add
-    en=KSAllElectron(symb,configuration=occu_add)
-    en.run()
-    en=en.get_energy()-e0
+    ip=KSAllElectron(symb,configuration=occu_remove)
+    ip.run()
+
+    e0=atom.get_energy()
+    en=ea.get_energy()-e0
+    ep=ip.get_energy()-e0
     # e(x)=e0+c1*x+c2*x**2 =energy as a function of additional electrons
     c2=(en+ep*add/remove)/(add*(remove+add))
     c1=(c2*remove**2-ep)/remove
     IP=-c1+c2
     EA=-(c1+c2)
-    return IP, EA
+    return IP, EA, valence_energies
     
     
     

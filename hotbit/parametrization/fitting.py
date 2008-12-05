@@ -73,7 +73,7 @@ class RepulsiveFitting:
         v=[self(x,der=0) for x in r]
         vp=[self(x,der=1) for x in r]
         rmin=0.9*min([d[0] for d in self.deriv])
-        
+
         # Vrep
         pl.subplots_adjust(wspace=0.25)
         pl.subplot(1,2,1)
@@ -83,22 +83,21 @@ class RepulsiveFitting:
         pl.plot(r,v)
         pl.ylim(ymin=0,ymax=self(rmin))
         pl.xlim(xmin=rmin)
-        
+
         # Vrep'
         pl.subplot(1,2,2)
         pl.ylabel('$dV_{rep}(r)/dr (eV/\AA)$')
         pl.xlabel('$r (\AA)$')
-        pl.plot(r,vp,label='$V_{rep}(r)$')
+        pl.plot(r,vp,label='$dV_{rep}(r)/dr$')
         for s in self.deriv:
-            #pl.scatter( [s[0]],[s[1]],s=100*s[2],label=s[3])
             pl.scatter( [s[0]],[s[1]],s=100*s[2],c=s[3],label=s[4])
         pl.axvline(x=self.r_cut,c='r',ls=':')
         pl.xlim(xmin=rmin)
         pl.ylim(ymin=self(rmin,der=1))
         pl.legend()
-        pl.show()        
-        
-        
+        pl.show()
+
+
     def add_fitting_comment(self,s):
         """ Append some comment for par-file. """
         add='|'
@@ -381,6 +380,7 @@ class RepulsiveFitting:
         h:                   The deviation that is allowed in the bond
                              length between the element pairs that should
                              have exactly the same bond length.
+        comment:             A comment to be added to the .par file
         """
         import scipy
         import pylab
@@ -428,10 +428,14 @@ class RepulsiveFitting:
             label = ''
         else:
             label = kwargs['label']
+        if not 'comment' in kwargs:
+            comment = "Point from energy curve fitting"
+        else:
+            comment = kwargs['comment']
         for i, r in enumerate(R):
             if i > 0:
                 label='_nolegend_'
-            self.append_point([r, vrep(r,der=1), kwargs['weight'], color, label], comment="Point from energy curve fitting")
+            self.append_point([r, vrep(r,der=1), kwargs['weight'], color, label], comment=comment)
 
 
     def process_trajectory(self, traj, elA, elB, **kwargs):

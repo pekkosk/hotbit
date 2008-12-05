@@ -5,6 +5,7 @@ from box.data import data
 from copy import copy
 from box.interpolation import Function, SplineFunction
 import sys
+import os
 from box.timing import Timer
 from time import asctime
 import math
@@ -130,15 +131,17 @@ class KSAllElectron:
         
     def set_output(self,txt):
         """ Set output channel and give greetings. """
-        if txt==None:
+        if txt == '-':
+            self.txt = open(os.devnull,'w')
+        elif txt==None:
             self.txt=sys.stdout
         else:
             self.txt=open(txt,'a')
         print>>self.txt, '*******************************************'
         print>>self.txt, 'Kohn-Sham all-electron calculation for %2s ' %self.symbol
         print>>self.txt, '*******************************************'
-        
-        
+    
+    
     def calculate_energies(self,echo=False):
         """ 
         Calculate energy contributions. 
