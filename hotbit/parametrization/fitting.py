@@ -46,7 +46,7 @@ class RepulsiveFitting:
         if self.v is None:
             return self.parametric_potential(r,self.param,der=der)
         else:
-            self.v(r,der=der)
+            return self.v(r,der=der)
 
 
     def write_to_par(self,txt=None,points=100,append=True):
@@ -212,74 +212,126 @@ class RepulsiveFitting:
         self.param = fmin(self.fitting_function,self.param,maxiter=self.maxiter, maxfun=self.maxiter)
 
 
-    def fit2(self, r_cut):
+    def fit_smoothing_spline(self, r_cut, s=None, filename=None):
         """
-        Fit first derivative of 2nd order polynomial p(x)
-        into points {r,V_rep'(r)}. The result is used as an initial
-        guess in fitting the derivative of 3rd order p(x).
-        Finally Nth order p(x) is given as an initial guess
-        to the final fitting procedure.
+        Fit smoothing spline into points {r, V_rep'(r)}.
+        The weights are treated as inverse of the stardard deviation.
         """
+        from scipy.interpolate import splrep, splev
         self.r_cut = r_cut
-        from scipy.optimize import fmin
-        N = 5
-        params = nu.zeros(2, float)
-        for o in range(N-1):
-            p = nu.zeros(len(params) + 1)
-            p[:-1] = params
-            params = p
-            params = fmin(self.fitting_function2, params)
-        self.param=nu.zeros(self.order,float)
-        self.param[0:N+1] = params
-        self.param = fmin(self.fitting_function,self.param,maxiter=self.maxiter, maxfun=self.maxiter)
+        k = 3
+        x = nu.array([self.deriv[i][0] for i in range(len(self.deriv))])
+        y = nu.array([self.deriv[i][1] for i in range(len(self.deriv))])
+        w = nu.array([self.deriv[i][2] for i in range(len(self.deriv))])
+        # sort values so that x is in ascending order
+        indices = x.argsort()
+        x = x[indices]
+        y = y[indices]
+        w = w[indices]
+        x, y, w = self.average_too_similar_values(x,y,w)
+        # use only points that are closer than r_cut
+        indices = nu.where(x<r_cut)
+        x = list(x[indices])
+        y = list(y[indices])
+        w = list(w[indices])
+        # force the spline curve to go to zero at x=r_cut
+        x.append(r_cut)
+        y.append(0)
+        w.append(1e3*max(w))
+        if s == None:
+            # from documentation of splrep in scipy.interpolate.fitpack
+            s = len(x) - nu.sqrt(2*len(x))
+        tck = splrep(x, y, w, s=s, k=k)
+
+        def dv_rep(r):
+            return splev(r, tck)
+
+        v_rep = self.integrate_vrep(dv_rep, r_cut)
+
+        def potential(r, der=0):
+            if der == 0:
+                return v_rep(r)
+            elif der == 1:
+                return dv_rep(r)
+            else:
+                raise NotImplementedError("Only 0th and 1st derivatives")
+        self.v = potential
+        if filename != None:
+            self.smoothing_spline_fit_to_file(filename, r_cut, s, k)
 
 
-    def fitting_function2(self,d):
+    def average_too_similar_values(self, x, y, w):
         """
-        Minimize this function in the fitting. The derivative of
-        the polynomial should fit well to the points, it must be
-        zero at r=r_cut and it should be relatively smooth curve.
+        If there are many y-values with almost the same x-values,
+        it is impossible to make spline fit to these points.
+        For these points the y will be the weighted average of
+        the y-points and the weight is the sum of the weights of
+        averaged y-points.
         """
-        ret = 0.0
-        d[0] = 0
-        d[1] = 0
-        for point in self.deriv:
-            r = point[0]
-            dv = point[1]
-            w = point[2]
-            ret += ( dv-self.polynomial(r,d,der=1) )**2*w
-        ret += self.curvature_penalty(d)
-        return ret
+        accuracy = 4 # the number of decimals to maintain
+        pseudo_x = nu.array(x*10**accuracy, dtype=int)
+        groups = nu.zeros(len(x), dtype=int)
+        g = 0
+        for i in range(1,len(pseudo_x)):
+            if pseudo_x[i] != pseudo_x[i-1]:
+                groups[i] = groups[i-1] + 1
+            else:
+                groups[i] = groups[i-1]
+        new_x = []
+        new_y = []
+        new_w = []
+        for g in range(max(groups)+1):
+            same = nu.where(groups == g)
+            new_x.append(nu.average(x[same]))
+            new_y.append(nu.dot(y[same],w[same])/nu.sum(w[same]))
+            new_w.append(nu.sum(w[same]))
+        return nu.array(new_x), nu.array(new_y), nu.array(new_w)
 
 
-    def polynomial(self, r, d, der=0):
+    def smoothing_spline_fit_to_file(self, filename, r_cut, s, k):
         """
-                                                 N                     
-        Return the value of a polynomial p(r) = sum d[i]*(r_cut - r)**i
-                                                i=0                    
-        at point r.
+        Write the full par-file to filename.
         """
-        r0 = self.r_cut
-        if r>r0 or r<0:
-            return 0.0
-        if der == 0:
-            return sum([d[i]*(r0-r)**i for i in range(len(d))])
-        if der == 1:
-            return sum([d[i]*(r0-r)**(i-1)*i*(-1) for i in range(1,len(d))])
-        raise NotImplementedError("Only first derivative is available")
+        from time import asctime
+        import shutil
+        par_files = self.calc.table_files
+        par_file = None
+        e12 = self.sym1 + self.sym2
+        e21 = self.sym2 + self.sym1
+        if e12 in par_files:
+            par_file = par_files[e12]
+        if e21 in par_files:
+            par_file = par_files[e21]
+        if par_file != None:
+            shutil.copy(par_file, filename)
+            f = open(filename, 'a')
+            print >> f, "repulsion_fitting_comment="
+            print >> f, "Repulsive potential generated by fitting function 'fit_smoothing_spline'"
+            print >> f, "parameters r_cut = %0.4f, s = %0.4f, k = %3i" % (r_cut, s, k)
+            print >> f, asctime() + "\n\n"
+            print >> f, 'fitting='
+            print >> f, self.comments
+            print >> f, '\n\nrepulsion='
+            for r in nu.linspace(0.1, r_cut, 100):
+                print >> f, r/Bohr, self(r)/Hartree
+            f.close()
 
 
-    def curvature_penalty(self, d):
+    def integrate_vrep(self, dv_rep, r_cut, N=100):
         """
-        Return a value between zero and +\infty that somehow describes
-        the curvature of the polynomial (zero == straigth line)
+        Integrate V'_rep(r) from r_cut to zero to get the V_rep(r)
         """
-        rg = nu.linspace(0, self.r_cut, 100)
-        ret = 0
-        for i, r in enumerate(rg):
-            if 1 <= i <= len(rg)-2:
-                ret += ( (self.polynomial(rg[i+1],d) - 2*self.polynomial(r,d) + self.polynomial(rg[i-1],d)) / (rg[i+1]-rg[i])**2 )**2
-        return ret/len(rg)
+        from box.interpolation import SplineFunction
+        from scipy.integrate import quadrature
+        r_g = nu.linspace(r_cut, 0, N)
+        dr = r_g[1] - r_g[0]
+        v_rep = nu.zeros(N)
+        for i in range(1,len(r_g)):
+            v_rep[i] = v_rep[i-1]
+            val, err = quadrature(dv_rep, r_g[i-1], r_g[i], tol=1.0e-12, maxiter=50)
+            v_rep[i] += val
+        # SplineFunction wants the x-values in ascendind order
+        return SplineFunction(r_g[::-1], v_rep[::-1])
 
 
     def repulsion_forces(self,atoms,vrep):
