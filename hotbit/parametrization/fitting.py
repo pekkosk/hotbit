@@ -580,6 +580,76 @@ class RepulsiveFitting:
         return nu.average(R[:N]), N
 
 
+    def append_homogeneous_structure(self, structure, charge=0, color='red', weight=1.0, label='', comment='', maxiter=10):
+        """
+        For a given structure, calculate points {r, V'_rep(r)} so that
+        the residual forces are minimized (F_i = \sum_j(-dV/dR)).
+        If only coordinates are given, the structure must be an equilibrium
+        structure. If also forces from DFT calculation are given
+        (ase.traj), any homogeneous structure may be applied, assuming
+        the minimization converges.
+        """
+        raise NotImplementedError("Not tested adequately")
+        from ase import read, PickleTrajectory
+        structures = []
+        if ".traj" in structure:
+            traj = PickleTrajectory(structure)
+            for image in traj:
+                structures.append(image)
+        elif ".xyz" in structure:
+            structures.append(read(structure))
+        else:
+            raise Exception("Unknown file format")
+        for structure in structures:
+            N = len(structure)
+            epsilon = nu.zeros((N,N))
+            r_hat = nu.zeros((N,N,3))
+            r_norm = nu.zeros((N,N))
+            for i in range(N):
+                for j in range(N):
+                    if i == j:
+                        r_hat[i,j] = 0
+                    else:
+                        vec = structure.positions[j] - structure.positions[i]
+                        norm = nu.linalg.norm(vec)
+                        r_norm[i,j] = norm
+                        r_hat[i,j] = vec/norm
+            try:
+                forces_DFT = structure.get_forces()
+            except:
+                forces_DFT = nu.zeros((N,3))
+            calc = self.solve_ground_state(structure, charge=charge)
+            forces = calc.get_forces(structure)
+            forces_res = forces_DFT - forces
+            def residual_forces(epsilon):
+                epsilon = nu.reshape(epsilon, (N,N))
+                res = 0.
+                for i in range(N):
+                    f = forces_res[i].copy()
+                    for j in range(N):
+                        f -= epsilon[i,j]*r_hat[i,j]
+                    res += nu.linalg.norm(f)
+                return res
+            from scipy.optimize import fmin
+            it = 0
+            minimized = False
+            while it < maxiter:
+                it += 1
+                epsilon = nu.reshape(fmin(residual_forces, epsilon), (N,N))
+                # if the epsilon matrix is almost symmetric, the minimization
+                # is satisfactory => symmetrize the matrix
+                if nu.linalg.norm(epsilon-epsilon.transpose()) < 0.1:
+                    minimized = True
+                    break
+            if minimized:
+                epsilon = 0.5*(epsilon + epsilon.transpose())
+                for i in range(0,N-1):
+                    for j in range(i+1,N):
+                        self.append_point([r_norm[i,j], epsilon[i,j], weight, color, label], comment)
+            else:
+                print "The minimization of forces did not converge!"
+
+
 #    def append_energy_curve(traj,edft,charge,bonds,weight):
 #        """ 
 #        Fit V_rep'(r) into energy curve E(r) in given trajectory.
