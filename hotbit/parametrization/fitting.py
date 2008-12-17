@@ -580,74 +580,147 @@ class RepulsiveFitting:
         return nu.average(R[:N]), N
 
 
-    def append_homogeneous_structure(self, structure, charge=0, color='red', weight=1.0, label='', comment='', maxiter=10):
+    def append_homogeneous_structure(self, filename, charge=0, color='red', weight=1.0, label='homogeneous structure', comment='', maxiter=6, cut_radius=3, traj_indices=None):
         """
         For a given structure, calculate points {r, V'_rep(r)} so that
-        the residual forces are minimized (F_i = \sum_j(-dV/dR)).
+        the residual forces are minimized (F_i = \sum_j(dV(|r_ij|)/dR)).
         If only coordinates are given, the structure must be an equilibrium
         structure. If also forces from DFT calculation are given
         (ase.traj), any homogeneous structure may be applied, assuming
         the minimization converges.
+
+        maxiter:      how many fmin-runs is performed to find minimum point
+        cut_radius:   the largest distance of elements that is taken
+                      into account.
+        traj_indices: list of indices for images in trajectory
         """
-        raise NotImplementedError("Not tested adequately")
-        from ase import read, PickleTrajectory
-        structures = []
-        if ".traj" in structure:
-            traj = PickleTrajectory(structure)
-            for image in traj:
-                structures.append(image)
-        elif ".xyz" in structure:
-            structures.append(read(structure))
-        else:
-            raise Exception("Unknown file format")
+        #raise NotImplementedError("Not tested adequately")
+        points = []
+        structures = self.import_structures(filename, traj_indices)
         for structure in structures:
             N = len(structure)
-            epsilon = nu.zeros((N,N))
+            epsilon, distances, mask=self.get_matrices(structure, cut_radius)
             r_hat = nu.zeros((N,N,3))
-            r_norm = nu.zeros((N,N))
             for i in range(N):
                 for j in range(N):
-                    if i == j:
-                        r_hat[i,j] = 0
-                    else:
-                        vec = structure.positions[j] - structure.positions[i]
+                    if not i == j:
+                        vec = structure.positions[j] -structure.positions[i]
                         norm = nu.linalg.norm(vec)
-                        r_norm[i,j] = norm
                         r_hat[i,j] = vec/norm
+            # if the given structure contains forces, use them, otherwise
+            # assume that the structure is optimized
             try:
                 forces_DFT = structure.get_forces()
             except:
                 forces_DFT = nu.zeros((N,3))
             calc = self.solve_ground_state(structure, charge=charge)
-            forces = calc.get_forces(structure)
-            forces_res = forces_DFT - forces
-            def residual_forces(epsilon):
-                epsilon = nu.reshape(epsilon, (N,N))
-                res = 0.
-                for i in range(N):
-                    f = forces_res[i].copy()
-                    for j in range(N):
-                        f -= epsilon[i,j]*r_hat[i,j]
-                    res += nu.linalg.norm(f)
-                return res
-            from scipy.optimize import fmin
-            it = 0
-            minimized = False
-            while it < maxiter:
-                it += 1
-                epsilon = nu.reshape(fmin(residual_forces, epsilon), (N,N))
-                # if the epsilon matrix is almost symmetric, the minimization
-                # is satisfactory => symmetrize the matrix
-                if nu.linalg.norm(epsilon-epsilon.transpose()) < 0.1:
-                    minimized = True
-                    break
-            if minimized:
-                epsilon = 0.5*(epsilon + epsilon.transpose())
-                for i in range(0,N-1):
-                    for j in range(i+1,N):
-                        self.append_point([r_norm[i,j], epsilon[i,j], weight, color, label], comment)
-            else:
-                print "The minimization of forces did not converge!"
+            if not calc == None:
+                forces = calc.get_forces(structure)
+                forces_res = forces_DFT - forces
+
+                # use one less point in an array that is given for
+                # the minimizer to reduce the number of degrees of freedom
+                v_rep_points = nu.zeros(len(distances)-1)
+
+                # the function that is minimized, returns the sum of
+                # the norm of forces acting on each atoms
+                def residual_forces(v_rep_points):
+                    points = list(v_rep_points)
+                    # a point needed for distance i_i
+                    points.insert(0,0)
+                    res = 0.
+                    for i in range(N):
+                        f = forces_res[i].copy()
+                        for j in range(N):
+                            f -= mask[i,j]*points[mask[i,j]*epsilon[i,j]]*r_hat[i,j]
+                        res += nu.linalg.norm(f)
+                    return res
+
+                v_rep_points, last_res_forces, minimized = self.find_forces(residual_forces, v_rep_points, maxiter)
+                # finally add the missing component
+                v_rep_points = list(v_rep_points)
+                v_rep_points.insert(0,0)
+                if minimized:
+                    for i in range(0,N-1):
+                        for j in range(i+1,N):
+                            if mask[i,j] > 0:
+                                # could add a degeneracy factor since there
+                                # may be different number of different bonds
+                                points.append([distances[epsilon[i,j]], v_rep_points[epsilon[i,j]], last_res_forces])
+                else:
+                    print "The minimization of forces did not converge!"
+        if len(points) > 0:
+            points = nu.array(points)
+            # Normalize weights so that the best results corrensponds
+            # to a weight given by the user (smallest residual force
+            # after the minimization => largest weight)
+            # +0.001 assures that 1/w does not diverge
+            min_res_force = nu.min(points[:,2]) + 0.001
+            for data in points:
+                self.append_point([data[0], data[1], weight*min_res_force/(data[2]+0.001), color, label], comment)
+                label = '_nolegend_'
+
+
+    def get_matrices(self, structure, cut_radius):
+        """
+        Construct epsilon matrix that maps the indices (i,j) to a
+        single list of distances. If there are many bonds with
+        almost same lengths, treat these bonds as there was only
+        one of them in order to reduce the degree of freedom
+        in the minimization. If the bond is longer that given
+        cut radius, that bond is ignored.
+        """
+        N = len(structure)
+        distances = []
+        index_list = []
+        for i in range(N):
+            for j in range(N):
+                vec = structure.positions[j] - structure.positions[i]
+                distances.append(nu.linalg.norm(vec))
+                index_list.append([i,j])
+        distances = nu.array(distances)
+        index_list = nu.array(index_list)
+
+        indices = distances.argsort()
+        distances = distances[indices]
+        index_list = index_list[indices]
+        groups = nu.zeros(len(distances), dtype=int)
+        group = 0
+        for i, d in enumerate(distances):
+            if i != 0:
+                groups[i] = groups[i-1]
+                if distances[i]-distances[i-1] > 0.005: #FIXME some good constant
+                    groups[i] += 1
+                    group = groups[i]
+        averaged_distances = nu.array([nu.sum(distances[nu.where(groups == i)])/len(nu.where(groups == i)[0]) for i in range(group+1)])
+        epsilon = nu.zeros((N,N), dtype=int)
+        for (i,j), g in zip(index_list, groups):
+            epsilon[i,j] = g
+        mask = nu.zeros(nu.shape(epsilon), dtype=int)
+        for i in range(N):
+            for j in range(N):
+                if i != j and averaged_distances[epsilon[i,j]] < cut_radius:
+                    mask[i,j] = 1
+        averaged_distances = averaged_distances[nu.where(averaged_distances < cut_radius)]
+        return epsilon, averaged_distances, mask
+
+
+    def find_forces(self, function, v_rep_points, maxiter):
+        """
+        Try to minimize the residual forces by finding matrix
+        elements epsilon_ij = V'_rep(|r_ij|).
+        """
+        from scipy.optimize import fmin
+        it = 0
+        last_res_forces = 0
+        while it < maxiter:
+            it += 1
+            ret = fmin(function, v_rep_points, full_output=1)
+            v_rep_points = ret[0]
+            if ret[4] == 0 and nu.abs(ret[1]-last_res_forces) <0.01:
+                return v_rep_points, last_res_forces, True
+            last_res_forces = ret[1]
+        return v_rep_points, last_res_forces, False
 
 
 #    def append_energy_curve(traj,edft,charge,bonds,weight):
@@ -732,3 +805,21 @@ class RepulsiveFitting:
         f = open(filename,'r')
         self.deriv = pickle.load(f)
         f.close()
+
+
+    def import_structures(self, filename, traj_indices=None):
+        from ase import read, PickleTrajectory
+        structures = []
+        if ".traj" in filename:
+            traj = PickleTrajectory(filename)
+            if traj_indices == None:
+                traj_indices = range(len(traj))
+            for i in traj_indices:
+                image = traj[i]
+                structures.append(image)
+        elif ".xyz" in filename:
+            structures.append(read(filename))
+        else:
+            raise Exception("Unknown file format: %s" % structure)
+        return structures
+
