@@ -37,6 +37,9 @@ class RepulsiveFitting:
         self.v=None
         self.maxiter=maxiter
 
+        self.colors = ['blue','cyan','red','pink','yellow','orange','#8DEE1E','magenta','green','white','black']
+        self.color_index = 0
+
         print 'r_dimer      =',r_dimer
         print '1.5 x r_dimer=',1.5*r_dimer
 
@@ -473,7 +476,7 @@ class RepulsiveFitting:
         vrep = SplineFunction(R, (E_dft - E_bs)/N)
 
         if not 'color' in kwargs:
-            color = 'b'
+            color = self.get_color()
         else:
             color = kwargs['color']
         if not 'label' in kwargs:
@@ -580,7 +583,7 @@ class RepulsiveFitting:
         return nu.average(R[:N]), N
 
 
-    def append_homogeneous_structure(self, filename, charge=0, color='red', weight=1.0, label='homogeneous structure', comment='', maxiter=6, cut_radius=3, traj_indices=None):
+    def append_homogeneous_structure(self, filename, charge=0, color=None, weight=1.0, label='homogeneous structure', comment='', maxiter=6, cut_radius=3, traj_indices=None):
         """
         For a given structure, calculate points {r, V'_rep(r)} so that
         the residual forces are minimized (F_i = \sum_j(dV(|r_ij|)/dR)).
@@ -656,6 +659,8 @@ class RepulsiveFitting:
             # after the minimization => largest weight)
             # +0.001 assures that 1/w does not diverge
             min_res_force = nu.min(points[:,2]) + 0.001
+            if color == None:
+                color = self.get_color()
             for data in points:
                 self.append_point([data[0], data[1], weight*min_res_force/(data[2]+0.001), color, label], comment)
                 label = '_nolegend_'
@@ -823,3 +828,10 @@ class RepulsiveFitting:
             raise Exception("Unknown file format: %s" % structure)
         return structures
 
+
+    def get_color(self):
+        color = self.colors[self.color_index]
+        self.color_index += 1
+        if self.color_index == len(self.colors):
+            self.color_index = 0
+        return color
