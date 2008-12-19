@@ -5,6 +5,8 @@ from ase.units import Bohr,Hartree
 from box import mix
 from box import Atoms
 from box.interpolation import Function
+from ase import read, PickleTrajectory
+import pylab as pl
 
 
 class RepulsiveFitting:
@@ -71,7 +73,6 @@ class RepulsiveFitting:
         
     def plot(self):
         """ Plot vrep and derivative together with fit info. """
-        import pylab as pl
         r=nu.linspace(self.r_small,self.r_cut)
         v=[self(x,der=0) for x in r]
         vp=[self(x,der=1) for x in r]
@@ -438,7 +439,6 @@ class RepulsiveFitting:
         comment:             A comment to be added to the .par file
         """
         import scipy
-        import pylab
         from ase.io.trajectory import PickleTrajectory
         from ase import Atoms
         from copy import copy
@@ -583,7 +583,7 @@ class RepulsiveFitting:
         return nu.average(R[:N]), N
 
 
-    def append_homogeneous_structure(self, filename, charge=0, color=None, weight=1.0, label='homogeneous structure', comment='', maxiter=6, cut_radius=3, traj_indices=None):
+    def append_homogeneous_structure(self, filename, charge=0, color=None, weight=1.0, label='homogeneous structure', comment='', maxiter=6, cut_radius=3, traj_indices=None, h=0.005, fmax=0.05):
         """
         For a given structure, calculate points {r, V'_rep(r)} so that
         the residual forces are minimized (F_i = \sum_j(dV(|r_ij|)/dR)).
@@ -596,13 +596,15 @@ class RepulsiveFitting:
         cut_radius:   the largest distance of elements that is taken
                       into account.
         traj_indices: list of indices for images in trajectory
+        h:            the variation in the bond lengths that are still
+                      considered to be equal.
         """
         #raise NotImplementedError("Not tested adequately")
         points = []
         structures = self.import_structures(filename, traj_indices)
         for structure in structures:
             N = len(structure)
-            epsilon, distances, mask=self.get_matrices(structure, cut_radius)
+            epsilon, distances, mask=self.get_matrices(structure, cut_radius, h)
             r_hat = nu.zeros((N,N,3))
             for i in range(N):
                 for j in range(N):
@@ -639,7 +641,7 @@ class RepulsiveFitting:
                         res += nu.linalg.norm(f)
                     return res
 
-                v_rep_points, last_res_forces, minimized = self.find_forces(residual_forces, v_rep_points, maxiter)
+                v_rep_points, last_res_forces, minimized = self.find_forces(residual_forces, v_rep_points, maxiter, fmax)
                 # finally add the missing component
                 v_rep_points = list(v_rep_points)
                 v_rep_points.insert(0,0)
@@ -666,7 +668,7 @@ class RepulsiveFitting:
                 label = '_nolegend_'
 
 
-    def get_matrices(self, structure, cut_radius):
+    def get_matrices(self, structure, cut_radius, h):
         """
         Construct epsilon matrix that maps the indices (i,j) to a
         single list of distances. If there are many bonds with
@@ -694,7 +696,7 @@ class RepulsiveFitting:
         for i, d in enumerate(distances):
             if i != 0:
                 groups[i] = groups[i-1]
-                if distances[i]-distances[i-1] > 0.005: #FIXME some good constant
+                if distances[i]-distances[i-1] > h:
                     groups[i] += 1
                     group = groups[i]
         averaged_distances = nu.array([nu.sum(distances[nu.where(groups == i)])/len(nu.where(groups == i)[0]) for i in range(group+1)])
@@ -710,7 +712,7 @@ class RepulsiveFitting:
         return epsilon, averaged_distances, mask
 
 
-    def find_forces(self, function, v_rep_points, maxiter):
+    def find_forces(self, function, v_rep_points, maxiter, fmax):
         """
         Try to minimize the residual forces by finding matrix
         elements epsilon_ij = V'_rep(|r_ij|).
@@ -718,12 +720,18 @@ class RepulsiveFitting:
         from scipy.optimize import fmin
         it = 0
         last_res_forces = 0
-        while it < maxiter:
+        N = len(v_rep_points)
+        limit = N*fmax
+        #while it < maxiter:
+        while True:
+            print "Found %i different bond lengths." % N
             it += 1
             ret = fmin(function, v_rep_points, full_output=1)
             v_rep_points = ret[0]
-            if ret[4] == 0 and nu.abs(ret[1]-last_res_forces) <0.01:
-                return v_rep_points, last_res_forces, True
+            forces = ret[1]
+            print "The sum of the norm of the net forces: %0.4f, should be < %0.4f" % (forces, limit)
+            if ret[4] == 0 and nu.abs(forces-last_res_forces) < 0.001 and forces < limit:
+                return v_rep_points, forces, True
             last_res_forces = ret[1]
         return v_rep_points, last_res_forces, False
 
@@ -813,7 +821,6 @@ class RepulsiveFitting:
 
 
     def import_structures(self, filename, traj_indices=None):
-        from ase import read, PickleTrajectory
         structures = []
         if ".traj" in filename:
             traj = PickleTrajectory(filename)
@@ -835,3 +842,139 @@ class RepulsiveFitting:
         if self.color_index == len(self.colors):
             self.color_index = 0
         return color
+
+
+class ParametrizationTest:
+    """
+    A tool to examine how well your parametrization agrees with
+    given ase-trajectories.
+
+    trajectories:  list of trajectories you want to compare
+    charges:       the charges of the systems in trajectories
+    """
+
+    def __init__(self, pars, trajectories, charges=None):
+        if charges != None:
+            assert len(trajectories) == len(charges)
+            self.charges = charges
+        else:
+            charges = nu.zeros(len(trajectories))
+        self.trajectories = trajectories
+        self.points = []
+        self.ref_points = []
+        self.pars = pars
+        self.colors = ['cyan','red','orange','#8DEE1E','magenta','green','black']
+
+
+    def norm_to_isolated_atoms(self, atoms):
+        """
+        Return the constant that can be used to calculate
+        the binding energy of the system.
+        """
+        delta_E = 0
+        for atom in atoms:
+            delta_E -= self.E_free[atom.symbol]
+        return delta_E
+
+
+    def get_isolated_energies(self, trajs, par):
+        """
+        Return the energies of an isolated atoms.
+        """
+        elements = []
+        energies = {}
+        for t in trajs:
+            traj = PickleTrajectory(t)
+            for atom in traj[0]:
+                if not atom.symbol in elements:
+                    elements.append(atom.symbol)
+        for el in elements:
+            ss = "%s%s" % (el, el)
+            tables = {ss:par, 'others':'default'}
+            atoms = Atoms(ss, ((0,0,0),(200,0,0)))
+            atoms.center(vacuum=100)
+            atoms.set_calculator(Calculator(SCC=True, tables=tables))
+            energies[el] = atoms.get_potential_energy() / 2
+        return energies
+
+
+    def compare(self):
+        """
+        Make a comparison for all the systems.
+        """
+        for i_par in range(len(self.pars)):
+            self.compare_with_par(i_par)
+
+
+    def compare_with_par(self, i_par):
+        """
+        Make a comparison to all trajectories with given parameter-file.
+        The i_par is the index to the self.pars.
+        """
+        par = self.pars[i_par]
+        self.E_free = self.get_isolated_energies(self.trajectories, par)
+        temp = par.split('_')
+        symbols = "%s%s" % (temp[0],temp[1])
+        tables = {symbols:par, 'others':'default'}
+        for i_traj, charge in zip(range(len(self.trajectories)), self.charges):
+            pl.figure(i_traj)
+            pl.title(self.trajectories[i_traj])
+            if i_par == 0:
+                self.plot_ref(i_traj)
+            self.compare_trajectory(i_traj, charge, tables, i_par)
+
+
+    def compare_trajectory(self, i_traj, charge, tables, i_par):
+        """
+        Calculate the energies for the frames in the trajectory
+        and plot them.
+        """
+        frames = []
+        energies = []
+        trajectory = PickleTrajectory(self.trajectories[i_traj])
+        for i, image in enumerate(trajectory):
+            e_tb = None
+            try:
+                atoms = Atoms(image)
+                atoms.set_calculator(Calculator(SCC=True, charge=charge, tables=tables))
+                e_tb = atoms.get_potential_energy()
+            except Exception, ex:
+                print ex
+            if e_tb != None:
+                energies.append(e_tb)
+                frames.append(i)
+        delta_E = self.norm_to_isolated_atoms(trajectory[0])
+        for i in range(len(energies)):
+            energies[i] += delta_E
+        self.plot(frames, energies, i_traj, tables, i_par)
+
+
+    def plot_ref(self, i_traj):
+        """
+        Plot the energies of a given trajectory as a function
+        of the frame number.
+        """
+        e_dft = []
+        traj = PickleTrajectory(self.trajectories[i_traj])
+        for image in traj:
+            e_dft.append(image.get_total_energy())
+        pl.plot(e_dft, c='blue', label='DFT-energies')
+
+
+    def plot(self, frames, points, i_traj, tables, i_par):
+        par = self.pars[i_par]
+        color = self.colors[i_par]
+        pl.plot(frames, points, c=color, label='TB-%s' % par)
+        pl.xlabel('frame #')
+        pl.ylabel('Energy (eV)')
+        pl.legend()
+
+
+    def run(self):
+        """
+        Make all the comparisons with given trajectories and parameter
+        files and show the results.
+        """
+        self.compare()
+        pl.show()
+
