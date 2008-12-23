@@ -152,23 +152,26 @@ class RepulsiveFitting:
         self.reduce_atoms_into_cell()
         
         
-    def solve_ground_state(self, atoms, charge=None):
+    def solve_ground_state(self, atoms, charge=None, calc=None):
         """
         vahan kuten get_energy
                 
         """
         from copy import copy
-        calc = copy(self.calc)
+        if calc == None:
+            c = copy(self.calc)
+        else:
+            c = copy(calc)
         if charge != None:
-            calc.set("charge",charge)
-        atoms.set_calculator(calc)
+            c.set("charge",charge)
+        atoms.set_calculator(c)
         try:
             # FIXME make these output to file also
             atoms.get_potential_energy()
         except Exception:
-            del(calc)
-            calc = None
-        return calc
+            del(c)
+            c = None
+        return c
 
 
     def get_energy(self,atoms,charge,forces=False):
@@ -583,7 +586,7 @@ class RepulsiveFitting:
         return nu.average(R[:N]), N
 
 
-    def append_homogeneous_structure(self, filename, charge=0, color=None, weight=1.0, label='homogeneous structure', comment='', maxiter=6, cut_radius=3, traj_indices=None, h=0.005, fmax=0.05):
+    def append_homogeneous_structure(self, filename, charge=0, color=None, weight=1.0, label='homogeneous structure', comment='', cut_radius=3, traj_indices=None, h=0.005, calc=None):
         """
         For a given structure, calculate points {r, V'_rep(r)} so that
         the residual forces are minimized (F_i = \sum_j(dV(|r_ij|)/dR)).
@@ -605,6 +608,7 @@ class RepulsiveFitting:
         for structure in structures:
             N = len(structure)
             epsilon, distances, mask=self.get_matrices(structure, cut_radius, h)
+            # epsilon = epsilon*mask
             r_hat = nu.zeros((N,N,3))
             for i in range(N):
                 for j in range(N):
@@ -618,9 +622,9 @@ class RepulsiveFitting:
                 forces_DFT = structure.get_forces()
             except:
                 forces_DFT = nu.zeros((N,3))
-            calc = self.solve_ground_state(structure, charge=charge)
-            if not calc == None:
-                forces = calc.get_forces(structure)
+            calc_new = self.solve_ground_state(structure, charge=charge, calc=calc)
+            if not calc_new == None:
+                forces = calc_new.get_forces(structure)
                 forces_res = forces_DFT - forces
 
                 # use one less point in an array that is given for
@@ -630,18 +634,18 @@ class RepulsiveFitting:
                 # the function that is minimized, returns the sum of
                 # the norm of forces acting on each atoms
                 def residual_forces(v_rep_points):
-                    points = list(v_rep_points)
-                    # a point needed for distance i_i
-                    points.insert(0,0)
                     res = 0.
                     for i in range(N):
+                        # FIXME this can be done easier/faster
+                        indices = nu.array(mask[i,:]*epsilon[i,:])
+                        indices -= 1
+                        ppoints  = v_rep_points[indices]
                         f = forces_res[i].copy()
-                        for j in range(N):
-                            f -= mask[i,j]*points[mask[i,j]*epsilon[i,j]]*r_hat[i,j]
+                        f -= nu.dot((mask[i,:]*ppoints),r_hat[i,:])
                         res += nu.linalg.norm(f)
                     return res
 
-                v_rep_points, last_res_forces, minimized = self.find_forces(residual_forces, v_rep_points, maxiter, fmax)
+                v_rep_points, last_res_forces, minimized = self.find_forces(residual_forces, v_rep_points)
                 # finally add the missing component
                 v_rep_points = list(v_rep_points)
                 v_rep_points.insert(0,0)
@@ -712,25 +716,21 @@ class RepulsiveFitting:
         return epsilon, averaged_distances, mask
 
 
-    def find_forces(self, function, v_rep_points, maxiter, fmax):
+    def find_forces(self, function, v_rep_points):
         """
         Try to minimize the residual forces by finding matrix
         elements epsilon_ij = V'_rep(|r_ij|).
         """
         from scipy.optimize import fmin
-        it = 0
         last_res_forces = 0
         N = len(v_rep_points)
-        limit = N*fmax
-        #while it < maxiter:
         while True:
             print "Found %i different bond lengths." % N
-            it += 1
             ret = fmin(function, v_rep_points, full_output=1)
             v_rep_points = ret[0]
             forces = ret[1]
-            print "The sum of the norm of the net forces: %0.4f, should be < %0.4f" % (forces, limit)
-            if ret[4] == 0 and nu.abs(forces-last_res_forces) < 0.001 and forces < limit:
+            print "The sum of the norm of the net forces: %0.4f" % (forces)
+            if ret[4] == 0 and nu.abs(forces-last_res_forces) < 0.001:
                 return v_rep_points, forces, True
             last_res_forces = ret[1]
         return v_rep_points, last_res_forces, False
