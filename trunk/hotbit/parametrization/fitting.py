@@ -96,8 +96,15 @@ class RepulsiveFitting:
         for s in self.deriv:
             pl.scatter( [s[0]],[s[1]],s=100*s[2],c=s[3],label=s[4])
         pl.axvline(x=self.r_cut,c='r',ls=':')
-        pl.xlim(xmin=rmin)
-        pl.ylim(ymin=self(rmin,der=1))
+        pl.axvline(x=self.r_dimer,c='r',ls=':')
+        xmin = 0.8*self.r_dimer
+        xmax = 1.2*self.r_cut
+        ymin = self(0.8*self.r_dimer, der=1)
+        ymax = abs(0.2*ymin)
+        pl.text(self.r_dimer, ymin, 'r_dimer')
+        pl.text(self.r_cut, ymin, 'r_cut')
+        pl.xlim(xmin=xmin, xmax=xmax)
+        pl.ylim(ymin=ymin, ymax=ymax)
         pl.legend()
         pl.show()
 
@@ -248,6 +255,8 @@ class RepulsiveFitting:
         if s == None:
             # from documentation of splrep in scipy.interpolate.fitpack
             s = len(x) - nu.sqrt(2*len(x))
+        print "Fitting smoothing spline with parameters"
+        print "k=%i, s=%i, r_cut=%0.4f\n" %(k, s, r_cut)
         tck = splrep(x, y, w, s=s, k=k)
 
         def dv_rep(r):
@@ -431,7 +440,7 @@ class RepulsiveFitting:
         acceptable keyword arguments:
         color:               Color that is used in the fitting plot.
         label:               Name that is used in the fitting plot.
-        weight:              Weight given for the points calculated
+        sigma:               The "uncertainty" of the points calculated
                              from this system (default=1).
         separating_distance: If distance between two elements is larger
                              than this, it is assumed that their
@@ -451,8 +460,8 @@ class RepulsiveFitting:
             kwargs['separating_distance'] = 3.0
         if not 'h' in kwargs:
             kwargs['h'] = 1e-5
-        if not 'weight' in kwargs:
-            kwargs['weight'] = 1.0
+        if not 'sigma' in kwargs:
+            kwargs['sigma'] = 1.0
         if not 'charge' in kwargs:
             kwargs['charge'] = None
         traj = PickleTrajectory(dft_traj)
@@ -471,6 +480,7 @@ class RepulsiveFitting:
         R = R[usable_frames]
         E_dft = E_dft[usable_frames]
         E_bs = E_bs[usable_frames]
+        sigma_coefficient = nu.sqrt(len(R))
         # sort the radii and corresponding energies to ascending order
         indices = R.argsort()
         R = R[indices]
@@ -493,7 +503,7 @@ class RepulsiveFitting:
         for i, r in enumerate(R):
             if i > 0:
                 label='_nolegend_'
-            self.append_point([r, vrep(r,der=1), kwargs['weight'], color, label], comment=comment)
+            self.append_point([r, vrep(r,der=1), sigma_coefficient*kwargs['sigma'], color, label], comment=comment)
 
 
     def process_trajectory(self, traj, elA, elB, **kwargs):
@@ -888,12 +898,17 @@ class ParametrizationTest:
             for atom in traj[0]:
                 if not atom.symbol in elements:
                     elements.append(atom.symbol)
+        el1, el2 = par.split("_")[0:2]
         for el in elements:
             ss = "%s%s" % (el, el)
-            tables = {ss:par, 'others':'default'}
+            if el1 == el2 and el1 == el:
+                tables = {ss:par, 'others':'default'}
+                calc = Calculator(SCC=True, tables=tables)
+            else:
+                calc = Calculator(SCC=True)
             atoms = Atoms(ss, ((0,0,0),(200,0,0)))
             atoms.center(vacuum=100)
-            atoms.set_calculator(Calculator(SCC=True, tables=tables))
+            atoms.set_calculator(calc)
             energies[el] = atoms.get_potential_energy() / 2
         return energies
 
