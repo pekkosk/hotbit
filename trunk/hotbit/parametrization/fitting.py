@@ -503,7 +503,7 @@ class RepulsiveFitting:
         for i, r in enumerate(R):
             if i > 0:
                 label='_nolegend_'
-            self.append_point([r, vrep(r,der=1), sigma_coefficient*kwargs['sigma'], color, label], comment=comment)
+            self.append_point([r, vrep(r,der=1), 1./(sigma_coefficient*kwargs['sigma']), color, label], comment=comment)
 
 
     def process_trajectory(self, traj, elA, elB, **kwargs):
