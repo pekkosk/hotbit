@@ -440,8 +440,7 @@ class RepulsiveFitting:
         acceptable keyword arguments:
         color:               Color that is used in the fitting plot.
         label:               Name that is used in the fitting plot.
-        sigma:               The "uncertainty" of the points calculated
-                             from this system (default=1).
+        sigma:               The "uncertainty" of the system (default=1)
         separating_distance: If distance between two elements is larger
                              than this, it is assumed that their
                              interaction can be neglected.
@@ -596,7 +595,7 @@ class RepulsiveFitting:
         return nu.average(R[:N]), N
 
 
-    def append_homogeneous_structure(self, filename, charge=0, color=None, weight=1.0, label='homogeneous structure', comment='', cut_radius=3, traj_indices=None, h=0.005, calc=None):
+    def append_homogeneous_structure(self, filename, charge=0, color=None, sigma=1.0, label='homogeneous structure', comment='', cut_radius=3, h=0.005, calc=None):
         """
         For a given structure, calculate points {r, V'_rep(r)} so that
         the residual forces are minimized (F_i = \sum_j(dV(|r_ij|)/dR)).
@@ -605,16 +604,16 @@ class RepulsiveFitting:
         (ase.traj), any homogeneous structure may be applied, assuming
         the minimization converges.
 
+        sigma:        The "uncertainty" of the system (default=1)
         maxiter:      how many fmin-runs is performed to find minimum point
         cut_radius:   the largest distance of elements that is taken
                       into account.
-        traj_indices: list of indices for images in trajectory
         h:            the variation in the bond lengths that are still
                       considered to be equal.
         """
         #raise NotImplementedError("Not tested adequately")
         points = []
-        structures = self.import_structures(filename, traj_indices)
+        structures = self.import_structures(filename)
         for structure in structures:
             N = len(structure)
             epsilon, distances, mask=self.get_matrices(structure, cut_radius, h)
@@ -670,15 +669,14 @@ class RepulsiveFitting:
                     print "The minimization of forces did not converge!"
         if len(points) > 0:
             points = nu.array(points)
-            # Normalize weights so that the best results corrensponds
-            # to a weight given by the user (smallest residual force
-            # after the minimization => largest weight)
-            # +0.001 assures that 1/w does not diverge
-            min_res_force = nu.min(points[:,2]) + 0.001
+            sigmas = points[:,2] + 0.001 #+0.001 to prevent 1/sigma to go infinity
+            inv_sigmas = 1./sigmas
+            norm_factor = nu.sqrt(1./sigma**2 / nu.dot(inv_sigmas, inv_sigmas))
+            points[:,2] /= norm_factor
             if color == None:
                 color = self.get_color()
             for data in points:
-                self.append_point([data[0], data[1], weight*min_res_force/(data[2]+0.001), color, label], comment)
+                self.append_point([data[0], data[1], 1/data[2], color, label], comment)
                 label = '_nolegend_'
 
 
