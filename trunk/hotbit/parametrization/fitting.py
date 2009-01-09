@@ -669,7 +669,7 @@ class RepulsiveFitting:
                     print "The minimization of forces did not converge!"
         if len(points) > 0:
             points = nu.array(points)
-            sigmas = points[:,2] + 0.001 #+0.001 to prevent 1/sigma to go infinity
+            sigmas = points[:,2] + nu.min(points[:,2])*0.001 # add small value to prevent 1/sigma to go infinity
             inv_sigmas = 1./sigmas
             norm_factor = nu.sqrt(1./sigma**2 / nu.dot(inv_sigmas, inv_sigmas))
             points[:,2] /= norm_factor
