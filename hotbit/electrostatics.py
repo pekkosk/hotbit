@@ -20,6 +20,9 @@ class Electrostatics:
         self.cut=self.calc.ia.get_cut()
         self.gamma_potential=None
         
+    def __del__(self):
+        print "Electrostatics deleted"
+
     def __call__(self):
         """ Electrostatic (TB) potential at r. """
         return None
