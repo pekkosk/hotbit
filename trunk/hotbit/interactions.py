@@ -92,6 +92,9 @@ class Interactions:
         self.check_box_size()
         self.first=True
     
+    def __del__(self):
+        print "Interactions deleted"
+
     def get_files(self):
         """ Return the list of Slater-Koster table files."""
         return self.files  

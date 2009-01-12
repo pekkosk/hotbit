@@ -127,8 +127,30 @@ class Calculator(Output):
             for note in self.notes:
                 print>>self.txt, note         
         self.timer.summary()
-        self.close_output()
-        
+        print "Calculator deleted"
+        Output.__del__(self)
+
+    def discard(self):
+        if self.init == True:
+            atoms = self.get_atoms()
+            if type(atoms) != type(None):
+                del atoms.calc
+            del self.el.calc
+            del self.ia.calc
+            del self.rep.calc
+            del self.env.calc
+            del self.st.calc
+            del self.st.es.calc
+            del self.st.solver.calc
+
+            del self.env.el
+            del self.st.el
+            del self.st.es.el
+            del self.rep.el
+
+            del self.st.ia
+            del self.rep.ia
+
     def add_note(self,note):
         """ Add warning (etc) note to be printed in log file end. """
         self.notes.append(note)        

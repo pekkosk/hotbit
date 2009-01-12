@@ -32,6 +32,9 @@ class Repulsion:
                     raise KeyError('Interaction file for %s-%s or %s-%s not found.' %(si,sj,sj,si))
                 self.vrep[si+sj]=RepulsivePotential(self.files[si+sj])
                     
+    def __del__(self):
+        print "Repulsion deleted"
+
     def greetings(self):
         """ Return the repulsion documentations. """
         txt='Repulsions:\n'

@@ -56,6 +56,9 @@ class Elements:
         self.solved={'ground state':None,'energy':None,'forces':None,'stress':None}
             
             
+    def __del__(self):
+        print "Elements deleted"
+
     def set_cutoffs(self,cutoffs):
         """ Set the maximum interaction cutoffs (dict of ranges for element pair SlaKo tables). """
         self.cut=cutoffs
