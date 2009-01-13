@@ -131,6 +131,8 @@ class Calculator(Output):
         Output.__del__(self)
 
     def discard(self):
+        """ Remove internal references between instances so that
+            the calculator can be destroyed by the garbace collection. """
         if self.init == True:
             atoms = self.get_atoms()
             if type(atoms) != type(None):
