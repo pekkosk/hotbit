@@ -8,21 +8,20 @@ from box import Atoms
 from box.interpolation import Function
 import os
 import ase
+from weakref import proxy
 #import cgitb; cgitb.enable()
 find=mix.find_value
 vec=nu.array
 
 class Repulsion:
-    def __init__(self,calc,timer,elements,interactions):
-        self.calc=calc
-        self.el=elements
-        self.ia=interactions
-        self.timer=timer
+    def __init__(self,calc):
+        self.calc=proxy(calc)
+        self.timer=calc.timer
         
         # read repulsions
         self.vrep={} 
-        present=self.el.get_present()               
-        self.files=self.ia.get_files()        
+        present=calc.el.get_present()               
+        self.files=self.calc.ia.get_files()        
         for si in present:
             for sj in present:
                 try:
@@ -52,7 +51,7 @@ class Repulsion:
     def get_repulsive_energy(self):
         """ Calculate the repulsive energy with included element pairs. """
         erep=0.0     
-        for i,j,si,sj,dist in self.el.get_ia_atom_pairs(['i','j','si','sj','dist']):
+        for i,j,si,sj,dist in self.calc.el.get_ia_atom_pairs(['i','j','si','sj','dist']):
             if i==j: 
                 continue
             erep+=self.vrep[si+sj](dist)
@@ -61,8 +60,8 @@ class Repulsion:
     def get_repulsive_forces(self):
         """ Calculate the forces due to repulsive potentials for element pairs. """
         self.timer.start('f_rep')
-        f=nu.zeros((len(self.el),3))
-        for i,j,si,sj,dist,rhat in self.el.get_ia_atom_pairs(['i','j','si','sj','dist','rhat']):
+        f=nu.zeros((len(self.calc.el),3))
+        for i,j,si,sj,dist,rhat in self.calc.el.get_ia_atom_pairs(['i','j','si','sj','dist','rhat']):
             if i==j: 
                 continue
             frep=self.vrep[si+sj](dist,der=1)*rhat

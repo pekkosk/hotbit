@@ -11,7 +11,6 @@ from ase.units import Bohr, Hartree
 from box.timing import Timer
 from elements import Elements
 from interactions import Interactions
-from electrostatics import Electrostatics
 from environment import Environment
 from repulsion import Repulsion
 from states import States
@@ -226,11 +225,10 @@ class Calculator(Output):
         """ Initialization of hotbit. """  
         self.timer.start('initialization')
         self.init=True
-        self.el=Elements(self,atoms,self.timer,self.element_files,charge=self.charge)
-        self.ia=Interactions(self,self.timer,self.el,self.table_files)
-        self.es=Electrostatics(self,self.timer)
-        self.st=States(self,self.timer,self.el,self.ia)
-        self.rep=Repulsion(self,self.timer,self.el,self.ia)
+        self.el=Elements(self,atoms)
+        self.ia=Interactions(self)
+        self.st=States(self)
+        self.rep=Repulsion(self)
         self.env=Environment(self)
         self.set_enabled=False
         self.pbc=atoms.get_pbc()
@@ -261,7 +259,7 @@ class Calculator(Output):
         self.timer.start('forces')
         fbs=self.st.band_structure_forces()
         frep=self.rep.get_repulsive_forces()
-        fcoul=self.es.gamma_forces() #zero for non-SCC
+        fcoul=self.st.es.gamma_forces() #zero for non-SCC
         self.timer.stop('forces')
         return (fbs+frep+fcoul)*(Hartree/Bohr)
             
@@ -297,7 +295,7 @@ class Calculator(Output):
             
     def get_coulomb_energy(self,atoms):
         self.solve_ground_state(atoms)
-        return self.es.coulomb_energy()*Hartree
+        return self.st.es.coulomb_energy()*Hartree
     
     
     #def calculation_required(self,atoms,quantities):

@@ -4,13 +4,14 @@
 from scipy.linalg import eig
 import numpy as nu
 from hotbit.fortran.eigensolver import geig
-from numpy.linalg import solve 
+from numpy.linalg import solve
 from box.misc import AndersonMixer
+from weakref import proxy
 
 class Solver:
-    def __init__(self,calc,timer):
-        self.calc=calc
-        self.timer=timer
+    def __init__(self,calc):
+        self.calc=proxy(calc)
+        self.timer=calc.timer
         self.maxiter=calc.get('maxiter')
         self.mix=calc.get('mixing_constant')
         self.convergence=calc.get('convergence')
@@ -18,7 +19,6 @@ class Solver:
         self.mmax=calc.get('Anderson_memory')
         self.limit=calc.get('convergence')
         self.beta=calc.get('mixing_constant')
-        self.es=calc.es
         self.norb=len(self.calc.el)
         self.verbose=calc.get('verbose')
         self.iterations=None
@@ -74,12 +74,12 @@ class Solver:
         
     def get_states(self,st,dq,H0,S,count):
         """ Solve the (non)SCC generalized eigenvalue problem. """
-        self.es=self.calc.es
+        es=st.es
         self.norb=len(self.calc.el)
         mixer=AndersonMixer(self.beta,self.mmax,self.limit,chop=0.2)
         for i in range(self.maxiter):
             if self.SCC:
-                H=H0+self.es.construct_H1(dq)*S
+                H=H0 + es.construct_H1(dq)*S
             else:
                 H=H0
             e,wf=self.solve(H,S)

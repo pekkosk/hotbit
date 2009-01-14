@@ -2,28 +2,28 @@
 # Please see the accompanying LICENSE file for further information.
 
 from solver import Solver
+from electrostatics import Electrostatics
+from occupations import Occupations
 from hotbit.fortran.misc import fortran_rho
 from hotbit.fortran.misc import fortran_rho0
 from hotbit.fortran.misc import fortran_rhoe0
 from hotbit.fortran.misc import symmetric_matmul
 from hotbit.fortran.misc import matmul_diagonal
 from hotbit.fortran.misc import fortran_fbs
-from occupations import Occupations
 import numpy as nu
+from weakref import proxy
 
 class States:
-    
-    def __init__(self,calc,timer,elements,interactions):
-        self.calc=calc
-        self.timer=timer
-        self.el=elements
-        self.ia=interactions
-        self.solver=Solver(calc,timer)
+
+    def __init__(self,calc):
+        self.es=Electrostatics(calc)
+        self.solver=Solver(calc)
+        self.timer=calc.timer
+        self.calc=proxy(calc)
         width=calc.get('width')
-        self.occu=Occupations(self.el.get_number_of_electrons(),width=width)
-        self.nat=len(elements)
-        self.es=calc.es
-        self.norb=self.el.get_nr_orbitals()
+        self.occu=Occupations(calc.el.get_number_of_electrons(),width=width)
+        self.nat=len(calc.el)
+        self.norb=calc.el.get_nr_orbitals()
         self.prev_dq=[None,None]
         self.count=0
         self.SCC=calc.get('SCC')
@@ -34,7 +34,7 @@ class States:
         print "States deleted"
 
     def guess_dq(self):
-        n=len(self.el)
+        n=len(self.calc.el)
         if not self.SCC:
             return nu.zeros((n,))
         if self.count==0:
@@ -48,13 +48,12 @@ class States:
     def solve(self):
         self.timer.start('solve')
         dq=self.guess_dq()
-        self.norb=self.el.get_nr_orbitals()
-        self.H0, self.S, self.dH0, self.dS=self.ia.get_matrices()
+        self.H0, self.S, self.dH0, self.dS=self.calc.ia.get_matrices()
         try:
             if self.SCC:
                 self.es.construct_tables()
             self.e, self.wf=self.solver.get_states(self,dq,self.H0,self.S,self.count)
-            self.el.set_solved('ground state')
+            self.calc.el.set_solved('ground state')
             self.large_update()
             self.count+=1
             self.timer.stop('solve')
@@ -70,7 +69,7 @@ class States:
         self.wf=wf
         self.f=self.occu.occupy(e)
         self.timer.start('rho')
-        self.rho0=fortran_rho0(self.wf,self.f,self.el.nr_ia_orbitals,self.el.ia_orbitals,self.norb)
+        self.rho0=fortran_rho0(self.wf,self.f,self.calc.el.nr_ia_orbitals,self.calc.el.ia_orbitals,self.norb)
         self.timer.stop('rho')
         self.rho0S_diagonal=matmul_diagonal(self.rho0,self.S,self.norb)
         if self.SCC:
@@ -93,7 +92,7 @@ class States:
             self.dH=self.dH0                 
             
         # density matrix weighted by eigenenergies 
-        self.rhoe0=fortran_rhoe0(self.wf,self.f,self.e,self.el.nr_ia_orbitals,self.el.ia_orbitals,self.norb)                     
+        self.rhoe0=fortran_rhoe0(self.wf,self.f,self.e,self.calc.el.nr_ia_orbitals,self.calc.el.ia_orbitals,self.norb)                     
         self.timer.stop('final update')
                                    
     def get_dq(self):
@@ -124,9 +123,9 @@ class States:
         """ Return excess Mulliken populations. """
         q=[]
         for i in range(self.nat):
-            orbitals=self.el.orbitals(i,indices=True)
+            orbitals=self.calc.el.orbitals(i,indices=True)
             q.append( sum(self.rho0S_diagonal[orbitals]) )           
-        return nu.array(q)-self.el.get_valences()
+        return nu.array(q)-self.calc.el.get_valences()
             
     def mulliken_transfer(self,k,l):
         """ Return Mulliken transfer charges between states k and l. """
@@ -134,7 +133,7 @@ class States:
             self.Swf=symmetric_matmul(self.S,self.wf)
         q=[]
         for i in range(self.nat):            
-            iorb=self.el.orbitals(i,indices=True)
+            iorb=self.calc.el.orbitals(i,indices=True)
             qi=sum( [self.wf[oi,k]*self.Swf[oi,l]+self.wf[oi,l]*self.Swf[oi,k] for oi in iorb] )
             q.append(qi/2)
         return nu.array(q)
@@ -147,8 +146,8 @@ class States:
         """ Return forces arising from band structure. """
         self.timer.start('f_bs')
         
-        norbs=self.el.nr_orbitals
-        inds=self.el.atom_orb_indices2
+        norbs=self.calc.el.nr_orbitals
+        inds=self.calc.el.atom_orb_indices2
         
         f=fortran_fbs(self.rho0,self.rhoe0,self.dH,self.dS,norbs,inds,self.norb,self.nat)
         self.timer.stop('f_bs')                

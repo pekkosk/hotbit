@@ -9,6 +9,7 @@ import numpy as nu
 from hotbit import auxil
 from box.mix import kronecker
 from box.interpolation import MultipleSplineFunction
+from weakref import proxy
 dot=nu.dot
 array=nu.array
 
@@ -25,7 +26,7 @@ integrals={'dds':0,'ddp':1,'ddd':2,'pds':3,'pdp':4,'pps':5,'ppp':6,\
 
 class Interactions:
     
-    def __init__(self,calc,timer,elements,tables):
+    def __init__(self,calc):
         """
         Set up the input files for interactions.
         
@@ -35,7 +36,8 @@ class Interactions:
         """ 
         from os import environ 
         from os.path import isfile
-        present=elements.get_present()
+        tables = calc.tables
+        present = calc.el.get_present()
         default_dir=environ.get('HOTBIT_PARAMETERS')
         files={}
         if tables!=None:
@@ -83,10 +85,9 @@ class Interactions:
             if not isfile(files[file]):
                 raise AssertionError('Interaction for %s %s.' %(file,files[file]))
         self.files=files
-        self.calc=calc
+        self.calc=proxy(calc)
         self.present=present
-        self.timer=timer
-        self.el=elements
+        self.timer=calc.timer
         self.max_cut=0.0 # maximum interaction range in Bohrs
         self.read_tables()
         self.check_box_size()
@@ -106,8 +107,8 @@ class Interactions:
     def check_box_size(self):
         """ Check that box is large enough. """
         gamma_cut, SCC=self.calc.get('gamma_cut') ,self.calc.get('SCC')
-        pbc=self.el.atoms.get_pbc()
-        for periodic,length in zip(self.el.get_box_lengths(),pbc):
+        pbc=self.calc.el.atoms.get_pbc()
+        for periodic,length in zip(self.calc.el.get_box_lengths(),pbc):
             for ia in self.cut:
                 if self.cut[ia]>length/2 and not periodic:
                     raise AssertionError('Too small box (one size %.2f, largest cut %.2f)' %(length,self.cut[ia]))
@@ -149,7 +150,7 @@ class Interactions:
                 self.max_cut=max(self.max_cut,self.cut[si+sj])
                 self.maxh[si+sj]=max( [max(nu.abs(table_ij[:,i])) for i in range(1,11)] )
                 
-                ei, ej=self.el.elements[si], self.el.elements[sj]
+                ei, ej=self.calc.el.elements[si], self.calc.el.elements[sj]
                 valence_i, valence_j=ei.get_valence_orbitals(), ej.get_valence_orbitals()
                 
                 pair=si+sj
@@ -193,23 +194,24 @@ class Interactions:
         
     def construct_matrices(self):
         """ Hamiltonian and overlap matrices. """
+        el = self.calc.el
         start=self.timer.start
         stop=self.timer.stop
         start('matrix construction')
-        orbs=self.el.orbitals()
+        orbs=el.orbitals()
         norb=len(orbs)
         self.H0=nu.zeros((norb,norb))
         self.dH0, self.dS=nu.zeros((norb,norb,3)),nu.zeros((norb,norb,3))
         self.S=nu.identity(norb)            
         
-        orbitals=[[orb['orbital'] for orb in self.el.orbitals(i)] for i in range(len(self.el))]
-        orbindex=[self.el.orbitals(i,indices=True) for i in range(len(self.el))]
+        orbitals=[[orb['orbital'] for orb in el.orbitals(i)] for i in range(len(el))]
+        orbindex=[el.orbitals(i,indices=True) for i in range(len(el))]
         
-        self.el.set_cutoffs(self.cut)
+        el.set_cutoffs(self.cut)
         nonzero=0
-        for i,j,si,sj,dist,r,rhat in self.el.get_ia_atom_pairs(['i','j','si','sj','dist','r','rhat']):
+        for i,j,si,sj,dist,r,rhat in el.get_ia_atom_pairs(['i','j','si','sj','dist','r','rhat']):
             if i==j:
-                for orb in self.el.orbitals(i):
+                for orb in el.orbitals(i):
                     self.H0[orb['index'],orb['index']]=orb['energy']
                     nonzero+=1
             else:                    
