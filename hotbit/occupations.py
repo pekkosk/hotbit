@@ -5,7 +5,7 @@ class Occupations:
     def __init__(self,nel,width):
         self.nel=nel
         self.width=width
-        
+
     def fermi(self,e,mu,width):
         y=(e-mu)/width
         if y>100:
@@ -13,16 +13,16 @@ class Occupations:
         elif y<-100:
             return 2.0
         else:
-            return 2.0/(nu.exp(y)+1)        
-                
+            return 2.0/(nu.exp(y)+1)
+
     def root_function(self,mu):
         args=(self.e-mu)/self.width
         exps=nu.exp(args)
         #exps=where(args>100,exps,0.0)
         #exps=where(args<-100,2.0,exps)
-        occus=2/(exps+1)                
+        occus=2/(exps+1)
         return occus.sum()-self.nel
-        
+
     def occupy(self,e,width=None):
         if width!=None:
             self.width=width
@@ -38,7 +38,7 @@ class Occupations:
             self.mu=brentq(self.root_function,self.e[0]-dmu,self.e[-1]+dmu)
         self.f=nu.array([self.fermi(ek,self.mu,self.width) for ek in self.e])
         return self.f
-        
+
     def plot(self):
         import pylab as pl
         pl.plot(self.e,self.f)
@@ -48,10 +48,10 @@ class Occupations:
         pl.xlabel('energy (Ha)')
         pl.ylabel('occupation')
         pl.show()
-        
-            
-        
-        
-    
-        
-       
+
+
+
+
+
+
+

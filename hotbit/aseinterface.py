@@ -4,7 +4,7 @@
 """
     ASE-calculator interface for HOTBIT.
     (Hybrid Open-Source Tight-Binding Tool)
-    
+
 """
 import numpy as nu
 from ase.units import Bohr, Hartree
@@ -17,8 +17,8 @@ from states import States
 from hotbit.output import Output
 import box.mix as mix
 
-         
-    
+
+
 class Calculator(Output):
     """
     ASE-calculator frontend for HOTBIT calculations.
@@ -37,29 +37,29 @@ class Calculator(Output):
                       gamma_cut=None,
                       txt=None,
                       verbose_SCC=False):
-        """ 
-        Initialize calculator. 
-        
+        """
+        Initialize calculator.
+
         Parameters:
         -----------
         parameters:       The directory for parametrizations. If parameters==None, use
                           HOTBIT_PARAMETERS environment variable. Parametrizations given
                           by 'elements' and 'tables' keywords override parametrizations
                           in this directory.
-         
+
         elements:         Dictionary for elements used, e.g. {'H':'H_custom.elm','C':'/../C.elm'}
                           Items can also be elements directly: {'H':H} (with H being type Element)
                           * If elements==None, use element info from default directory.
                           * If elements['others']=='default', use default parameters for all other
                             elements than the ones specified. E.g. {'H':'H.elm','others':'default'}
                             (otherwise all elements present have to be specified excplicitly).
-                            
+
         tables:           Dictionary for interactions, e.g. {'CH':'C_H.par','CC':'C_C.par'}
                           * If elements==None, use default interactions.
                           * If elements['others']='default', use default parameters for all other
-                            interactions than the ones specified. 
+                            interactions than the ones specified.
                             E.g. {'CH':'C_H.par','others':'default'}
-        
+
         charge            total electric charge for system (-1 means an additional electron)
         width             width of Fermi occupation (in eV)
         SCC               Self-Consistent Charge calculation
@@ -70,11 +70,11 @@ class Calculator(Output):
         gamma_cut         Range for Coulomb interaction
         txt               Filename for log-file (stdout = None)
         verbose_SCC       Increase verbosity for SCC iterations.
-        """       
+        """
         from copy import copy
         import os
-        
-        if gamma_cut!=None: gamma_cut=gamma_cut/Bohr                          
+
+        if gamma_cut!=None: gamma_cut=gamma_cut/Bohr
         self.__dict__={ 'parameters':parameters,
                         'elements':elements,
                         'tables':tables,
@@ -88,31 +88,31 @@ class Calculator(Output):
                         'maxiter':maxiter,
                         'gamma_cut':gamma_cut,
                         'txt':txt,
-                        'verbose_SCC':verbose_SCC}                    
-            
+                        'verbose_SCC':verbose_SCC}
+
         if parameters!=None:
             os.environ.data['HOTBIT_PARAMETERS']=parameters
-                        
+
         self.init=False
         self.element_files=elements
-        self.table_files=tables    
-        self.verbose=verbose     
+        self.table_files=tables
+        self.verbose=verbose
         self.set_enabled=True
         self.notes=[]
         self.set_text(self.txt)
         self.timer=Timer('Hotbit',txt=self.get_output())
-       
-       
-    def set(self,key,value):       
+
+
+    def set(self,key,value):
         if self.init==True or key not in ['charge']:
             raise AssertionError('Parameters cannot be set after initialization.')
         self.__dict__[key]=value
-        
+
     def get_atoms(self):
         """ Return the current atoms object. """
-        return self.el.atoms        
-        
-        
+        return self.el.atoms
+
+
     def __del__(self):
         """ Delete calculator -> timing summary. """
         if self.get('SCC'):
@@ -121,10 +121,10 @@ class Calculator(Output):
                 self.txt.flush()
             except:
                 pass
-        if len(self.notes)>0:            
-            print>>self.txt, 'Notes and warnings:'            
+        if len(self.notes)>0:
+            print>>self.txt, 'Notes and warnings:'
             for note in self.notes:
-                print>>self.txt, note         
+                print>>self.txt, note
         self.timer.summary()
         print "Calculator deleted"
         Output.__del__(self)
@@ -154,15 +154,15 @@ class Calculator(Output):
 
     def add_note(self,note):
         """ Add warning (etc) note to be printed in log file end. """
-        self.notes.append(note)        
-          
+        self.notes.append(note)
+
     def greetings(self):
         """ Simple greetings text """
         from time import asctime
         from os import uname, popen
         from os.path import abspath, curdir
         from os import environ
-        
+
         revision=popen('svnversion %s' %environ.get('HOTBIT_DIR') ).readline()
         self.version='0.1 (svn=%s)' %revision[:-1]
         print>>self.txt,  '\n\n\n\n\n'
@@ -182,14 +182,14 @@ class Calculator(Output):
         print>>self.txt,  '       Box: (Ang)', nu.array(self.el.get_box_lengths())*Bohr
         print>>self.txt,  '       PBC:',self.pbc
         print>>self.txt, self.el.greetings()
-        print>>self.txt, self.ia.greetings()  
-        print>>self.txt, self.rep.greetings()   
-             
-             
+        print>>self.txt, self.ia.greetings()
+        print>>self.txt, self.rep.greetings()
+
+
     def out(self,text):
         print>>self.txt, text
-        
-    
+
+
     def set_text(self,txt):
         """ Set up the output file. """
         if txt is None:
@@ -197,20 +197,20 @@ class Calculator(Output):
             self.txt=stdout
         else:
             self.txt=open(txt,'a')
-       
-       
+
+
     def get(self,arg=None):
         if arg==None:
             return self.__dict__
         else:
             return self.__dict__[arg]
-        
-        
+
+
     def solve_ground_state(self,atoms):
         """ If atoms moved, solve electronic structure. """
         if not self.init:
             self._initialize(atoms)
-                    
+
         #print 'required?',self.el.calculation_required(atoms,'ground state')
         #print atoms.get_positions()[1]
         #print self.el.atoms.get_positions()[1]
@@ -219,10 +219,10 @@ class Calculator(Output):
             self.st.solve()
         else:
             pass
-                  
-                  
+
+
     def _initialize(self,atoms):
-        """ Initialization of hotbit. """  
+        """ Initialization of hotbit. """
         self.timer.start('initialization')
         self.init=True
         self.el=Elements(self,atoms)
@@ -240,8 +240,8 @@ class Calculator(Output):
             raise AssertionError('Charged system cannot be periodic.')
         self.flush()
         self.timer.stop('initialization')
-        
-        
+
+
     def get_potential_energy(self,atoms):
         """ Return the potential energy of present system. """
         self.solve_ground_state(atoms)
@@ -251,8 +251,8 @@ class Calculator(Output):
         erep=self.rep.get_repulsive_energy()
         self.timer.stop('energies')
         return ebs+ecoul+erep
-              
-              
+
+
     def get_forces(self,atoms):
         """ Return the forces of present system. """
         self.solve_ground_state(atoms)
@@ -262,56 +262,56 @@ class Calculator(Output):
         fcoul=self.st.es.gamma_forces() #zero for non-SCC
         self.timer.stop('forces')
         return (fbs+frep+fcoul)*(Hartree/Bohr)
-            
-            
+
+
     def get_stress(self,atoms):
         self.solve_ground_state(atoms)
-        return None            
-         
-         
+        return None
+
+
     def get_charge(self):
         return self.get('charge')
-    
-    
+
+
     def get_dq(self,atoms):
         self.solve_ground_state(atoms)
         return self.st.get_dq()
-    
-    
+
+
     def get_eigenvalues(self,atoms):
         self.solve_ground_state(atoms)
         return self.st.get_eigenvalues()*Hartree
-    
-    
+
+
     def get_occupations(self):
         #self.solve_ground_state(atoms)
         return self.st.get_occupations()
-        
-        
+
+
     def get_band_structure_energy(self,atoms):
         self.solve_ground_state(atoms)
         return self.st.band_structure_energy()*Hartree
-            
-            
+
+
     def get_coulomb_energy(self,atoms):
         self.solve_ground_state(atoms)
         return self.st.es.coulomb_energy()*Hartree
-    
-    
+
+
     #def calculation_required(self,atoms,quantities):
-        #""" Check if a calculation is required. 
-        
-        #Check if the quantities in the quantities list have already been calculated 
-        #for the atomic configuration atoms. The quantities can be one or more of: 
+        #""" Check if a calculation is required.
+
+        #Check if the quantities in the quantities list have already been calculated
+        #for the atomic configuration atoms. The quantities can be one or more of:
         #'ground state', 'energy', 'forces', and 'stress'.
         #"""
         #return self.el.calculation_required(atoms,quantities)
-        
-    
+
+
     # some not implemented ASE-assumed methods
     def get_fermi_level(self):
         raise NotImplementedError
-        
+
 
     def set_atoms(self,atoms):
         """ Initialize the calculator for given atomic system. """
@@ -319,17 +319,17 @@ class Calculator(Output):
             atoms2=Atoms(atoms)
             raise RuntimeError('Calculator initialized for %s. Create new calculator for %s.'
                                %(self.el.atoms.get_name(),atoms2.get_name() ))
-        else:                               
-            self._initialize(atoms)    
-    
-    
+        else:
+            self._initialize(atoms)
+
+
     def get_occupation_numbers(self,kpt=0,spin=0):
         raise NotImplementedError
-        
-        
-    def get_number_of_bands(self):
-        raise NotImplementedError  
-               
-Hotbit=Calculator    
 
-     
+
+    def get_number_of_bands(self):
+        raise NotImplementedError
+
+Hotbit=Calculator
+
+

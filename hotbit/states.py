@@ -29,7 +29,7 @@ class States:
         self.SCC=calc.get('SCC')
         self.rho=None
         self.rhoe=None
-        
+
     def __del__(self):
         print "States deleted"
 
@@ -39,12 +39,12 @@ class States:
             return nu.zeros((n,))
         if self.count==0:
             return nu.zeros((n,)) - self.calc.get('charge')/n
-        elif self.count==1:    # use previous charges 
+        elif self.count==1:    # use previous charges
             return self.prev_dq[0]
         else:                  # linear extrapolation
             return self.prev_dq[0] + (self.prev_dq[0]-self.prev_dq[1])
-        
-        
+
+
     def solve(self):
         self.timer.start('solve')
         dq=self.guess_dq()
@@ -60,8 +60,8 @@ class States:
         except Exception, ex:
             self.timer.stop('solve')
             raise Exception(ex)
-    
-    
+
+
     def update(self,e,wf):
         """ Update all essential stuff from given wave functions. """
         self.timer.start('update')
@@ -75,9 +75,9 @@ class States:
         if self.SCC:
             self.dq=self.mulliken()
             self.es.set_dq(self.dq)
-        self.timer.stop('update')       
-        
-        
+        self.timer.stop('update')
+
+
     def large_update(self):
         """ Update stuff from eigenstates needed later for forces etc. """
         self.timer.start('final update')
@@ -89,69 +89,69 @@ class States:
             for a in range(3):
                 self.dH[:,:,a]=self.dH0[:,:,a] + self.es.get_H1()*self.dS[:,:,a]
         else:
-            self.dH=self.dH0                 
-            
-        # density matrix weighted by eigenenergies 
-        self.rhoe0=fortran_rhoe0(self.wf,self.f,self.e,self.calc.el.nr_ia_orbitals,self.calc.el.ia_orbitals,self.norb)                     
+            self.dH=self.dH0
+
+        # density matrix weighted by eigenenergies
+        self.rhoe0=fortran_rhoe0(self.wf,self.f,self.e,self.calc.el.nr_ia_orbitals,self.calc.el.ia_orbitals,self.norb)
         self.timer.stop('final update')
-                                   
+
     def get_dq(self):
         return self.dq
-            
+
     def get_eigenvalues(self):
         return self.e
-    
+
     def get_occupations(self):
         return self.f
-    
+
     def get_homo(self):
         """ Return highest orbital with occu>0.99. """
         for i in range(self.norb)[::-1]:
             if self.f[i]>0.99: return i
-        
+
     def get_lumo(self):
         """ Return lowest orbital with occu<1.01. """
         for i in range(self.norb):
             if self.f[i]<1.01: return i
-        
+
     def get_hoc(self):
         """ Return highest partially occupied orbital. """
         for i in range(self.norb)[::-1]:
             if self.f[i]>1E-9: return i
-                        
+
     def mulliken(self):
         """ Return excess Mulliken populations. """
         q=[]
         for i in range(self.nat):
             orbitals=self.calc.el.orbitals(i,indices=True)
-            q.append( sum(self.rho0S_diagonal[orbitals]) )           
+            q.append( sum(self.rho0S_diagonal[orbitals]) )
         return nu.array(q)-self.calc.el.get_valences()
-            
+
     def mulliken_transfer(self,k,l):
         """ Return Mulliken transfer charges between states k and l. """
         if self.Swf==None:
             self.Swf=symmetric_matmul(self.S,self.wf)
         q=[]
-        for i in range(self.nat):            
+        for i in range(self.nat):
             iorb=self.calc.el.orbitals(i,indices=True)
             qi=sum( [self.wf[oi,k]*self.Swf[oi,l]+self.wf[oi,l]*self.Swf[oi,k] for oi in iorb] )
             q.append(qi/2)
         return nu.array(q)
-                
+
     def band_structure_energy(self):
         """ Return band structure energy. """
-        return nu.trace(nu.dot(self.rho0,self.H0)) 
-                           
+        return nu.trace(nu.dot(self.rho0,self.H0))
+
     def band_structure_forces(self):
         """ Return forces arising from band structure. """
         self.timer.start('f_bs')
-        
+
         norbs=self.calc.el.nr_orbitals
         inds=self.calc.el.atom_orb_indices2
-        
+
         f=fortran_fbs(self.rho0,self.rhoe0,self.dH,self.dS,norbs,inds,self.norb,self.nat)
-        self.timer.stop('f_bs')                
+        self.timer.stop('f_bs')
         return -2*nu.real(f)
-                                        
-      
- 
+
+
+
