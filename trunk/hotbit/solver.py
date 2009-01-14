@@ -23,7 +23,7 @@ class Solver:
         self.verbose=calc.get('verbose')
         self.iterations=None
         self.iter_history=[]
-        
+
     def __del__(self):
         print "Solver deleted"
 
@@ -31,14 +31,14 @@ class Solver:
         """ Set the non-SCC DFTB matrices """
         self.H,self.S=H,S
         self.norb=len(self.H[:,0])
-        
+
     def get_nr_iterations(self):
-        return self.iterations    
-       
+        return self.iterations
+
     def get_iteration_info(self):
         avg, mx, mn=nu.mean(self.iter_history), min(self.iter_history), max(self.iter_history)
         return 'Solved %i times; Iterations: avg %.1f, max %i, min %i' %(len(self.iter_history),avg,mx,mn)
-        
+
     #def get_states(self,st,dq,H0,S,count):
         #""" Solve the (non)SCC generalized eigenvalue problem. """
         #self.es=self.calc.es
@@ -58,10 +58,10 @@ class Solver:
                 #break
             #dq_out=st.get_dq()
             #done,dq=mixer(dq,dq_out)
-            
+
             #if self.verbose:
                 #mixer.echo()
-            #if done: 
+            #if done:
                 #self.iterations=i
                 #self.iter_history.append(i)
                 #break
@@ -70,8 +70,8 @@ class Solver:
                 #raise RuntimeError('Out of iterations.')
         #if self.verbose:
             #mixer.final_echo()
-        #return st.e,st.wf            
-        
+        #return st.e,st.wf
+
     def get_states(self,st,dq,H0,S,count):
         """ Solve the (non)SCC generalized eigenvalue problem. """
         es=st.es
@@ -90,7 +90,7 @@ class Solver:
             done,dq=mixer(dq,dq_out)
             #if self.verbose:
                 #mixer.echo()
-            if done: 
+            if done:
                 self.iterations=i
                 self.iter_history.append(i)
                 break
@@ -99,7 +99,7 @@ class Solver:
                 raise RuntimeError('Out of iterations.')
         #if self.verbose:
             #mixer.final_echo()
-        return st.e,st.wf    
+        return st.e,st.wf
 
     def solve(self,H,S):
         """ Solve the eigenstates. """
@@ -118,12 +118,12 @@ class Solver:
             for i in range(self.norb):
                 wf[i,:]=wf[i,order]
             for i in range(self.norb): #normalize properly
-                wf[:,i]=wf[:,i]/nu.sqrt( nu.dot(wf[:,i],nu.dot(self.S0,wf[:,i])) )                                
+                wf[:,i]=wf[:,i]/nu.sqrt( nu.dot(wf[:,i],nu.dot(self.S0,wf[:,i])) )
         self.timer.stop('eigensolver')
         return e,wf
-            
-            
-  
 
-    
-   
+
+
+
+
+
