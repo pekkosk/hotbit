@@ -6,18 +6,20 @@ import box.mix as mix
 from numpy.linalg.linalg import norm
 from ase.units import Hartree,Bohr
 from os import environ
+from weakref import proxy
 
 
 
 
 class Elements:
-    def __init__(self,calc,atoms,timer,elements,charge=None):  
+    def __init__(self,calc,atoms,charge=None):
         """ 
         Read element info from atoms and set up the input files
         for reading element data.
         
         If atoms is ASE.atoms object, convert it into box.Atoms object
         """
+        elements = calc.element_files
         if elements!=None:
             elements=elements.copy()
         
@@ -27,13 +29,14 @@ class Elements:
             self.atoms=atoms.copy()
         else:
             self.atoms=Atoms(atoms)
-        self.calc=calc            
-        self.timer=timer            
+        self.calc=proxy(calc)            
+        self.timer=calc.timer            
         self.Z=atoms.get_atomic_numbers()
         self.symbols=atoms.get_chemical_symbols()
         self.N=len(atoms)
         self.positions=None
-        self.charge=charge
+        if charge == None:
+            self.charge = calc.charge
         
         self.present=[]
         for element in self.symbols:

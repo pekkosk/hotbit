@@ -1,5 +1,6 @@
 import numpy as nu
 from ase.units import Hartree
+from weakref import proxy
 hbar=0.02342178
 
 
@@ -43,8 +44,7 @@ class Environment:
     def __init__(self,calc):
         self.t=0.0
         self.phis=[]
-        self.calc=calc
-        self.el=calc.el
+        self.calc=proxy(calc)
         
     def __del__(self):
         print "Environment deleted"
@@ -74,7 +74,7 @@ class Environment:
            index if r is an integer
         """
         if isinstance(r,int):
-            r=self.el.vector(r)
+            r=self.calc.el.vector(r)
         pot=0.0
         for f in self.phis:
             pot+=f(r,self.t)

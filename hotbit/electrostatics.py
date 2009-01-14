@@ -5,19 +5,19 @@ import numpy as nu
 from scipy.special import erf
 from hotbit import auxil
 from math import sqrt,pi,exp
+from weakref import proxy
 dot=nu.dot
 
 
 class Electrostatics:
-    def __init__(self,calc,timer):
-        self.calc=calc
-        self.el=calc.el
-        self.dq=nu.zeros(len(self.el))
-        self.norb=self.el.get_nr_orbitals()
+    def __init__(self,calc):
+        self.calc=proxy(calc)
+        self.dq=nu.zeros(len(calc.el))
+        self.norb=calc.el.get_nr_orbitals()
         self.SCC=calc.get('SCC')
-        self.N=len(self.el)
-        self.timer=timer
-        self.cut=self.calc.ia.get_cut()
+        self.N=len(calc.el)
+        self.timer=calc.timer
+        self.cut=calc.ia.get_cut()
         self.gamma_potential=None
         
     def __del__(self):
@@ -90,8 +90,9 @@ class Electrostatics:
     def construct_tables(self):
         """ Stuff calculated _once_ for given coordinates. """
         self.timer.start('es tables')
+        el = self.calc.el
         #7: return (i,o1i,noi,j,o1j,noj) 
-        self.pairs=self.el.get_ia_atom_pairs(['i','j','o1i','o1j','noi','noj']) # this also only once
+        self.pairs=el.get_ia_atom_pairs(['i','j','o1i','o1j','noi','noj']) # this also only once
         #print [self.el.orbitals(i,indices=True)[0] for i in range(self.N)]
         #print [self.el.orbitals(i,number=True) for i in range(self.N)]
         #self.orb1=nu.array([self.el.orbitals(i,indices=True)[0] for i in range(self.N)])
@@ -99,7 +100,7 @@ class Electrostatics:
         
         g=nu.zeros((self.N,self.N))
         dg=nu.zeros((self.N,self.N,3))
-        for i,j in self.el.get_ia_atom_pairs(['i','j']):
+        for i,j in el.get_ia_atom_pairs(['i','j']):
             g[i,j]=self.gamma(i,j)
             g[j,i]=g[i,j]
             if i!=j:
@@ -111,9 +112,10 @@ class Electrostatics:
             
     def gamma(self,i,j,der=0):
         """ Return the gamma function for atoms i and j. der=1 for gradient. """
-        r=self.el.distance(i,j)
+        el = self.calc.el
+        r=el.distance(i,j)
         cut=self.calc.get('gamma_cut')
-        ei, ej=[self.el.get_element(k) for k in [i,j]]
+        ei, ej=[el.get_element(k) for k in [i,j]]
         wi, wj=ei.get_FWHM(), ej.get_FWHM()
         const=2*nu.sqrt( nu.log(2.0)/(wi**2+wj**2) )
         if i==j:
@@ -127,7 +129,7 @@ class Electrostatics:
                 else:
                     return ecr/r*(1-erf(r/cut))
             elif der==1:
-                vec=self.el.vector(i,j)
+                vec=el.vector(i,j)
                 decr=2/sqrt(pi)*exp(-(const*r)**2)*const
                 if cut==None:
                     return (decr - ecr/r)*vec/r**2         
