@@ -4,7 +4,7 @@
 import numpy as nu
 from ase.units import Bohr,Hartree
 from box import mix
-from box import Atoms
+#from box import Atoms
 from box.interpolation import Function
 import os
 import ase
