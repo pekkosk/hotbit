@@ -4,6 +4,8 @@ class Output:
         self.txt=None
 
     def __del__(self):
+        if self.txt.closed == False:
+            self.close_output()
         print "Output deleted"
 
     def set_text(self,txt):
@@ -15,7 +17,7 @@ class Output:
 
     def close_output(self):
         self.txt.flush()
-        if txt != sys.stdout:
+        if self.txt != sys.stdout:
             self.txt.close()
 
     def get_output(self):
