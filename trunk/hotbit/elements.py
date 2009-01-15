@@ -1,5 +1,6 @@
 from element import Element
-from box import Atoms
+#from box import Atoms
+from ase import Atoms
 import numpy as nu
 import hotbit.auxil as aux
 import box.mix as mix
@@ -34,6 +35,7 @@ class Elements:
         self.Z=atoms.get_atomic_numbers()
         self.symbols=atoms.get_chemical_symbols()
         self.N=len(atoms)
+        self.name = None
         self.positions=None
         if charge == None:
             self.charge = calc.charge
@@ -72,6 +74,29 @@ class Elements:
 
     def get_name(self):
         return self.atoms.get_name()
+
+
+    def get_name(self):
+        """ Get the name of the system, e.g. 'benzene'. Default are symbols, 'H2O' """
+        if self.name == None:
+            symbols=self.atoms.get_chemical_symbols()
+            dict={}
+            for symbol in symbols:
+                n=symbols.count(symbol)
+                if n not in dict:
+                    dict.update({symbol:n})
+            name=''
+            for symbol in dict:
+                if dict[symbol]<2:
+                    name+=symbol
+                else:
+                    name+=symbol+str(dict[symbol])
+            self.name = name
+            return name
+
+
+    def set_name(self, name):
+        self.name = name
 
 
     def __len__(self):
@@ -246,11 +271,65 @@ class Elements:
         """ Return the center of mass. """
         return self.atoms.get_center_of_mass() / Bohr
 
-    def distance(self,ri,rj=None,mic=True):
-        return self.atoms.distance(ri,rj,mic)/Bohr
+    #def distance(self,ri,rj=None,mic=True):
+    #    return self.atoms.distance(ri,rj,mic)/Bohr
 
-    def vector(self,ri,rj=None,mic=True):
-        return self.atoms.vector(ri,rj,mic)/Bohr
+    #def vector(self,ri,rj=None,mic=True):
+    #    return self.atoms.vector(ri,rj,mic)/Bohr
+
+    def vector(self, ri, rj=None, mic=True):
+        """
+        Return the vector ri or rj-ri, normally within the minimum image convention (mic).
+        
+        parameters:
+        -----------
+        ri: initial point (atom index or position)
+        rj: final point (atom index or position)
+        """
+        if not mic:
+            raise NotImplementedError('Why not use mic?')
+        R = self.atoms.get_positions() / Bohr
+        if type(ri) == type(1):
+            Ri = R[ri].copy()
+        else:
+            Ri = ri.copy()
+        if rj == None:
+            Rj = None
+        elif type(rj) == type(1):
+            Rj = R[rj].copy()
+        else:
+            Rj = rj
+
+        if Rj == None:
+            rij = Ri
+        else:
+            rij = Rj - Ri
+
+        L = self.get_cell_axes()
+        for a in range(3):
+            if self.atoms.pbc[a]:
+                rij[a] = npy.mod(rij[a]+0.5*L[a],L[a]) - 0.5*L[a]
+        return nu.array(rij)
+
+
+    def distance(self,ri,rj=None,mic=True):
+        """
+        Return the length of |ri| or |rj-ri|, normally within the minimum image convention.
+        """
+        if rj == None:
+            return mix.norm(self.vector(ri,mic))
+        else:
+            return mix.norm(self.vector(ri,rj,mic))
+
+
+    def get_cell_axes(self):
+        """
+        Lengths of the unit cell axes (currently for orthorhombic cell).
+        """
+        x,y,z = self.atoms.get_cell()
+        assert (nu.dot(x,y) == 0 and nu.dot(x,z) == 0 and nu.dot(y,z) == 0)
+        return nu.diag(self.atoms.get_cell()) / Bohr
+
 
     def get_symbols(self):
         return self.symbols
