@@ -129,28 +129,6 @@ class Calculator(Output):
         print "Calculator deleted"
         Output.__del__(self)
 
-    def discard(self):
-        """ Remove internal references between instances so that
-            the calculator can be destroyed by the garbace collection. """
-        if self.init == True:
-            atoms = self.get_atoms()
-            if type(atoms) != type(None):
-                del atoms.calc
-            del self.el.calc
-            del self.ia.calc
-            del self.rep.calc
-            del self.env.calc
-            del self.st.calc
-            del self.st.es.calc
-            del self.st.solver.calc
-
-            del self.env.el
-            del self.st.el
-            del self.st.es.el
-            del self.rep.el
-
-            del self.st.ia
-            del self.rep.ia
 
     def add_note(self,note):
         """ Add warning (etc) note to be printed in log file end. """
