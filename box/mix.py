@@ -559,8 +559,27 @@ def add_file_appendix(file,app):
     else:
         return file[:i]+'_'+app+file[i:]
  #-- SplineFunction(x,y) (y 1-or multidim) f(x,der=0)
-    
-    
+
+
+def parse_name_for_atoms(atoms):
+    """
+    Returns a name for the atoms based on the symbols.
+    """
+    symbols = atoms.get_chemical_symbols()
+    dict = {}
+    for symbol in symbols:
+        n = symbols.count(symbol)
+        if n not in dict:
+            dict.update({symbol:n})
+    name = ''
+    for symbol in dict:
+        if dict[symbol] < 2:
+            name += symbol
+        else:
+            name += symbol+str(dict[symbol])
+    return name
+
+
 class AnalyticFunction:
     """ Class for defining analytic functions with strings."""
     

@@ -8,6 +8,7 @@
 """
 import numpy as nu
 from ase.units import Bohr, Hartree
+from ase import Atoms
 from box.timing import Timer
 from elements import Elements
 from interactions import Interactions
@@ -294,9 +295,8 @@ class Calculator(Output):
     def set_atoms(self,atoms):
         """ Initialize the calculator for given atomic system. """
         if self.init==True and atoms.get_chemical_symbols()!=self.el.atoms.get_chemical_symbols():
-            atoms2=Atoms(atoms)
             raise RuntimeError('Calculator initialized for %s. Create new calculator for %s.'
-                               %(self.el.atoms.get_name(),atoms2.get_name() ))
+                               %(self.el.get_name(),mix.parse_name_for_atoms(atoms)))
         else:
             self._initialize(atoms)
 

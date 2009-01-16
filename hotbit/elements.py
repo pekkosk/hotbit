@@ -38,7 +38,7 @@ class Elements:
         self.name = None
         self.positions=None
         if charge == None:
-            self.charge = calc.charge
+            self.charge = calc.get_charge()
 
         self.present=[]
         for element in self.symbols:
@@ -73,26 +73,10 @@ class Elements:
 
 
     def get_name(self):
-        return self.atoms.get_name()
-
-
-    def get_name(self):
         """ Get the name of the system, e.g. 'benzene'. Default are symbols, 'H2O' """
         if self.name == None:
-            symbols=self.atoms.get_chemical_symbols()
-            dict={}
-            for symbol in symbols:
-                n=symbols.count(symbol)
-                if n not in dict:
-                    dict.update({symbol:n})
-            name=''
-            for symbol in dict:
-                if dict[symbol]<2:
-                    name+=symbol
-                else:
-                    name+=symbol+str(dict[symbol])
-            self.name = name
-            return name
+            self.name = mix.parse_name_for_atoms(self.atoms)
+        return self.name
 
 
     def set_name(self, name):
@@ -308,7 +292,7 @@ class Elements:
         L = self.get_cell_axes()
         for a in range(3):
             if self.atoms.pbc[a]:
-                rij[a] = npy.mod(rij[a]+0.5*L[a],L[a]) - 0.5*L[a]
+                rij[a] = nu.mod(rij[a]+0.5*L[a],L[a]) - 0.5*L[a]
         return nu.array(rij)
 
 
