@@ -1,5 +1,4 @@
 from element import Element
-#from box import Atoms
 from ase import Atoms
 import numpy as nu
 import hotbit.auxil as aux
@@ -24,12 +23,14 @@ class Elements:
         if elements!=None:
             elements=elements.copy()
 
-        #if not isinstance(atoms,Atoms):
+        if not isinstance(atoms, Atoms):
+            raise AssertionError('Given atoms object has to be ase.Atoms type.')
+        self.atoms = atoms.copy()
             #raise AssertionError('Given atoms object has to be box.Atoms, not ase.Atoms type.')
-        if isinstance(atoms,Atoms):
-            self.atoms=atoms.copy()
-        else:
-            self.atoms=Atoms(atoms)
+        #if isinstance(atoms,Atoms):
+        #    self.atoms=atoms.copy()
+        #else:
+        #    self.atoms=Atoms(atoms)
         self.calc=proxy(calc)
         self.timer=calc.timer
         self.Z=atoms.get_atomic_numbers()
@@ -255,11 +256,6 @@ class Elements:
         """ Return the center of mass. """
         return self.atoms.get_center_of_mass() / Bohr
 
-    #def distance(self,ri,rj=None,mic=True):
-    #    return self.atoms.distance(ri,rj,mic)/Bohr
-
-    #def vector(self,ri,rj=None,mic=True):
-    #    return self.atoms.vector(ri,rj,mic)/Bohr
 
     def vector(self, ri, rj=None, mic=True):
         """
@@ -315,6 +311,12 @@ class Elements:
         return nu.diag(self.atoms.get_cell()) / Bohr
 
 
+    def get_box_lengths(self):
+        """ Return lengths of box sizes in orthorombic box. """
+        c=self.atoms.get_cell()/Bohr
+        return c[0,0],c[1,1],c[2,2]
+
+
     def get_symbols(self):
         return self.symbols
 
@@ -352,12 +354,6 @@ class Elements:
     def get_nr_orbitals(self):
         """ Total number of orbitals. """
         return self.norb
-
-    def get_box_lengths(self):
-        """ Return lengths of box sizes in orthorombic box. """
-        c=self.atoms.get_cell()/Bohr
-        return c[0,0],c[1,1],c[2,2]
-
 
     def get_ia_atom_pairs(self,get):
         """
