@@ -11,7 +11,6 @@ from weakref import proxy
 class Solver:
     def __init__(self,calc):
         self.calc=proxy(calc)
-        self.timer=calc.timer
         self.maxiter=calc.get('maxiter')
         self.mix=calc.get('mixing_constant')
         self.convergence=calc.get('convergence')
@@ -105,7 +104,7 @@ class Solver:
         """ Solve the eigenstates. """
         self.H,self.S=H,S
         self.norb=len(self.H[:,0])
-        self.timer.start('eigensolver')
+        self.calc.start_timing('eigensolver')
         if True:
             # via Fortran wrapper
             e,wf=geig(self.H,self.S,self.norb)
@@ -119,7 +118,7 @@ class Solver:
                 wf[i,:]=wf[i,order]
             for i in range(self.norb): #normalize properly
                 wf[:,i]=wf[:,i]/nu.sqrt( nu.dot(wf[:,i],nu.dot(self.S0,wf[:,i])) )
-        self.timer.stop('eigensolver')
+        self.calc.stop_timing('eigensolver')
         return e,wf
 
 

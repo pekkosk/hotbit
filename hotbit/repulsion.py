@@ -16,7 +16,6 @@ vec=nu.array
 class Repulsion:
     def __init__(self,calc):
         self.calc=proxy(calc)
-        self.timer=calc.timer
 
         # read repulsions
         self.vrep={}
@@ -59,7 +58,7 @@ class Repulsion:
 
     def get_repulsive_forces(self):
         """ Calculate the forces due to repulsive potentials for element pairs. """
-        self.timer.start('f_rep')
+        self.calc.start_timing('f_rep')
         f=nu.zeros((len(self.calc.el),3))
         for i,j,si,sj,dist,rhat in self.calc.el.get_ia_atom_pairs(['i','j','si','sj','dist','rhat']):
             if i==j:
@@ -67,7 +66,7 @@ class Repulsion:
             frep=self.vrep[si+sj](dist,der=1)*rhat
             f[i,:]=f[i,:]+frep
             f[j,:]=f[j,:]-frep
-        self.timer.stop('f_rep')
+        self.calc.stop_timing('f_rep')
         return f
 
 

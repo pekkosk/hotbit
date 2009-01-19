@@ -87,7 +87,6 @@ class Interactions:
         self.files=files
         self.calc=proxy(calc)
         self.present=present
-        self.timer=calc.timer
         self.max_cut=0.0 # maximum interaction range in Bohrs
         self.read_tables()
         self.check_box_size()
@@ -195,8 +194,8 @@ class Interactions:
     def construct_matrices(self):
         """ Hamiltonian and overlap matrices. """
         el = self.calc.el
-        start=self.timer.start
-        stop=self.timer.stop
+        start = self.calc.start_timing
+        stop = self.calc.stop_timing
         start('matrix construction')
         orbs=el.orbitals()
         norb=len(orbs)

@@ -133,16 +133,6 @@ class Calculator(Output):
         return ret
 
 
-    def set(self,key,value):
-        if self.init==True or key not in ['charge']:
-            raise AssertionError('Parameters cannot be set after initialization.')
-        self.__dict__[key]=value
-
-    def get_atoms(self):
-        """ Return the current atoms object. """
-        return self.el.atoms
-
-
     def __del__(self):
         """ Delete calculator -> timing summary. """
         if self.get('SCC'):
@@ -158,6 +148,16 @@ class Calculator(Output):
         self.timer.summary()
         print "Calculator deleted"
         Output.__del__(self)
+
+
+    def set(self,key,value):
+        if self.init==True or key not in ['charge']:
+            raise AssertionError('Parameters cannot be set after initialization.')
+        self.__dict__[key]=value
+
+    def get_atoms(self):
+        """ Return the current atoms object. """
+        return self.el.atoms
 
 
     def add_note(self,note):
@@ -231,7 +231,7 @@ class Calculator(Output):
 
     def _initialize(self,atoms):
         """ Initialization of hotbit. """
-        self.timer.start('initialization')
+        self.start_timing('initialization')
         self.init=True
         self.el=Elements(self,atoms)
         self.ia=Interactions(self)
@@ -247,28 +247,28 @@ class Calculator(Output):
         if nu.any(self.pbc) and abs(self.get('charge'))>0.0:
             raise AssertionError('Charged system cannot be periodic.')
         self.flush()
-        self.timer.stop('initialization')
+        self.stop_timing('initialization')
 
 
     def get_potential_energy(self,atoms):
         """ Return the potential energy of present system. """
         self.solve_ground_state(atoms)
-        self.timer.start('energies')
+        self.start_timing('energies')
         ebs=self.get_band_structure_energy(atoms)
         ecoul=self.get_coulomb_energy(atoms)
         erep=self.rep.get_repulsive_energy()
-        self.timer.stop('energies')
+        self.stop_timing('energies')
         return ebs+ecoul+erep
 
 
     def get_forces(self,atoms):
         """ Return the forces of present system. """
         self.solve_ground_state(atoms)
-        self.timer.start('forces')
+        self.start_timing('forces')
         fbs=self.st.band_structure_forces()
         frep=self.rep.get_repulsive_forces()
         fcoul=self.st.es.gamma_forces() #zero for non-SCC
-        self.timer.stop('forces')
+        self.stop_timing('forces')
         return (fbs+frep+fcoul)*(Hartree/Bohr)
 
 
@@ -336,6 +336,15 @@ class Calculator(Output):
 
     def get_number_of_bands(self):
         raise NotImplementedError
+
+
+    def start_timing(self, label):
+        self.timer.start(label)
+
+
+    def stop_timing(self, label):
+        self.timer.stop(label)
+
 
 Hotbit=Calculator
 
