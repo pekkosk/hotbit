@@ -256,7 +256,7 @@ class RepulsiveFitting:
             # from documentation of splrep in scipy.interpolate.fitpack
             s = len(x) - nu.sqrt(2*len(x))
         print "Fitting smoothing spline with parameters"
-        print "k=%i, s=%i, r_cut=%0.4f\n" %(k, s, r_cut)
+        print "k=%i, s=%0.4f, r_cut=%0.4f\n" %(k, s, r_cut)
         tck = splrep(x, y, w, s=s, k=k)
 
         def dv_rep(r):
@@ -976,7 +976,7 @@ class ParametrizationTest:
 
     def plot(self, frames, points, i_traj, tables, i_par):
         par = self.pars[i_par]
-        color = self.colors[i_par]
+        color = self.colors[i_par % len(self.colors)]
         pl.plot(frames, points, c=color, label='TB-%s' % par)
         pl.xlabel('frame #')
         pl.ylabel('Energy (eV)')
