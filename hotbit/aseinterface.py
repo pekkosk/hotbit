@@ -104,6 +104,35 @@ class Calculator(Output):
         self.timer=Timer('Hotbit',txt=self.get_output())
 
 
+    def __copy__(self):
+        """
+        Returns an uninitialized calculator.
+        """
+        import sys
+        if self.init == True:
+            raise NotImplementedError('Calculator has been initialized and it cannot be copied. Please create a new calculator.')
+
+        params_to_copy = ['SCC',
+                          'width',
+                          'tables',
+                          'charge',
+                          'verbose',
+                          'maxiter',
+                          'elements',
+                          'gamma_cut',
+                          'parameters',
+                          'convergence',
+                          'verbose_SCC',
+                          'Anderson_memory',
+                          'mixing_constant']
+
+        ret = Hotbit()
+        ret.__dict__['txt'] = sys.stdout
+        for key in params_to_copy:
+            ret.__dict__[key] = self.__dict__[key]
+        return ret
+
+
     def set(self,key,value):
         if self.init==True or key not in ['charge']:
             raise AssertionError('Parameters cannot be set after initialization.')
