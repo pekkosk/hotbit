@@ -18,7 +18,6 @@ class States:
     def __init__(self,calc):
         self.es=Electrostatics(calc)
         self.solver=Solver(calc)
-        self.timer=calc.timer
         self.calc=proxy(calc)
         width=calc.get('width')
         self.occu=Occupations(calc.el.get_number_of_electrons(),width=width)
@@ -46,7 +45,7 @@ class States:
 
 
     def solve(self):
-        self.timer.start('solve')
+        self.calc.start_timing('solve')
         dq=self.guess_dq()
         self.H0, self.S, self.dH0, self.dS=self.calc.ia.get_matrices()
         try:
@@ -56,31 +55,31 @@ class States:
             self.calc.el.set_solved('ground state')
             self.large_update()
             self.count+=1
-            self.timer.stop('solve')
+            self.calc.stop_timing('solve')
         except Exception, ex:
-            self.timer.stop('solve')
+            self.calc.stop_timing('solve')
             raise Exception(ex)
 
 
     def update(self,e,wf):
         """ Update all essential stuff from given wave functions. """
-        self.timer.start('update')
+        self.calc.start_timing('update')
         self.e=e
         self.wf=wf
         self.f=self.occu.occupy(e)
-        self.timer.start('rho')
+        self.calc.start_timing('rho')
         self.rho0=fortran_rho0(self.wf,self.f,self.calc.el.nr_ia_orbitals,self.calc.el.ia_orbitals,self.norb)
-        self.timer.stop('rho')
+        self.calc.stop_timing('rho')
         self.rho0S_diagonal=matmul_diagonal(self.rho0,self.S,self.norb)
         if self.SCC:
             self.dq=self.mulliken()
             self.es.set_dq(self.dq)
-        self.timer.stop('update')
+        self.calc.stop_timing('update')
 
 
     def large_update(self):
         """ Update stuff from eigenstates needed later for forces etc. """
-        self.timer.start('final update')
+        self.calc.start_timing('final update')
         self.Swf=None
         #self.rho=fortran_rho(self.wf,self.f,self.norb) # the complete density matrix (even needed?)
         self.dH=nu.zeros_like(self.dH0)
@@ -93,7 +92,7 @@ class States:
 
         # density matrix weighted by eigenenergies
         self.rhoe0=fortran_rhoe0(self.wf,self.f,self.e,self.calc.el.nr_ia_orbitals,self.calc.el.ia_orbitals,self.norb)
-        self.timer.stop('final update')
+        self.calc.stop_timing('final update')
 
     def get_dq(self):
         return self.dq
@@ -144,13 +143,13 @@ class States:
 
     def band_structure_forces(self):
         """ Return forces arising from band structure. """
-        self.timer.start('f_bs')
+        self.calc.start_timigs('f_bs')
 
         norbs=self.calc.el.nr_orbitals
         inds=self.calc.el.atom_orb_indices2
 
         f=fortran_fbs(self.rho0,self.rhoe0,self.dH,self.dS,norbs,inds,self.norb,self.nat)
-        self.timer.stop('f_bs')
+        self.calc.stop_timigs('f_bs')
         return -2*nu.real(f)
 
 

@@ -32,7 +32,6 @@ class Elements:
         #else:
         #    self.atoms=Atoms(atoms)
         self.calc=proxy(calc)
-        self.timer=calc.timer
         self.Z=atoms.get_atomic_numbers()
         self.symbols=atoms.get_chemical_symbols()
         self.N=len(atoms)
@@ -142,7 +141,7 @@ class Elements:
         (analogously for j): i=atom index, si=symbol, r=vector i-->j, rhat=unit vector,
         ri=position of i, o1i=index of first orbital, noi=number of orbitals, oi=orbital indices of i
         """
-        self.timer.start('geometry')
+        self.calc.start_timing('geometry')
         self.geometry={}
         properties=['i','j','si','sj','r','dist','rhat','ri','rj','o1i','o1j','noi','noj','oi','oj']
         self.ia_pairs={}
@@ -176,7 +175,7 @@ class Elements:
                 ni=self.nr_ia_orbitals[orbi]
                 self.ia_orbitals[orbi,ni:ni+noj]=oj
                 self.nr_ia_orbitals[orbi]+=noj
-        self.timer.stop('geometry')
+        self.calc.stop_timing('geometry')
 
 
     def calculation_required(self,atoms,quantities):

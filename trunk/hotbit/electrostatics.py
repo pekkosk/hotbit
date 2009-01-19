@@ -16,7 +16,6 @@ class Electrostatics:
         self.norb=calc.el.get_nr_orbitals()
         self.SCC=calc.get('SCC')
         self.N=len(calc.el)
-        self.timer=calc.timer
         self.cut=calc.ia.get_cut()
         self.gamma_potential=None
 
@@ -52,17 +51,17 @@ class Electrostatics:
         if not self.SCC:
             return nu.zeros((self.N,3))
         else:
-            self.timer.start('f_es')
+            self.calc.start_timing('f_es')
             f=[]
             for i in range(self.N):
                 f.append( (-self.dq[i])*self.gamma_potential_der[i] )
-            self.timer.stop('f_es')
+            self.calc.stop_timing('f_es')
             return nu.array(f)
 
 
     def construct_H1(self,dq=None):
         """ Make the electrostatic part of the Hamiltonian. """
-        self.timer.start('electrostatic H')
+        self.calc.start_timing('electrostatic H')
         if dq!=None:
             self.set_dq(dq)
         H1=nu.zeros((self.norb,self.norb))
@@ -79,7 +78,7 @@ class Electrostatics:
             H1[o1i:o1i+noi,o1j:o1j+noj]+=ext_ij
             H1[o1j:o1j+noj,o1i:o1i+noi]+=ext_ij
 
-        self.timer.stop('electrostatic H')
+        self.calc.stop_timing('electrostatic H')
         self.H1=H1
         return self.H1
 
@@ -89,7 +88,7 @@ class Electrostatics:
 
     def construct_tables(self):
         """ Stuff calculated _once_ for given coordinates. """
-        self.timer.start('es tables')
+        self.calc.start_timing('es tables')
         el = self.calc.el
         #7: return (i,o1i,noi,j,o1j,noj)
         self.pairs=el.get_ia_atom_pairs(['i','j','o1i','o1j','noi','noj']) # this also only once
@@ -108,7 +107,7 @@ class Electrostatics:
                 dg[j,i,:]=-dg[i,j,:]
         self.gamma_table, self.gamma_der=g, dg
         self.ext = [self.calc.env.phi(i) for i in range(self.N)]
-        self.timer.stop('es tables')
+        self.calc.stop_timing('es tables')
 
     def gamma(self,i,j,der=0):
         """ Return the gamma function for atoms i and j. der=1 for gradient. """
