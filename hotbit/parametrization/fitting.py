@@ -838,7 +838,9 @@ class RepulsiveFitting:
                 image = traj[i]
                 structures.append(image)
         elif ".xyz" in filename:
-            structures.append(read(filename))
+            structure = read(filename)
+            structure.center(vacuum=6)
+            structures.append(structure)
         else:
             raise Exception("Unknown file format: %s" % structure)
         return structures
