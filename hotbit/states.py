@@ -143,13 +143,13 @@ class States:
 
     def band_structure_forces(self):
         """ Return forces arising from band structure. """
-        self.calc.start_timigs('f_bs')
+        self.calc.start_timing('f_bs')
 
         norbs=self.calc.el.nr_orbitals
         inds=self.calc.el.atom_orb_indices2
 
         f=fortran_fbs(self.rho0,self.rhoe0,self.dH,self.dS,norbs,inds,self.norb,self.nat)
-        self.calc.stop_timigs('f_bs')
+        self.calc.stop_timing('f_bs')
         return -2*nu.real(f)
 
 
