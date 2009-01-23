@@ -125,6 +125,7 @@ class RepulsiveFitting:
         pl.text(self.r_cut, ymin, 'r_cut')
         pl.xlim(xmin=xmin, xmax=xmax)
         pl.ylim(ymin=ymin, ymax=ymax)
+        pl.suptitle('Fitting for %s and %s' % (self.sym1, self.sym2))
         pl.legend()
         pl.show()
 
