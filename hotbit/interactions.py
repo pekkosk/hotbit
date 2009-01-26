@@ -36,7 +36,7 @@ class Interactions:
         """
         from os import environ
         from os.path import isfile
-        tables = calc.tables
+        tables = calc.get('tables')
         present = calc.el.get_present()
         default_dir=environ.get('HOTBIT_PARAMETERS')
         files={}

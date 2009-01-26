@@ -27,7 +27,7 @@ class States:
         self.count=0
         self.SCC=calc.get('SCC')
         self.rho=None
-        self.rhoe=None
+        self.rhoe0=None
 
     def __del__(self):
         print "States deleted"

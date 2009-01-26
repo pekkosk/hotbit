@@ -95,10 +95,6 @@ class Calculator(Output):
             os.environ.data['HOTBIT_PARAMETERS']=parameters
 
         self.init=False
-        self.element_files=elements
-        self.table_files=tables
-        self.verbose=verbose
-        self.set_enabled=True
         self.notes=[]
         self.set_text(self.txt)
         self.timer=Timer('Hotbit',txt=self.get_output())
@@ -188,7 +184,7 @@ class Calculator(Output):
         print>>self.txt,  'System:',self.el.get_name()
         print>>self.txt,  '       Charge=%4.1f' % self.charge
         print>>self.txt,  '       Box: (Ang)', nu.array(self.el.get_box_lengths())*Bohr
-        print>>self.txt,  '       PBC:',self.pbc
+        print>>self.txt,  '       PBC:',self.el.atoms.get_pbc()
         print>>self.txt, self.el.greetings()
         print>>self.txt, self.ia.greetings()
         print>>self.txt, self.rep.greetings()
@@ -238,13 +234,12 @@ class Calculator(Output):
         self.st=States(self)
         self.rep=Repulsion(self)
         self.env=Environment(self)
-        self.set_enabled=False
-        self.pbc=atoms.get_pbc()
         self.el.update_geometry()
         self.greetings()
-        if self.get('SCC') and nu.any(self.pbc) and self.get('gamma_cut')==None:
+        pbc=atoms.get_pbc()
+        if self.get('SCC') and nu.any(pbc) and self.get('gamma_cut')==None:
             raise NotImplementedError('SCC not implemented for periodic systems yet (see parameter gamma_cut).')
-        if nu.any(self.pbc) and abs(self.get('charge'))>0.0:
+        if nu.any(pbc) and abs(self.get('charge'))>0.0:
             raise AssertionError('Charged system cannot be periodic.')
         self.flush()
         self.stop_timing('initialization')
