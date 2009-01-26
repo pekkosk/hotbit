@@ -19,7 +19,7 @@ class Elements:
 
         If atoms is ASE.atoms object, convert it into box.Atoms object
         """
-        elements = calc.element_files
+        elements = calc.get('elements')
         if elements!=None:
             elements=elements.copy()
 
@@ -231,6 +231,7 @@ class Elements:
         if txt=='':
             txt='No comments for elements.'
         return txt
+
 
     def get_valences(self):
         """ Number of valence electrons for atoms. """
