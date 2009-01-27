@@ -89,6 +89,7 @@ class Interactions:
         self.present=present
         self.max_cut=0.0 # maximum interaction range in Bohrs
         self.read_tables()
+        self.check_too_close_distances()
         self.check_box_size()
         self.first=True
 
@@ -114,6 +115,18 @@ class Interactions:
                 if SCC and periodic and (gamma_cut!=None and gamma_cut<length/4):
                     raise AssertionError('gamma_cut should be small enough compared to %s Bohr' %length)
 
+
+    def check_too_close_distances(self):
+        """ If some element pair doesn't have repulsive potential,
+            check that they are not too close to each other. """
+        for si in self.present:
+            for sj in self.present:
+                d = self.calc.el.distance_of_elements(si,sj,mode='minimum')
+                if d != None and self.kill_radius[si,sj] != None:
+                    if d < self.kill_radius[si,sj]:
+                        raise AssertionError("Atoms with no repulsive potential are too close to each other: %s and %s" % (si, sj))
+
+
     def greetings(self):
         """ Return the interaction specifications """
         txt='Interactions:\n'
@@ -137,9 +150,14 @@ class Interactions:
         self.s={}
         self.cut={}
         self.maxh={}
+        self.kill_radius={}
 
         for si in self.present:
             for sj in self.present:
+                try:
+                    self.kill_radius[si,sj] = float(mix.find_value(self.files[si+sj],'kill_radius'))
+                except:
+                    self.kill_radius[si,sj] = None
                 try:
                     table_ij=mix.find_value(self.files[si+sj],'%s_%s_table' %(si,sj),fmt='matrix')
                     table_ji=mix.find_value(self.files[sj+si],'%s_%s_table' %(sj,si),fmt='matrix')

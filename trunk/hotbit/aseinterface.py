@@ -179,6 +179,7 @@ class Calculator(Output):
 
 
     def load(self, filename):
+        """ Load saved state and initialize calculator using that state."""
         import pickle
         f = open(filename)
         state = pickle.load(f)
