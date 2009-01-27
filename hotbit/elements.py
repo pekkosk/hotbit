@@ -302,6 +302,30 @@ class Elements:
             return mix.norm(self.vector(ri,rj,mic))
 
 
+    def distance_of_elements(self, si, sj, mode='minimum'):
+        """ Returns the closest distance between two elements. """
+        if type(si) != str or type(sj) != str:
+            raise AssertionError('Wrong types of parameters')
+        found_pair = False
+        distances = []
+        for i, a in enumerate(self.atoms):
+            for j, b in enumerate(self.atoms):
+                if i == j:
+                    pass
+                else:
+                    if (a.symbol == si and b.symbol == sj):
+                        found_pair = True
+                        d = self.distance(i, j)
+                        distances.append(d)
+        if found_pair:
+            if mode == 'minimum':
+                return min(distances)
+            else:
+                raise NotImplementedError('Only mode=minimum works')
+        else:
+            return None
+
+
     def get_cell_axes(self):
         """
         Lengths of the unit cell axes (currently for orthorhombic cell).
