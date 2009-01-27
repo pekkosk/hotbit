@@ -37,7 +37,8 @@ class Calculator(Output):
                       maxiter=50,
                       gamma_cut=None,
                       txt=None,
-                      verbose_SCC=False):
+                      verbose_SCC=False,
+                      filename=None):
         """
         Initialize calculator.
 
@@ -99,6 +100,9 @@ class Calculator(Output):
         self.set_text(self.txt)
         self.timer=Timer('Hotbit',txt=self.get_output())
 
+        if filename is not None:
+            self.load(filename)
+
 
     def __copy__(self):
         """
@@ -146,6 +150,53 @@ class Calculator(Output):
         Output.__del__(self)
 
 
+    def write(self, filename):
+        """ Write data from calculation to a file. """
+        state = {}
+        self.get_data_to_save(state)
+        import pickle
+        f = open(filename, 'w')
+        pickle.dump(state, f)
+        f.close()
+
+
+    def get_data_to_save(self, state):
+        """ Gather data from different object. """
+        atoms = {}
+        atoms['positions'] = self.el.atoms.get_positions()
+        atoms['numbers'] = self.el.atoms.get_atomic_numbers()
+        atoms['pbc'] = self.el.atoms.get_pbc()
+        atoms['cell'] = self.el.atoms.get_cell()
+        state['atoms'] = atoms
+
+        calc = {}
+        params = ['parameters','width','Anderson_memory','elements','SCC',
+                  'maxiter','tables','convergence','gamma_cut','charge',
+                  'mixing_constant']
+        for key in params:
+            calc[key] = self.__dict__[key]
+        state['calc'] = calc
+
+
+    def load(self, filename):
+        import pickle
+        f = open(filename)
+        state = pickle.load(f)
+        f.close()
+
+        atoms = state['atoms']
+        pos = atoms['positions']
+        num = atoms['numbers']
+        pbc = atoms['pbc']
+        cell = atoms['cell']
+        atoms = Atoms(positions=pos, numbers=num, pbc=pbc, cell=cell)
+
+        calc = state['calc']
+        for key in calc:
+            self.__dict__[key] = calc[key]
+        self._initialize(atoms)
+
+
     def set(self,key,value):
         if self.init==True or key not in ['charge']:
             raise AssertionError('Parameters cannot be set after initialization.')
@@ -153,7 +204,9 @@ class Calculator(Output):
 
     def get_atoms(self):
         """ Return the current atoms object. """
-        return self.el.atoms
+        atoms = self.el.atoms.copy()
+        atoms.calc = self
+        return atoms
 
 
     def add_note(self,note):
