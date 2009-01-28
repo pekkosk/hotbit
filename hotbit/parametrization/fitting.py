@@ -10,7 +10,7 @@ import pylab as pl
 
 
 class RepulsiveFitting:
-    
+
     def __init__(self,rep,r_cut=None,r_dimer=None,order=8,calc=None,maxiter=None, errfile=None):
         """
         Fit the short-range repulsive potential.

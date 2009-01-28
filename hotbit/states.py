@@ -46,6 +46,7 @@ class States:
 
     def solve(self):
         self.calc.start_timing('solve')
+        self.calc.ia.check_too_close_distances()
         dq=self.guess_dq()
         self.H0, self.S, self.dH0, self.dS=self.calc.ia.get_matrices()
         try:

@@ -89,7 +89,6 @@ class Interactions:
         self.present=present
         self.max_cut=0.0 # maximum interaction range in Bohrs
         self.read_tables()
-        self.check_too_close_distances()
         self.check_box_size()
         self.first=True
 
@@ -122,8 +121,8 @@ class Interactions:
         for si in self.present:
             for sj in self.present:
                 d = self.calc.el.distance_of_elements(si,sj,mode='minimum')
-                if d != None and self.kill_radius[si,sj] != None:
-                    if d < self.kill_radius[si,sj]:
+                if d != None and self.kill_radii[si,sj] != None:
+                    if d < self.kill_radii[si,sj]:
                         raise AssertionError("Atoms with no repulsive potential are too close to each other: %s and %s" % (si, sj))
 
 
@@ -150,14 +149,14 @@ class Interactions:
         self.s={}
         self.cut={}
         self.maxh={}
-        self.kill_radius={}
+        self.kill_radii={}
 
         for si in self.present:
             for sj in self.present:
                 try:
-                    self.kill_radius[si,sj] = float(mix.find_value(self.files[si+sj],'kill_radius'))
+                    self.kill_radii[si,sj] = float(mix.find_value(self.files[si+sj],'kill_radius'))
                 except:
-                    self.kill_radius[si,sj] = None
+                    self.kill_radii[si,sj] = None
                 try:
                     table_ij=mix.find_value(self.files[si+sj],'%s_%s_table' %(si,sj),fmt='matrix')
                     table_ji=mix.find_value(self.files[sj+si],'%s_%s_table' %(sj,si),fmt='matrix')
