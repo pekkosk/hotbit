@@ -24,7 +24,7 @@ class Solver:
         self.iter_history=[]
 
     def __del__(self):
-        print "Solver deleted"
+        pass
 
     def set_matrices(self,H,S):
         """ Set the non-SCC DFTB matrices """

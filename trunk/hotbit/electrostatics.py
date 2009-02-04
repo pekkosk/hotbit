@@ -20,7 +20,7 @@ class Electrostatics:
         self.gamma_potential=None
 
     def __del__(self):
-        print "Electrostatics deleted"
+        pass
 
     def __call__(self):
         """ Electrostatic (TB) potential at r. """

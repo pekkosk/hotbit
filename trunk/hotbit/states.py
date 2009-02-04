@@ -30,7 +30,7 @@ class States:
         self.rhoe0=None
 
     def __del__(self):
-        print "States deleted"
+        pass
 
     def guess_dq(self):
         n=len(self.calc.el)

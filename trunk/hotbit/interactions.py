@@ -93,7 +93,7 @@ class Interactions:
         self.first=True
 
     def __del__(self):
-        print "Interactions deleted"
+        pass
 
     def get_files(self):
         """ Return the list of Slater-Koster table files."""

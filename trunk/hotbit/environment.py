@@ -47,7 +47,7 @@ class Environment:
         self.calc=proxy(calc)
 
     def __del__(self):
-        print "Environment deleted"
+        pass
 
     def propagate_time(self,dt):
         """ Increase time by dt (dt in atomic units) """

@@ -31,7 +31,7 @@ class Repulsion:
                 self.vrep[si+sj]=RepulsivePotential(self.files[si+sj])
 
     def __del__(self):
-        print "Repulsion deleted"
+        pass
 
     def greetings(self):
         """ Return the repulsion documentations. """

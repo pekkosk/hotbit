@@ -146,7 +146,6 @@ class Calculator(Output):
             for note in self.notes:
                 print>>self.txt, note
         self.timer.summary()
-        print "Calculator deleted"
         Output.__del__(self)
 
 
