@@ -62,7 +62,7 @@ class Elements:
 
 
     def __del__(self):
-        print "Elements deleted"
+        pass
 
     def set_cutoffs(self,cutoffs):
         """ Set the maximum interaction cutoffs (dict of ranges for element pair SlaKo tables). """

@@ -26,7 +26,6 @@ for SCC in [False,True]:
         atoms.set_calculator(calc)
         sys.stdout.flush()
         rec, de, du=energy_conservation(atoms,dt=0.2,steps=100)
-        calc.__del__()
         #print de,du,de/du
         assert de/du<0.01
         

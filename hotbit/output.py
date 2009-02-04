@@ -6,7 +6,6 @@ class Output:
     def __del__(self):
         if self.txt.closed == False:
             self.close_output()
-        print "Output deleted"
 
     def set_text(self,txt):
         """ Set the stream for text output. """
