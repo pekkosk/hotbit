@@ -184,11 +184,19 @@ class Timer:
         print>>self.txt, '-'*79
         print>>self.txt, txt,
         print>>self.txt, '-'*79
-        print>>self.txt, 'total time %12.3f' %total
+        print>>self.txt, 'total time %12.3f seconds      %s' % (total, self.human_readable_time(total))
         print>>self.txt, asctime()
         self.smry=True
         self.txt.flush()
-                
+
+
+    def human_readable_time(self, seconds):
+        seconds = int(round(seconds))
+        hours = seconds/3600
+        seconds -= hours*3600
+        mins = seconds/60
+        seconds -= mins*60
+        return "%i h  %i min  %i sec" % (hours, mins, seconds)
 
 
 class OneTimer:
