@@ -394,6 +394,9 @@ class Calculator(Output):
         self.timer.stop(label)
 
 
+    def get_mayer_bond_order(self, i, j):
+        return self.st.mayer_bond_order(i, j)
+
 Hotbit=Calculator
 
 

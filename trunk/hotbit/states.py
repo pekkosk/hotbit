@@ -154,4 +154,17 @@ class States:
         return -2*nu.real(f)
 
 
-
+    def mayer_bond_order(self, a, b):
+        """ Returns the Mayer bond-order of the bond between the
+        atoms A and B (a and b are atom indices). """
+        assert type(a) == int
+        assert type(b) == int
+        A = self.calc.el.orbitals(a, indices=True)
+        B = self.calc.el.orbitals(b, indices=True)
+        rho_tilde = 0.5*(self.rho0 + self.rho0.conjugate().transpose())
+        rho_tilde_S = nu.dot(rho_tilde, self.S)
+        B_AB = 0
+        for i in A:
+            for j in B:
+                B_AB += rho_tilde_S[i,j]*rho_tilde_S[j,i]
+        return B_AB
