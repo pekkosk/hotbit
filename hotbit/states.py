@@ -127,6 +127,21 @@ class States:
             q.append( sum(self.rho0S_diagonal[orbitals]) )
         return nu.array(q)-self.calc.el.get_valences()
 
+    def mulliken_population_on_atom(self, i):
+        """ Return the Mulliken population on atom i. """
+        rho_tilde = 0.5*(self.rho0 + self.rho0.conjugate().transpose())
+        rho_tilde_S = nu.dot(rho_tilde, self.S)
+        q = self.trace_I(i, rho_tilde_S)
+        return q
+
+    def trace_I(self, I, matrix):
+        """ Return partial trace over atom I's orbitals. """
+        ret = 0
+        I = self.calc.el.orbitals(I, indices=True)
+        for i in I:
+            ret += matrix[i,i]
+        return ret
+
     def mulliken_transfer(self,k,l):
         """ Return Mulliken transfer charges between states k and l. """
         if self.Swf==None:
