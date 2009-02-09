@@ -230,3 +230,23 @@ class States:
             ldos += [nu.exp(-(e-e_k)**2/(2*sigma**2)) for e in e_g]
         return e_g, ldos
 
+    def LDOS(self, sigma, indices=None, npts=300):
+        eigs = self.get_eigenvalues()
+        e_min, e_max = min(eigs), max(eigs)
+        e_range = e_max - e_min
+        e_min -= e_range*0.1
+        e_max += e_range*0.1
+        e_g = nu.linspace(e_min, e_max, npts)
+        ldos = nu.zeros_like(e_g)
+        if indices == None:
+            indices = range(self.nat)
+        elif type(indices) == int:
+            indices = [indices]
+        N_el = self.calc.el.get_number_of_electrons()
+        for I in indices:
+            for k, e_k in enumerate(eigs):
+                q_Ik = self.mulliken_I_k(I,k)
+                ldos_k = [nu.exp(-(e-e_k)**2/(2*sigma**2)) for e in e_g]
+                ldos += nu.array(ldos_k) * q_Ik
+        return e_g, ldos
+
