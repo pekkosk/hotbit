@@ -127,11 +127,45 @@ class States:
             q.append( sum(self.rho0S_diagonal[orbitals]) )
         return nu.array(q)-self.calc.el.get_valences()
 
-    def mulliken_population_on_atom(self, i):
-        """ Return the Mulliken population on atom i. """
+    def mulliken_I(self, I):
+        """ Return the Mulliken population on atom I. """
         rho_tilde = 0.5*(self.rho0 + self.rho0.conjugate().transpose())
         rho_tilde_S = nu.dot(rho_tilde, self.S)
-        q = self.trace_I(i, rho_tilde_S)
+        q = self.trace_I(I, rho_tilde_S)
+        return q
+
+    def mulliken_mu(self, mu):
+        """ Return the population of basis state mu. """
+        raise NotImplementedError('Check what this means')
+        rho_tilde = 0.5*(self.rho0 + self.rho0.conjugate().transpose())
+        rho_tilde_S = nu.dot(rho_tilde, self.S)
+        return rho_tilde_S[mu,mu]
+
+    def mulliken_I_k(self, I, k):
+        """ Return the Mulliken population of atom I from eigenstate k. """
+        rho_k = nu.zeros_like(self.rho0)
+        for i, c_ik in enumerate(self.wf[:,k]):
+            for j, c_jk in enumerate(self.wf[:,k]):
+                rho_k[i,j] = c_ik*c_jk.conjugate()
+        rho_k = 0.5*(rho_k + rho_k.conjugate().transpose())
+        q_Ik = self.trace_I(I, nu.dot(rho_k,self.S))
+        return q_Ik
+
+    def mulliken_I_l(self, I, l):
+        """ Return the Mulliken population of atom I basis states with
+        angular momentum l. """
+        rho_tilde = 0.5*(self.rho0 + self.rho0.conjugate().transpose())
+        rho_tilde_S = nu.dot(rho_tilde, self.S)
+        orb_indices = self.calc.el.orbitals(I, indices=True)
+        orbs = self.calc.el.orbitals(I)
+        q = 0
+        for i, orb in zip(orb_indices, orbs):
+            if   's' in orb['orbital']: l_orb = 0
+            elif 'p' in orb['orbital']: l_orb = 1
+            elif 'd' in orb['orbital']: l_orb = 2
+            else: raise RuntimeError('Something wrong with orbital types')
+            if l_orb == l:
+                q += rho_tilde_S[i,i]
         return q
 
     def trace_I(self, I, matrix):
@@ -183,3 +217,16 @@ class States:
             for j in B:
                 B_AB += rho_tilde_S[i,j]*rho_tilde_S[j,i]
         return B_AB
+
+    def DOS(self, sigma, npts=300):
+        eigs = self.get_eigenvalues()
+        e_min, e_max = min(eigs), max(eigs)
+        e_range = e_max - e_min
+        e_min -= e_range*0.1
+        e_max += e_range*0.1
+        e_g = nu.linspace(e_min, e_max, npts)
+        ldos = nu.zeros_like(e_g)
+        for e_k in eigs:
+            ldos += [nu.exp(-(e-e_k)**2/(2*sigma**2)) for e in e_g]
+        return e_g, ldos
+
