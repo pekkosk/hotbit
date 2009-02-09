@@ -143,12 +143,9 @@ class States:
 
     def mulliken_I_k(self, I, k):
         """ Return the Mulliken population of atom I from eigenstate k. """
-        rho_k = nu.zeros_like(self.rho0)
-        for i, c_ik in enumerate(self.wf[:,k]):
-            for j, c_jk in enumerate(self.wf[:,k]):
-                rho_k[i,j] = c_ik*c_jk.conjugate()
-        rho_k = 0.5*(rho_k + rho_k.conjugate().transpose())
-        q_Ik = self.trace_I(I, nu.dot(rho_k,self.S))
+        rho_k = self.get_rho_k(k)
+        rho_tilde_k = 0.5*(rho_k + rho_k.conjugate().transpose())
+        q_Ik = self.trace_I(I, nu.dot(rho_tilde_k,self.S))
         return q_Ik
 
     def mulliken_I_l(self, I, l):
@@ -167,6 +164,31 @@ class States:
             if l_orb == l:
                 q += rho_tilde_S[i,i]
         return q
+
+    def mulliken_I_k_l(self, I, k, l):
+        """ Return the Mulliken population of atom I from eigenstate k
+            from basis functions with angular momentum l. """
+        rho_k = self.get_rho_k(k)
+        rho_tilde_k = 0.5*(rho_k + rho_k.conjugate().transpose())
+        rho_tilde_k_S = nu.dot(rho_k, self.S)
+        q_Ikl = 0.0
+        orb_indices = self.calc.el.orbitals(I, indices=True)
+        orbs = self.calc.el.orbitals(I)
+        for i, orb in zip(orb_indices, orbs):
+            if   's' in orb['orbital']: l_orb = 0
+            elif 'p' in orb['orbital']: l_orb = 1
+            elif 'd' in orb['orbital']: l_orb = 2
+            else: raise RuntimeError('Something wrong with orbital types')
+            if l_orb == l:
+                q_Ikl += rho_tilde_k_S[i,i]
+        return q_Ikl
+
+    def get_rho_k(self, k):
+        rho_k = nu.zeros_like(self.rho0)
+        for i, c_ik in enumerate(self.wf[:,k]):
+            for j, c_jk in enumerate(self.wf[:,k]):
+                rho_k[i,j] = c_ik*c_jk.conjugate()
+        return rho_k
 
     def trace_I(self, I, matrix):
         """ Return partial trace over atom I's orbitals. """
@@ -249,4 +271,11 @@ class States:
                 ldos_k = [nu.exp(-(e-e_k)**2/(2*sigma**2)) for e in e_g]
                 ldos += nu.array(ldos_k) * q_Ik
         return e_g, ldos
+
+    def hybridization(self, la, lb):
+        h = 0.0
+        for k, fk in enumerate(self.f):
+            for I in range(len(self.calc.el)):
+                h += fk * self.mulliken_I_k_l(I, k, la) * self.mulliken_I_k_l(I, k, lb)
+        return h
 
