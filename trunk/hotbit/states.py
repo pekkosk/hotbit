@@ -241,6 +241,7 @@ class States:
         return B_AB
 
     def DOS(self, sigma, npts=300):
+        """ Return the energy array and corresponding DOS array. """
         eigs = self.get_eigenvalues()
         e_min, e_max = min(eigs), max(eigs)
         e_range = e_max - e_min
@@ -253,6 +254,9 @@ class States:
         return e_g, ldos
 
     def LDOS(self, sigma, indices=None, npts=300):
+        """ Return the energy array and corresponding LDOS array
+            calculated using Mulliken population analysis. Indices
+            refer to the atoms that are included to the LDOS. """
         eigs = self.get_eigenvalues()
         e_min, e_max = min(eigs), max(eigs)
         e_range = e_max - e_min
@@ -272,7 +276,46 @@ class States:
                 ldos += nu.array(ldos_k) * q_Ik
         return e_g, ldos
 
+    def PDOS(self, sigma, indices=None, l='spd', npts=300):
+        """ Return the energy array and corresponding PDOS array
+            calculated using Mulliken population analysis. Indices refer
+            to the atoms and l to the angular momenta that are included. """
+        eigs = self.get_eigenvalues()
+        e_min, e_max = min(eigs), max(eigs)
+        e_range = e_max - e_min
+        e_min -= e_range*0.1
+        e_max += e_range*0.1
+        e_g = nu.linspace(e_min, e_max, npts)
+        pdos = nu.zeros_like(e_g)
+        if indices == None:
+            indices = range(self.nat)
+        elif type(indices) == int:
+            indices = [indices]
+        if l == 'spd':
+            l = [0,1,2]
+        elif type(l) == str:
+            l = self.get_angular_momenta(l)
+        else:
+            raise RuntimeError("l must be orbital types, for example l='sp'")
+        for li in l:
+            for k, e_k in enumerate(eigs):
+                pdos_k = [nu.exp(-(e-e_k)**2/(2*sigma**2)) for e in e_g]
+                for I in indices:
+                    q_Ikl = self.mulliken_I_k_l(I,k,li)
+                    pdos += nu.array(pdos_k) * q_Ikl
+        return e_g, pdos
+
+    def get_angular_momenta(self, l):
+        ret = []
+        if 's' in l: ret.append(0)
+        if 'p' in l: ret.append(1)
+        if 'd' in l: ret.append(2)
+        return ret
+
     def hybridization(self, la, lb):
+        """ Return a number between zero and one that describes how much the
+            wave functions of the atoms are hybridized between angular
+            momenta la and lb. """
         h = 0.0
         for k, fk in enumerate(self.f):
             for I in range(len(self.calc.el)):
