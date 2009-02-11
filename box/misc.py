@@ -83,7 +83,7 @@ class AndersonMixer:
 
     def echo(self):
         """ Say something about the progress of iteration. """
-        print 'Anderson:',self.it,self.fmax[-1]
+        return 'Anderson: iter: %i   fmax: %0.12f' % (self.it,self.fmax[-1])
         
     def out_of_iterations(self,out):
         """ Print out-of-iterations info. """
@@ -97,7 +97,7 @@ class AndersonMixer:
             print>>out, i-1, self.x[i,:5]            
         
     def final_echo(self):
-        print self.it
+        return self.it
 
 
 if __name__=='__main__':
