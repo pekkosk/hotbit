@@ -1,4 +1,5 @@
 import numpy as nu
+from scipy.linalg import solve
 
 class AndersonMixer:
     """
