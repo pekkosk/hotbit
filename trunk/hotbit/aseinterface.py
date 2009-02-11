@@ -160,7 +160,7 @@ class Calculator(Output):
 
 
     def get_data_to_save(self, state):
-        """ Gather data from different object. """
+        """ Gather data from different objects. """
         atoms = {}
         atoms['positions'] = self.el.atoms.get_positions()
         atoms['numbers'] = self.el.atoms.get_atomic_numbers()
@@ -175,6 +175,11 @@ class Calculator(Output):
         for key in params:
             calc[key] = self.__dict__[key]
         state['calc'] = calc
+
+        states = {}
+        states['prev_dq'] = self.st.prev_dq
+        states['count'] = self.st.count
+        state['states'] = states
 
 
     def load(self, filename):
@@ -195,6 +200,10 @@ class Calculator(Output):
         for key in calc:
             self.__dict__[key] = calc[key]
         self._initialize(atoms)
+
+        states = state['states']
+        self.st.prev_dq = states['prev_dq']
+        self.st.count = states['count']
 
 
     def set(self,key,value):
@@ -245,6 +254,7 @@ class Calculator(Output):
 
     def out(self,text):
         print>>self.txt, text
+        self.txt.flush()
 
 
     def set_text(self,txt):

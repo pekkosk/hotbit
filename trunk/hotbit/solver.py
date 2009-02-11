@@ -87,8 +87,8 @@ class Solver:
                 break
             dq_out=st.get_dq()
             done,dq=mixer(dq,dq_out)
-            #if self.verbose:
-                #mixer.echo()
+            if self.calc.get('verbose_SCC'):
+                self.calc.out(mixer.echo())
             if done:
                 self.iterations=i
                 self.iter_history.append(i)
@@ -96,8 +96,8 @@ class Solver:
             if i==self.maxiter-1:
                 mixer.out_of_iterations(self.calc.get_output())
                 raise RuntimeError('Out of iterations.')
-        #if self.verbose:
-            #mixer.final_echo()
+        if self.calc.get('verbose_SCC'):
+            self.calc.out(mixer.final_echo())
         return st.e,st.wf
 
     def solve(self,H,S):
