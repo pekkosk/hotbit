@@ -52,7 +52,7 @@ class States:
         try:
             if self.SCC:
                 self.es.construct_tables()
-            self.e, self.wf=self.solver.get_states(self,dq,self.H0,self.S,self.count)
+            self.e, self.wf=self.solver.get_states(self.calc,dq,self.H0,self.S,self.count)
             self.calc.el.set_solved('ground state')
             self.large_update()
             self.count+=1
