@@ -33,11 +33,12 @@ class Calculator(Output):
                       SCC=True,
                       convergence=1E-3,
                       mixing_constant=0.2,
-                      Anderson_memory=3,
+                      mixer_memory=3,
                       maxiter=50,
                       gamma_cut=None,
                       txt=None,
                       verbose_SCC=False,
+                      mixer='Anderson',
                       filename=None):
         """
         Initialize calculator.
@@ -66,8 +67,8 @@ class Calculator(Output):
         width             width of Fermi occupation (in eV)
         SCC               Self-Consistent Charge calculation
         convergence       convergence criterion (Mulliken charge variation/atom)
-        mixing_constant   density mixing for Anderson mixer
-        Anderson_memory   Memory for Anderson mixing
+        mixing_constant   density mixing constant for a mixer
+        mixer_memory      Memory for mixing
         maxiter           Maximum number of self-consistent iterations (for SCC)
         gamma_cut         Range for Coulomb interaction
         txt               Filename for log-file (stdout = None)
@@ -86,11 +87,12 @@ class Calculator(Output):
                         'SCC':SCC,
                         'convergence':convergence,
                         'mixing_constant':mixing_constant,
-                        'Anderson_memory':Anderson_memory,
+                        'mixer_memory':mixer_memory,
                         'maxiter':maxiter,
                         'gamma_cut':gamma_cut,
                         'txt':txt,
-                        'verbose_SCC':verbose_SCC}
+                        'verbose_SCC':verbose_SCC,
+                        'mixer':mixer}
 
         if parameters!=None:
             os.environ.data['HOTBIT_PARAMETERS']=parameters
@@ -123,7 +125,7 @@ class Calculator(Output):
                           'parameters',
                           'convergence',
                           'verbose_SCC',
-                          'Anderson_memory',
+                          'mixer_memory',
                           'mixing_constant']
 
         ret = Hotbit()
@@ -149,8 +151,10 @@ class Calculator(Output):
         Output.__del__(self)
 
 
-    def write(self, filename):
+    def write(self, filename='restart.hb'):
         """ Write data from calculation to a file. """
+        if self.init == False:
+            raise RuntimeError('The calculator is not initialized.')
         state = {}
         self.get_data_to_save(state)
         import pickle
@@ -169,9 +173,9 @@ class Calculator(Output):
         state['atoms'] = atoms
 
         calc = {}
-        params = ['parameters','width','Anderson_memory','elements','SCC',
+        params = ['parameters','width','mixer_memory','elements','SCC',
                   'maxiter','tables','convergence','gamma_cut','charge',
-                  'mixing_constant']
+                  'mixing_constant','mixer']
         for key in params:
             calc[key] = self.__dict__[key]
         state['calc'] = calc
@@ -207,7 +211,10 @@ class Calculator(Output):
 
 
     def set(self,key,value):
-        if self.init==True or key not in ['charge']:
+        if self.init == True and key == 'mixing_constant':
+            self.mixing_constant = value
+            self.st.mixing_constant = value
+        elif self.init==True or key not in ['charge']:
             raise AssertionError('Parameters cannot be set after initialization.')
         self.__dict__[key]=value
 
@@ -247,6 +254,8 @@ class Calculator(Output):
         print>>self.txt,  '       Charge=%4.1f' % self.charge
         print>>self.txt,  '       Box: (Ang)', nu.array(self.el.get_box_lengths())*Bohr
         print>>self.txt,  '       PBC:',self.el.atoms.get_pbc()
+        print>>self.txt,  '       Electronic temperature:', self.width*Hartree,'eV'
+        print>>self.txt,  '       Mixer:', self.mixer, 'with memory =', self.mixer_memory, ', mixing constant =', self.mixing_constant
         print>>self.txt, self.el.greetings()
         print>>self.txt, self.ia.greetings()
         print>>self.txt, self.rep.greetings()

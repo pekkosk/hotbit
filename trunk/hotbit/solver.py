@@ -6,6 +6,7 @@ import numpy as nu
 from hotbit.fortran.eigensolver import geig
 from numpy.linalg import solve
 from box.misc import AndersonMixer
+from box.pulay import PulayMixer
 from weakref import proxy
 
 class Solver:
@@ -15,7 +16,7 @@ class Solver:
         self.mix=calc.get('mixing_constant')
         self.convergence=calc.get('convergence')
         self.SCC=calc.get('SCC')
-        self.mmax=calc.get('Anderson_memory')
+        self.mmax=calc.get('mixer_memory')
         self.limit=calc.get('convergence')
         self.beta=calc.get('mixing_constant')
         self.norb=len(self.calc.el)
@@ -71,11 +72,17 @@ class Solver:
             #mixer.final_echo()
         #return st.e,st.wf
 
-    def get_states(self,st,dq,H0,S,count):
+    def get_states(self,calc,dq,H0,S,count):
         """ Solve the (non)SCC generalized eigenvalue problem. """
-        es=st.es
+        st = calc.st
+        es = st.es
         self.norb=len(self.calc.el)
-        mixer=AndersonMixer(self.beta,self.mmax,self.limit,chop=0.2)
+        if calc.get('mixer') == 'Anderson':
+            mixer=AndersonMixer(self.beta,self.mmax,self.limit,chop=0.2)
+        elif calc.get('mixer') == 'Pulay':
+            mixer=PulayMixer(self.beta,self.mmax,self.limit)
+        else:
+            raise NotImplementedError('No such density mixer: %s' % calc.get('mixer'))
         for i in range(self.maxiter):
             if self.SCC:
                 H=H0 + es.construct_H1(dq)*S
