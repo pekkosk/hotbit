@@ -26,7 +26,7 @@ class LinearResponse:
         self.calc=calc
         self.st=calc.st
         self.el=calc.el
-        self.es=calc.es
+        self.es=calc.st.es
         self.energy_cut=energy_cut/Hartree
         #self.noc=self.st.get_hoc()+1 #number of occupied states (not index)
         self.nel=self.el.get_number_of_electrons()
@@ -62,7 +62,7 @@ class LinearResponse:
         if self.done==True:
             raise AssertionError('Run LR calculation only once.')
         
-        print>>self.txt, '\nLR for %s (charge %.2f). ' %(self.el.atoms.get_name(),self.calc.get_charge()),
+        print>>self.txt, '\nLR for %s (charge %.2f). ' %(self.el.get_name(),self.calc.get_charge()),
         
         #
         # select electron-hole excitations (i occupied, j not occupied)
