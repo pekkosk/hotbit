@@ -5,20 +5,15 @@ from scipy.linalg import eig
 import numpy as nu
 from hotbit.fortran.eigensolver import geig
 from numpy.linalg import solve
-from box.misc import AndersonMixer
-from box.pulay import PulayMixer
+from box.buildmixer import BuildMixer
 from weakref import proxy
 
 class Solver:
     def __init__(self,calc):
         self.calc=proxy(calc)
         self.maxiter=calc.get('maxiter')
-        self.mix=calc.get('mixing_constant')
-        self.convergence=calc.get('convergence')
+        self.mixer=BuildMixer(calc.mixer)
         self.SCC=calc.get('SCC')
-        self.mmax=calc.get('mixer_memory')
-        self.limit=calc.get('convergence')
-        self.beta=calc.get('mixing_constant')
         self.norb=len(self.calc.el)
         self.verbose=calc.get('verbose')
         self.iterations=None
@@ -77,12 +72,7 @@ class Solver:
         st = calc.st
         es = st.es
         self.norb=len(self.calc.el)
-        if calc.get('mixer') == 'Anderson':
-            mixer=AndersonMixer(self.beta,self.mmax,self.limit,chop=0.2)
-        elif calc.get('mixer') == 'Pulay':
-            mixer=PulayMixer(self.beta,self.mmax,self.limit)
-        else:
-            raise NotImplementedError('No such density mixer: %s' % calc.get('mixer'))
+        mixer = self.mixer
         for i in range(self.maxiter):
             if self.SCC:
                 H=H0 + es.construct_H1(dq)*S
@@ -95,7 +85,7 @@ class Solver:
             dq_out=st.get_dq()
             done,dq=mixer(dq,dq_out)
             if self.calc.get('verbose_SCC'):
-                self.calc.out(mixer.echo())
+                mixer.echo(self.calc.get_output())
             if done:
                 self.iterations=i
                 self.iter_history.append(i)
@@ -104,7 +94,7 @@ class Solver:
                 mixer.out_of_iterations(self.calc.get_output())
                 raise RuntimeError('Out of iterations.')
         if self.calc.get('verbose_SCC'):
-            self.calc.out(mixer.final_echo())
+            mixer.final_echo(self.calc.get_output())
         return st.e,st.wf
 
     def solve(self,H,S):

@@ -240,6 +240,56 @@ class States:
                 B_AB += rho_tilde_S[i,j]*rho_tilde_S[j,i]
         return B_AB
 
+    def get_covalent_energy(self):
+        """ Returns the covalent bond energy of the whole system. """
+        E_bs = self.band_structure_energy()
+        rho = self.rho0
+        H0 = self.H0
+        S = self.S
+        epsilon = nu.zeros_like(H0)
+        for i in range(len(H0)):
+            for j in range(len(H0)):
+                epsilon[i,j] = 0.5*(H0[i,i] + H0[j,j])
+        E = nu.sum(rho*epsilon*S)
+        return E_bs - E
+
+    def E_cov_m_n(self, m, n, sigma, npts=400):
+        """ Return the covalent energy of the orbital pairs mu and nu
+        as a function of an energy. Returns the energy grid and covalent
+        energy grid. """
+        eigs = self.get_eigenvalues()
+        e_min, e_max = min(eigs), max(eigs)
+        e_range = e_max - e_min
+        e_min -= e_range*0.1
+        e_max += e_range*0.1
+        e_g = nu.linspace(e_min, e_max, npts)
+        f = self.get_occupations()
+        E_cov_mn = nu.zeros_like(e_g)
+        epsilon = nu.zeros_like(self.H0)
+        for i in range(len(self.H0)):
+            for j in range(len(self.H0)):
+                epsilon[i,j] = 0.5*(self.H0[i,i] + self.H0[j,j])
+        for k, e_k in enumerate(eigs):
+            f_k = f[k]
+            rho_k = self.get_rho_k(k)
+            for i, e in enumerate(e_g):
+                E_cov_mn[i] += f_k*nu.exp(-(e-e_k)**2/(2*sigma**2))*rho_k[m,n]*(self.H0[n,m]+epsilon[n,m]*self.S[n,m])
+        return e_g, E_cov_mn
+
+    def E_cov_mn(self):
+        """ Return the covalent energy of the orbital pairs mu and nu
+        as a function of an energy. """
+        f = self.get_occupations()
+        E_cov_mn = 0.0
+        epsilon = nu.zeros_like(self.H0)
+        for i in range(len(self.H0)):
+            for j in range(len(self.H0)):
+                epsilon[i,j] = 0.5*(self.H0[i,i] + self.H0[j,j])
+        for k, f_k in enumerate(f):
+            rho_k = self.get_rho_k(k)
+            E_cov_mn += f_k*nu.trace(nu.dot(rho_k, self.H0)) - f_k*nu.sum(rho_k*epsilon*self.S)
+        return E_cov_mn
+
     def DOS(self, sigma, npts=300):
         """ Return the energy array and corresponding DOS array. """
         eigs = self.get_eigenvalues()
