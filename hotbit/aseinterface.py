@@ -29,16 +29,13 @@ class Calculator(Output):
                       tables=None,
                       verbose=True,
                       charge=0.0,
-                      width=0.02,
                       SCC=True,
-                      convergence=1E-3,
-                      mixing_constant=0.2,
-                      mixer_memory=3,
                       maxiter=50,
                       gamma_cut=None,
                       txt=None,
                       verbose_SCC=False,
-                      mixer='Anderson',
+                      width=0.02,
+                      mixer=None,
                       filename=None):
         """
         Initialize calculator.
@@ -63,12 +60,10 @@ class Calculator(Output):
                             interactions than the ones specified.
                             E.g. {'CH':'C_H.par','others':'default'}
 
+        mixer             Density mixer. Can be a name of the mixer (mixer='Anderson') or a dictionary of parameters (mixer={'name':'Anderson','mixing_constant':0.3, 'memory':5}).
         charge            total electric charge for system (-1 means an additional electron)
         width             width of Fermi occupation (in eV)
         SCC               Self-Consistent Charge calculation
-        convergence       convergence criterion (Mulliken charge variation/atom)
-        mixing_constant   density mixing constant for a mixer
-        mixer_memory      Memory for mixing
         maxiter           Maximum number of self-consistent iterations (for SCC)
         gamma_cut         Range for Coulomb interaction
         txt               Filename for log-file (stdout = None)
@@ -85,9 +80,6 @@ class Calculator(Output):
                         'charge':charge,
                         'width':width/Hartree,
                         'SCC':SCC,
-                        'convergence':convergence,
-                        'mixing_constant':mixing_constant,
-                        'mixer_memory':mixer_memory,
                         'maxiter':maxiter,
                         'gamma_cut':gamma_cut,
                         'txt':txt,
@@ -115,6 +107,7 @@ class Calculator(Output):
             raise NotImplementedError('Calculator has been initialized and it cannot be copied. Please create a new calculator.')
 
         params_to_copy = ['SCC',
+                          'mixer',
                           'width',
                           'tables',
                           'charge',
@@ -123,10 +116,7 @@ class Calculator(Output):
                           'elements',
                           'gamma_cut',
                           'parameters',
-                          'convergence',
-                          'verbose_SCC',
-                          'mixer_memory',
-                          'mixing_constant']
+                          'verbose_SCC']
 
         ret = Hotbit()
         ret.__dict__['txt'] = sys.stdout
@@ -173,9 +163,8 @@ class Calculator(Output):
         state['atoms'] = atoms
 
         calc = {}
-        params = ['parameters','width','mixer_memory','elements','SCC',
-                  'maxiter','tables','convergence','gamma_cut','charge',
-                  'mixing_constant','mixer']
+        params = ['parameters','mixer','elements','SCC',
+                  'maxiter','tables','gamma_cut','charge','width']
         for key in params:
             calc[key] = self.__dict__[key]
         state['calc'] = calc
@@ -211,10 +200,7 @@ class Calculator(Output):
 
 
     def set(self,key,value):
-        if self.init == True and key == 'mixing_constant':
-            self.mixing_constant = value
-            self.st.mixing_constant = value
-        elif self.init==True or key not in ['charge']:
+        if self.init==True or key not in ['charge']:
             raise AssertionError('Parameters cannot be set after initialization.')
         self.__dict__[key]=value
 
@@ -255,7 +241,8 @@ class Calculator(Output):
         print>>self.txt,  '       Box: (Ang)', nu.array(self.el.get_box_lengths())*Bohr
         print>>self.txt,  '       PBC:',self.el.atoms.get_pbc()
         print>>self.txt,  '       Electronic temperature:', self.width*Hartree,'eV'
-        print>>self.txt,  '       Mixer:', self.mixer, 'with memory =', self.mixer_memory, ', mixing constant =', self.mixing_constant
+        mixer = self.st.solver.mixer
+        print>>self.txt,  '       Mixer:', mixer.get('name'), 'with memory =', mixer.get('memory'), ', mixing constant =', mixer.get('beta')
         print>>self.txt, self.el.greetings()
         print>>self.txt, self.ia.greetings()
         print>>self.txt, self.rep.greetings()

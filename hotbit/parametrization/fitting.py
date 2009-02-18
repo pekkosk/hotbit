@@ -88,7 +88,7 @@ class RepulsiveFitting:
 #        print>>o, '\n\nrepulsion='
 #        for r in nu.linspace(0.1,self.r_cut,points):
 #            print>>o, r/Bohr, self(r)/Hartree
-#        o.close()        
+#        o.close()
 
 
     def plot(self):
@@ -487,12 +487,12 @@ class RepulsiveFitting:
             calc = self.calc
         if color == None:
             color = self.get_color()
-        if 'traj' in dft_traj:
-            self.structures.append({'filename':dft_traj, 'charge':charge,
-                       'mixing_constant':calc.get('mixing_constant'),
-                       'Anderson_memory':calc.get('Anderson_memory'),
-                       'maxiter':calc.get('maxiter'),'SCC':calc.get('SCC'),
-                       'width':calc.get('width')})
+#        if 'traj' in dft_traj:
+#            self.structures.append({'filename':dft_traj, 'charge':charge,
+#                       'mixing_constant':calc.get('mixing_constant'),
+#                       'mixer_memory':calc.get('mixer_memory'),
+#                       'maxiter':calc.get('maxiter'),'SCC':calc.get('SCC'),
+#                       'width':calc.get('width')})
         traj = PickleTrajectory(dft_traj)
         R, E_dft, N = self.process_trajectory(traj, self.sym1, self.sym2, separating_distance, h)
         E_bs = nu.zeros(len(E_dft))
@@ -629,12 +629,12 @@ class RepulsiveFitting:
         points = []
         if calc == None:
             calc = self.calc
-        if 'traj' in filename:
-            self.structures.append({'filename':filename, 'charge':charge,
-                       'mixing_constant':calc.get('mixing_constant'),
-                       'Anderson_memory':calc.get('Anderson_memory'),
-                       'maxiter':calc.get('maxiter'),'SCC':calc.get('SCC'),
-                       'width':calc.get('width')})
+#        if 'traj' in filename:
+#            self.structures.append({'filename':filename, 'charge':charge,
+#                       'mixing_constant':calc.get('mixing_constant'),
+#                       'mixer_memory':calc.get('mixer_memory'),
+#                       'maxiter':calc.get('maxiter'),'SCC':calc.get('SCC'),
+#                       'width':calc.get('width')})
         structures = self.import_structures(filename)
         for ind, structure in enumerate(structures):
             N = len(structure)
