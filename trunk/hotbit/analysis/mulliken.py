@@ -1,3 +1,4 @@
+from ase import Hartree
 import numpy as nu
 
 
@@ -10,19 +11,26 @@ def get_angular_momenta(l):
 
 
 class MullikenAnalysis:
-    """ A class that calculates different Mulliken charges. """
+    """ A class that calculates different Mulliken charges. All the units
+    are in electronvolts and Angstroms. """
 
     def __init__(self, calc):
         self.calc = calc
         self.rho = calc.st.rho0
-        self.H0 = calc.st.H0
+        self.H0 = calc.st.H0*Hartree
         self.S = calc.st.S
 
         self.rho_tilde = 0.5*(self.rho + self.rho.conjugate().transpose())
         self.rho_tilde_S = nu.dot(self.rho_tilde, self.S)
         self.rho_k = nu.zeros((len(self.calc.st.get_eigenvalues()), len(self.rho), len(self.rho)))
         self.built_rho_k = [False for i in range(len(self.rho_k))]
+        self.eigs = self.calc.st.get_eigenvalues()*Hartree
 
+
+    def delta_sigma(self, x, x0, sigma):
+        """ Return the value of a gaussian function centered at x0
+        with variance sigma^2 at point x. """
+        return 1./nu.sqrt(2*nu.pi*sigma**2)*nu.exp(-(x-x0)**2/(2*sigma**2))
 
 
     def get_rho_k(self, k):
@@ -62,7 +70,6 @@ class MullikenAnalysis:
 
     def mulliken_mu(self, mu):
         """ Return the population of basis state mu. """
-        raise NotImplementedError('Check what this means')
         return self.rho_tilde_S[mu,mu]
 
 
@@ -133,12 +140,6 @@ class MullikenBondAnalysis(MullikenAnalysis):
         return h
 
 
-    def delta_sigma(self, x, x0, sigma):
-        """ Return the value of a gaussian function centered at x0
-        with variance sigma^2 at point x. """
-        return nu.sqrt(2*nu.pi*sigma**2)*nu.exp(-(x-x0)**2/(2*sigma**2))
-
-
     def get_mayer_bond_order(self, a, b):
         """ Returns the Mayer bond-order of the bond between the
         atoms A and B (a and b are atom indices). """
@@ -155,17 +156,19 @@ class MullikenBondAnalysis(MullikenAnalysis):
 
     def get_covalent_energy(self):
         """ Returns the covalent bond energy of the whole system. """
-        E_bs = self.calc.st.band_structure_energy()
+        E_bs = self.calc.st.band_structure_energy()*Hartree
         E = nu.sum(self.rho*self.bar_epsilon*self.S)
         return E_bs - E
 
 
-    def E_cov_m_n(self, m, n, sigma, npts=800):
+    def get_E_cov_m_n(self, m, n, sigma, npts=500, e_min=None, e_max=None):
         """ Return the covalent energy of the orbital pairs mu and nu
         as a function of an energy. Returns the energy grid and covalent
         energy grid. """
-        eigs = self.calc.st.get_eigenvalues()
-        e_min, e_max = min(eigs), max(eigs)
+        if e_min == None:
+            e_min = min(self.eigs)
+        if e_max == None:
+            e_max = max(self.eigs)
         e_range = e_max - e_min
         e_min -= e_range*0.1
         e_max += e_range*0.1
@@ -173,13 +176,48 @@ class MullikenBondAnalysis(MullikenAnalysis):
         f = self.calc.st.get_occupations()
         E_cov_mn = nu.zeros_like(e_g)
         mat = self.H0[n,m] - self.bar_epsilon[n,m]*self.S[n,m]
-        for k, e_k in enumerate(eigs):
+        for k, e_k in enumerate(self.eigs):
             f_k = f[k]
             rho_k = self.get_rho_k(k)
             E_cov_k = rho_k[m,n]*mat
             for i, e in enumerate(e_g):
-                E_cov_mn[i] += f_k/nu.sqrt(2*nu.pi*sigma**2)*nu.exp(-(e-e_k)**2/(2*sigma**2))*E_cov_k
+                E_cov_mn[i] += f_k*self.delta_sigma(e, e_k, sigma)*E_cov_k
         return e_g, E_cov_mn
+
+
+    def get_E_cov_I_J(self, I, J, sigma, npts=500, e_min=None, e_max=None):
+        I = self.calc.el.orbitals(I, indices=True)
+        J = self.calc.el.orbitals(J, indices=True)
+        E_cov_IJ = nu.zeros(npts)
+        e_g = None
+        for m in I:
+            for n in J:
+                e_g, E_cov_mn = self.get_E_cov_m_n(m, n, sigma, npts, e_min, e_max)
+                E_cov_IJ += E_cov_mn
+        return e_g, E_cov_IJ
+
+
+    def get_E_cov_la_lb(self, la, lb, sigma, npts=500, e_min=None, e_max=None):
+        e_g = None
+        E_cov_lalb = nu.zeros(npts)
+        if len(la) != 1 or len(lb) != 1:
+            raise Exception('Give only one angular momentum at a time.')
+        for I in range(len(self.calc.el)):
+            for J in range(len(self.calc.el)):
+                orb_indices_I = self.calc.el.orbitals(I, indices=True)
+                orbs_I = self.calc.el.orbitals(I)
+                orb_indices_J = self.calc.el.orbitals(J, indices=True)
+                orbs_J = self.calc.el.orbitals(J)
+                for i, orb_i in zip(orb_indices_I, orbs_I):
+                    for j, orb_j in zip(orb_indices_J, orbs_J):
+                        orb_type_i = orb_i['orbital']
+                        orb_type_j = orb_j['orbital']
+                        if (la == orb_type_i[0] and lb == orb_type_j[0]) or\
+                           (la == orb_type_j[0] and lb == orb_type_i[0]):
+                            # orb_i and orb_j are of the wanted type
+                            e_g, E_cov = self.get_E_cov_m_n(i, j, sigma, npts, e_min, e_max)
+                            E_cov_lalb += E_cov
+        return e_g, E_cov_lalb
 
 
 class DensityOfStates(MullikenAnalysis):
@@ -188,29 +226,32 @@ class DensityOfStates(MullikenAnalysis):
 
     def __init__(self, calc):
         MullikenAnalysis.__init__(self, calc)
-        self.eigs = self.calc.st.get_eigenvalues()
 
 
-    def DOS(self, sigma, npts=300):
+    def DOS(self, sigma, npts=500, e_min=None, e_max=None):
         """ Return the energy array and corresponding DOS array. """
-        eigs = self.eigs
-        e_min, e_max = min(eigs), max(eigs)
+        if e_min == None:
+            e_min = min(self.eigs)
+        if e_max == None:
+            e_max = max(self.eigs)
         e_range = e_max - e_min
         e_min -= e_range*0.1
         e_max += e_range*0.1
         e_g = nu.linspace(e_min, e_max, npts)
-        ldos = nu.zeros_like(e_g)
-        for e_k in eigs:
-            ldos += [nu.exp(-(e-e_k)**2/(2*sigma**2)) for e in e_g]
-        return e_g, ldos
+        dos = nu.zeros_like(e_g)
+        for e_k in self.eigs:
+            dos += [self.delta_sigma(e, e_k, sigma) for e in e_g]
+        return e_g, dos
 
 
-    def LDOS(self, sigma, indices=None, npts=300):
+    def LDOS(self, sigma, indices=None, npts=500, e_min=None, e_max=None):
         """ Return the energy array and corresponding LDOS array
             calculated using Mulliken population analysis. Indices
             refer to the atoms that are included to the LDOS. """
-        eigs = self.eigs
-        e_min, e_max = min(eigs), max(eigs)
+        if e_min == None:
+            e_min = min(self.eigs)
+        if e_max == None:
+            e_max = max(self.eigs)
         e_range = e_max - e_min
         e_min -= e_range*0.1
         e_max += e_range*0.1
@@ -222,19 +263,21 @@ class DensityOfStates(MullikenAnalysis):
             indices = [indices]
         N_el = self.calc.el.get_number_of_electrons()
         for I in indices:
-            for k, e_k in enumerate(eigs):
+            for k, e_k in enumerate(self.eigs):
                 q_Ik = self.mulliken_I_k(I,k)
-                ldos_k = [nu.exp(-(e-e_k)**2/(2*sigma**2)) for e in e_g]
+                ldos_k = [self.delta_sigma(e, e_k, sigma) for e in e_g]
                 ldos += nu.array(ldos_k) * q_Ik
         return e_g, ldos
 
 
-    def PDOS(self, sigma, indices=None, l='spd', npts=300):
+    def PDOS(self, sigma, indices=None, l='spd', npts=500, e_min=None, e_max=None):
         """ Return the energy array and corresponding PDOS array
             calculated using Mulliken population analysis. Indices refer
             to the atoms and l to the angular momenta that are included. """
-        eigs = self.eigs
-        e_min, e_max = min(eigs), max(eigs)
+        if e_min == None:
+            e_min = min(self.eigs)
+        if e_max == None:
+            e_max = max(self.eigs)
         e_range = e_max - e_min
         e_min -= e_range*0.1
         e_max += e_range*0.1
@@ -251,8 +294,8 @@ class DensityOfStates(MullikenAnalysis):
         else:
             raise RuntimeError("l must be orbital types, for example l='sp'")
         for li in l:
-            for k, e_k in enumerate(eigs):
-                pdos_k = [nu.exp(-(e-e_k)**2/(2*sigma**2)) for e in e_g]
+            for k, e_k in enumerate(self.eigs):
+                pdos_k = [self.delta_sigma(e, e_k, sigma) for e in e_g]
                 for I in indices:
                     q_Ikl = self.mulliken_I_k_l(I,k,li)
                     pdos += nu.array(pdos_k) * q_Ikl
