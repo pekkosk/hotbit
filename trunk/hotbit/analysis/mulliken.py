@@ -120,9 +120,9 @@ class MullikenBondAnalysis(MullikenAnalysis):
     """ A class that calculates analyzes atom bonds using the Mulliken
     charges. """
 
+
     def __init__(self, calc):
         MullikenAnalysis.__init__(self, calc)
-        self.calc = calc
         self.bar_epsilon = nu.zeros_like(self.H0)
         for i in range(len(self.H0)):
             for j in range(len(self.H0)):
@@ -218,6 +218,56 @@ class MullikenBondAnalysis(MullikenAnalysis):
                             e_g, E_cov = self.get_E_cov_m_n(i, j, sigma, npts, e_min, e_max)
                             E_cov_lalb += E_cov
         return e_g, E_cov_lalb
+
+
+    def A_I(self, I):
+        """ Return absolute the promotion energy of atom I. """
+        gamma_II = self.calc.st.es.gamma(I,I)*Hartree
+        dq_I = self.mulliken_I(I) - self.calc.el.get_valences()[I]
+        return gamma_II*dq_I**2 + self.E_prom_I(I)
+
+
+    def E_prom_I(self, I):
+        """ Return the promotion energy of atom I. """
+        orb_indices = self.calc.el.orbitals(I, indices=True)
+        ret = 0.0
+        for m in orb_indices:
+            q_mu = self.mulliken_mu(m)
+            q_mu_free = self.calc.el.get_free_population(m)
+            ret += (q_mu-q_mu_free)*self.H0[m,m]
+        return ret
+
+
+    def B_IJ(self, I, J):
+        """ Return the absolute bond energy between atoms I and J. """
+        if I == J:
+             return 0
+        dist_IJ = self.calc.el.distance(I, J)
+
+        sI = self.calc.el.symbol(I)
+        sJ = self.calc.el.symbol(J)
+        V_rep_IJ = self.calc.rep.vrep[sI+sJ](dist_IJ)*Hartree
+
+        gamma_IJ = self.calc.st.es.gamma(I, J)*Hartree
+        dq_I = self.mulliken_I(I) - self.calc.el.get_valences()[I]
+        dq_J = self.mulliken_I(J) - self.calc.el.get_valences()[J]
+
+        ret = V_rep_IJ + gamma_IJ*dq_I*dq_J
+        for m in self.calc.el.orbitals(I, indices=True):
+            for n in self.calc.el.orbitals(J, indices=True):
+                mat = self.rho[n,m]*self.H0[m,n]-self.rho_tilde[n,m]*self.S[m,n]*self.bar_epsilon[m,n]
+                ret += (mat + mat.conjugate())
+        return ret
+
+
+    def get_AB_I(self, I):
+        """ Return the atom I's contribution to the total binding
+        energy of the system. """
+        ret = self.A_I(I)
+        for J in range(len(self.calc.el)):
+            if J != I:
+                ret += 0.5*self.B_IJ(I,J)
+        return ret
 
 
 class DensityOfStates(MullikenAnalysis):

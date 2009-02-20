@@ -445,3 +445,11 @@ class Elements:
         return lst
 
 
+    def get_free_population(self, m):
+        """ Return the population of the basis state m when the atom
+        is isolated (a number between zero and two). """
+        orb = self.orb[m]
+        i_element = orb['atom']
+        n_el = self.get_valences()[i_element]
+        atomindex = orb['atomindex'] # atomindex states before this
+        return max(0, min(2, n_el - 2*atomindex))
