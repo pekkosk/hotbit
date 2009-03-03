@@ -9,6 +9,7 @@ import os
 from box.timing import Timer
 from time import asctime
 import math
+import pickle
 array=nu.array
 sqrt=math.sqrt
 pi=math.pi
@@ -27,7 +28,9 @@ class KSAllElectron:
                       itmax=200,  
                       timing=False,
                       verbose=False,
-                      txt=None):       
+                      txt=None,
+                      restart=None,
+                      write=None):       
         """ 
         Make Kohn-Sham all-electron calculation for given atom.
         
@@ -56,6 +59,10 @@ class KSAllElectron:
         timing:         output of timing summary 
         verbose:        increase verbosity during iterations
         txt:            output file name 
+        write:          filename: save rgrid, effective potential and
+                        density to a file for further calculations.
+        restart:        filename: make an initial guess for effective
+                        potential and density from another calculation.
         """
         self.symbol=symbol
         self.valence=valence
@@ -71,6 +78,8 @@ class KSAllElectron:
         self.timing=timing       
         self.timer=Timer('KSAllElectron',txt=self.txt,enabled=self.timing)
         self.timer.start('init')
+        self.restart = restart
+        self.write = write
         
         # element data
         self.data=copy( data[self.symbol] )
@@ -266,9 +275,23 @@ class KSAllElectron:
         # make confinement and nuclear potentials; intitial guess for veff
         self.conf=array([self.confinement_potential(r) for r in self.rgrid])
         self.nucl=array([self.V_nuclear(r) for r in self.rgrid])
-        self.veff=self.nucl+self.conf
+        if self.restart == None:
+            self.veff=self.nucl+self.conf
+            self.dens=self.guess_density()
+        else:
+            # use density and effective potential from another calculation
+            from scipy.interpolate import splrep, splev
+            f = open(self.restart)
+            rgrid = pickle.load(f)
+            veff = pickle.load(f)
+            dens = pickle.load(f)
+            v = splrep(rgrid, veff)
+            d = splrep(rgrid, dens)
+            self.veff = array([splev(r,v) for r in self.rgrid])
+            self.dens = array([splev(r,d) for r in self.rgrid])
+            f.close()
+
         
-        self.dens=self.guess_density()
         self.calculate_Hartree_potential()
         #self.Hartree=nu.zeros((N,))
         
@@ -304,6 +327,12 @@ class KSAllElectron:
         self.timer.summary()    
         self.txt.flush()
         self.solved=True
+        if self.write != None:
+            f=open(self.write,'w')
+            pickle.dump(self.rgrid, f)
+            pickle.dump(self.veff, f)
+            pickle.dump(self.dens, f)
+            f.close()
 
 
     def solve_eigenstates(self,iteration,itmax=100):

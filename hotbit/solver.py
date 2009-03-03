@@ -73,6 +73,8 @@ class Solver:
         es = st.es
         self.norb=len(self.calc.el)
         mixer = self.mixer
+        from box.convergence_plotter import ConvergencePlotter
+        convergence_plotter = ConvergencePlotter(self.calc)
         for i in range(self.maxiter):
             if self.SCC:
                 H=H0 + es.construct_H1(dq)*S
@@ -84,6 +86,9 @@ class Solver:
                 break
             dq_out=st.get_dq()
             done,dq=mixer(dq,dq_out)
+            convergence_plotter.draw(dq)
+            if i%10 == 0:
+                self.calc.get_output().flush()
             if self.calc.get('verbose_SCC'):
                 mixer.echo(self.calc.get_output())
             if done:
@@ -92,6 +97,7 @@ class Solver:
                 break
             if i==self.maxiter-1:
                 mixer.out_of_iterations(self.calc.get_output())
+                convergence_plotter.show()
                 raise RuntimeError('Out of iterations.')
         if self.calc.get('verbose_SCC'):
             mixer.final_echo(self.calc.get_output())

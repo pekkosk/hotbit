@@ -54,12 +54,25 @@ class States:
                 self.es.construct_tables()
             self.e, self.wf=self.solver.get_states(self.calc,dq,self.H0,self.S,self.count)
             self.calc.el.set_solved('ground state')
+            self.check_mulliken_charges()
             self.large_update()
             self.count+=1
             self.calc.stop_timing('solve')
         except Exception, ex:
             self.calc.stop_timing('solve')
             raise Exception(ex)
+
+
+    def check_mulliken_charges(self):
+        """ Check that the Mulliken populations are physically
+        reasonable. """
+        dQ = self.mulliken()
+        Z = self.calc.el.get_atomic_numbers()
+        for dq, z in zip(dQ, Z):
+            if dq < -z or dq > z:
+                for dq, z in zip(dQ, Z):
+                    print >> self.calc.get_output(), "Z=%i    dq=%0.3f    excess charge=%0.3f" % (z, dq, -dq)
+                raise Exception("The Mulliken charges are insane!")
 
 
     def update(self,e,wf):

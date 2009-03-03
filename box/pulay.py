@@ -6,13 +6,14 @@ class PulayMixer(DummyMixer):
         https://wiki.fysik.dtu.dk/gpaw/documentation/densitymix/densitymix.html#densitymix """
 
 
-    def __init__(self, mixing_constant=0.3, memory=8, convergence=1e-3):
+    def __init__(self, mixing_constant=0.3, memory=8, convergence=1e-3, chop=None):
         DummyMixer.__init__(self, mixing_constant, convergence)
         self.name = 'Pulay'
         self.memory = memory
         self.initialized = False
         self.A = nu.zeros((self.memory, self.memory))
         self.alfa = nu.zeros(self.memory)
+        self.chop = chop
 
 
     def _initialize(self, xi):
@@ -51,6 +52,12 @@ class PulayMixer(DummyMixer):
             xb = nu.zeros_like(xi)
             for i in range(lim):
                 xb += self.alfa[i]*(self.rho[i] + self.beta*self.R[i])
+
+        # The input must not change more than chop for all
+        maxdev=max(abs(xb-xi))
+        if self.chop!=None and maxdev>self.chop:
+            xb = xi + self.chop/maxdev*(xb-xi)
+
         fmax = max(abs(self.R[0]))
         self.fmax.append(fmax)
         if fmax < self.convergence:

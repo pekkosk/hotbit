@@ -92,7 +92,6 @@ class AndersonMixer(DummyMixer):
         for i in range(1,self.memory+1):
             print>>out, i-1, self.x[i,:5]
 
-
 if __name__=='__main__':
     def testf(x):
         return -nu.array([3.0,2.0,1.5,1.0,0.5])*x-0.01*x**3
