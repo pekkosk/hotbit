@@ -255,7 +255,9 @@ class Calculator(Output):
 
     def set_text(self,txt):
         """ Set up the output file. """
-        if txt is None:
+        if txt is '-':
+            self.txt = open('/dev/null','w')
+        elif txt is None:
             from sys import stdout
             self.txt=stdout
         else:

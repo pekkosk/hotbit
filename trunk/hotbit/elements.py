@@ -32,7 +32,6 @@ class Elements:
         #else:
         #    self.atoms=Atoms(atoms)
         self.calc=proxy(calc)
-        self.Z=atoms.get_atomic_numbers()
         self.symbols=atoms.get_chemical_symbols()
         self.N=len(atoms)
         self.name = None
@@ -255,6 +254,10 @@ class Elements:
     def get_center_of_mass(self):
         """ Return the center of mass. """
         return self.atoms.get_center_of_mass() / Bohr
+
+    def get_atomic_numbers(self):
+        """ Return the atomic numbers. """
+        return self.atoms.get_atomic_numbers()
 
 
     def vector(self, ri, rj=None, mic=True):
