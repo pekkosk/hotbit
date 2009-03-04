@@ -1,5 +1,5 @@
 from ase import *
-from hotbit import Calculator
+from hotbit import Hotbit
 import numpy as nu
 import sys
 
@@ -62,11 +62,11 @@ def angle(atoms, a, b, c, unit='deg'):
 
 
 def optimize(atoms, fmax=0.01):
-    if atoms.get_calculator() == None:
-        atoms.set_calculator(Calculator(SCC=True))
     atoms.center(vacuum=6)
     atoms.rattle()
-    dyn = QuasiNewton(atoms)
+    if atoms.get_calculator() == None:
+        atoms.set_calculator(Hotbit())
+    dyn = QuasiNewton(atoms, maxstep=0.01)
     dyn.run(fmax=fmax)
 
 

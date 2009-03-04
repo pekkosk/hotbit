@@ -20,7 +20,9 @@ class ConvergencePlotter:
         colors2 = [(1,1-n,0) for n in nu.linspace(0,1,self.N2)]
         self.colors = colors1 + colors2
         self.it = 0
+        self.iters_saved = 0
         self.points = nu.zeros((self.maxiter,N))
+        self.points2 = []
 
     def color(self):
         """ Return next color. """
@@ -30,7 +32,9 @@ class ConvergencePlotter:
 
     def draw(self, dq):
         """ Add points to be shown later. """
-        self.points[1:self.maxiter,:] = self.points[0:self.maxiter-1,:]
+        self.iters_saved += 1
+        self.points2.append(dq)
+        self.points[1:self.maxiter] = self.points[0:self.maxiter-1]
         self.points[0] = dq
 
     def show(self):
@@ -40,11 +44,18 @@ class ConvergencePlotter:
         except ImportError:
             print "Could not import pylab, cannot print the Mulliken excess charges."
             return
-        for p in self.points:
+        for p in self.points[:self.iters_saved][::-1]:
             c = self.color()
             pylab.scatter(range(len(p)), p, color=c)
         pylab.title(self.title)
         pylab.xlabel('atom index')
         pylab.ylabel('Mulliken excess population')
         pylab.savefig('mulliken_charge_fluctuations_%i.png' % self.maxiter)
+        pylab.figure()
+        pylab.title('Mulliken excess charges evolution')
+        pylab.xlabel('iteration')
+        pylab.ylabel('excess population')
+        P=nu.array(self.points2)
+        for p in P.transpose():
+            pylab.plot(range(len(p)), p)
         pylab.show()

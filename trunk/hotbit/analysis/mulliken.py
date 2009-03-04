@@ -24,7 +24,11 @@ class MullikenAnalysis:
         self.rho_tilde_S = nu.dot(self.rho_tilde, self.S)
         self.rho_k = nu.zeros((len(self.calc.st.get_eigenvalues()), len(self.rho), len(self.rho)))
         self.built_rho_k = [False for i in range(len(self.rho_k))]
-        self.eigs = self.calc.st.get_eigenvalues()*Hartree
+        if calc.st.get_lumo() == None:
+            fermi_energy = calc.st.get_homo()
+        else:
+            fermi_energy = 0.5*(calc.st.get_homo() + calc.st.get_lumo())
+        self.eigs = self.calc.st.get_eigenvalues()*Hartree - fermi_energy
 
 
     def delta_sigma(self, x, x0, sigma):
@@ -164,7 +168,7 @@ class MullikenBondAnalysis(MullikenAnalysis):
     def get_E_cov_m_n(self, m, n, sigma, npts=500, e_min=None, e_max=None):
         """ Return the covalent energy of the orbital pairs mu and nu
         as a function of an energy. Returns the energy grid and covalent
-        energy grid. """
+        energy grid, where the fermi-energy is shifted to zero. """
         if e_min == None:
             e_min = min(self.eigs)
         if e_max == None:
