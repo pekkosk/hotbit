@@ -75,6 +75,7 @@ class Solver:
         mixer = self.mixer
         from box.convergence_plotter import ConvergencePlotter
         convergence_plotter = ConvergencePlotter(self.calc)
+        convergence_plotter.draw(dq)
         for i in range(self.maxiter):
             if self.SCC:
                 H=H0 + es.construct_H1(dq)*S
