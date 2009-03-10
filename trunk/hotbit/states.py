@@ -37,7 +37,7 @@ class States:
         if not self.SCC:
             return nu.zeros((n,))
         if self.count==0:
-            return nu.zeros((n,)) - self.calc.get('charge')/n
+            return nu.zeros((n,)) - float(self.calc.get('charge'))/n
         elif self.count==1:    # use previous charges
             return self.prev_dq[0]
         else:                  # linear extrapolation
