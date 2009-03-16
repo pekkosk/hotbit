@@ -174,9 +174,9 @@ class MullikenBondAnalysis(MullikenAnalysis):
             e_min = min(self.eigs)
         if e_max == None:
             e_max = max(self.eigs)
-        e_range = e_max - e_min
-        e_min -= e_range*0.1
-        e_max += e_range*0.1
+            e_range = e_max - e_min
+            e_min -= e_range*0.1
+            e_max += e_range*0.1
         e_g = nu.linspace(e_min, e_max, npts)
         f = self.calc.st.get_occupations()
         E_cov_mn = nu.zeros_like(e_g)
@@ -185,8 +185,10 @@ class MullikenBondAnalysis(MullikenAnalysis):
             f_k = f[k]
             rho_k = self.get_rho_k(k)
             E_cov_k = rho_k[m,n]*mat
-            for i, e in enumerate(e_g):
-                E_cov_mn[i] += f_k*self.delta_sigma(e, e_k, sigma)*E_cov_k
+            add = self.delta_sigma(e_g, e_k, sigma)*E_cov_k
+            E_cov_mn += add
+            #for i, e in enumerate(e_g):
+            #    E_cov_mn[i] += f_k*self.delta_sigma(e, e_k, sigma)*E_cov_k
         return e_g, E_cov_mn
 
 
@@ -203,6 +205,7 @@ class MullikenBondAnalysis(MullikenAnalysis):
 
 
     def get_E_cov_la_lb(self, la, lb, sigma, npts=500, e_min=None, e_max=None):
+        print "Covalent energy graph for angular momenta %s and %s..." % (la, lb)
         e_g = None
         E_cov_lalb = nu.zeros(npts)
         if len(la) != 1 or len(lb) != 1:
