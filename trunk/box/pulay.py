@@ -25,9 +25,9 @@ class PulayMixer(DummyMixer):
 
     def  __call__(self, xi, yi):
         simple = False
-        self.it += 1
-        if not self.initialized:
+        if self.it == 0:
             self._initialize(xi)
+        self.it += 1
         lim = min(self.it, self.memory)
         self.rho[1:lim] = self.rho[0:lim-1]
         self.rho[0] = xi
@@ -60,7 +60,7 @@ class PulayMixer(DummyMixer):
 
         fmax = max(abs(self.R[0]))
         self.fmax.append(fmax)
-        if fmax < self.convergence:
+        if self.it > 3 and nu.all(nu.array(self.fmax[-3:]) < self.convergence):
             return True, xb
         else:
             return False, xb

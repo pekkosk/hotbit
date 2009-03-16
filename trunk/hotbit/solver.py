@@ -73,6 +73,7 @@ class Solver:
         es = st.es
         self.norb=len(self.calc.el)
         mixer = self.mixer
+        mixer.reset()
         from box.convergence_plotter import ConvergencePlotter
         convergence_plotter = ConvergencePlotter(self.calc)
         convergence_plotter.draw(dq)

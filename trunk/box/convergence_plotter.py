@@ -58,4 +58,5 @@ class ConvergencePlotter:
         P=nu.array(self.points2)
         for p in P.transpose():
             pylab.plot(range(len(p)), p)
+        pylab.savefig('Mulligen_population_evolution.png')
         pylab.show()
