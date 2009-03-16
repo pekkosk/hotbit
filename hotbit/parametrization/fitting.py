@@ -669,13 +669,12 @@ class RepulsiveFitting:
                 def residual_forces(v_rep_points):
                     res = 0.
                     for i in range(N):
-                        # FIXME this can be done easier/faster
                         indices = nu.array(mask[i,:]*epsilon[i,:])
                         indices -= 1
                         ppoints  = v_rep_points[indices]
                         f = forces_res[i].copy()
                         f -= nu.dot((mask[i,:]*ppoints),r_hat[i,:])
-                        res += nu.linalg.norm(f)
+                        res += nu.dot(f,f)
                     return res
 
                 v_rep_points, last_res_forces, minimized = self.find_forces(residual_forces, v_rep_points)

@@ -70,11 +70,11 @@ class Electrostatics:
         ext=self.ext
         for i,j,o1i,o1j,noi,noj in self.pairs:
             # internal electrostatics
-            phi_ij=(-1)*(gp[i]+gp[j])/2
+            phi_ij=(-1)*(gp[i]+gp[j])/2.
             H1[o1i:o1i+noi,o1j:o1j+noj]=phi_ij
             H1[o1j:o1j+noj,o1i:o1i+noi]=phi_ij
             # external electrostatics
-            ext_ij=(-1)*(ext[i]+ext[j])/2
+            ext_ij=(-1)*(ext[i]+ext[j])/2.
             H1[o1i:o1i+noi,o1j:o1j+noj]+=ext_ij
             H1[o1j:o1j+noj,o1i:o1i+noi]+=ext_ij
 

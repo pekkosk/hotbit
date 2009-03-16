@@ -6,6 +6,10 @@ class DummyMixer:
         self.name = 'DummyMixer'
         self.beta = beta
         self.convergence = convergence
+        self.reset()
+
+
+    def reset(self):
         self.fmax = []
         self.it = 0
 

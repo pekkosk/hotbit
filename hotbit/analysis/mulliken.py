@@ -24,11 +24,12 @@ class MullikenAnalysis:
         self.rho_tilde_S = nu.dot(self.rho_tilde, self.S)
         self.rho_k = nu.zeros((len(self.calc.st.get_eigenvalues()), len(self.rho), len(self.rho)))
         self.built_rho_k = [False for i in range(len(self.rho_k))]
+        self.eigs = self.calc.st.get_eigenvalues().copy()*Hartree
         if calc.st.get_lumo() == None:
-            fermi_energy = calc.st.get_homo()
+            fermi_energy = self.eigs[calc.st.get_homo()]
         else:
-            fermi_energy = 0.5*(calc.st.get_homo() + calc.st.get_lumo())
-        self.eigs = self.calc.st.get_eigenvalues()*Hartree - fermi_energy
+            fermi_energy = 0.5*(self.eigs[calc.st.get_homo()] + self.eigs[calc.st.get_lumo()])
+        self.eigs -= fermi_energy
 
 
     def delta_sigma(self, x, x0, sigma):
@@ -206,10 +207,10 @@ class MullikenBondAnalysis(MullikenAnalysis):
         E_cov_lalb = nu.zeros(npts)
         if len(la) != 1 or len(lb) != 1:
             raise Exception('Give only one angular momentum at a time.')
-        for I in range(len(self.calc.el)):
-            for J in range(len(self.calc.el)):
-                orb_indices_I = self.calc.el.orbitals(I, indices=True)
-                orbs_I = self.calc.el.orbitals(I)
+        for I in range(len(self.calc.el)-1):
+            orb_indices_I = self.calc.el.orbitals(I, indices=True)
+            orbs_I = self.calc.el.orbitals(I)
+            for J in range(I+1, len(self.calc.el)):
                 orb_indices_J = self.calc.el.orbitals(J, indices=True)
                 orbs_J = self.calc.el.orbitals(J)
                 for i, orb_i in zip(orb_indices_I, orbs_I):
