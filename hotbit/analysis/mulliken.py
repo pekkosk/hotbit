@@ -22,8 +22,6 @@ class MullikenAnalysis:
 
         self.rho_tilde = 0.5*(self.rho + self.rho.conjugate().transpose())
         self.rho_tilde_S = nu.dot(self.rho_tilde, self.S)
-        self.rho_k = nu.zeros((len(self.calc.st.get_eigenvalues()), len(self.rho), len(self.rho)))
-        self.built_rho_k = [False for i in range(len(self.rho_k))]
         self.eigs = self.calc.st.get_eigenvalues().copy()*Hartree
         if calc.st.get_lumo() == None:
             fermi_energy = self.eigs[calc.st.get_homo()]
@@ -41,14 +39,7 @@ class MullikenAnalysis:
     def get_rho_k(self, k):
         """ Return the k-contribution of the density matrix without
         multiplication with the occupation number f_k. """
-        if self.built_rho_k[k]:
-            return self.rho_k[k]
-        else:
-            for i, c_ik in enumerate(self.calc.st.wf[:,k]):
-                for j, c_jk in enumerate(self.calc.st.wf[:,k]):
-                    self.rho_k[k,i,j] = c_ik*c_jk.conjugate()
-            self.built_rho_k[k] = True
-        return self.rho_k[k]
+        return nu.outer(self.calc.st.wf[:,k],self.calc.st.wf[:,k].conjugate())
 
 
     def trace_I(self, I, matrix):
@@ -166,7 +157,7 @@ class MullikenBondAnalysis(MullikenAnalysis):
         return E_bs - E
 
 
-    def get_E_cov_m_n(self, m, n, sigma, npts=500, e_min=None, e_max=None):
+    def get_E_cov_m_n(self, m, n, sigma, npts=500, e_min=None, e_max=None, occupations=False):
         """ Return the covalent energy of the orbital pairs mu and nu
         as a function of an energy. Returns the energy grid and covalent
         energy grid, where the fermi-energy is shifted to zero. """
@@ -180,52 +171,62 @@ class MullikenBondAnalysis(MullikenAnalysis):
         e_g = nu.linspace(e_min, e_max, npts)
         f = self.calc.st.get_occupations()
         E_cov_mn = nu.zeros_like(e_g)
-        mat = self.H0[n,m] - self.bar_epsilon[n,m]*self.S[n,m]
+        mat_nm = self.H0[n,m] - self.bar_epsilon[n,m]*self.S[n,m]
         for k, e_k in enumerate(self.eigs):
-            f_k = f[k]
-            rho_k = self.get_rho_k(k)
-            E_cov_k = rho_k[m,n]*mat
+            rho_k_mn = self.calc.st.wf[m,k]*self.calc.st.wf[n,k].conjugate()
+            if occupations:
+                rho_k_mn *= f[k]
+            E_cov_k = rho_k_mn*mat_nm
             add = self.delta_sigma(e_g, e_k, sigma)*E_cov_k
             E_cov_mn += add
-            #for i, e in enumerate(e_g):
-            #    E_cov_mn[i] += f_k*self.delta_sigma(e, e_k, sigma)*E_cov_k
         return e_g, E_cov_mn
 
 
-    def get_E_cov_I_J(self, I, J, sigma, npts=500, e_min=None, e_max=None):
+    def get_E_cov_I_J(self, I, J, sigma, npts=500, e_min=None, e_max=None, occupations=False):
         I = self.calc.el.orbitals(I, indices=True)
         J = self.calc.el.orbitals(J, indices=True)
         E_cov_IJ = nu.zeros(npts)
         e_g = None
         for m in I:
             for n in J:
-                e_g, E_cov_mn = self.get_E_cov_m_n(m, n, sigma, npts, e_min, e_max)
+                e_g, E_cov_mn = self.get_E_cov_m_n(m, n, sigma, npts, e_min, e_max, occupations=occupations)
                 E_cov_IJ += E_cov_mn
         return e_g, E_cov_IJ
 
 
-    def get_E_cov_la_lb(self, la, lb, sigma, npts=500, e_min=None, e_max=None):
+    def get_E_cov_la_lb(self, la, lb, sigma, npts=500, e_min=None, e_max=None, occupations=False):
         print "Covalent energy graph for angular momenta %s and %s..." % (la, lb)
         e_g = None
         E_cov_lalb = nu.zeros(npts)
         if len(la) != 1 or len(lb) != 1:
             raise Exception('Give only one angular momentum at a time.')
-        for I in range(len(self.calc.el)-1):
-            orb_indices_I = self.calc.el.orbitals(I, indices=True)
-            orbs_I = self.calc.el.orbitals(I)
-            for J in range(I+1, len(self.calc.el)):
-                orb_indices_J = self.calc.el.orbitals(J, indices=True)
-                orbs_J = self.calc.el.orbitals(J)
-                for i, orb_i in zip(orb_indices_I, orbs_I):
-                    for j, orb_j in zip(orb_indices_J, orbs_J):
-                        orb_type_i = orb_i['orbital']
-                        orb_type_j = orb_j['orbital']
-                        if (la == orb_type_i[0] and lb == orb_type_j[0]) or\
-                           (la == orb_type_j[0] and lb == orb_type_i[0]):
-                            # orb_i and orb_j are of the wanted type
-                            e_g, E_cov = self.get_E_cov_m_n(i, j, sigma, npts, e_min, e_max)
-                            E_cov_lalb += E_cov
-        return e_g, E_cov_lalb
+        if e_min == None:
+            e_min = min(self.eigs)
+        if e_max == None:
+            e_max = max(self.eigs)
+            e_range = e_max - e_min
+            e_min -= e_range*0.1
+            e_max += e_range*0.1
+        e_g = nu.linspace(e_min, e_max, npts)
+        E_cov_mn = nu.zeros_like(e_g)
+        f = self.calc.st.get_occupations()
+        for k, e_k in enumerate(self.eigs):
+            print "  Analyzing state %i/%i" % (k+1, len(self.eigs))
+            rho_k = self.get_rho_k(k)
+            if occupations:
+                rho_k *= f[k]
+            mat = self.H0 - self.bar_epsilon*self.S
+            add = self.delta_sigma(e_g, e_k, sigma)
+            w_k = 0.0
+            for i, orb_i in enumerate(self.calc.el.orb):
+                for j, orb_j in enumerate(self.calc.el.orb):
+                    orb_type_i = orb_i['orbital']
+                    orb_type_j = orb_j['orbital']
+                    if (la == orb_type_i[0] and lb == orb_type_j[0]) or\
+                       (la == orb_type_j[0] and lb == orb_type_i[0]):
+                        w_k += rho_k[i,j]*mat[j,i]
+            E_cov_mn += add*w_k
+        return e_g, E_cov_mn
 
 
     def A_I(self, I):
