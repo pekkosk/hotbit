@@ -183,6 +183,8 @@ class MullikenBondAnalysis(MullikenAnalysis):
 
 
     def get_E_cov_I_J(self, I, J, sigma, npts=500, e_min=None, e_max=None, occupations=False):
+        # Returns the energy grid and corresponding covalent bonding
+        # energy values for the atom pair I-J
         I = self.calc.el.orbitals(I, indices=True)
         J = self.calc.el.orbitals(J, indices=True)
         E_cov_IJ = nu.zeros(npts)
@@ -191,7 +193,7 @@ class MullikenBondAnalysis(MullikenAnalysis):
             for n in J:
                 e_g, E_cov_mn = self.get_E_cov_m_n(m, n, sigma, npts, e_min, e_max, occupations=occupations)
                 E_cov_IJ += E_cov_mn
-        return e_g, E_cov_IJ
+        return e_g, 2*E_cov_IJ
 
 
     def get_E_cov_la_lb(self, la, lb, sigma, npts=500, e_min=None, e_max=None, occupations=False):
@@ -287,8 +289,16 @@ class DensityOfStates(MullikenAnalysis):
         MullikenAnalysis.__init__(self, calc)
 
 
-    def DOS(self, sigma, npts=500, e_min=None, e_max=None):
-        """ Return the energy array and corresponding DOS array. """
+    def DOS(self, sigma, npts=500, e_min=None, e_max=None, occupations=False):
+        """ Return the energy array and corresponding DOS array.
+            
+            sigma: the broadening of the Gaussian distribution
+            npts:  the number of grid points
+            e_min: the minimum of the energy array
+            e_max: the maximum of the energy array
+            occupations: weight the states with the occupation number of
+                         the state.
+        """
         if e_min == None:
             e_min = min(self.eigs)
         if e_max == None:
@@ -298,15 +308,27 @@ class DensityOfStates(MullikenAnalysis):
         e_max += e_range*0.1
         e_g = nu.linspace(e_min, e_max, npts)
         dos = nu.zeros_like(e_g)
-        for e_k in self.eigs:
-            dos += [self.delta_sigma(e, e_k, sigma) for e in e_g]
+        f = self.calc.st.f
+        for k, e_k in enumerate(self.eigs):
+            add = nu.array([self.delta_sigma(e, e_k, sigma) for e in e_g])
+            if occupations:
+                add *= f[k]
+            dos += add
         return e_g, dos
 
 
-    def LDOS(self, sigma, indices=None, npts=500, e_min=None, e_max=None):
-        """ Return the energy array and corresponding LDOS array
-            calculated using Mulliken population analysis. Indices
-            refer to the atoms that are included to the LDOS. """
+    def LDOS(self, sigma, indices=None, npts=500, e_min=None, e_max=None, occupations=False):
+        """ Return the energy array and corresponding local DOS array
+            calculated using Mulliken population analysis.
+            
+            sigma: the broadening of the Gaussian distribution
+            indices: the indices of atoms included to the LDOS
+            npts:  the number of grid points
+            e_min: the minimum of the energy array
+            e_max: the maximum of the energy array
+            occupations: weight the states with the occupation number of
+                         the state.
+        """
         if e_min == None:
             e_min = min(self.eigs)
         if e_max == None:
@@ -321,18 +343,31 @@ class DensityOfStates(MullikenAnalysis):
         elif type(indices) == int:
             indices = [indices]
         N_el = self.calc.el.get_number_of_electrons()
+        f = self.calc.st.f
         for I in indices:
             for k, e_k in enumerate(self.eigs):
                 q_Ik = self.mulliken_I_k(I,k)
                 ldos_k = [self.delta_sigma(e, e_k, sigma) for e in e_g]
-                ldos += nu.array(ldos_k) * q_Ik
+                if occupations:
+                    ldos += nu.array(ldos_k) * q_Ik * f[k]
+                else:
+                    ldos += nu.array(ldos_k) * q_Ik
         return e_g, ldos
 
 
-    def PDOS(self, sigma, indices=None, l='spd', npts=500, e_min=None, e_max=None):
-        """ Return the energy array and corresponding PDOS array
+    def PDOS(self, sigma, indices=None, l='spd', npts=500, e_min=None, e_max=None, occupations=False):
+        """ Return the energy array and corresponding projected DOS array
             calculated using Mulliken population analysis. Indices refer
-            to the atoms and l to the angular momenta that are included. """
+            to the atoms and l to the angular momenta that are included.
+            
+            sigma: the broadening of the Gaussian distribution
+            indices: the indices of atoms included to the LDOS
+            npts:  the number of grid points
+            e_min: the minimum of the energy array
+            e_max: the maximum of the energy array
+            occupations: weight the states with the occupation number of
+                         the state.
+        """
         if e_min == None:
             e_min = min(self.eigs)
         if e_max == None:
@@ -353,11 +388,14 @@ class DensityOfStates(MullikenAnalysis):
         else:
             raise RuntimeError("l must be orbital types, for example l='sp'")
         for li in l:
+            f = self.calc.st.f
             for k, e_k in enumerate(self.eigs):
-                pdos_k = [self.delta_sigma(e, e_k, sigma) for e in e_g]
+                pdos_k = nu.array([self.delta_sigma(e, e_k, sigma) for e in e_g])
+                if occupations:
+                    pdos_k *= f[k]
                 for I in indices:
                     q_Ikl = self.mulliken_I_k_l(I,k,li)
-                    pdos += nu.array(pdos_k) * q_Ikl
+                    pdos += pdos_k * q_Ikl
         return e_g, pdos
 
 
