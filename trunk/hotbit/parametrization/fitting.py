@@ -93,7 +93,8 @@ class RepulsiveFitting:
 
     def plot(self):
         """ Plot vrep and derivative together with fit info. """
-        r=nu.linspace(self.r_small,self.r_cut)
+        #r=nu.linspace(self.r_small,self.r_cut)
+        r=nu.linspace(0,self.r_cut)
         v=[self(x,der=0) for x in r]
         vp=[self(x,der=1) for x in r]
         rmin=0.9*min([d[0] for d in self.deriv])

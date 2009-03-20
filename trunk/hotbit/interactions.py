@@ -109,7 +109,7 @@ class Interactions:
         pbc=self.calc.el.atoms.get_pbc()
         for periodic,length in zip(self.calc.el.get_box_lengths(),pbc):
             for ia in self.cut:
-                if self.cut[ia]>length/2 and not periodic:
+                if self.cut[ia]>length/2. and not periodic:
                     raise AssertionError('Too small box (one size %.2f, largest cut %.2f)' %(length,self.cut[ia]))
                 if SCC and periodic and (gamma_cut!=None and gamma_cut<length/4):
                     raise AssertionError('gamma_cut should be small enough compared to %s Bohr' %length)

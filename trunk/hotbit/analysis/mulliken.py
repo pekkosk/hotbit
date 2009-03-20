@@ -213,7 +213,7 @@ class MullikenBondAnalysis(MullikenAnalysis):
         E_cov_mn = nu.zeros_like(e_g)
         f = self.calc.st.get_occupations()
         for k, e_k in enumerate(self.eigs):
-            print "  Analyzing state %i/%i" % (k+1, len(self.eigs))
+            print "  %s%s: Analyzing state %i/%i" % (la, lb, k+1, len(self.eigs))
             rho_k = self.get_rho_k(k)
             if occupations:
                 rho_k *= f[k]

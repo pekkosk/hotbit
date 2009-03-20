@@ -28,10 +28,8 @@ class Electrostatics:
 
     def set_dq(self,dq):
         """ (Re)setting dq gives new gamma-potential. """
-        if nu.all(abs(dq-self.dq)<1E-13) and self.gamma_potential!=None:
-            return
         self.dq=dq
-        self.gamma_potential=nu.zeros((self.N,))
+        self.gamma_potential=nu.zeros((self.N))
         self.gamma_potential_der=nu.zeros((self.N,3))
         for i in range(self.N):
             self.gamma_potential[i]=dot(self.gamma_table[i,:],-self.dq[:])
@@ -99,12 +97,15 @@ class Electrostatics:
 
         g=nu.zeros((self.N,self.N))
         dg=nu.zeros((self.N,self.N,3))
-        for i,j in el.get_ia_atom_pairs(['i','j']):
-            g[i,j]=self.gamma(i,j)
-            g[j,i]=g[i,j]
-            if i!=j:
-                dg[i,j,:]=self.gamma(i,j,der=1)
-                dg[j,i,:]=-dg[i,j,:]
+        # FIXME: this in probably not right with periodic boundary
+        # conditions
+        for i in range(len(self.calc.el)):
+            for j in range(i, len(self.calc.el)):
+                g[i,j]=self.gamma(i,j)
+                g[j,i]=g[i,j]
+                if i!=j:
+                    dg[i,j,:]=self.gamma(i,j,der=1)
+                    dg[j,i,:]=-dg[i,j,:]
         self.gamma_table, self.gamma_der=g, dg
         self.ext = [self.calc.env.phi(i) for i in range(self.N)]
         self.calc.stop_timing('es tables')
