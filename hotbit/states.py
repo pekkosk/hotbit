@@ -67,6 +67,8 @@ class States:
         """ Check that the Mulliken populations are physically
         reasonable. """
         dQ = self.mulliken()
+        if self.calc.verbose_SCC:
+            print "Mulliken populations: min=%0.3f, max=%0.3f" % (nu.min(dQ),nu.max(dQ))
         Z = self.calc.el.get_atomic_numbers()
         for dq, z in zip(dQ, Z):
             if dq < -z or dq > z:

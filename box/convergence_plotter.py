@@ -50,7 +50,7 @@ class ConvergencePlotter:
         pylab.title(self.title)
         pylab.xlabel('atom index')
         pylab.ylabel('Mulliken excess population')
-        pylab.savefig('mulliken_charge_fluctuations_%i.png' % self.maxiter)
+        pylab.savefig('mulliken_charge_fluctuations_%i.eps' % self.maxiter)
         pylab.figure()
         pylab.title('Mulliken excess charges evolution')
         pylab.xlabel('iteration')
@@ -58,5 +58,5 @@ class ConvergencePlotter:
         P=nu.array(self.points2)
         for p in P.transpose():
             pylab.plot(range(len(p)), p)
-        pylab.savefig('Mulligen_population_evolution.png')
+        pylab.savefig('Mulligen_population_evolution.eps')
         pylab.show()
