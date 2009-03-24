@@ -15,7 +15,6 @@ class Solver:
         self.mixer=BuildMixer(calc.mixer)
         self.SCC=calc.get('SCC')
         self.norb=len(self.calc.el)
-        self.verbose=calc.get('verbose')
         self.iterations=None
         self.iter_history=[]
 
@@ -74,9 +73,9 @@ class Solver:
         self.norb=len(self.calc.el)
         mixer = self.mixer
         mixer.reset()
-        from box.convergence_plotter import ConvergencePlotter
-        convergence_plotter = ConvergencePlotter(self.calc)
-        convergence_plotter.draw(dq)
+        #from box.convergence_plotter import ConvergencePlotter
+        #convergence_plotter = ConvergencePlotter(self.calc)
+        #convergence_plotter.draw(dq)
         for i in range(self.maxiter):
             if self.SCC:
                 H=H0 + es.construct_H1(dq)*S
@@ -88,7 +87,7 @@ class Solver:
                 break
             dq_out=st.get_dq()
             done,dq=mixer(dq,dq_out)
-            convergence_plotter.draw(dq)
+            #convergence_plotter.draw(dq)
             if i%10 == 0:
                 self.calc.get_output().flush()
             if self.calc.get('verbose_SCC'):
@@ -99,7 +98,8 @@ class Solver:
                 break
             if i==self.maxiter-1:
                 mixer.out_of_iterations(self.calc.get_output())
-                convergence_plotter.show()
+                #if self.calc.get('verbose_SCC'):
+                #    convergence_plotter.show()
                 raise RuntimeError('Out of iterations.')
         if self.calc.get('verbose_SCC'):
             mixer.final_echo(self.calc.get_output())
