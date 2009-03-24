@@ -91,9 +91,8 @@ class RepulsiveFitting:
 #        o.close()
 
 
-    def plot(self):
+    def plot(self, screen=True):
         """ Plot vrep and derivative together with fit info. """
-        #r=nu.linspace(self.r_small,self.r_cut)
         r=nu.linspace(0,self.r_cut)
         v=[self(x,der=0) for x in r]
         vp=[self(x,der=1) for x in r]
@@ -106,8 +105,8 @@ class RepulsiveFitting:
         pl.xlabel('$r (\AA)$')
         pl.axvline(x=self.r_cut,c='r',ls=':')
         pl.plot(r,v)
-        pl.ylim(ymin=0,ymax=self(rmin))
-        pl.xlim(xmin=rmin)
+        pl.ylim(ymin=0,ymax=self(0))
+        pl.xlim(xmin=0, xmax=self.r_cut)
 
         # Vrep'
         pl.subplot(1,2,2)
@@ -120,15 +119,19 @@ class RepulsiveFitting:
         pl.axvline(x=self.r_dimer,c='r',ls=':')
         xmin = 0.8*self.r_dimer
         xmax = 1.2*self.r_cut
-        ymin = self(0.8*self.r_dimer, der=1)
-        ymax = abs(0.2*ymin)
+        ymin = self(xmin, der=1)
+        ymax = 0
         pl.text(self.r_dimer, ymin, 'r_dimer')
         pl.text(self.r_cut, ymin, 'r_cut')
         pl.xlim(xmin=xmin, xmax=xmax)
         pl.ylim(ymin=ymin, ymax=ymax)
         pl.suptitle('Fitting for %s and %s' % (self.sym1, self.sym2))
-        pl.legend()
-        pl.show()
+        pl.rc('font', size=10)
+        pl.legend(loc=4, borderaxespad=1)
+        pl.savefig('%s_%s.eps' % (self.sym1, self.sym2))
+        if screen:
+            pl.show()
+        pl.clf()
 
 
     def add_fitting_comment(self,s):
@@ -268,7 +271,7 @@ class RepulsiveFitting:
         w = w[indices]
         x, y, w = self.average_too_similar_values(x,y,w)
         # use only points that are closer than r_cut
-        indices = nu.where(x<r_cut)
+        indices = nu.where(x < r_cut)
         x = list(x[indices])
         y = list(y[indices])
         w = list(w[indices])
@@ -762,7 +765,7 @@ class RepulsiveFitting:
             ret = fmin(function, v_rep_points, full_output=1)
             v_rep_points = ret[0]
             forces = ret[1]
-            print "The sum of the norm of the net forces: %0.4f" % (forces)
+            print "The sum of the squared norms of the net forces: %0.4f" % (forces)
             if ret[4] == 0 and nu.abs(forces-last_res_forces) < 0.001:
                 return v_rep_points, forces, True
             last_res_forces = ret[1]

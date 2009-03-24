@@ -17,6 +17,7 @@ from repulsion import Repulsion
 from states import States
 from hotbit.output import Output
 import box.mix as mix
+from time import time
 
 
 
@@ -281,7 +282,11 @@ class Calculator(Output):
         #print self.el.atoms.get_positions()[1]
         if self.el.calculation_required(atoms,'ground state'):
             self.el.set_atoms(atoms)
+            t0 = time()
             self.st.solve()
+            t1 = time()
+            if self.verbose:
+                print >> self.get_output(), "Solved in %0.2f seconds" % (t1-t0)
         else:
             pass
 
