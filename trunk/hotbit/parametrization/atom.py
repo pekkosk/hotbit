@@ -21,44 +21,44 @@ class KSAllElectron:
                       valence=[],
                       confinement=None,
                       xc='PW92',
-                      convergence={'density':1E-7,'energies':1E-7},        
+                      convergence={'density':1E-7,'energies':1E-7},
                       ScR=False,
                       nodegpts=500,
                       mix=0.2,
-                      itmax=200,  
+                      itmax=200,
                       timing=False,
                       verbose=False,
                       txt=None,
                       restart=None,
-                      write=None):       
-        """ 
+                      write=None):
+        """
         Make Kohn-Sham all-electron calculation for given atom.
-        
+
         Examples:
         ---------
         atom=KSAllElectron('C')
         atom=KSAllElectron('C',confinement={'mode':'frauenheim','r0':1.234})
         atom.run()
-        
+
         Parameters:
         -----------
         symbol:         chemical symbol
-        configuration:  e.g. {'2s':2,'2p':2}. Overrides (for orbitals given in dict) default 
+        configuration:  e.g. {'2s':2,'2p':2}. Overrides (for orbitals given in dict) default
                         configuration from box.data.
         valence:        valence orbitals, e.g. ['2s','2p']. Overrides default valence from box.data.
         confinement:    additional confining potential (see ConfinementPotential class)
         etol:           sp energy tolerance for eigensolver (Hartree)
         convergence:    convergence criterion dictionary
-                        * density: max change for integrated |n_old-n_new| 
+                        * density: max change for integrated |n_old-n_new|
                         * energies: max change in single-particle energy (Hartree)
         ScR:            Use scalar relativistic corrections
-        nodegpts:       total number of grid points is nodegpts times the max number 
+        nodegpts:       total number of grid points is nodegpts times the max number
                         of antinodes for all orbitals
         mix:            effective potential mixing constant
         itmax:          maximum number of iterations for self-consistency.
-        timing:         output of timing summary 
+        timing:         output of timing summary
         verbose:        increase verbosity during iterations
-        txt:            output file name 
+        txt:            output file name
         write:          filename: save rgrid, effective potential and
                         density to a file for further calculations.
         restart:        filename: make an initial guess for effective
@@ -75,18 +75,18 @@ class KSAllElectron:
         self.verbose=verbose
         self.nodegpts=nodegpts
         self.mix=mix
-        self.timing=timing       
+        self.timing=timing
         self.timer=Timer('KSAllElectron',txt=self.txt,enabled=self.timing)
         self.timer.start('init')
         self.restart = restart
         self.write = write
-        
+
         # element data
         self.data=copy( data[self.symbol] )
         self.Z=self.data['Z']
         if self.valence == []:
             self.valence = copy( data[self.symbol]['valence_orbitals'] )
-        
+
         # ... more specific
         self.occu = copy( data[self.symbol]['configuration'] )
         nel_neutral = self.Z
@@ -97,15 +97,15 @@ class KSAllElectron:
         if self.confinement==None:
             self.confinement_potential=ConfinementPotential('none')
         else:
-            self.confinement_potential=ConfinementPotential(**self.confinement)            
-        self.conf=None      
-        self.nucl=None      
+            self.confinement_potential=ConfinementPotential(**self.confinement)
+        self.conf=None
+        self.nucl=None
         self.exc=None
         if self.xc=='PW92':
             self.xcf=XC_PW92()
         else:
             raise NotImplementedError('Not implemented xc functional: %s' %xc)
-        
+
         # technical stuff
         self.maxl=9
         self.maxn=9
@@ -116,8 +116,8 @@ class KSAllElectron:
         self.Rnl_fct={}
         self.veff_fct=None
         self.total_energy=0.0
-        
-        maxnodes=max( [n-l-1 for n,l,nl in self.list_states()] )        
+
+        maxnodes=max( [n-l-1 for n,l,nl in self.list_states()] )
         self.rmin, self.rmax, self.N=( 1E-2/self.Z, 100.0, (maxnodes+1)*self.nodegpts )
         if self.ScR:
             print >> self.txt, 'Using scalar relativistic corrections.'
@@ -128,7 +128,7 @@ class KSAllElectron:
         self.timer.stop('init')
         print>>self.txt, self.get_comment()
         self.solved=False
-        
+
     def __getstate__(self):
         """ Return dictionary of all pickable items. """
         d=self.__dict__.copy()
@@ -137,7 +137,7 @@ class KSAllElectron:
                 d.pop(key)
         d.pop('out')
         return d
-        
+
     def set_output(self,txt):
         """ Set output channel and give greetings. """
         if txt == '-':
@@ -149,17 +149,17 @@ class KSAllElectron:
         print>>self.txt, '*******************************************'
         print>>self.txt, 'Kohn-Sham all-electron calculation for %2s ' %self.symbol
         print>>self.txt, '*******************************************'
-    
-    
+
+
     def calculate_energies(self,echo=False):
-        """ 
-        Calculate energy contributions. 
+        """
+        Calculate energy contributions.
         """
         self.timer.start('energies')
         self.bs_energy=0.0
         for n,l,nl in self.list_states():
             self.bs_energy+=self.occu[nl]*self.enl[nl]
-            
+
         self.exc=array([self.xcf.exc(self.dens[i]) for i in xrange(self.N)])
         self.Hartree_energy=self.grid.integrate(self.Hartree*self.dens,use_dV=True)/2
         self.vxc_energy=self.grid.integrate(self.vxc*self.dens,use_dV=True)
@@ -173,12 +173,12 @@ class KSAllElectron:
             print>>self.txt, '------------------------'
             for n,l,nl in self.list_states():
                 print>>self.txt, '%s, energy %.15f' %(nl,self.enl[nl])
-                            
+
             print>>self.txt, '\nvalence orbital energies'
             print>>self.txt, '--------------------------'
             for nl in data[self.symbol]['valence_orbitals']:
-                print>>self.txt, '%s, energy %.15f' %(nl,self.enl[nl])                            
-                
+                print>>self.txt, '%s, energy %.15f' %(nl,self.enl[nl])
+
             print>>self.txt, '\n'
             print>>self.txt, 'total energies:'
             print>>self.txt, '---------------'
@@ -187,33 +187,33 @@ class KSAllElectron:
             print>>self.txt, 'vxc correction:         %.15f' %self.vxc_energy
             print>>self.txt, 'exchange + corr energy: %.15f' %self.exc_energy
             print>>self.txt, '----------------------------'
-            print>>self.txt, 'total energy:           %.15f\n\n' %self.total_energy     
-        self.timer.stop('energies')            
-        
-        
+            print>>self.txt, 'total energy:           %.15f\n\n' %self.total_energy
+        self.timer.stop('energies')
+
+
     def calculate_density(self):
         """ Calculate the radial electron density.; sum_nl |Rnl(r)|**2/(4*pi) """
         self.timer.start('density')
         dens=nu.zeros_like(self.rgrid)
         for n,l,nl in self.list_states():
             dens+=self.occu[nl]*self.unlg[nl]**2
-                   
+
         nel=self.grid.integrate(dens)
         if abs(nel-self.nel)>1E-10:
             raise RuntimeError('Integrated density %.3g, number of electrons %.3g' %(nel,self.nel) )
         dens=dens/(4*nu.pi*self.rgrid**2)
-        
+
         self.timer.stop('density')
-        return dens           
-        
-      
+        return dens
+
+
     def calculate_Hartree_potential(self):
-        """ 
-        Calculate Hartree potential. 
-        
+        """
+        Calculate Hartree potential.
+
         Everything is very sensitive to the way this is calculated.
         If you can think of how to improve this, please tell me!
-        
+
         """
         self.timer.start('Hartree')
         dV=self.grid.get_dvolumes()
@@ -221,34 +221,34 @@ class KSAllElectron:
         N=self.N
         n0=0.5*(self.dens[1:]+self.dens[:-1])
         n0*=self.nel/sum(n0*dV)
-        
-        lo, hi, Hartree=nu.zeros(N), nu.zeros(N), nu.zeros(N)        
-        lo[0]=0.0 
-        for i in range(1,N):    
-            lo[i] = lo[i-1] + dV[i-1]*n0[i-1] 
-            
+
+        lo, hi, Hartree=nu.zeros(N), nu.zeros(N), nu.zeros(N)
+        lo[0]=0.0
+        for i in range(1,N):
+            lo[i] = lo[i-1] + dV[i-1]*n0[i-1]
+
         hi[-1]=0.0
-        for i in range(N-2,-1,-1):            
+        for i in range(N-2,-1,-1):
             hi[i] = hi[i+1] + n0[i]*dV[i]/r0[i]
-            
+
         for i in range(N):
-            Hartree[i] = lo[i]/r[i] + hi[i]                            
+            Hartree[i] = lo[i]/r[i] + hi[i]
         self.Hartree=Hartree
         self.timer.stop('Hartree')
-    
-    
+
+
     def V_nuclear(self,r):
         return -self.Z/r
-    
-    
+
+
     def calculate_veff(self):
         """ Calculate effective potential. """
         self.timer.start('veff')
         self.vxc=array([self.xcf.vxc(self.dens[i]) for i in xrange(self.N)])
         self.timer.stop('veff')
-        return self.nucl + self.Hartree + self.vxc + self.conf        
-    
-    
+        return self.nucl + self.Hartree + self.vxc + self.conf
+
+
     def guess_density(self):
         """ Guess initial density. """
         r2=0.02*self.Z # radius at which density has dropped to half; improve this!
@@ -256,11 +256,38 @@ class KSAllElectron:
         dens=dens/self.grid.integrate(dens,use_dV=True)*self.nel
         pl.plot(self.rgrid,dens)
         return dens
-        
-    
+
+
+    def get_veff_and_dens(self):
+        """ Construct effective potential and electron density. If restart
+            file is given, try to read from there, otherwise make a guess.
+        """
+        done = False
+        if self.restart is not None:
+            # use density and effective potential from another calculation
+            try:
+                from scipy.interpolate import splrep, splev
+                f = open(self.restart)
+                rgrid = pickle.load(f)
+                veff = pickle.load(f)
+                dens = pickle.load(f)
+                v = splrep(rgrid, veff)
+                d = splrep(rgrid, dens)
+                self.veff = array([splev(r,v) for r in self.rgrid])
+                self.dens = array([splev(r,d) for r in self.rgrid])
+                f.close()
+                done = True
+            except IOError:
+                print >> self.txt, "Could not open restart file, " \
+                                   "starting from scratch."
+        if not done:
+            self.veff=self.nucl+self.conf
+            self.dens=self.guess_density()
+
+
     def run(self):
         """
-        Solve the self-consistent potential. 
+        Solve the self-consistent potential.
         """
         self.timer.start('solve ground state')
         print>>self.txt, '\nStart iteration...'
@@ -269,62 +296,46 @@ class KSAllElectron:
         for n,l,nl in self.list_states():
             self.enl[nl]=0.0
             self.d_enl[nl]=0.0
-         
+
         N=self.grid.get_N()
-        
+
         # make confinement and nuclear potentials; intitial guess for veff
         self.conf=array([self.confinement_potential(r) for r in self.rgrid])
         self.nucl=array([self.V_nuclear(r) for r in self.rgrid])
-        if self.restart == None:
-            self.veff=self.nucl+self.conf
-            self.dens=self.guess_density()
-        else:
-            # use density and effective potential from another calculation
-            from scipy.interpolate import splrep, splev
-            f = open(self.restart)
-            rgrid = pickle.load(f)
-            veff = pickle.load(f)
-            dens = pickle.load(f)
-            v = splrep(rgrid, veff)
-            d = splrep(rgrid, dens)
-            self.veff = array([splev(r,v) for r in self.rgrid])
-            self.dens = array([splev(r,d) for r in self.rgrid])
-            f.close()
-
-        
+        self.get_veff_and_dens()
         self.calculate_Hartree_potential()
         #self.Hartree=nu.zeros((N,))
-        
+
         for it in range(self.itmax):
             self.veff=self.mix*self.calculate_veff()+(1-self.mix)*self.veff
             if self.ScR:
                 veff = SplineFunction(self.rgrid, self.veff)
                 self.dveff = array([veff(r, der=1) for r in self.rgrid])
             d_enl_max, itmax=self.solve_eigenstates(it)
-            
+
             dens0=self.dens.copy()
             self.dens=self.calculate_density()
             diff=self.grid.integrate(nu.abs(self.dens-dens0),use_dV=True)
-                        
-            if diff<self.convergence['density'] and d_enl_max<self.convergence['energies']:
+
+            if diff<self.convergence['density'] and d_enl_max<self.convergence['energies'] and it > 5:
                 break
             self.calculate_Hartree_potential()
             if nu.mod(it,10)==0:
                 print>>self.txt, 'iter %3i, dn=%.1e>%.1e, max %i sp-iter' %(it,diff,self.convergence['density'],itmax)
             if it==self.itmax-1:
                 if self.timing:
-                    self.timer.summary()            
+                    self.timer.summary()
                 raise RuntimeError('Density not converged in %i iterations' %(it+1))
-            self.txt.flush()            
-        
-        self.calculate_energies(echo=True)        
+            self.txt.flush()
+
+        self.calculate_energies(echo=True)
         print>>self.txt, 'converged in %i iterations' %it
         print>>self.txt, '%9.4f electrons, should be %9.4f' %(self.grid.integrate(self.dens,use_dV=True),self.nel)
         for n,l,nl in self.list_states():
             self.Rnl_fct[nl]=Function('spline',self.rgrid,self.Rnlg[nl])
             self.unl_fct[nl]=Function('spline',self.rgrid,self.unlg[nl])
-        self.timer.stop('solve ground state')                    
-        self.timer.summary()    
+        self.timer.stop('solve ground state')
+        self.timer.summary()
         self.txt.flush()
         self.solved=True
         if self.write != None:
@@ -336,14 +347,14 @@ class KSAllElectron:
 
 
     def solve_eigenstates(self,iteration,itmax=100):
-        """ 
+        """
         Solve the eigenstates for given effective potential.
-        
-        u''(r) - 2*(v_eff(r)+l*(l+1)/(2r**2)-e)*u(r)=0 
+
+        u''(r) - 2*(v_eff(r)+l*(l+1)/(2r**2)-e)*u(r)=0
         ( u''(r) + c0(r)*u(r) = 0 )
-        
+
         r=r0*exp(x) --> (to get equally spaced integration mesh)
-        
+
         u''(x) - u'(x) + c0(x(r))*u(r) = 0
         """
         self.timer.start('eigenstates')
@@ -366,7 +377,7 @@ class KSAllElectron:
                 eps=self.enl[nl]
 
             if iteration<=3:
-                delta=0.5*self.Z**2/n**2  #previous!!!!!!!!!!                
+                delta=0.5*self.Z**2/n**2  #previous!!!!!!!!!!
             else:
                 delta=self.d_enl[nl]
 
@@ -457,7 +468,7 @@ class KSAllElectron:
 
 
     def plot_Rnl(self,screen=False,r=False):
-        """ Plot radial wave functions with matplotlib. 
+        """ Plot radial wave functions with matplotlib.
         r: plot as a function of r or grid points
         """
         i=1
@@ -468,9 +479,9 @@ class KSAllElectron:
         for n,l,nl in self.list_states():
             pl.subplot(p,p,i)
             if r:
-                pl.plot(self.rgrid[:ri],self.Rnlg[nl][:ri])    
+                pl.plot(self.rgrid[:ri],self.Rnlg[nl][:ri])
                 pl.xlabel('r (Bohr)')
-            else:                
+            else:
                 pl.plot(self.Rnlg[nl])
                 pl.xlabel('r (grid point)')
             pl.ylabel('Rnl (%s)' %nl)
@@ -479,94 +490,94 @@ class KSAllElectron:
             pl.show()
         else:
             pl.savefig('%s_KSatom.png' %self.symbol)
-            
-            
+
+
     def get_wf_range(self,nl,fractional_limit=1E-7):
         """ Return the maximum r for which |R(r)|<fractional_limit*max(|R(r)|) """
         wfmax=max(abs(self.Rnlg[nl]))
         for r,wf in zip(self.rgrid[-1::-1],self.Rnlg[nl][-1::-1]):
-            if abs(wf)>fractional_limit*wfmax: 
+            if abs(wf)>fractional_limit*wfmax:
                 return r
-        
-        
+
+
     def list_states(self):
         """ List all potential states {(n,l,'nl')}. """
         states=[]
         for l in range(self.maxl+1):
-            for n in range(1,self.maxn+1):  
-                nl=orbit_transform((n,l),string=True) 
+            for n in range(1,self.maxn+1):
+                nl=orbit_transform((n,l),string=True)
                 if nl in self.occu:
                     states.append((n,l,nl))
         return states
-                
-                
+
+
     def get_energy(self):
-        return self.total_energy                
-                    
-                    
+        return self.total_energy
+
+
     def get_epsilon(self,nl):
         """ get_eigenvalue('2p') or get_eigenvalue((2,1)) """
         nls=orbit_transform(nl,string=True)
         if not self.solved:
             raise AssertionError('run calculations first.')
         return self.enl[nls]
-    
-    
+
+
     def effective_potential(self,r,der=0):
         """ Return effective potential at r or its derivatives. """
         if self.veff_fct==None:
             self.veff_fct=Function('spline',self.rgrid,self.veff)
         return self.veff_fct(r,der=der)
-        
-        
+
+
     def get_radial_density(self):
-        return self.rgrid,self.dens        
-        
-        
+        return self.rgrid,self.dens
+
+
     def Rnl(self,r,nl,der=0):
         """ Rnl(r,'2p') or Rnl(r,(2,1))"""
         nls=orbit_transform(nl,string=True)
         return self.Rnl_fct[nls](r,der=der)
-        
-        
+
+
     def unl(self,r,nl,der=0):
         """ unl(r,'2p')=Rnl(r,'2p')/r or unl(r,(2,1))..."""
         nls=orbit_transform(nl,string=True)
         return self.unl_fct[nls](r,der=der)
-        
-        
+
+
     def get_valence_orbitals(self):
         """ Get list of valence orbitals, e.g. ['2s','2p'] """
         return self.valence
-    
-    
+
+
     def get_symbol(self):
         """ Return atom's chemical symbol. """
         return self.symbol
-        
-        
+
+
     def get_comment(self):
         """ One-line comment, e.g. 'H, charge=0, frauenheim, r0=4' """
         comment='%s xc=%s charge=%.1f conf:%s' %(self.symbol,self.xc,float(self.charge),self.confinement_potential.get_comment())
         return comment
-    
-    
+
+
     def get_valence_energies(self):
         """ Return list of valence energies, e.g. ['2s','2p'] --> [-39.2134,-36.9412] """
         if not self.solved:
             raise AssertionError('run calculations first.')
         return [(nl,self.enl[nl]) for nl in self.valence]
-    
-    
+
+
     def write_functions(self,file,only_valence=True,step=1):
-        """ Append functions (unl,v_effective,...) into file (only valence functions by default). 
-        
+        """ Append functions (unl,v_effective,...) into file (only valence functions by default).
+
         Parameters:
         -----------
         file: output file name (e.g. XX.elm)
         only_valence: output of only valence orbitals
         step: step size for output grid
-        
+
         """
         if not self.solved:
             raise AssertionError('run calculations first.')
@@ -579,98 +590,98 @@ class KSAllElectron:
             print>>o, '\n\nu_%s=' %nl
             for r,u in zip(self.rgrid[::step],self.unlg[nl][::step]):
                 print>>o, r,u
-            
+
         print>>o,'\n\nv_effective='
         for r,ve in zip(self.rgrid[::step],self.veff[::step]):
-                print>>o, r,ve        
+                print>>o, r,ve
         print>>o,'\n\nconfinement='
         for r,vc in zip(self.rgrid[::step],self.conf[::step]):
                 print>>o, r,vc
         print>>o,'\n\n'
-        
-        
-def shoot(u,dx,c2,c1,c0,N):       
+
+
+def shoot(u,dx,c2,c1,c0,N):
     """
     Integrate diff equation
-            
+
            2
          d u      du
          --- c  + -- c  + u c  = 0
            2  2   dx  1      0
          dx
-         
-    in equispaced grid (spacing dx) using simple finite difference formulas 
-    
+
+    in equispaced grid (spacing dx) using simple finite difference formulas
+
     u'(i)=(u(i+1)-u(i-1))/(2*dx) and
     u''(i)=(u(i+1)-2*u(i)+u(i-1))/dx**2
-    
+
     u[0:2] *has already been set* according to boundary conditions.
-    
-    return u, number of nodes, the discontinuity of derivative at 
+
+    return u, number of nodes, the discontinuity of derivative at
     classical turning point (ctp), and ctp
     c0(r) is negative with large r, and turns positive at ctp.
     """
     fp=c2/dx**2 + 0.5*c1/dx
     fm=c2/dx**2 - 0.5*c1/dx
     f0=c0-2*c2/dx**2
-    
-    # backward integration down to classical turning point ctp 
-    # (or one point beyond to get derivative)                                
+
+    # backward integration down to classical turning point ctp
+    # (or one point beyond to get derivative)
     # If no ctp, integrate half-way
     u[-1]=1.0
     u[-2]=u[-1]*f0[-1]/fm[-1]
     all_negative=all(c0<0)
-    for i in xrange(N-2,0,-1): 
+    for i in xrange(N-2,0,-1):
         u[i-1]=(-fp[i]*u[i+1]-f0[i]*u[i])/fm[i]
-        if abs(u[i-1])>1E10: u[i-1:]*=1E-10 #numerical stability            
-        if c0[i]>0: 
+        if abs(u[i-1])>1E10: u[i-1:]*=1E-10 #numerical stability
+        if c0[i]>0:
             ctp=i
             break
-        if all_negative and i==N/2: 
+        if all_negative and i==N/2:
             ctp=N/2
             break
-                                   
+
     utp=u[ctp]
     utp1=u[ctp+1]
     dright=(u[ctp+1]-u[ctp-1])/(2*dx)
-    
+
     for i in xrange(1,ctp+1):
         u[i+1]=(-f0[i]*u[i]-fm[i]*u[i-1])/fp[i]
-    
+
     dleft=(u[ctp+1]-u[ctp-1])/(2*dx)
-    scale=utp/u[ctp]    
+    scale=utp/u[ctp]
     u[:ctp+1]*=scale
     u[ctp+1]=utp1 #above overrode
     dleft*=scale
     u=u*nu.sign(u[1])
-        
+
     nodes=sum( (u[0:ctp-1]*u[1:ctp])<0 )
     A=(dright-dleft)*utp
-    return u, nodes, A, ctp                                          
-            
-            
+    return u, nodes, A, ctp
+
+
 class RadialGrid:
     def __init__(self,grid):
-        """ 
+        """
         mode
         ----
-        
+
         rmin                                                        rmax
         r[0]     r[1]      r[2]            ...                     r[N-1] grid
         I----'----I----'----I----'----I----'----I----'----I----'----I
            r0[0]     r0[1]     r0[2]       ...              r0[N-2]       r0grid
            dV[0]     dV[1]     dV[2]       ...              dV[N-2]       dV
-           
+
            dV[i] is volume element of shell between r[i] and r[i+1]
         """
-        
+
         rmin, rmax=grid[0], grid[-1]
         N=len(grid)
         self.N=N
         self.grid=grid
         self.dr=self.grid[1:N]-self.grid[0:N-1]
         self.r0=self.grid[0:N-1]+self.dr/2
-        # first dV is sphere (treat separately), others are shells 
+        # first dV is sphere (treat separately), others are shells
         self.dV=4*nu.pi*self.r0**2*self.dr
         self.dV*=(4*nu.pi*rmax**3/3)/sum(self.dV)
 
@@ -681,26 +692,26 @@ class RadialGrid:
     def get_N(self):
         """ Return the number of grid points. """
         return self.N
-        
+
     def get_drgrid(self):
         """ Return the grid spacings (array of length N-1). """
         return self.dr
-        
+
     def get_r0grid(self):
         """ Return the mid-points between grid spacings (array of length N-1). """
         return self.r0
-    
+
     def get_dvolumes(self):
         """ Return dV(r)'s=4*pi*r**2*dr. """
         return self.dV
-        
+
     def plot(self,screen=True):
         rgrid=self.get_grid()
         pl.scatter(range(len(rgrid)),rgrid)
-        if screen: pl.show()       
-         
+        if screen: pl.show()
+
     def integrate(self,f,use_dV=False):
-        """ 
+        """
         Integrate function f (given with N grid points).
         int_rmin^rmax f*dr (use_dv=False) or int_rmin^rmax*f dV (use_dV=True)
         """
@@ -708,8 +719,8 @@ class RadialGrid:
             return ((f[0:self.N-1]+f[1:self.N])*self.dV).sum()*0.5
         else:
             return ((f[0:self.N-1]+f[1:self.N])*self.dr).sum()*0.5
-        
-                    
+
+
 
 class ConfinementPotential:
     def __init__(self,mode,**kwargs):
@@ -723,21 +734,21 @@ class ConfinementPotential:
             self.comment='frauenheim r0=%.3f' %self.r0
         else:
             raise NotImplementedError('implement new confinements')
-        
+
     def get_comment(self):
-        return self.comment        
-        
+        return self.comment
+
     def none(self,r):
         return 0.0
-        
+
     def frauenheim(self,r):
         return (r/self.r0)**2
-        
+
     def __call__(self,r):
         return self.f(r)
-        
-    
-        
+
+
+
 
 
 class XC_PW92:
@@ -751,14 +762,14 @@ class XC_PW92:
         self.b2 = 2*self.c0*self.b1**2
         self.b3 = 1.6382
         self.b4 = 0.49294
-    
+
     def exc(self,n,der=0):
         """ Exchange-correlation with electron density n. """
         if n<self.small:
             return 0.0
         else:
             return self.e_x(n,der=der)+self.e_corr(n,der=der)
-        
+
     def e_x(self,n,der=0):
         """ Exchange. """
         if der==0:
@@ -776,17 +787,17 @@ class XC_PW92:
             return ( -2*self.c0*self.a1*log(1+aux**-1) \
                    -2*self.c0*(1+self.a1*rs)*(1+aux**-1)**-1*(-aux**-2)\
                    *2*self.c0*(self.b1/(2*sqrt(rs))+self.b2+3*self.b3*sqrt(rs)/2+2*self.b4*rs) )*( -(4*pi*n**2*rs**2)**-1 )
-                   
+
     def vxc(self,n):
         """ Exchange-correlation potential (functional derivative of exc). """
-        eps=1E-9*n       
+        eps=1E-9*n
         if n<self.small:
             return 0.0
-        else: 
+        else:
             return self.exc(n)+n*self.exc(n,der=1)
 
-    
-    
+
+
 angular_momenta=['s','p','d','f','g','h','i','j','k','l']
 def orbit_transform(nl,string):
     """ Transform orbitals into strings<->tuples, e.g. (2,1)<->'2p'. """
@@ -800,6 +811,6 @@ def orbit_transform(nl,string):
         l=angular_momenta.index(nl[1])
         n=int(nl[0])
         return (n,l)  # '2p'->(2,1)
-        
 
-    
+
+
