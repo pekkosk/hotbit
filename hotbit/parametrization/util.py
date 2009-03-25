@@ -9,19 +9,19 @@ def plot_table(parfile,screen=False,s1=None,s2=None,der=0):
     """ Plot table. """
     import pylab as pl
     if s1==None or s2==None:
-        s1,s2=parfile.split('.')[0].split('_')        
+        s1,s2=parfile.split('.')[0].split('_')
     if s1==s2:
         nel=1
         pairs=[(s1,s2)]
     else:
         nel=2
-        pairs=[(s1,s2),(s2,s1)]        
-    
+        pairs=[(s1,s2),(s2,s1)]
+
     pl.rc('figure.subplot',wspace=0.0001)
     pl.rc('figure.subplot',hspace=0.0001)
     rgrid, tables=read_table(parfile,s1,s2)
     mx=max( tables[0].flatten() )
-    
+
     for i in range(10):
         name=integrals[i]
         ax=pl.subplot(5,2,i+1)
@@ -39,45 +39,45 @@ def plot_table(parfile,screen=False,s1=None,s2=None,der=0):
                 H=nu.array([hf(r,der=1) for r in grid])
                 S=nu.array([sf(r,der=1) for r in grid])
             pl.plot(grid,H,c='r',ls=s,label='%s%s: H' %(e1,e2))
-            pl.plot(grid,S,c='b',ls=s,label='%s%s: S' %(e1,e2))                
+            pl.plot(grid,S,c='b',ls=s,label='%s%s: S' %(e1,e2))
             pl.axhline(c='k',ls='--')
-            pl.title(name,position=(0.9,0.8)) 
+            pl.title(name,position=(0.9,0.8))
             if ax.is_last_row():
-                pl.xlabel('r (Bohr)')                                        
+                pl.xlabel('r (Bohr)')
             else:
                 pl.xticks([],[])
-            if not ax.is_first_col():                   
+            if not ax.is_first_col():
                 pl.yticks([],[])
             pl.ylim(-mx,mx)
             pl.xlim(0)
             pl.legend(loc='upper left')
-    if screen:                
+    if screen:
         pl.show()
     else:
         name='%s_%s_par.png' %(s1,s2)
         if der==1:
             name='der_'+name
-        pl.savefig(name)   
-        
-        
+        pl.savefig(name)
+
+
 def compare_tables(parfile1,parfile2,s1=None,s2=None,screen=False):
     """ Plot table. """
     import pylab as pl
     if s1==None or s2==None:
-        s1,s2=parfile1.split('.')[0].split('_')        
+        s1,s2=parfile1.split('.')[0].split('_')
     if s1==s2:
         nel=1
         pairs=[(s1,s2)]
     else:
         nel=2
-        pairs=[(s1,s2),(s2,s1)]        
-    
+        pairs=[(s1,s2),(s2,s1)]
+
     pl.rc('figure.subplot',wspace=0.0001)
     pl.rc('figure.subplot',hspace=0.0001)
     rgrid1, tables1=read_table(parfile1,s1,s2)
     rgrid2, tables2=read_table(parfile2,s1,s2)
     mx=max( tables1[0].flatten() )*0.5
-    
+
     for i in range(10):
         name=integrals[i]
         ax=pl.subplot(5,2,i+1)
@@ -87,28 +87,28 @@ def compare_tables(parfile1,parfile2,s1=None,s2=None,screen=False):
             # first table
             pl.plot(rgrid1,tables1[p][:,i],lw=5,c='r',alpha=0.3,ls=s,label='%s%s: H' %(e1,e2))
             pl.plot(rgrid1,tables1[p][:,i+10],lw=5,alpha=0.3,c='b',ls=s,label='%s%s: S' %(e1,e2))
-            
+
             # second table
             pl.plot(rgrid2,tables2[p][:,i],lw=2,c='r',ls=s,label='%s%s: H' %(e1,e2))
             pl.plot(rgrid2,tables2[p][:,i+10],lw=2,c='b',ls=s,label='%s%s: S' %(e1,e2))
             pl.axhline(c='k',ls='--')
-            pl.title(name,position=(0.9,0.8)) 
+            pl.title(name,position=(0.9,0.8))
             if ax.is_last_row():
-                pl.xlabel('r (Bohr)')                                        
+                pl.xlabel('r (Bohr)')
             else:
                 pl.xticks([],[])
-            if not ax.is_first_col():                   
+            if not ax.is_first_col():
                 pl.yticks([],[])
             pl.ylim(-mx,mx)
             pl.xlim(0)
             #pl.legend(loc='upper left')
-    if screen:                
+    if screen:
         pl.show()
     else:
-        pl.savefig('%s_%s_comparison.png' %(s1,s2))           
+        pl.savefig('%s_%s_comparison.png' %(s1,s2))
         pl.close()
-        
-        
+
+
 def read_table(parfile,s1,s2):
     """ Read parameter table from file parfile for elements with symbols s1 and s2. 
     
@@ -122,10 +122,10 @@ def read_table(parfile,s1,s2):
     if s1!=s2:
         tab=mix.find_value(parfile,'%s_%s_table' %(s2,s1),fmt='matrix')
         table.append(tab[:,1:])
-    f.close()                
+    f.close()
     return rgrid, table
-    
-    
+
+
 def tail_smoothening(x,y):
     """ For given grid-function y(x), make smooth tail.
     
@@ -152,11 +152,11 @@ def tail_smoothening(x,y):
     if k<N/4:
         for i in range(N):
             print x[i],y[i]
-        raise RuntimeError('Problem with tail smoothening: requires too large tail.')                
+        raise RuntimeError('Problem with tail smoothening: requires too large tail.')
     if k==N-3:
         y[-1]=0.0
         return y
-    else:        
+    else:
         # g(x)=c2*(xmax-x)**m + c3*(xmax-x)**(m+1) goes through (xk,yk),(xk+1,yk+1) and (xmax,0)
         # Try different m if g(x) should change sign (this we do not want)
         sgn=nu.sign(y[k])
@@ -168,12 +168,12 @@ def tail_smoothening(x,y):
             for i in range(k+2,N):
                 y[i]=c2*(xmax-x[i])**2 + c3*(xmax-x[i])**3
             y[-1]=0.0 #once more excplicitly            
-            if all(y[k:]*sgn>=0): 
+            if all(y[k:]*sgn>=0):
                 break
             if m==9:
                 raise RuntimeError('Problems with function smoothening; need for new algorithm?')
-    return y            
-            
+    return y
+
 def IP_EA(symb,remove_orb,add_orb,remove,add):
     """ Return ionization potential and electron affinity for given atom,
         and the valence energies of neutral atom.
@@ -192,42 +192,41 @@ def IP_EA(symb,remove_orb,add_orb,remove,add):
     electron adding and removal.             
     """
     #from box.data import atom_occupations
-    atom=KSAllElectron(symb, txt='-')
+    atom = KSAllElectron(symb, txt='-')
 
     # add electrons -> negative ion
     #occu=atom_occupations[symb].copy()
-    occu_add=atom.occu.copy()
-    occu_add[add_orb]+=add
-    ea=KSAllElectron(symb,configuration=occu_add)
+    w = 'negative.atom'
+    occu_add = atom.occu.copy()
+    occu_add[add_orb] += add
+    ea = KSAllElectron(symb, configuration=occu_add, restart=w, write=w)
     ea.run()
 
     # neutral atom
-    atom=KSAllElectron(symb)
-    atom.run()
-    valence_energies = atom.get_valence_energies()
+    w = 'neutral.atom'
+    neutral = KSAllElectron(symb, restart=w, write=w)
+    neutral.run()
+    valence_energies = neutral.get_valence_energies()
 
     # remove electrons -> positive ion
     #occu=atom_occupations[symb].copy()
-    occu_remove=atom.occu.copy()
-    occu_remove[remove_orb]-=remove
-    ip=KSAllElectron(symb,configuration=occu_remove)
+    w = 'positive.atom'
+    occu_remove = atom.occu.copy()
+    occu_remove[remove_orb] -= remove
+    ip = KSAllElectron(symb, configuration=occu_remove, restart=w, write=w)
     ip.run()
 
-    e0=atom.get_energy()
-    en=ea.get_energy()-e0
-    ep=ip.get_energy()-e0
+    e0 = neutral.get_energy()
+    en = ea.get_energy()-e0
+    ep = ip.get_energy()-e0
     # e(x)=e0+c1*x+c2*x**2 =energy as a function of additional electrons
-    c2=(en+ep*add/remove)/(add*(remove+add))
-    c1=(c2*remove**2-ep)/remove
-    IP=-c1+c2
-    EA=-(c1+c2)
+    c2 = (en+ep*add/remove)/(add*(remove+add))
+    c1 = (c2*remove**2-ep)/remove
+    IP = -c1+c2
+    EA = -(c1+c2)
     return IP, EA, valence_energies
-    
-    
-    
-    
-    return (e1-e0)/electrons        
-        
+
+
 def ionization_potential(symb,remove,electrons=1.0):
     """ Return ionization potential of given atom. 
     
@@ -276,14 +275,14 @@ def electron_affinity(symb,add,electrons=1.0):
     ion.run()
     e1=ion.get_energy()
     return (e0-e1)/electrons
-    
-    
-                
-        
+
+
+
+
 if __name__=='__main__':
     #plot_table('Au_Au.par',s1='Au',s2='Au',screen=True,der=0)
     #compare_tables('Au_Au.par','Au_Au_NR.par',s1='Au',s2='Au',screen=False)                
-    
+
     x=nu.array([1,2,3,4,5,6,7,8,9,10])
     y=nu.array([100,70,30,10,5,2,0.5,0.1,0.05,0.0001])
     pl.plot(x,y)
