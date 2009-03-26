@@ -224,7 +224,7 @@ def IP_EA(symb,remove_orb,add_orb,remove,add):
     c1 = (c2*remove**2-ep)/remove
     IP = -c1+c2
     EA = -(c1+c2)
-    return IP, EA, valence_energies
+    return IP, EA, neutral
 
 
 def ionization_potential(symb,remove,electrons=1.0):

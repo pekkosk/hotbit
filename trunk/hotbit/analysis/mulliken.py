@@ -98,7 +98,7 @@ class MullikenAnalysis:
             from basis functions with angular momentum l. """
         rho_k = self.get_rho_k(k)
         rho_tilde_k = 0.5*(rho_k + rho_k.conjugate().transpose())
-        rho_tilde_k_S = nu.dot(rho_k, self.S)
+        rho_tilde_k_S = nu.dot(rho_tilde_k, self.S)
         q_Ikl = 0.0
         orb_indices = self.calc.el.orbitals(I, indices=True)
         orbs = self.calc.el.orbitals(I)
@@ -129,11 +129,41 @@ class MullikenBondAnalysis(MullikenAnalysis):
         """ Return a number between zero and one that describes how much the
             wave functions of the atoms are hybridized between angular
             momenta la and lb. """
-        h = 0.0
-        for k, fk in enumerate(self.calc.st.get_occupations()):
-            for I in range(len(self.calc.el)):
-                h += fk * self.mulliken_I_k_l(I, k, la) * self.mulliken_I_k_l(I, k, lb)
-        return h
+        assert la != lb
+        table = {'s':0, 'p':1, 'd':2}
+        if type(la) == str:
+            la = table[la]
+        if type(lb) == str:
+            lb = table[lb]
+        ret = 0.0
+        for k, f_k in enumerate(self.calc.st.get_occupations()):
+            ret += f_k * self.hybr_k_la_lb(k, la, lb)
+        return ret
+
+
+    def hybr_k_la_lb(self, k, la, lb):
+        """ Return hybridization of eigenstate k between angular
+        momentum la and lb. """
+        rho_k = self.get_rho_k(k)
+        rho_tilde_k = 0.5*(rho_k + rho_k.conjugate().transpose())
+        rho_tilde_k_S = nu.dot(rho_tilde_k, self.S)
+        ret = 0.0
+        for I in range(len(self.calc.el)):
+            orb_indices = self.calc.el.orbitals(I, indices=True)
+            orbs = self.calc.el.orbitals(I)
+            for i, orb_i in zip(orb_indices, orbs):
+                if   's' in orb_i['orbital']: l_i = 0
+                elif 'p' in orb_i['orbital']: l_i = 1
+                elif 'd' in orb_i['orbital']: l_i = 2
+                else: raise RuntimeError('Wrong orbital type')
+                for j, orb_j in zip(orb_indices, orbs):
+                    if   's'  in orb_j['orbital']: l_j = 0
+                    elif 'p'  in orb_j['orbital']: l_j = 1
+                    elif 'd'  in orb_j['orbital']: l_j = 2
+                    else: raise RuntimeError('Wrong orbital type')
+                    if l_i == la and l_j == lb:
+                        ret += rho_tilde_k_S[i,i]*rho_tilde_k_S[j,j]
+        return ret
 
 
     def get_mayer_bond_order(self, a, b):
