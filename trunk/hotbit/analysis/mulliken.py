@@ -125,47 +125,6 @@ class MullikenBondAnalysis(MullikenAnalysis):
                 self.bar_epsilon[i,j] = 0.5*(self.H0[i,i] + self.H0[j,j])
 
 
-    def hybridization(self, la, lb):
-        """ Return a number between zero and one that describes how much the
-            wave functions of the atoms are hybridized between angular
-            momenta la and lb. """
-        assert la != lb
-        table = {'s':0, 'p':1, 'd':2}
-        if type(la) == str:
-            la = table[la]
-        if type(lb) == str:
-            lb = table[lb]
-        ret = 0.0
-        for k, f_k in enumerate(self.calc.st.get_occupations()):
-            ret += f_k * self.hybr_k_la_lb(k, la, lb)
-        return ret
-
-
-    def hybr_k_la_lb(self, k, la, lb):
-        """ Return hybridization of eigenstate k between angular
-        momentum la and lb. """
-        rho_k = self.get_rho_k(k)
-        rho_tilde_k = 0.5*(rho_k + rho_k.conjugate().transpose())
-        rho_tilde_k_S = nu.dot(rho_tilde_k, self.S)
-        ret = 0.0
-        for I in range(len(self.calc.el)):
-            orb_indices = self.calc.el.orbitals(I, indices=True)
-            orbs = self.calc.el.orbitals(I)
-            for i, orb_i in zip(orb_indices, orbs):
-                if   's' in orb_i['orbital']: l_i = 0
-                elif 'p' in orb_i['orbital']: l_i = 1
-                elif 'd' in orb_i['orbital']: l_i = 2
-                else: raise RuntimeError('Wrong orbital type')
-                for j, orb_j in zip(orb_indices, orbs):
-                    if   's'  in orb_j['orbital']: l_j = 0
-                    elif 'p'  in orb_j['orbital']: l_j = 1
-                    elif 'd'  in orb_j['orbital']: l_j = 2
-                    else: raise RuntimeError('Wrong orbital type')
-                    if l_i == la and l_j == lb:
-                        ret += rho_tilde_k_S[i,i]*rho_tilde_k_S[j,j]
-        return ret
-
-
     def get_mayer_bond_order(self, a, b):
         """ Returns the Mayer bond-order of the bond between the
         atoms A and B (a and b are atom indices). """
@@ -213,8 +172,8 @@ class MullikenBondAnalysis(MullikenAnalysis):
 
 
     def get_E_cov_I_J(self, I, J, sigma, npts=500, e_min=None, e_max=None, occupations=False):
-        # Returns the energy grid and corresponding covalent bonding
-        # energy values for the atom pair I-J
+        """ Returns the energy grid and corresponding covalent bonding
+            energy values for the atom pair I-J. """
         I = self.calc.el.orbitals(I, indices=True)
         J = self.calc.el.orbitals(J, indices=True)
         E_cov_IJ = nu.zeros(npts)
