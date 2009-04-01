@@ -199,15 +199,15 @@ class WaveFunctions:
         
         parameters:
         -----------
-        dr: (approximate) grid spacing.
+        dr: (approximate) grid spacing in Angstroms.
         """
         calc=atoms.get_calculator()
         self.atoms=atoms
         self.calc=calc
         self.el=calc.el
         self.st=calc.st
-        self.L=self.atoms.get_cell().diagonal()
-        self.N=ceil(self.L/dr)
+        self.L=self.atoms.get_cell().diagonal() / Bohr
+        self.N=ceil(self.L / (dr/Bohr) )
         self.grid=[]
         for i in range(3):
             self.grid.append( nu.linspace(0,self.L[i],self.N[i]) )
