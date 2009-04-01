@@ -271,7 +271,7 @@ class WaveFunctions:
                 for j,y in enumerate(grid[1]):
                     for k,z in enumerate(grid[2]):
                         r0=nu.array([x,y,z])
-                        r=self.el.vector(orb['atom'],rj=r0)
+                        r=self.el.vector(orb['atom'],rj=r0)                        
                         wfg[i,j,k]+=c*Rnl(mix.norm(r))*angular(r,orbtype)
         box.vtk.rectilinear_vtk(grid,wfg,fname)                                
         
