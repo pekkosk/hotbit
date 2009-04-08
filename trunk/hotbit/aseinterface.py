@@ -379,7 +379,7 @@ class Calculator(Output):
 
     # some not implemented ASE-assumed methods
     def get_fermi_level(self):
-        raise NotImplementedError
+        return self.st.get_fermi_level() * Hartree
 
 
     def set_atoms(self,atoms):
@@ -406,9 +406,6 @@ class Calculator(Output):
     def stop_timing(self, label):
         self.timer.stop(label)
 
-
-    def get_mayer_bond_order(self, i, j):
-        return self.st.mayer_bond_order(i, j)
 
 Hotbit=Calculator
 

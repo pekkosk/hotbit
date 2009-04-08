@@ -134,6 +134,40 @@ class States:
         for i in range(self.norb)[::-1]:
             if self.f[i]>1E-9: return i
 
+    def get_fermi_level(self):
+        """ Return the Fermi level of the system. The Fermi level
+            is defined by the fit of 
+
+                               2
+              f(e) =  --------------------
+                      exp((e-e_F)/kbT) + 1
+
+            to the eigenenergy-occupation -points (kbT is the width of
+            the Fermi distribution and e_F the Fermi energy).
+            If the kbT is smaller than 0.004 Ha the eigenenergy
+            of the HOMO is considered as the Fermi level. """
+        e = self.get_eigenvalues()
+        f = self.get_occupations()
+        from scipy.optimize import leastsq
+        fermifunc = lambda p, e:    2./(nu.exp((e-p[0])/p[1]) + 1)
+        errfunc   = lambda p, e, y: fermifunc(p, e) - y
+        # p = [Fermi_level, width]
+        p = [0.5 * (e[self.get_homo()] + e[self.get_lumo()]), 1.0]
+        p, success = leastsq(errfunc, p[:], args=(e,f), ftol=0.0001, xtol=0.001)
+        e_g = nu.linspace(e[0], e[-1], 500)
+        #import pylab
+        #pylab.figure()
+        #pylab.plot(e,f,"b^", e_g, fermifunc(p, e_g), "r-")
+        #pylab.show()
+        if success:
+            if p[1] < 0.004:
+                return e[self.get_homo()]
+            else:
+                return p[0]
+        else:
+            raise RuntimeError("Could not define the Fermi level.")
+
+
     def mulliken(self):
         """ Return excess Mulliken populations. """
         q=[]
