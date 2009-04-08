@@ -98,6 +98,9 @@ class Elements:
                 self.elements[symb]=self.files[symb]
 
         self.orb=[]
+        # index: the number of the orbital
+        # atomindex: the number of the orbital on the atom
+        # atom: the number of atom the orbital is centered on
         self.atomorb=[]
         self.nr_orbitals=[]
         self.first_orbitals=[]
