@@ -9,11 +9,11 @@ atoms.center(vacuum=5)
 
 default_param['width'] = 0.0136
 
-calc=Hotbit(SCC=True,charge=1,**default_param)
+calc=Hotbit(SCC=True,charge=1,txt='linear_response.cal',**default_param)
 atoms.set_calculator()
 calc.solve_ground_state(atoms)
 
-lr=LinearResponse(calc,energy_cut=2000)
+lr=LinearResponse(calc,energy_cut=2000,txt='linear_response.txt')
 lr.run()
 lr.plot_spectrum('Na3+_lr.png',width=0.08)
-lr.info()
+#lr.info()
