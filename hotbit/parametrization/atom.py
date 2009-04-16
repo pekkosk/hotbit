@@ -630,7 +630,7 @@ def shoot(u,dx,c2,c1,c0,N):
     # If no ctp, integrate half-way
     u[-1]=1.0
     u[-2]=u[-1]*f0[-1]/fm[-1]
-    all_negative=all(c0<0)
+    all_negative=nu.all(c0<0)
     for i in xrange(N-2,0,-1):
         u[i-1]=(-fp[i]*u[i+1]-f0[i]*u[i])/fm[i]
         if abs(u[i-1])>1E10: u[i-1:]*=1E-10 #numerical stability
