@@ -121,7 +121,7 @@ class LinearResponse:
         self.timer.stop('diagonalize')
         print>>self.txt, 'Matrix diagonalized.',
         self.txt.flush()
-        assert all(omega2>1E-16)           
+        assert nu.all(omega2>1E-16)           
         omega=sqrt(omega2)
         
         # calculate oscillator strengths
