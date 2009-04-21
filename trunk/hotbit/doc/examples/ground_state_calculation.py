@@ -1,4 +1,4 @@
- # let us calculate Au dimer
+ # calculate Au dimer
 from ase import *
 from hotbit import Calculator
 

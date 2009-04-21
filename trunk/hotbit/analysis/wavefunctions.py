@@ -211,7 +211,7 @@ def angular(r,wf):
 
 
 class WaveFunctions:
-    def __init__(self,atoms,dr=0.2):
+    def __init__(self,atoms,dr=0.5):
         """ Wave functions into real grid.
         
         parameters:
