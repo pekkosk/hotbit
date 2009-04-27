@@ -300,7 +300,6 @@ class Calculator(Output):
         self.st=States(self)
         self.rep=Repulsion(self)
         self.env=Environment(self)
-        self.el.update_geometry()
         self.greetings()
         pbc=atoms.get_pbc()
         if self.get('SCC') and nu.any(pbc) and self.get('gamma_cut')==None:
@@ -309,6 +308,7 @@ class Calculator(Output):
             raise AssertionError('Charged system cannot be periodic.')
         self.flush()
         self.stop_timing('initialization')
+        self.el.update_geometry()
 
 
     def get_potential_energy(self,atoms):
