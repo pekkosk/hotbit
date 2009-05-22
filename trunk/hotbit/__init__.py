@@ -9,4 +9,4 @@ from environment import Environment, LinearlyPolarizedLaser
 from output import Output
 from states import States
 
-
+from hotbit.wa import WedgeAtoms, BendAtoms
