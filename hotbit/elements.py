@@ -229,7 +229,7 @@ class Elements:
                 else:
                     txt+='Element %s (object given)\n' %s
                 for line in comment:
-                    txt+='    '+line.lstrip()+'\n'
+                    txt+='    *'+line.lstrip()+'\n'
         if txt=='':
             txt='No comments for elements.'
         return txt
