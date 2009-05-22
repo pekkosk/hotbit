@@ -55,7 +55,7 @@ class Element:
         self.data['epsilon']={}
         for orbital in self.data['valence_orbitals']:
             self.data['epsilon'][orbital]=float( find(f,'epsilon_%s' %orbital) )
-        self.data['comment']=find(f,'comment',fmt='lines',default='no comment')
+        self.data['comment']=find(f,'comment',fmt='strings',default=['no comment'])
         self._read_functions(file)
         
         # for internal...
