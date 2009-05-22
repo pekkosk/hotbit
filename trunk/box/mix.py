@@ -304,7 +304,6 @@ def find_value(inp,key,fmt='default',default=None,position='start'):
              'onestr'  = return the whole line from the same line as one string
              'matrix'  = return a matrix coming after key as float
              'strings' = return the non-empty lines coming after the key as str
-             'lines'   = return the following non-empty lines as one string (with \n's)
              'bool'    = interpret the line as boolean
              'test'    = return True if key found, otherwise False
        default - returned value if key not found

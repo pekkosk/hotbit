@@ -73,7 +73,8 @@ def optimize(atoms, fmax=0.01):
 def H2(data):
     name = 'H2'
     data[name] = {}
-    atoms = Atoms('H2',((0,0,0),(0.76,0,0)))
+    atoms = Atoms('H2',((0,    0,    0),
+                        (0.76, 0,    0)))
     optimize(atoms)
 
     data[name]['HH'] = length(atoms, 0, 1)
@@ -82,7 +83,8 @@ def H2(data):
 def CH(data):
     name = 'CH'
     data[name] = {}
-    atoms = Atoms('CH',((0,0,0),(1.1,0,0)))
+    atoms = Atoms('CH',((0,   0,    0),
+                        (1.1, 0,    0)))
     optimize(atoms)
 
     data[name]['CH'] = length(atoms, 0, 1)
@@ -91,18 +93,25 @@ def CH(data):
 def CH2(data):
     name = 'CH2'
     data[name] = {}
-    atoms = Atoms('HCH',((-1,0,0),(0,0,0),(1,0,0)))
+    atoms = Atoms('CH2',
+      ((7.348,      5.390,      5.640),
+       (6.288,      5.745,      5.850),
+       (8.038,      6.169,      6.098)))
     optimize(atoms)
 
     data[name]['CH'] = length(atoms, 0, 1)
-    data[name]['HCH'] = angle(atoms, 0,1,2)
+    data[name]['HCH'] = angle(atoms, 1,0,2)
 
 
 def CH3(data):
     name = 'CH3'
     data[name] = {}
     a = 1.1
-    atoms = Atoms('CH3', ((0,0,0),(a,0,0),(a*cos(2*pi/3), a*sin(2*pi/3),0),(a*cos(4*pi/3), a*sin(4*pi/3),0)))
+    atoms = Atoms('CH3',
+      ((6.550,      6.952,      6.000),
+       (7.650,      6.952,      5.999),
+       (6.001,      7.904,      5.999),
+       (6.001,      6.000,      5.999)))
     optimize(atoms)
 
     data[name]['CH'] = length(atoms, 0, 1)
@@ -112,9 +121,12 @@ def CH3(data):
 def CH4(data):
     name = 'CH4'
     data[name] = {}
-    atoms = Atoms('CH4',((0,0,0),(0,0,1),(sin(2*pi/3), 0, cos(2*pi/3)),
-           (cos(2*pi/3)*sin(2*pi/3), sin(2*pi/3)*sin(2*pi/3), cos(2*pi/3)),
-           (cos(4*pi/3)*sin(2*pi/3), sin(4*pi/3)*sin(2*pi/3), cos(2*pi/3))))
+    atoms = Atoms('CH4',
+      ((6.459,      6.786,      6.250),
+       (6.422,      6.706,      7.388),
+       (7.547,      6.808,      5.905),
+       (5.935,      7.745,      5.918),
+       (5.931,      5.886,      5.787)))
     optimize(atoms)
     data[name]['CH'] = length(atoms, 0, 1)
 
@@ -122,66 +134,87 @@ def CH4(data):
 def C2H2(data):
     name = 'C2H2'
     data[name] = {}
-    atoms = Atoms('HCCH', ((0,0,0),(1.2,0,0),(2.4,0,0),(3.6,0,0)))
+    atoms = Atoms('C2H2',
+      ((7.226,      5.993,      6.042),
+       (8.382,      5.973,      6.040),
+       (6.157,      6.012,      6.045),
+       (9.451,      5.954,      6.037)))
     optimize(atoms)
 
-    data[name]['CC'] = length(atoms, 1, 2)
-    data[name]['CH'] = length(atoms, 0, 1)
+    data[name]['CC'] = length(atoms, 0, 1)
+    data[name]['CH'] = length(atoms, 0, 2)
 
 
 def C2H4(data):
     name = 'C2H4'
     data[name] = {}
-    atoms = Atoms('H2C2H2',((cos(2*pi/3),sin(2*pi/3),0),
-                            (cos(4*pi/3),sin(4*pi/3),0), (0,0,0),
-                            (1.2,0,0),(1.2-cos(2*pi/3),sin(2*pi/3),0),
-                            (1.2-cos(4*pi/3),sin(4*pi/3), 0)))
+    atoms = Atoms('C2H4',
+      ((6.469,      6.865,      6.009),
+       (7.736,      6.864,      5.992),
+       (5.902,      7.807,      6.017),
+       (5.903,      5.922,      6.017),
+       (8.303,      7.807,      5.984),
+       (8.302,      5.921,      5.984)))
     optimize(atoms)
 
-    data[name]['CC'] = length(atoms, 2, 3)
-    data[name]['CH'] = length(atoms, 1, 2)
-    data[name]['CCH'] = angle(atoms, 0, 2, 3)
+    data[name]['CC'] = length(atoms, 0, 1)
+    data[name]['CH'] = length(atoms, 0, 2)
+    data[name]['CCH'] = angle(atoms, 1, 0, 2)
 
 
 def C2H6(data):
     name = 'C2H6'
     data[name] = {}
-    atoms = Atoms('H3C2H3',((sin(2*pi/3), 0, cos(2*pi/3)),
-                            (cos(2*pi/3)*sin(2*pi/3), sin(2*pi/3)*sin(2*pi/3), cos(2*pi/3)),
-                            (cos(4*pi/3)*sin(2*pi/3), sin(4*pi/3)*sin(2*pi/3), cos(2*pi/3)),
-                            (0, 0, 0),
-                            (0, 0, 1.2),
-                            (cos(0)*sin(2*pi/3), 0, 1.2-cos(2*pi/3)),
-                            (cos(2*pi/3)*sin(2*pi/3), sin(2*pi/3)*sin(2*pi/3), 1.2-cos(2*pi/3)),
-                            (cos(4*pi/3)*sin(2*pi/3), sin(4*pi/3)*sin(2*pi/3), 1.2-cos(2*pi/3))))
+    atoms = Atoms('C2H6',
+      ((6.434,      6.752,      6.343),
+       (6.433,      6.751,      7.856),
+       (7.506,      6.751,      5.987),
+       (5.898,      7.680,      5.985),
+       (5.898,      5.823,      5.987),
+       (7.505,      6.751,      8.214),
+       (5.896,      7.679,      8.213),
+       (5.897,      5.822,      8.212)))
     optimize(atoms)
 
 
-    data[name]['CC'] = length(atoms, 3, 4)
+    data[name]['CC'] = length(atoms, 0, 1)
     data[name]['CH'] = length(atoms, 0, 3)
-    data[name]['HCH'] = angle(atoms, 0, 3, 2)
+    data[name]['HCH'] = angle(atoms, 5, 1, 6)
 
 
 def C3H4(data):
     name = 'C3H4'
+    a=1.2
     data[name] = {}
-    atoms = Atoms('C3H4', ((0,0,0),(1.2,0,0),(0.6,0.8,0),
-                           (-0.5,-0.5,0),(1.7,-0.5,0),
-                           (0.6,1.3,0.5),(0.6,1.3,-0.5)))
+    atoms = Atoms('C3H4',
+      ((6.722,      6.495,      6.659),
+       (7.979,      6.359,      6.670),
+       (7.498,      7.780,      6.624),
+       (5.748,      6.021,      6.667),
+       (8.828,      5.687,      6.693),
+       (7.555,      8.386,      7.548),
+       (7.565,      8.327,      5.665)))
     optimize(atoms)
 
     data[name]['C1C2']  = length(atoms, 0, 1)
-    data[name]['C2C3']  = length(atoms, 1, 2)
+    data[name]['C2C3']  = length(atoms, 0, 2)
     data[name]['C1H']   = length(atoms, 0, 3)
-    data[name]['HC1C2'] = angle(atoms, 1,0,3)
+    data[name]['HC1C2'] = angle(atoms, 3,0,1)
 
 
 def C3H6(data):
     name = 'C3H6'
     data[name] = {}
-    atoms = Atoms('C3H6',((0,0,0),(1.2,0,0),(0.6,1,0),
-                          (-0.5,-0.5,0.5),(1.7, -0.5, 0.5),(0.6, 1.5, 0.5),
-                          (-0.5,-0.5,-0.5),(1.7,-0.5,-0.5),(0.6, 1.5,-0.5)))
+    atoms = Atoms('C3H6',
+      ((6.283,      6.485,      6.760),
+       (7.603,      6.293,      6.078),
+       (7.037,      7.670,      6.239),
+       (6.267,      6.352,      7.851),
+       (8.457,      6.032,      6.721),
+       (7.518,      8.317,      6.988),
+       (5.388,      6.181,      6.197),
+       (7.579,      5.865,      5.065),
+       (6.639,      8.150,      5.333)))
     optimize(atoms)
 
     data[name]['CC'] = length(atoms, 0, 1)
@@ -191,16 +224,25 @@ def C3H6(data):
 def C4H10(data):
     name = 'C4H10'
     data[name] = {}
-    atoms = Atoms('CH2CH2CH2CH2H2',((0,0,0),(0,1,0),(0,0,1),
-                                    (1,0,0),(1,-1,0),(1,0,-1),
-                                    (2,0,0),(2,1,0),(2,0,1),
-                                    (3,0,0),(3,-1,0),(3,0,-1),
-                                    (-1,0,0),(4,0,0)))
-    atoms.positions = atoms.positions * 1.3
+    atoms = Atoms('C4H10',
+      ((7.350,      7.576,      7.578),
+       (8.621,      6.992,      7.003),
+       (9.880,      7.612,      7.587),
+      (11.151,      7.021,      7.018),
+       (7.340,      8.686,      7.372),
+       (7.338,      7.376,      8.689),
+       (8.630,      5.900,      7.232),
+       (8.619,      7.183,      5.903),
+       (9.874,      8.703,      7.348),
+       (9.880,      7.432,      8.689),
+      (11.155,      5.912,      7.227),
+      (11.168,      7.219,      5.907),
+       (6.478,      7.068,      7.072),
+      (12.023,      7.526,      7.527)))
     optimize(atoms)
 
-    data[name]['C1C2'] = length(atoms, 0, 3)
-    data[name]['C2C3'] = length(atoms, 3, 6)
+    data[name]['C1C2'] = length(atoms, 0, 1)
+    data[name]['C2C3'] = length(atoms, 1, 2)
 
 
 def C6H6(data):
@@ -208,14 +250,23 @@ def C6H6(data):
     data[name] = {}
     a=1.2
     b=2.1
-    atoms = Atoms()
-    for d in nu.arange(6) / 6. * 2*pi:
-        atoms += Atom('C',(a*cos(d), a*sin(d), 0))
-        atoms += Atom('H',(b*cos(d), b*sin(d), 0))
+    atoms = Atoms('C6H6',
+      ((9.444,      7.815,      6.065),
+       (8.770,      8.981,      6.062),
+       (7.423,      8.981,      6.061),
+       (6.750,      7.814,      6.063),
+       (7.424,      6.648,      6.062),
+       (8.771,      6.649,      6.063),
+      (10.533,      7.816,      6.069),
+       (9.314,      9.925,      6.059),
+       (6.879,      9.923,      6.057),
+       (5.661,      7.814,      6.066),
+       (6.879,      5.705,      6.063),
+       (9.316,      5.706,      6.063)))
     optimize(atoms)
 
-    data[name]['CC'] = length(atoms, 0, 2)
-    data[name]['CH'] = length(atoms, 0, 1)
+    data[name]['CC'] = length(atoms, 0, 1)
+    data[name]['CH'] = length(atoms, 0, 6)
 
 
 def geometry_test(data):

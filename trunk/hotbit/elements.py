@@ -221,8 +221,8 @@ class Elements:
         txt='%i atoms, %i states, %.1f electrons (%.1f filled states)\n' %(self.N,self.norb,self.electrons,self.electrons/2)
         for s in self.present:
             el=self.elements[s]
-            comment=el.get_comment().splitlines()
-            if comment!='':
+            comment=el.get_comment()
+            if len(comment) > 0:
                 if type(self.files[s])==type(''):
                     file=self.files[s]
                     txt+='Element %s in %s\n' %(s,file)
