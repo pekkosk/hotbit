@@ -468,6 +468,8 @@ class JelliumAnalysis:
             orbital_type = orbital['orbital']
             symbol = orbital['symbol']
             wf_range = self.calc.el.elements[symbol].get_wf_range(orbital_type)
+            if wf_range == None:
+                raise Exception('No radial function %s found for %s (maybe the element file does not contain it?).' % (orbital_type, symbol))
             R = positions[atom]
             if nu.linalg.norm(R - self.origin) < self.R_0 + wf_range:
                 self.needed_orbitals[m] = True
