@@ -611,7 +611,7 @@ class JelliumAnalysis:
         return exp( - (x-x0)**2 / (4*width**2) )
 
 
-    def make_plot(self, width=0.1, bands=None, limits=None):
+    def make_plot(self, width=0.1, bands=None, limits=None, out=None):
         import pylab
         colors = ['#FFFF00','#FF0000','#2758D3','#5FD300',
                   '#058C00','#E1AB18','#50E1D0']
@@ -639,7 +639,9 @@ class JelliumAnalysis:
         pylab.ylabel("Arbitrary units")
         pylab.title("Angular momentum analysis")
         pylab.legend()
-        pylab.savefig('Jellium_analysis_w%0.3f.eps' % width)
+        if out == None:
+            out = 'Jellium_analysis_w%0.3f.eps'
+        pylab.savefig(out)
         pylab.show()
 
 

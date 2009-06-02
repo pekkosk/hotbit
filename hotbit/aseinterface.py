@@ -263,6 +263,9 @@ class Calculator(Output):
             self.txt=stdout
         else:
             self.txt=open(txt,'a')
+        # check if the output of timer must be changed also
+        if 'timer' in self.__dict__:
+            self.timer.txt = self.txt
 
 
     def get(self,arg=None):
