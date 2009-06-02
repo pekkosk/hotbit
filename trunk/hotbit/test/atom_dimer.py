@@ -1,4 +1,5 @@
 from ase import *
+from numpy import random
 from box import Atoms
 from box import mix
 from hotbit import Calculator
