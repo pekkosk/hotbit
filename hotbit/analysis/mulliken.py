@@ -221,10 +221,10 @@ class MullikenBondAnalysis(MullikenAnalysis):
 
 
     def A_I(self, I):
-        """ Return absolute the promotion energy of atom I. """
+        """ Return the absolute energy of atom I. """
         gamma_II = self.calc.st.es.gamma(I,I)*Hartree
         dq_I = self.mulliken_I(I) - self.calc.el.get_valences()[I]
-        return gamma_II*dq_I**2 + self.E_prom_I(I)
+        return 0.5*gamma_II*dq_I**2 + self.E_prom_I(I)
 
 
     def E_prom_I(self, I):
