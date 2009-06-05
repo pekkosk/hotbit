@@ -89,7 +89,7 @@ class Interactions:
         self.present=present
         self.max_cut=0.0 # maximum interaction range in Bohrs
         self.read_tables()
-        self.check_box_size()
+#        self.check_box_size()
         self.first=True
 
     def __del__(self):
@@ -103,19 +103,21 @@ class Interactions:
         """ Return element pair cutoff dictionary. """
         return self.cut
 
-    def check_box_size(self):
-        """ Check that box is large enough. """
-        gamma_cut, SCC=self.calc.get('gamma_cut') ,self.calc.get('SCC')
-        pbc=self.calc.el.atoms.get_pbc()
-        for periodic,length in zip(self.calc.el.get_box_lengths(),pbc):
-            for ia in self.cut:
-                if self.cut[ia]>length/2. and not periodic:
-                    raise AssertionError('Too small box (one size %.2f, largest cut %.2f)' %(length,self.cut[ia]))
-                if SCC and periodic and (gamma_cut!=None and gamma_cut<length/4):
-                    raise AssertionError('gamma_cut should be small enough compared to %s Bohr' %length)
+#    def check_box_size(self):
+#        """ Check that box is large enough. """
+#        # TODO: remove this completely
+#        gamma_cut, SCC=self.calc.get('gamma_cut') ,self.calc.get('SCC')
+#        pbc=self.calc.el.atoms.get_pbc()
+#        for periodic,length in zip(self.calc.el.get_box_lengths(),pbc):
+#            for ia in self.cut:
+#                if self.cut[ia]>length/2. and not periodic:
+#                    raise AssertionError('Too small box (one size %.2f, largest cut %.2f)' %(length,self.cut[ia]))
+#                if SCC and periodic and (gamma_cut!=None and gamma_cut<length/4):
+#                    raise AssertionError('gamma_cut should be small enough compared to %s Bohr' %length)
 
 
     def check_too_close_distances(self):
+        # FIXME: move this to elements--it's their business; and call in geometry update
         """ If some element pair doesn't have repulsive potential,
             check that they are not too close to each other. """
         for si in self.present:
@@ -139,6 +141,7 @@ class Interactions:
                 txt+='    *'+line.lstrip()+'\n'
             shown.append(file)
         return txt
+
 
     def read_tables(self):
         """
@@ -207,6 +210,7 @@ class Interactions:
             pl.xlabel('r (Bohr)')
             pl.ylabel('H (Hartree) and S')
         pl.show()
+
 
     def construct_matrices(self):
         """ Hamiltonian and overlap matrices. """
