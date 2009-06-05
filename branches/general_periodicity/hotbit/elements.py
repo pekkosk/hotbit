@@ -8,6 +8,8 @@ from ase.units import Hartree,Bohr
 from os import environ
 from weakref import proxy
 
+from atoms import BravaisAtoms
+
 
 
 
@@ -59,6 +61,83 @@ class Elements:
         self._initialize()
         self.solved={'ground state':None,'energy':None,'forces':None,'stress':None}
 
+
+    def init2(self):
+        # TODO: these have to be divided into subroutines
+        self.nranges=[(-1,1),(-1,1),(-1,1)]
+#        self.nranges=[(0,0),(0,0),(0,0)]
+        self.nlists= [range(n[0],n[1]+1) for n in self.nranges]
+        self.M=[len(l) for l in self.nlists]
+#        self.ntuples=[] # n-tuples
+#        for n1 in self.nlists[0]:
+#            for n2 in self.nlists[1]:
+#                for n3 in self.nlists[2]:
+#                    self.ntuples.append((n1,n2,n3))        
+
+        self.ntuples=[] # n-tuples
+        rang=[]
+        for i in range(3):
+            if self.atoms.pbc[0]:
+                rang.append([0,1,-1])
+            else:
+                rang.append([0])
+            
+        for n1 in rang[0]:
+            for n2 in rang[1]:
+                for n3 in rang[2]:
+                    self.ntuples.append((n1,n2,n3))
+                    
+#        self.copies = len(self.ntuples)
+        self.Rn = nu.zeros((self.N,len(self.ntuples),3))
+        self.Tn = nu.zeros((self.N,len(self.ntuples),3,3))
+        for i in range(self.N):
+            for n,nt in enumerate(self.ntuples):
+                self.Rn[i,n,:] = self.nvector(r=i,ntuple=nt)
+                self.Tn[i,n,:,:] = self.nvector(r=i,ntuple=nt,lst='dtensor')
+            
+
+    def get_transforms(self):
+        return self.ntuples
+       
+    
+    def nvector(self,r,ntuple=(0,0,0),r0=[0,0,0],lst='vec'):
+        '''
+        Return position vector rn-r0, when r is operated by S(n)r=rn.
+        
+        @param r:   position (array) or atom index (integer) which is operated
+        @param ntuple:   operate on r with S(n)
+        @param r0:  if integer, use atom r0's position as r0
+        @param l:   list of properties to return, 'vec'=vector, 'hat'=unit vector, 'norm'=norm
+                    'dtensor' = return the dyadic tensor (derivative) T(r,n)_ab = d rn_a/d r_b
+        '''
+        self.calc.start_timing('nvec')
+        if not isinstance(lst,(list,tuple)):
+            lst=[lst]
+        assert not( r0!=[0,0,0] and 'dtensor' in lst )
+        if isinstance(r,int):  r=self.atoms.positions[r]
+        if isinstance(r0,int): r0=self.atoms.positions[r0]
+        vec=(self.atoms.transform(r,ntuple)-r0) / Bohr
+        
+        ret=[]
+        for l in lst:
+            if l=='vec': 
+                ret.append(vec)
+            elif l=='hat':
+                norm = nu.linalg.norm(vec)
+                if norm<1E-6: raise AssertionError('Suspiciously short vector')
+                ret.append( vec/norm )
+            elif l=='norm': 
+                ret.append( nu.linalg.norm(vec) )
+            elif l=='dtensor': 
+                ret.append( self.atoms.dtensor(r,ntuple) )
+            else:
+                raise AssertionError('Keyword %s not defined' %l)
+        
+        self.calc.stop_timing('nvec')
+        if len(ret)==1: 
+            return ret[0]
+        else: 
+            return ret
 
     def __del__(self):
         pass
@@ -138,6 +217,7 @@ class Elements:
 
 
     def update_geometry(self):
+        # TODO: this method will become useless
         """ Update all properties related to geometry (calculate once/geometry)
 
         (analogously for j): i=atom index, si=symbol, r=vector i-->j, rhat=unit vector,
@@ -204,8 +284,10 @@ class Elements:
     def set_atoms(self,atoms):
         """ Set the atoms object ready for calculations. """
         if type(atoms) == type(None) or not atoms == self.atoms:
-            self.atoms=Atoms(atoms)
+#            self.atoms=Atoms(atoms)
+            self.atoms=BravaisAtoms(atoms)
             self.update_geometry()
+            self.init2()
 
 
     def set_solved(self,quantities):
@@ -213,7 +295,8 @@ class Elements:
         if not isinstance(quantities,(list,tuple)):
             quantities=[quantities]
         for quantity in quantities:
-            self.solved[quantity]=self.atoms.copy()
+            # FIXME: more careful bookkeeping for solved stuff 
+            self.solved[quantity]=BravaisAtoms(self.atoms)
 
 
     def greetings(self):
@@ -349,13 +432,24 @@ class Elements:
 
     def get_symbols(self):
         return self.symbols
+    
+    def get_N(self):
+        """ Return the number of atoms. """
+        return self.N
 
     def symbol(self,i):
         return self.symbols[i]
 
     def get_element(self,i):
-        """ Return the element of given atom. """
-        return self.elements[self.symbols[i]]
+        '''
+        Return the element object of given atom.
+        
+        @param i: atom index or element symbol
+        '''
+        if isinstance(i,int):
+            return self.elements[self.symbols[i]]
+        else: 
+            return self.elements[i]
 
     def get_element_pairs(self):
         """ Return list of element pairs. """
@@ -386,6 +480,7 @@ class Elements:
         return self.norb
 
     def get_ia_atom_pairs(self,get):
+        # TODO: get rid of this!
         """
         List interacting atom pairs with desired properties:
 
@@ -399,9 +494,27 @@ class Elements:
         for item in get:
             lst.append(self.ia_pairs[item])
         return zip(*lst)
-
+    
+    
+    def get_property_lists(self,lst=['i']):
+        '''
+        Return lists of atoms' given properties.
+        
+        @param lst: 'i'=index; 's'=symbol; 'no'=number of orbitals; 'o1'= first orbital 
+        '''
+        def get_list(p):
+            if p=='i':      return range(self.N)
+            elif p=='s':    return self.symbols
+            elif p=='no':   return self.nr_orbitals
+            elif p=='o1':   return self.first_orbitals
+            else:
+                raise NotImplementedError('Property not defined')
+        l = [ get_list(item) for item in lst ]
+        return zip(*l)
+            
 
     def get_atom_pairs(self,mode=1,cut=None,include=None):
+        # TODO get rid of this method !!
         """
         List atom pairs with distance cutoff / only given element pairs.
         Different modes:

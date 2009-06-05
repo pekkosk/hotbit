@@ -205,6 +205,7 @@ class Calculator(Output):
             raise AssertionError('Parameters cannot be set after initialization.')
         self.__dict__[key]=value
 
+
     def get_atoms(self):
         """ Return the current atoms object. """
         atoms = self.el.atoms.copy()
@@ -215,6 +216,7 @@ class Calculator(Output):
     def add_note(self,note):
         """ Add warning (etc) note to be printed in log file end. """
         self.notes.append(note)
+
 
     def greetings(self):
         """ Simple greetings text """

@@ -46,7 +46,7 @@ class Solver:
                 #H=H0+self.es.construct_H1(dq)*S
             #else:
                 #H=H0
-            #e,wf=self.solve(H,S)
+            #e,wf=self.diagonalize(H,S)
             #st.update(e,wf)
             #if not self.SCC:
                 #break
@@ -78,10 +78,10 @@ class Solver:
         #convergence_plotter.draw(dq)
         for i in range(self.maxiter):
             if self.SCC:
-                H=H0 + es.construct_H1(dq)*S
+                H=H0 + es.construct_h1(dq)*S
             else:
                 H=H0
-            e,wf=self.solve(H,S)
+            e,wf=self.diagonalize(H,S)
             st.update(e,wf)
             if not self.SCC:
                 break
@@ -105,7 +105,7 @@ class Solver:
             mixer.final_echo(self.calc.get_output())
         return st.e,st.wf
 
-    def solve(self,H,S):
+    def diagonalize(self,H,S):
         """ Solve the eigenstates. """
         self.H,self.S=H,S
         self.norb=len(self.H[:,0])

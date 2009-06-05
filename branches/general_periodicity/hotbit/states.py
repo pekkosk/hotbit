@@ -46,13 +46,13 @@ class States:
 
     def solve(self):
         self.calc.start_timing('solve')
-        self.calc.ia.check_too_close_distances()
+        self.calc.ia.check_too_close_distances() #TODO: move this from here to elements
         dq=self.guess_dq()
-        self.H0, self.S, self.dH0, self.dS=self.calc.ia.get_matrices()
+        self.H0, self.S, self.dH0, self.dS = self.calc.ia.get_matrices()
         try:
             if self.SCC:
-                self.es.construct_tables()
-            self.e, self.wf=self.solver.get_states(self.calc,dq,self.H0,self.S,self.count)
+                self.es.construct_Gamma_matrix()
+            self.e, self.wf = self.solver.get_states(self.calc,dq,self.H0,self.S,self.count)
             self.calc.el.set_solved('ground state')
             self.check_mulliken_charges()
             self.large_update()
@@ -102,7 +102,7 @@ class States:
         if self.SCC:
             self.prev_dq=[self.dq, self.prev_dq[0]]
             for a in range(3):
-                self.dH[:,:,a]=self.dH0[:,:,a] + self.es.get_H1()*self.dS[:,:,a]
+                self.dH[:,:,a]=self.dH0[:,:,a] + self.es.get_h1()*self.dS[:,:,a]
         else:
             self.dH=self.dH0
 
