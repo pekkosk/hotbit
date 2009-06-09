@@ -201,9 +201,12 @@ class Calculator(Output):
 
 
     def set(self,key,value):
-        if self.init==True or key not in ['charge']:
+        if key == 'txt':
+            self.set_text(value)
+        elif self.init==True or key not in ['charge']:
             raise AssertionError('Parameters cannot be set after initialization.')
-        self.__dict__[key]=value
+        else:
+            self.__dict__[key]=value
 
     def get_atoms(self):
         """ Return the current atoms object. """
@@ -258,6 +261,8 @@ class Calculator(Output):
         """ Set up the output file. """
         if txt is '-':
             self.txt = open('/dev/null','w')
+        elif hasattr(txt, 'write'):
+            self.txt = txt
         elif txt is None:
             from sys import stdout
             self.txt=stdout
@@ -265,7 +270,7 @@ class Calculator(Output):
             self.txt=open(txt,'a')
         # check if the output of timer must be changed also
         if 'timer' in self.__dict__:
-            self.timer.txt = self.txt
+            self.timer.txt = self.get_output()
 
 
     def get(self,arg=None):
