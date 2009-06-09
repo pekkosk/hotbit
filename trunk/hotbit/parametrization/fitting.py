@@ -45,8 +45,9 @@ class RepulsiveFitting:
 
         self.err = None
         self.set_err_out(errfile)
-        print 'r_dimer      =',r_dimer
-        print '1.5 x r_dimer=',1.5*r_dimer
+        print '\n\n\n\nCreating a repulsion curve between elements %s and %s' % (self.sym1, self.sym2)
+        print '  r_dimer      =',r_dimer
+        print '  1.5 x r_dimer=',1.5*r_dimer
 
 
     def __call__(self,r,der=0):
@@ -67,7 +68,7 @@ class RepulsiveFitting:
                     pass
                 self.err = None
         if type(err) == str:
-            self.err = open(err, 'a')
+            self.err = open(err, 'w')
         elif hasattr(err, 'write'):
             self.err = out
         else:
@@ -195,14 +196,17 @@ class RepulsiveFitting:
         from copy import copy
         if calc == None:
             c = copy(self.calc)
+            c.set('txt', self.calc.txt)
         else:
             c = copy(calc)
+            c.set('txt', calc.txt)
         c.set("charge",charge)
         atoms.set_calculator(c)
         try:
-            # FIXME make these output to file also
             atoms.get_potential_energy()
+            c.set('txt',"-")
         except Exception:
+            c.set('txt', "-")
             del(c)
             c = None
         return c
@@ -282,8 +286,9 @@ class RepulsiveFitting:
         if s == None:
             # from documentation of splrep in scipy.interpolate.fitpack
             s = len(x) - nu.sqrt(2*len(x))
-        print "Fitting smoothing spline with parameters"
-        print "k=%i, s=%0.4f, r_cut=%0.4f\n" %(k, s, r_cut)
+        print ""
+        print "  Fitting smoothing spline with parameters"
+        print "  k=%i, s=%0.4f, r_cut=%0.4f\n" %(k, s, r_cut)
         tck = splrep(x, y, w, s=s, k=k)
 
         def dv_rep(r):
@@ -392,11 +397,11 @@ class RepulsiveFitting:
         calc.rep.get_repulsive_forces()
         """
         raise NotImplementedError('No idea if this works, check!')
-        
+
         n=len(atoms)
         forces=nu.empty((n,3))
         els=atoms.get_chemical_symbols()
-        
+
         for i in range(n):
             for j in range(i,n):
                 if (els[i],els[j]) is (self.elm1,self.elm2) or \
@@ -491,12 +496,7 @@ class RepulsiveFitting:
             calc = self.calc
         if color == None:
             color = self.get_color()
-#        if 'traj' in dft_traj:
-#            self.structures.append({'filename':dft_traj, 'charge':charge,
-#                       'mixing_constant':calc.get('mixing_constant'),
-#                       'mixer_memory':calc.get('mixer_memory'),
-#                       'maxiter':calc.get('maxiter'),'SCC':calc.get('SCC'),
-#                       'width':calc.get('width')})
+        print "  Appending energy curve data from %s..." % dft_traj
         traj = PickleTrajectory(dft_traj)
         R, E_dft, N = self.process_trajectory(traj, self.sym1, self.sym2, separating_distance, h)
         E_bs = nu.zeros(len(E_dft))
@@ -505,10 +505,15 @@ class RepulsiveFitting:
             atoms=copy(traj[i])
             calc_new = self.solve_ground_state(atoms, charge, calc)
             if calc_new == None:
-                print >> self.err, "No data from %s frame %i" % (label, i)
+                print "    *** Error: No data from frame %i ***" % i
+                print >> self.err, "No data from %s frame %i" % (dft_traj, i)
             else:
                 E_bs[i] = calc_new.get_potential_energy(atoms)
                 usable_frames.append(i)
+                calc_new.timer.summary()
+                calc_new.set_text("-")
+                del(calc_new)
+                print "    Collected data from frame %i" % i
         traj.close()
         # use only frames where DFTB-calculation converged
         R = R[usable_frames]
@@ -613,7 +618,7 @@ class RepulsiveFitting:
         return nu.average(R[:N]), N
 
 
-    def append_homogeneous_structure(self, filename, charge=0, color=None, sigma=1.0, label='homogeneous structure', comment=None, cut_radius=3, h=0.005, calc=None):
+    def append_homogeneous_structure(self, filename, charge=0, color=None, sigma=1.0, label='homogeneous structure', comment=None, cut_radius=3, h=0.005, calc=None, traj_indices=None):
         """
         For a given structure, calculate points {r, V'_rep(r)} so that
         the residual forces are minimized (F_i = \sum_j(dV(|r_ij|)/dR)).
@@ -628,38 +633,33 @@ class RepulsiveFitting:
                       into account.
         h:            the variation in the bond lengths that are still
                       considered to be equal.
+        traj_indices: A list of indices of the frames that is read from
+                      the trajectory.
         """
-        #raise NotImplementedError("Not tested adequately")
         points = []
         if calc == None:
             calc = self.calc
-#        if 'traj' in filename:
-#            self.structures.append({'filename':filename, 'charge':charge,
-#                       'mixing_constant':calc.get('mixing_constant'),
-#                       'mixer_memory':calc.get('mixer_memory'),
-#                       'maxiter':calc.get('maxiter'),'SCC':calc.get('SCC'),
-#                       'width':calc.get('width')})
-        structures = self.import_structures(filename)
-        for ind, structure in enumerate(structures):
-            N = len(structure)
+        structures, traj_indices = self.import_structures(filename, traj_indices)
+        print "\n  Appending homogeneous structure from %s..." % filename
+        for ind, (fr, structure) in enumerate(zip(traj_indices, structures)):
+            print "  frame %i" % fr
             epsilon, distances, mask=self.get_matrices(structure, cut_radius, h)
-            # epsilon = epsilon*mask
-            r_hat = nu.zeros((N,N,3))
-            for i in range(N):
-                for j in range(N):
-                    if not i == j:
-                        vec = structure.positions[j] -structure.positions[i]
-                        norm = nu.linalg.norm(vec)
-                        r_hat[i,j] = vec/norm
+            if len(distances) == 0:
+                raise RuntimeError("There are no bonds under given cut radius in frame %i." & fr)
+            r_hat = self.construct_rhat_matrix(structure)
+
             # if the given structure contains forces, use them, otherwise
             # assume that the structure is optimized
+            N = len(structure)
             try:
                 forces_DFT = structure.get_forces()
+                print "    Found forces from trajectory %s at frame %i" % (filename, fr)
             except:
                 forces_DFT = nu.zeros((N,3))
+                print "    No forces in trajectory %s at frame %i" % (filename, fr)
             calc_new = self.solve_ground_state(structure, charge=charge, calc=calc)
             if calc_new == None:
-                print >> self.err, "No data from %s frame %i" % (label, ind)
+                print >> self.err, "    No data from %s frame %i" % (label, fr)
             else:
                 forces = calc_new.get_forces(structure)
                 forces_res = forces_DFT - forces
@@ -681,7 +681,9 @@ class RepulsiveFitting:
                         res += nu.dot(f,f)
                     return res
 
+                print "    Found %i different bond lengths." % len(v_rep_points)
                 v_rep_points, last_res_forces, minimized = self.find_forces(residual_forces, v_rep_points)
+                print "    The sum of the squared norms of the net forces: %0.4f (eV/ang)**2" % (last_res_forces)
                 # finally add the missing component
                 v_rep_points = list(v_rep_points)
                 v_rep_points.insert(0,0)
@@ -693,7 +695,7 @@ class RepulsiveFitting:
                                 # may be different number of different bonds
                                 points.append([distances[epsilon[i,j]], v_rep_points[epsilon[i,j]], last_res_forces])
                 else:
-                    print "The minimization of forces did not converge!"
+                    print "    The minimization of forces did not converge!"
         if len(points) > 0:
             points = nu.array(points)
             sigmas = points[:,2] + nu.min(points[:,2])*0.001 # add small value to prevent 1/sigma to go infinity
@@ -706,6 +708,18 @@ class RepulsiveFitting:
                 self.append_point([data[0], data[1], 1/data[2], color, label], comment=None)
                 label = '_nolegend_'
             self.add_fitting_comment(comment)
+
+
+    def construct_rhat_matrix(self, structure):
+        N = len(structure)
+        r_hat = nu.zeros((N,N,3))
+        for i in range(N):
+            for j in range(N):
+                if not i == j:
+                    vec = structure.positions[j] -structure.positions[i]
+                    norm = nu.linalg.norm(vec)
+                    r_hat[i,j] = vec/norm
+        return r_hat
 
 
     def get_matrices(self, structure, cut_radius, h):
@@ -761,11 +775,9 @@ class RepulsiveFitting:
         last_res_forces = 0
         N = len(v_rep_points)
         while True:
-            print "Found %i different bond lengths." % N
-            ret = fmin(function, v_rep_points, full_output=1)
+            ret = fmin(function, v_rep_points, full_output=1, disp=0)
             v_rep_points = ret[0]
             forces = ret[1]
-            print "The sum of the squared norms of the net forces: %0.4f" % (forces)
             if ret[4] == 0 and nu.abs(forces-last_res_forces) < 0.001:
                 return v_rep_points, forces, True
             last_res_forces = ret[1]
@@ -868,9 +880,10 @@ class RepulsiveFitting:
             structure = read(filename)
             structure.center(vacuum=6)
             structures.append(structure)
+            traj_indices = [0]
         else:
             raise Exception("Unknown file format: %s" % structure)
-        return structures
+        return structures, traj_indices
 
 
     def get_color(self):
