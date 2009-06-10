@@ -38,6 +38,7 @@ class MultipleSplineFunction:
         self.initialized=False
         self.m=0
         
+        
     def add_function(self,y,label='',index=0):
         """ Add function on the same x-grid. 
         
@@ -50,11 +51,14 @@ class MultipleSplineFunction:
         self.indices.append(index)
         self.m+=1
         
+        
     def get_labels(self):
         return self.labels   
+        
              
     def get_indices(self):
         return self.indices             
+        
         
     def _initialize(self):
         """ Calculate second derivatives for all the functions. """            
@@ -84,9 +88,11 @@ class MultipleSplineFunction:
             self.d2.append(d2)
         self.d2=nu.array(self.d2)
         self.y=nu.array(self.y)            
+    
                     
     def get_range(self):    
         return self.x[0],self.x[-1]
+    
         
     def _find_bin_fast(self,x):
         """ For given x, return i such that x_i<=x<x_i+1 
@@ -94,6 +100,7 @@ class MultipleSplineFunction:
         """
         lo=int( (x-self.xmin)/(self.xmax-self.xmin)*(self.n-1) )
         return lo,lo+1
+    
     
     def _find_bin(self,x):
         """ For given x, return i and i+1 such that x_i<=x<x_i+1 """

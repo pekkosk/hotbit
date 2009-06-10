@@ -3,7 +3,7 @@
 
 from scipy.linalg import eig
 import numpy as nu
-from hotbit.fortran.eigensolver import geig
+from hotbit.fortran.eigensolver import geig, geigc
 from numpy.linalg import solve
 from box.buildmixer import BuildMixer
 from weakref import proxy
@@ -14,17 +14,17 @@ class Solver:
         self.maxiter=calc.get('maxiter')
         self.mixer=BuildMixer(calc.mixer)
         self.SCC=calc.get('SCC')
-        self.norb=len(self.calc.el)
+        self.norb=self.calc.el.norb
         self.iterations=None
         self.iter_history=[]
 
     def __del__(self):
         pass
 
-    def set_matrices(self,H,S):
-        """ Set the non-SCC DFTB matrices """
-        self.H,self.S=H,S
-        self.norb=len(self.H[:,0])
+#    def set_matrices(self,H,S):
+#        """ Set the non-SCC DFTB matrices """
+#        self.H, self.S = H,S
+#        self.norb=len(self.H[0,:,0])
 
     def get_nr_iterations(self):
         return self.iterations
@@ -66,25 +66,33 @@ class Solver:
             #mixer.final_echo()
         #return st.e,st.wf
 
+
     def get_states(self,calc,dq,H0,S,count):
         """ Solve the (non)SCC generalized eigenvalue problem. """
         st = calc.st
         es = st.es
-        self.norb=len(self.calc.el)
         mixer = self.mixer
         mixer.reset()
         #from box.convergence_plotter import ConvergencePlotter
         #convergence_plotter = ConvergencePlotter(self.calc)
         #convergence_plotter.draw(dq)
+        e=nu.zeros((st.nk,self.norb))
+        wf=nu.zeros((st.nk,self.norb,self.norb))
         for i in range(self.maxiter):
-            if self.SCC:
-                H=H0 + es.construct_h1(dq)*S
-            else:
-                H=H0
-            e,wf=self.diagonalize(H,S)
+            # diagonalize for all k-points at once
+            for ik in range(st.nk):
+#                if self.SCC:
+#                    raise NotImplementedError
+#                    H=H0 + es.construct_h1(dq)*S
+#                else:
+                H=H0[ik,:,:]
+                e[ik,:], wf[ik,:,:] = self.diagonalize(H,S[ik,:,:])
+                # self.H, self.S=H,S
             st.update(e,wf)
             if not self.SCC:
                 break
+            
+            raise NotImplementedError
             dq_out=st.get_dq()
             done,dq=mixer(dq,dq_out)
             #convergence_plotter.draw(dq)
@@ -105,15 +113,16 @@ class Solver:
             mixer.final_echo(self.calc.get_output())
         return st.e,st.wf
 
+
     def diagonalize(self,H,S):
         """ Solve the eigenstates. """
-        self.H,self.S=H,S
-        self.norb=len(self.H[:,0])
         self.calc.start_timing('eigensolver')
         if True:
             # via Fortran wrapper
-            e,wf=geig(self.H,self.S,self.norb)
+#            e,wf=geig(self.H,self.S,self.norb)
+            e, wf = geigc(H,S,self.norb)
         if False:
+            raise NotImplementedError('Not checked for complex stuff')
             # using numpy lapack_lite
             e,wf=eig(self.H,self.S)
             e=e.real

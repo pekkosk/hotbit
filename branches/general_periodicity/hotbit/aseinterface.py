@@ -31,6 +31,7 @@ class Calculator(Output):
                       verbose=True,
                       charge=0.0,
                       SCC=True,
+                      kpts=(1,1,1),
                       maxiter=50,
                       gamma_cut=None,
                       txt=None,
@@ -65,6 +66,7 @@ class Calculator(Output):
         charge            total electric charge for system (-1 means an additional electron)
         width             width of Fermi occupation (in eV)
         SCC               Self-Consistent Charge calculation
+        kpts              number of k-points wrt different symmetries
         maxiter           Maximum number of self-consistent iterations (for SCC)
         gamma_cut         Range for Coulomb interaction
         txt               Filename for log-file (stdout = None)
@@ -81,6 +83,7 @@ class Calculator(Output):
                         'charge':charge,
                         'width':width/Hartree,
                         'SCC':SCC,
+                        'kpts':kpts,
                         'maxiter':maxiter,
                         'gamma_cut':gamma_cut,
                         'txt':txt,
@@ -239,8 +242,9 @@ class Calculator(Output):
         print>>self.txt,  'Nodename:',dat[1]
         print>>self.txt,  'Arch:',dat[4]
         print>>self.txt,  'Dir:',abspath(curdir)
-        print>>self.txt,  'System:',self.el.get_name()
+        print>>self.txt,  'System:',self.el.get_name()        
         print>>self.txt,  '       Charge=%4.1f' % self.charge
+        # TODO: change box and pbc-info here
         print>>self.txt,  '       Box: (Ang)', nu.array(self.el.get_box_lengths())*Bohr
         print>>self.txt,  '       PBC:',self.el.atoms.get_pbc()
         print>>self.txt,  '       Electronic temperature:', self.width*Hartree,'eV'
@@ -336,7 +340,39 @@ class Calculator(Output):
         fcoul=self.st.es.gamma_forces() #zero for non-SCC
         self.stop_timing('forces')
         return (fbs+frep+fcoul)*(Hartree/Bohr)
+    
+    
+    def get_DOS(self,width=0.1,window=None,npts=201):
+        '''
+        Return the full density of states, including k-points.
+        Zero is the Fermi-level.
+        
+        @param width:  Gaussian broadening, in eV
+        @param window: energy window 2-tuple, in eV
+        @param npts:   number of data points in output
+        '''
+        ef = self.st.e.flatten()
+        mn, mx = min(ef), max(ef)
+        if window is not None:
+            mn, mx = window
+            
+        x, y = [],[]
+        for a in range(self.el.norb):
+            for k in range(self.st.nk):
+                x.append(self.st.e[k,a])
+                y.append(self.st.wk[k])
+        x=nu.array(x)*Hartree
+        y=nu.array(y)*2 # 2 spin-degenerate states!
+        return mix.broaden(x, y, width=width, N=npts, a=mn, b=mx)
 
+
+    def get_band_energies(self,kpts):
+        '''
+        Return band energies for explicitly given list of k-points.
+        
+        @param kpts: list of k-points; e.g. kpts=[(0,0,0),(pi/2,0,0),(pi,0,0)]
+        '''
+        
 
     def get_stress(self,atoms):
         self.solve_ground_state(atoms)
@@ -384,7 +420,7 @@ class Calculator(Output):
 
     # some not implemented ASE-assumed methods
     def get_fermi_level(self):
-        return self.st.get_fermi_level() * Hartree
+        return self.st.occu.get_mu() * Hartree
 
 
     def set_atoms(self,atoms):

@@ -36,6 +36,9 @@ class LinearResponse:
         self.N=len(self.el)
         if self.calc.get('SCC')==False:
             raise AssertionError('SCC should be True. (Otherwise, just plot DOS)')
+        atoms=calc.get_atoms()
+        if atoms.pbc.any():
+            raise AssertionError('No linear response for extended, periodic systems!')
         
         #if abs(nu.mod(self.nel,2))>1E-2:
             #raise RuntimeError('Linear response only for closed shell systems! (even number of electrons)')

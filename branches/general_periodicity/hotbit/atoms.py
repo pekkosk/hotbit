@@ -37,10 +37,26 @@ class BravaisAtoms(ase_Atoms):
         
         
     def __eq__(self,other):
-        if (self.positions-other.positions<1E-13).all():
-            return True
+        if isinstance(other,BravaisAtoms):
+            # More strict comparison for BravaisAtoms
+            # TODO: check additional stuff for other generalized classes
+            # (angles, torsions ...)
+            if (self.positions-other.positions<1E-13).all() and \
+               (self.pbc==other.pbc).all() and \
+               self.get_chemical_symbols()==other.get_chemical_symbols() and \
+               (self.cell==other.cell).all():
+                return True
+            else:
+                return False
         else:
-            return False
+            # other is probably normal ase.Atoms; more loose check
+            if (self.positions-other.positions<1E-13).all() and \
+               (self.pbc==other.pbc).all() and \
+               self.get_chemical_symbols()==other.get_chemical_symbols() and \
+               (self.cell==other.cell).all():
+                return True
+            else:
+                return False
            
         
 #    def get_number_of_cells(self):

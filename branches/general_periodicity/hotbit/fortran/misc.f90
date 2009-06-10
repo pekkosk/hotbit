@@ -65,6 +65,8 @@ end do
 end subroutine fortran_rhoe0
 
 
+
+
 ! return density matrix
 subroutine fortran_rho(wf,occ,norb,rho)
 implicit none
@@ -91,6 +93,43 @@ do j=i,norb-1
 end do
 end do
 end subroutine fortran_rho
+
+
+
+! return complex density matrix
+subroutine fortran_rhoc(wf,occ,norb,nk,rho)
+implicit none
+integer,    intent(in) :: norb,nk
+complex(8), intent(in)  :: wf(0:nk-1,0:norb-1,0:norb-1)
+real(8),    intent(in)  :: occ(0:nk-1,0:norb-1)
+complex(8), intent(out) :: rho(0:nk-1,0:norb-1,0:norb-1)
+integer :: i,j,k,mx
+complex(8) :: wft(0:norb-1,0:norb-1)
+
+rho=0d0
+
+
+
+first: do i=norb-1,0,-1
+    do k=0,nk-1
+    if( occ(k,i)>1E-15 ) then
+        mx=i
+        exit first
+    end if
+    end do
+end do first
+
+do k=0,nk-1
+   ! because the first index must be faster:
+   wft=transpose(wf(k,:,:))
+   do i=0,norb-1
+   do j=i,norb-1
+       rho(k,i,j)=sum( occ(k,0:mx)*wft(0:mx,i)*conjg(wft(0:mx,j)) )
+       rho(k,j,i)=conjg(rho(k,i,j))
+   end do
+   end do
+end do
+end subroutine fortran_rhoc
 
 
 ! return density matrix weighted by energies
