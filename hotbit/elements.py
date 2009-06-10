@@ -64,10 +64,10 @@ class Elements:
 
     def init2(self):
         # TODO: these have to be divided into subroutines
-        self.nranges=[(-1,1),(-1,1),(-1,1)]
+        #self.nranges=[(-3,3),(-3,3),(-3,3)]
 #        self.nranges=[(0,0),(0,0),(0,0)]
-        self.nlists= [range(n[0],n[1]+1) for n in self.nranges]
-        self.M=[len(l) for l in self.nlists]
+        #self.nlists= [range(n[0],n[1]+1) for n in self.nranges]
+        #self.M=[len(l) for l in self.nlists]
 #        self.ntuples=[] # n-tuples
 #        for n1 in self.nlists[0]:
 #            for n2 in self.nlists[1]:
@@ -77,8 +77,8 @@ class Elements:
         self.ntuples=[] # n-tuples
         rang=[]
         for i in range(3):
-            if self.atoms.pbc[0]:
-                rang.append([0,1,-1])
+            if self.atoms.pbc[i]:
+                rang.append([0,1,-1,2,-2,3,-3])
             else:
                 rang.append([0])
             
@@ -177,6 +177,7 @@ class Elements:
                 self.elements[symb]=self.files[symb]
 
         self.orb=[]
+        self.pbc = self.atoms.pbc.copy()
         # index: the number of the orbital
         # atomindex: the number of the orbital on the atom
         # atom: the number of atom the orbital is centered on
@@ -251,6 +252,8 @@ class Elements:
         # setup a table which orbitals are interacting
         self.ia_orbitals=nu.zeros((self.norb,self.norb),int)
         self.nr_ia_orbitals=nu.zeros((self.norb,),int)
+#        lst = self.get_property_lists([')
+        
         for oi, oj, noj in self.get_ia_atom_pairs(['oi','oj','noj']):
             # all orbitals oi and oj interact with each other
             for orbi in oi:
@@ -572,3 +575,17 @@ class Elements:
         n_el = self.get_valences()[i_element]
         atomindex = orb['atomindex'] # atomindex states before this
         return max(0, min(2, n_el - 2*atomindex))
+    
+#    def get_efree(self):
+#        # TODO this one
+#        """ Return the energies of the isolated atoms."""
+#        e=0.0
+#        for i,symb in enumerate(self.symbols):
+#            el = self.elements(s)
+#            e += el.
+            
+            
+#        
+#        e=0.0
+#        for i in range(self.norb):
+#            e += self.get_free_population(i)*

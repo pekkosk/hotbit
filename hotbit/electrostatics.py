@@ -100,6 +100,7 @@ class Electrostatics:
                 Rjin = self.calc.el.Rn[i,:,:] - self.calc.el.Rn[j,0,:]
                 for n,(rij,rji) in enumerate(zip(Rijn,Rjin)):
                     # gamma function sum 
+                    # TODO: this is the _one and only_ place where Ewald summations etc. can enter
                     dij = norm(rij)
                     G[i,j] = G[i,j] + g(si,sj,dij)
                     
