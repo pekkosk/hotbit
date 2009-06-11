@@ -8,9 +8,11 @@ from hotbit.fortran.misc import fortran_rho
 from hotbit.fortran.misc import fortran_rho0
 from hotbit.fortran.misc import fortran_rhoe0
 from hotbit.fortran.misc import fortran_rhoc
+from hotbit.fortran.misc import fortran_rhoec
 from hotbit.fortran.misc import symmetric_matmul
 from hotbit.fortran.misc import matmul_diagonal
 from hotbit.fortran.misc import fortran_fbs
+from hotbit.fortran.misc import fortran_fbsc
 import numpy as nu
 pi=nu.pi
 from weakref import proxy
@@ -57,6 +59,7 @@ class States:
             self.wk=nu.ones(self.nk)/self.nk
             self.kl=None
             
+        assert sum(self.wk)-1.0<1E-13
         pbc=self.calc.el.pbc
         for i in range(3):
             for k in self.k:
@@ -84,7 +87,9 @@ class States:
 
     def solve(self):
         self.calc.start_timing('solve')
-        self.calc.ia.check_too_close_distances() #TODO: move this from here to elements
+        # TODO: enable fixed dq-calculations in SCC (for band-structures)
+        # TODO: move this from here to elements
+        #self.calc.ia.check_too_close_distances() 
         dq=self.guess_dq()
         self.H0, self.S, self.dH0, self.dS = self.calc.ia.get_matrices()
 #        try:
@@ -127,6 +132,18 @@ class States:
         # TODO: rhoS etc...
 #        self.rho0=fortran_rho0(self.wf,self.f,self.calc.el.nr_ia_orbitals,self.calc.el.ia_orbitals,self.norb)
         self.rho = fortran_rhoc(self.wf,self.f,self.norb,self.nk)
+        
+        
+#        for ik in range(self.nk):
+#            norm=0.0
+#            a=3
+#            print nu.dot( nu.dot(self.wf[ik,:,:].transpose().conjugate(),self.S[ik,:,:]),self.wf[ik,:,:] )
+#            for p in range(self.norb):
+#                norm+=nu.dot(self.wf[ik,:,a].conjugate(),self.S[ik,:,p])*self.wf[ik,a,p]
+#            print 'norm',norm    
+#            rr = self.rho[ik,:,:]
+#            ss = self.S[ik,:,:]
+#            print 'trace',ik,2*(nu.trace(nu.dot(rr,ss)) + nu.trace(nu.dot(ss,rr))).real 
         self.calc.stop_timing('rho')
 #        self.rho0S_diagonal=matmul_diagonal(self.rho0,self.S,self.norb)
         if self.SCC:
@@ -153,6 +170,7 @@ class States:
         # density matrix weighted by eigenenergies
         # TODO: rhoe0 ...
 #        self.rhoe0=fortran_rhoe0(self.wf,self.f,self.e,self.calc.el.nr_ia_orbitals,self.calc.el.ia_orbitals,self.norb)
+        self.rhoe=fortran_rhoec(self.wf,self.f,self.e,self.norb,self.nk)
         self.calc.stop_timing('final update')
 
     def get_dq(self):
@@ -217,17 +235,24 @@ class States:
         for ik in range(self.nk):
             ebs += self.wk[ik] * nu.trace(nu.dot(self.rho[ik],self.H0[ik]))
         assert ebs.imag<1E-13
+        
+#        eb2=0.0
+#        for ik in range(self.nk):
+#            for a in range(self.norb):
+#                eb2+=self.e[ik,a]*self.wk[ik]*self.f[ik,a]
+#        print 'ebs,eb2',ebs,eb2
+#        
+#        
         return ebs.real 
 
 
     def band_structure_forces(self):
-        """ Return forces arising from band structure. """
+        """ Return forces from band structure. """
         self.calc.start_timing('f_bs')
-
         norbs=self.calc.el.nr_orbitals
         inds=self.calc.el.atom_orb_indices2
-
-        f=fortran_fbs(self.rho0,self.rhoe0,self.dH,self.dS,norbs,inds,self.norb,self.nat)
+        
+        f=fortran_fbsc(self.rho,self.rhoe,self.dH,self.dS,norbs,inds,self.wk,self.norb,self.nat,self.nk)
         self.calc.stop_timing('f_bs')
-        return -2*nu.real(f)
+        return f
 

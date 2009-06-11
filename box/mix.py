@@ -224,7 +224,7 @@ def lorenzian(x,mean,width):
     """ Return normalized Lorenzian with given mean and broadening. """
     return (width/nu.pi)/((x-mean)**2+width**2)
 
-def broaden(x,y=None,width=0.05,function='gaussian',extend=True,N=200,a=None,b=None):
+def broaden(x,y=None,width=0.05,function='gaussian',extend=False,N=200,a=None,b=None):
     """ 
     Broaden a peaked distribution (DOS,optical spectra,...).
     
@@ -241,14 +241,9 @@ def broaden(x,y=None,width=0.05,function='gaussian',extend=True,N=200,a=None,b=N
     
     return: xgrid, broadened distribution
     """
-    if function=='gaussian':
-        f=gauss_fct
-        param={'mean':0.0,'sigma':width}
-    elif function=='lorenzian':
-        f=lorenzian
-        param={'mean':0.0,'width':width}          
-    else:            
-        raise NotImplementedError('function %s not implemented.' %function)
+    if function=='lorenzian':
+        raise NotImplementedError('Only Gaussian works now for efficiency reasons')
+    
     if y==None:
         y=nu.ones_like(x)
     dx=[0.0,4*width][extend]
@@ -260,11 +255,13 @@ def broaden(x,y=None,width=0.05,function='gaussian',extend=True,N=200,a=None,b=N
         mx=max(x)+dx
     else:
         mx=b
-    xgrid=nu.linspace(mn,mx,N)
-    ybroad=nu.zeros((N,))
-    for ig,xg in enumerate(xgrid):
-        ybroad[ig]=sum( [yi*f(xi-xg,**param) for xi,yi in zip(x,y)] )
-    return xgrid,ybroad
+        
+    xgrid = nu.linspace(mn,mx,N)
+    ybroad= nu.zeros_like(xgrid)
+    for xi,yi in zip(x,y):
+        h = yi*nu.exp( -(xgrid-xi)**2/(2*width**2) ) / (nu.sqrt(2*nu.pi)*width)
+        ybroad = ybroad + h
+    return xgrid, ybroad 
     
 
 def grid(min,max,N):

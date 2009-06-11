@@ -316,8 +316,8 @@ class Calculator(Output):
         if nu.any(pbc) and abs(self.get('charge'))>0.0:
             raise AssertionError('Charged system cannot be periodic.')
         self.flush()
-        self.stop_timing('initialization')
         self.el.update_geometry()
+        self.stop_timing('initialization')
 
 
     def get_potential_energy(self,atoms):
@@ -345,25 +345,30 @@ class Calculator(Output):
     def get_DOS(self,width=0.1,window=None,npts=201):
         '''
         Return the full density of states, including k-points.
-        Zero is the Fermi-level.
+        Zero is the Fermi-level; spin-degeneracy is not counted.
         
         @param width:  Gaussian broadening, in eV
         @param window: energy window 2-tuple, in eV
         @param npts:   number of data points in output
         '''
-        ef = self.st.e.flatten()
-        mn, mx = min(ef), max(ef)
+        self.start_timing('DOS')
+        e = self.st.e.copy()*Hartree - self.get_fermi_level()
+        flat = e.flatten()
+        mn, mx = flat.min(), flat.max()
         if window is not None:
             mn, mx = window
             
         x, y = [],[]
         for a in range(self.el.norb):
-            for k in range(self.st.nk):
-                x.append(self.st.e[k,a])
-                y.append(self.st.wk[k])
-        x=nu.array(x)*Hartree
-        y=nu.array(y)*2 # 2 spin-degenerate states!
-        return mix.broaden(x, y, width=width, N=npts, a=mn, b=mx)
+            x = nu.concatenate( (x,e[:,a]) )
+            y = nu.concatenate( (y,self.st.wk) )
+        x=nu.array(x) 
+        y=nu.array(y) 
+        self.start_timing('broaden')
+        dos = mix.broaden(x, y, width=width, N=npts, a=mn, b=mx)
+        self.stop_timing('broaden')
+        self.stop_timing('DOS')
+        return dos
 
 
     def get_band_energies(self,kpts):

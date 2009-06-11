@@ -103,6 +103,8 @@ B2=B
 
 call ZHEGVD(1,'V','L',n,vec,n,B2,n,ev,work,lwork,rwork,lrwork,iwork,liwork,info)
 
+! normalized such that Z**H*B*Z = I (where eigenvectors Z=vec)
+
 if(info/=0) then
     write(*,*) "***********************************************************"
     write(*,*) "Parameter INFO from dsygvd:",info
