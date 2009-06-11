@@ -73,12 +73,12 @@ class Elements:
 #            for n2 in self.nlists[1]:
 #                for n3 in self.nlists[2]:
 #                    self.ntuples.append((n1,n2,n3))        
-
+        self.calc.start_timing('es.init2')
         self.ntuples=[] # n-tuples
         rang=[]
         for i in range(3):
             if self.atoms.pbc[i]:
-                rang.append([0,1,-1,2,-2,3,-3])
+                rang.append([0,1,-1,2,-2,3,-3,4,-4,5,-5])
             else:
                 rang.append([0])
             
@@ -94,11 +94,21 @@ class Elements:
             for n,nt in enumerate(self.ntuples):
                 self.Rn[i,n,:] = self.nvector(r=i,ntuple=nt)
                 self.Tn[i,n,:,:] = self.nvector(r=i,ntuple=nt,lst='dtensor')
-            
+        self.calc.stop_timing('es.init2')
+
 
     def get_transforms(self):
         return self.ntuples
+
        
+    def axis_rotation(self,n):
+        '''
+        Return the quantization axis rotation matrix for given symmetry operation.
+         
+        @param n: 3-tuple for transformation 
+        '''
+        return self.atoms.axis_rotation(n)
+        
     
     def nvector(self,r,ntuple=(0,0,0),r0=[0,0,0],lst='vec'):
         '''
@@ -225,41 +235,41 @@ class Elements:
         ri=position of i, o1i=index of first orbital, noi=number of orbitals, oi=orbital indices of i
         """
         self.calc.start_timing('geometry')
-        self.geometry={}
-        properties=['i','j','si','sj','r','dist','rhat','ri','rj','o1i','o1j','noi','noj','oi','oj']
-        self.ia_pairs={}
-        for property in properties:
-            self.ia_pairs[property]=[]
-        self.cut=self.calc.ia.get_cutoffs()
+        #self.geometry={}
+        #properties=['i','j','si','sj','r','dist','rhat','ri','rj','o1i','o1j','noi','noj','oi','oj']
+        #self.ia_pairs={}
+        #for property in properties:
+        #    self.ia_pairs[property]=[]
+        #self.cut=self.calc.ia.get_cutoffs()
 
-        for i in range(self.N):
-            for j in range(i,self.N):
-                dist=self.distance(i,j)
-                r=self.vector(i,j)
-                rhat=r/dist
-                self.geometry[(i,j)]={'dist':dist,'r':r,'rhat':rhat}
-                if i!=j:
-                    self.geometry[(j,i)]={'dist':dist,'r':-r,'rhat':-rhat}
-                si, sj=self.symbols[i], self.symbols[j]
-                if dist<=self.cut[si+sj]:
-                    ri, rj=self.vector(i), self.vector(j)
-                    o1i, o1j=self.first_orbitals[i], self.first_orbitals[j]
-                    noi, noj=self.nr_orbitals[i], self.nr_orbitals[j]
-                    oi, oj=self.atom_orb_indices[i], self.atom_orb_indices[j]
-                    for key,value in zip(properties,[i,j,si,sj,r,dist,rhat,ri,rj,o1i,o1j,noi,noj,oi,oj]):
-                        self.ia_pairs[key].append(value)
+#        for i in range(self.N):
+#            for j in range(i,self.N):
+#                dist=self.distance(i,j)
+#                r=self.vector(i,j)
+#                rhat=r/dist
+#                self.geometry[(i,j)]={'dist':dist,'r':r,'rhat':rhat}
+#                if i!=j:
+#                    self.geometry[(j,i)]={'dist':dist,'r':-r,'rhat':-rhat}
+#                si, sj=self.symbols[i], self.symbols[j]
+#                if dist<=self.cut[si+sj]:
+#                    ri, rj=self.vector(i), self.vector(j)
+#                    o1i, o1j=self.first_orbitals[i], self.first_orbitals[j]
+#                    noi, noj=self.nr_orbitals[i], self.nr_orbitals[j]
+#                    oi, oj=self.atom_orb_indices[i], self.atom_orb_indices[j]
+#                    for key,value in zip(properties,[i,j,si,sj,r,dist,rhat,ri,rj,o1i,o1j,noi,noj,oi,oj]):
+#                        self.ia_pairs[key].append(value)
 
         # setup a table which orbitals are interacting
-        self.ia_orbitals=nu.zeros((self.norb,self.norb),int)
-        self.nr_ia_orbitals=nu.zeros((self.norb,),int)
+        #self.ia_orbitals=nu.zeros((self.norb,self.norb),int)
+        #self.nr_ia_orbitals=nu.zeros((self.norb,),int)
 #        lst = self.get_property_lists([')
         
-        for oi, oj, noj in self.get_ia_atom_pairs(['oi','oj','noj']):
-            # all orbitals oi and oj interact with each other
-            for orbi in oi:
-                ni=self.nr_ia_orbitals[orbi]
-                self.ia_orbitals[orbi,ni:ni+noj]=oj
-                self.nr_ia_orbitals[orbi]+=noj
+#        for oi, oj, noj in self.get_ia_atom_pairs(['oi','oj','noj']):
+#            # all orbitals oi and oj interact with each other
+#            for orbi in oi:
+#                ni=self.nr_ia_orbitals[orbi]
+#                self.ia_orbitals[orbi,ni:ni+noj]=oj
+#                self.nr_ia_orbitals[orbi]+=noj
         self.calc.stop_timing('geometry')
 
 
@@ -422,6 +432,7 @@ class Elements:
         """
         Lengths of the unit cell axes (currently for orthorhombic cell).
         """
+        # TODO: get rid of this 
         x,y,z = self.atoms.get_cell()
         assert (nu.dot(x,y) == 0 and nu.dot(x,z) == 0 and nu.dot(y,z) == 0)
         return nu.diag(self.atoms.get_cell()) / Bohr

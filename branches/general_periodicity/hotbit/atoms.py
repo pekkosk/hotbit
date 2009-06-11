@@ -34,6 +34,15 @@ class BravaisAtoms(ase_Atoms):
         @param n:
         '''
         return nu.eye(3)
+    
+    
+    def axis_rotation(self,n):
+        '''
+        Return the rotation matrix for given symmetry operation.
+        
+        @param n: 3-tuple
+        '''
+        return nu.eye(3)       
         
         
     def __eq__(self,other):

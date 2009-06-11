@@ -77,7 +77,7 @@ class Solver:
         #convergence_plotter = ConvergencePlotter(self.calc)
         #convergence_plotter.draw(dq)
         e=nu.zeros((st.nk,self.norb))
-        wf=nu.zeros((st.nk,self.norb,self.norb))
+        wf=nu.zeros((st.nk,self.norb,self.norb),complex)
         for i in range(self.maxiter):
             # diagonalize for all k-points at once
             for ik in range(st.nk):

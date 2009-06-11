@@ -275,6 +275,13 @@ class Interactions:
                         ht, st, dht, dst = fast_slako_transformations(rijh,dij,noi,noj,h,s,dh,ds)
                         a, b, c, d = o1i, o1i+noi, o1j, o1j+noj
                         
+                        # Here we do the MEL transformation
+#                        R = self.el.axis_rotation(nt)
+#                        Rh = nu.zeros((4,4))
+#                        Rh[1:,1:] = R
+#                        Rh[0,0] = 1
+#                        ht = nu.dot( Rh,ht )
+                        
                         for ik,k in enumerate(states.k):
                             # ht, st,... are real; phase determines the phase
                             phase = nu.exp(1j*nu.dot(nt,k))                      
@@ -305,7 +312,7 @@ class Interactions:
     def get_matrices(self):
         self.construct_matrices()
         return self.H0, self.S, self.dH0, self.dS
-#        return self.H0[0,:,:], self.S[0,:,:], self.dH0[0,:,:], self.dS[0,:,:]
+        
 
     def get_cut(self):
         """ Maximum cutoff. """
