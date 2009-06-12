@@ -316,7 +316,7 @@ class Calculator(Output):
         if nu.any(pbc) and abs(self.get('charge'))>0.0:
             raise AssertionError('Charged system cannot be periodic.')
         self.flush()
-        self.el.update_geometry()
+        #self.el.update_geometry()
         self.stop_timing('initialization')
 
 
@@ -328,7 +328,7 @@ class Calculator(Output):
         ecoul=self.get_coulomb_energy(atoms)
         erep=self.rep.get_repulsive_energy()
         self.stop_timing('energies')
-        return ebs+ecoul+erep
+        return erep+ebs+ecoul
 
 
     def get_forces(self,atoms):
@@ -340,6 +340,7 @@ class Calculator(Output):
         fcoul=self.st.es.gamma_forces() #zero for non-SCC
         self.stop_timing('forces')
         return (fbs+frep+fcoul)*(Hartree/Bohr)
+#        return frep*(Hartree/Bohr)
     
     
     def get_DOS(self,width=0.1,window=None,npts=201):
@@ -428,13 +429,13 @@ class Calculator(Output):
         return self.st.occu.get_mu() * Hartree
 
 
-    def set_atoms(self,atoms):
-        """ Initialize the calculator for given atomic system. """
-        if self.init==True and atoms.get_chemical_symbols()!=self.el.atoms.get_chemical_symbols():
-            raise RuntimeError('Calculator initialized for %s. Create new calculator for %s.'
-                               %(self.el.get_name(),mix.parse_name_for_atoms(atoms)))
-        else:
-            self._initialize(atoms)
+#    def set_atoms(self,atoms):
+#        """ Initialize the calculator for given atomic system. """
+#        if self.init==True and atoms.get_chemical_symbols()!=self.el.atoms.get_chemical_symbols():
+#            raise RuntimeError('Calculator initialized for %s. Create new calculator for %s.'
+#                               %(self.el.get_name(),mix.parse_name_for_atoms(atoms)))
+#        else:
+#            self._initialize(atoms)
 
 
     def get_occupation_numbers(self,kpt=0,spin=0):

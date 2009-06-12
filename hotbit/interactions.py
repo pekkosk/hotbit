@@ -276,11 +276,17 @@ class Interactions:
                         a, b, c, d = o1i, o1i+noi, o1j, o1j+noj
                         
                         # Here we do the MEL transformation
-#                        R = self.el.axis_rotation(nt)
+#                        R = self.calc.el.axis_rotation(nt)
 #                        Rh = nu.zeros((4,4))
 #                        Rh[1:,1:] = R
 #                        Rh[0,0] = 1
-#                        ht = nu.dot( Rh,ht )
+#                        print 'before\n',ht
+#                        ht = nu.dot( ht,Rh )
+#                        st = nu.dot( st,Rh )
+#                        for l in range(3):
+#                            dht[:,:,l] = nu.dot( dht[:,:,l],Rh )
+#                            dst[:,:,l] = nu.dot( dst[:,:,l],Rh )
+#                        print nt[0],'after\n',ht
                         
                         for ik,k in enumerate(states.k):
                             # ht, st,... are real; phase determines the phase
@@ -314,9 +320,10 @@ class Interactions:
         return self.H0, self.S, self.dH0, self.dS
         
 
-    def get_cut(self):
+    def get_cutoff(self):
         """ Maximum cutoff. """
         return self.max_cut
+
 
 def simple_table_notation(table):
     a,b,i=table[2:].split('-')

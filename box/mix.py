@@ -11,6 +11,33 @@
 '''
 import numpy as nu
 import time
+from math import atan,pi
+
+
+def phival(x,y):
+    """ Return azimuthal angle for ALL x,y. """
+    e=1E-16
+    if x>e and y>e:
+        return atan(y/x)
+    elif x<-e and y>e:
+        return atan(y/x) + pi
+    elif x<-e and y<-e:
+        return atan(y/x) + pi
+    elif x>e and y<-e:
+        return atan(y/x)+2*pi
+    elif abs(x)<=e and abs(y)<=e:
+        return 0.0
+    elif x>e and abs(y)<=e:
+        return 0.0
+    elif y>e and abs(x)<=e:
+        return pi/2
+    elif x<-e and abs(y)<=e:
+        return pi
+    elif y<-e and abs(x)<=e:
+        return 3*pi/2
+    else:
+        raise RuntimeError('Strange things in phival')
+
 
 def kronecker(i,j):
     if i==j:
