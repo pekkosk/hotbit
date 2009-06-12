@@ -265,7 +265,7 @@ integer, intent(in) :: norbs(0:nat-1)
 integer, intent(in) :: indices(0:nat-1,0:8)
 real(8), intent(in) :: wk(0:nk-1)
 real(8), intent(out) :: f(0:nat-1,0:2)
-real(8) :: diff(0:norb-1)
+complex(8) :: diff(0:norb-1)
 integer :: a,i,noi,ik
 complex(8) :: f2(0:nat-1,0:2)
 
@@ -283,5 +283,5 @@ do ik=0,nk-1
       end do
   end do
 end do
-f = -2*real(f2)
+f = 2*real(f2)
 end subroutine fortran_fbsc             

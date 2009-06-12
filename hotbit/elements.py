@@ -9,6 +9,7 @@ from os import environ
 from weakref import proxy
 
 from atoms import BravaisAtoms
+from atoms import WedgeAtoms
 
 
 
@@ -206,7 +207,7 @@ class Elements:
             if r[i,0]==-nu.Inf:
                 n.append(nu.Inf)
             else:
-                n.append( r[i,1]-r[i,0]+1 )
+                n.append( int(round(r[i,1]-r[i,0]+1)) )
         return n                     
 
 
@@ -219,9 +220,9 @@ class Elements:
         self.calc.start_timing('geometry')      
         self.ntuples=[] # n-tuples
         r = self.atoms.get_ranges()
-        
-        # determine ranges, if they go to infinity
-        Mlarge = 4
+
+        # determine ranges if they go to infinity
+        Mlarge = 4 # TODO: chek Mlarge to be large enough (see TODO below)
         ranges = []
         for i in range(3):
             assert r[i,0]<=r[i,1]
@@ -234,16 +235,16 @@ class Elements:
             ranges[-1].append(0)
             ranges[-1].reverse() # zero first
         
+        
         # select the symmetry operations where atoms still interact chemically
         cut = self.calc.ia.get_cutoff()
         for n1 in ranges[0]:
             for n2 in ranges[1]:
                 for n3 in ranges[2]:
-                    # Here check that any atoms interact with given tuple
+                    # TODO: Here check that any atoms interact with given tuple
                     
-                    # here construct self.Rn, self.Tn (index ordering must change)
+                    # TODO: here construct self.Rn, self.Tn (index ordering must change)
                     self.ntuples.append((n1,n2,n3))
-                    
                     
                     
         # TODO : select here only the atoms interacting chemically!!!!
@@ -252,8 +253,10 @@ class Elements:
         self.Tn = nu.zeros((self.N,len(self.ntuples),3,3))
         for i in range(self.N):
             for n,nt in enumerate(self.ntuples):
+                
                 self.Rn[i,n,:] = self.nvector(r=i,ntuple=nt)
                 self.Tn[i,n,:,:] = self.nvector(r=i,ntuple=nt,lst='dtensor')
+#                print 'atom',i,self.Rn[i,n,:]
         
         
         
@@ -318,15 +321,16 @@ class Elements:
 
     def set_atoms(self,atoms):
         """ Set the atoms object ready for calculations. """
-        # FIXME!!! HERE IMPORTANT
-        if type(atoms) == type(None) or True: #not atoms == self.atoms:
-#            self.atoms=Atoms(atoms)
-            if isinstance(atoms,Atoms):
-                self.atoms=BravaisAtoms(atoms)
-            else:
-                #            print '..',type(atoms)
+        # TODO: can this be done better?
+        if atoms!=self.atoms:
+            try:
+                # we have custom-made atoms
+                r = atoms.ranges
                 from copy import copy
                 self.atoms = copy(atoms)
+            except:
+                # we have original ase.Atoms; use BravaisAtoms
+                self.atoms=BravaisAtoms(atoms)
             self.update_geometry()
 
 
