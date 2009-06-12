@@ -14,6 +14,7 @@ from hotbit.fortran.misc import matmul_diagonal
 from hotbit.fortran.misc import fortran_fbs
 from hotbit.fortran.misc import fortran_fbsc
 import numpy as nu
+from box import mix
 pi=nu.pi
 from weakref import proxy
 
@@ -22,9 +23,7 @@ class States:
     def __init__(self,calc):
         self.es=Electrostatics(calc)
         self.solver=Solver(calc)
-        self.calc=proxy(calc)
-        width=calc.get('width')
-        
+        self.calc=proxy(calc)       
         self.nat=len(calc.el)
         self.norb=calc.el.get_nr_orbitals()
         self.prev_dq=[None,None]
@@ -32,8 +31,7 @@ class States:
         self.SCC=calc.get('SCC')
         self.rho=None
         self.rhoe0=None
-        self.nk, self.k, self.kl, self.wk = self.setup_k_sampling( calc.get('kpts') )
-        self.occu=Occupations(calc.el.get_number_of_electrons(),width,self.wk)
+        self.nk=None
         
        
     def setup_k_sampling(self,kpts,physical=True):
@@ -51,6 +49,7 @@ class States:
         if kpts!=(1,1,1) and self.calc.get('width')<1E-10:
             raise AssertionError('With k-point sampling width must be>0!')
             
+        M = self.calc.el.get_number_of_transformations()
         if isinstance(kpts,tuple):
             # set up equal-weighted and spaced k-point mesh
             if 0 in kpts:
@@ -58,9 +57,18 @@ class States:
             
             kl=[]
             for i in range(3):
-                spacing = 2*pi/kpts[i]
-                kl.append( nu.linspace(-pi+spacing/2,pi-spacing/2,kpts[i]) )
-            
+                if M[i]==nu.Inf:
+                    # arbitrary sampling is allowed
+                    spacing = 2*pi/kpts[i]
+                    kl.append( nu.linspace(-pi+spacing/2,pi-spacing/2,kpts[i]) )
+                else:
+                    # discrete, well-defined sampling 
+                    if (kpts[i]!=M[i] and physical) or ( kpts[i] not in mix.divisors(M[i]) ):
+                        print 'Allowed k-points for direction',i,'are',mix.divisors(M[i])
+                        raise Warning('Non-physical k-point sampling!')
+                    else:
+                        kl.append( nu.linspace(0,2*pi-2*pi/kpts[i],kpts[i]) )
+                
             k=[]    
             for a in range(kpts[0]):
                 for b in range(kpts[1]):
@@ -81,10 +89,6 @@ class States:
             for kp in k:
                 if kp[i]>1E-10 and not self.calc.el.pbc[i]:
                     raise AssertionError('Do not set (non-zero) k-points in non-periodic direction!')            
-                # TODO: 
-                # N = self.el.get_number_of_transformations()
-                # if Inf or not physical -> any
-                # elif finite -> discrete
         return nk, k, kl, wk
 
 
@@ -101,6 +105,10 @@ class States:
 
 
     def solve(self):
+        if self.nk==None:
+            self.nk, self.k, self.kl, self.wk = self.setup_k_sampling( self.calc.get('kpts') )
+            width=self.calc.get('width')
+            self.occu = Occupations(self.calc.el.get_number_of_electrons(),width,self.wk)
         self.calc.start_timing('solve')
         # TODO: enable fixed dq-calculations in SCC (for band-structures)
         # TODO: move this from here to elements
@@ -256,8 +264,6 @@ class States:
 #            for a in range(self.norb):
 #                eb2+=self.e[ik,a]*self.wk[ik]*self.f[ik,a]
 #        print 'ebs,eb2',ebs,eb2
-#        
-#        
         return ebs.real 
 
 

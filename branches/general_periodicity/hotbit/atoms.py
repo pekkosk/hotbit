@@ -11,12 +11,13 @@ class WedgeAtoms(ase_Atoms):
     
                
     def set(self,omega):
+        # TODO: disable set_pbc and set_cell
         self.omega=omega
         self.pbc=nu.array([True,False,False],bool)
         M1 = round(2*nu.pi/omega)
         if nu.abs(M1-2*nu.pi/omega)>1E-12 or omega>nu.pi:
             raise AssertionError('omega not 2*pi/M !')
-        self.M1=M1
+        self.M1=int(M1)
         i = M1/2
         if nu.mod(M1,2)==1:
             self.ranges = nu.array([[-i,i],[0,0],[0,0]],int)
@@ -35,11 +36,11 @@ class WedgeAtoms(ase_Atoms):
         '''
         Check that the symmetry operation is allowed.
         
-        @param n: 3-tuple
+        @param n: 3-tuple for transformation
         '''
         for i in range(3):
             if not self.ranges[i,0]<=n[i]<=self.ranges[i,1]:
-                raise AssertionError('Illegal symmetry operation')
+                raise AssertionError('Illegal symmetry operation: %i %i %i' %n)
         
     
     def transform(self,r,n):
@@ -50,7 +51,6 @@ class WedgeAtoms(ase_Atoms):
         @param n: 3-tuple for symmetry operations
         '''
         self._check(n)
-        # TODO: check than n belongs to allowed transformations
         rn=nu.zeros_like(r)
         x, y = r[0], r[1]
         rad = nu.sqrt(x**2+y**2)
@@ -211,5 +211,7 @@ if __name__=='__main__':
     print gy.vector(array([0,0,0]),n=(1,1,1),r0=[0,0,0],lst=['vec','hat','norm'])
     print gy.vector(array([0,0,0]),n=(1,1,1),lst='dtensor')
     print gy.vector(array([0,0,0]),n=(1,1,1),r0=[2,2,2],lst='vec')
+        
+        
         
     

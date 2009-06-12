@@ -288,27 +288,51 @@ class Interactions:
 #                            dst[:,:,l] = nu.dot( dst[:,:,l],Rh )
 #                        print nt[0],'after\n',ht
                         
+#                        dht, dst = -dht, -dst
+                        #dst=dst*0
                         for ik,k in enumerate(states.k):
                             # ht, st,... are real; phase determines the phase
-                            phase = nu.exp(1j*nu.dot(nt,k))                      
-                            self.H0[ ik,a:b,c:d]   = self.H0[ ik,a:b,c:d]   + phase * ht 
-                            self.S[  ik,a:b,c:d]   = self.S[  ik,a:b,c:d]   + phase * st
-                            # TODO: check if derivatives are correct
-                            self.dH0[ik,a:b,c:d,:] = self.dH0[ik,a:b,c:d,:] + phase * dht
-                            self.dS[ ik,a:b,c:d,:] = self.dS[ ik,a:b,c:d,:] + phase * dst
-            
-                            if i!=j:
+                            phase = nu.exp(1j*nu.dot(nt,k))          
+                            self.H0[ ik,a:b,c:d]   = self.H0[ ik,a:b,c:d]   + phase*ht 
+                            self.S[  ik,a:b,c:d]   = self.S[  ik,a:b,c:d]   + phase*st
+                            self.dH0[ik,a:b,c:d,:] = self.dH0[ik,a:b,c:d,:] - phase*dht
+                            self.dS[ ik,a:b,c:d,:] = self.dS[ ik,a:b,c:d,:] - phase*dst
+                            if i==j:
+                                T = self.calc.el.Tn[i,n]
+                                hrot = nu.zeros_like(dht)
+                                srot = nu.zeros_like(dst)
+                                for p in range(noi):
+                                    for q in range(noj):
+                                        hrot[p,q,:] = nu.dot( dht[p,q,:],T )
+                                        srot[p,q,:] = nu.dot( dst[p,q,:],T )           
+                                self.dH0[ik,a:b,c:d,:] = self.dH0[ik,a:b,c:d,:] + phase*hrot
+                                self.dS[ ik,a:b,c:d,:] = self.dS[ ik,a:b,c:d,:] + phase*srot
+                            elif i!=j:
                                 # symmetrize (antisymmetrize) H and S (dH and dS)
                                 cphase = phase.conjugate()
-                                self.H0[ ik,c:d,a:b]   = self.H0[ ik,c:d,a:b]   + cphase * ht.transpose()
-                                self.S[  ik,c:d,a:b]   = self.S[  ik,c:d,a:b]   + cphase * st.transpose()
-                                self.dH0[ik,c:d,a:b,:] = self.dH0[ik,c:d,a:b,:] - cphase * dht.transpose((1,0,2))
-                                self.dS[ ik,c:d,a:b,:] = self.dS[ ik,c:d,a:b,:] - cphase * dst.transpose((1,0,2))
+                                self.H0[ ik,c:d,a:b]   = self.H0[ ik,c:d,a:b]   + cphase*ht.transpose()
+                                self.S[  ik,c:d,a:b]   = self.S[  ik,c:d,a:b]   + cphase*st.transpose()
+                                self.dH0[ik,c:d,a:b,:] = self.dH0[ik,c:d,a:b,:] + cphase*dht.transpose((1,0,2))
+                                self.dS[ ik,c:d,a:b,:] = self.dS[ ik,c:d,a:b,:] + cphase*dst.transpose((1,0,2))
+                        
                         
                         if self.first:
                             nonzero+=sum( abs(ht.flatten())>1E-20 )*2
                         stop('fortran slako')
 
+
+#        print 'H',self.H0
+#        print 'dH',self.dH0
+#        for ik in range(len(states.k)):
+#            self.S[ik,:,:]=nu.eye(norb)+0j
+            
+            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            
+            
+            
+            
+            
+            
         if self.first:
             self.calc.out('Hamiltonian matrix is %.3f %% filled on first calculation.' %(nonzero*100.0/norb**2) )
             self.first=False

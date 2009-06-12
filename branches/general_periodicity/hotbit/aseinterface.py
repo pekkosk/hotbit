@@ -19,6 +19,8 @@ from hotbit.output import Output
 import box.mix as mix
 from time import time
 
+from atoms import WedgeAtoms
+
 
 
 class Calculator(Output):
@@ -74,6 +76,8 @@ class Calculator(Output):
         """
         from copy import copy
         import os
+        
+        if SCC: raise NotImplementedError
 
         if gamma_cut!=None: gamma_cut=gamma_cut/Bohr
         self.__dict__={ 'parameters':parameters,
@@ -283,6 +287,7 @@ class Calculator(Output):
 
     def solve_ground_state(self,atoms):
         """ If atoms moved, solve electronic structure. """
+        
         if not self.init:
             self._initialize(atoms)
 
@@ -329,6 +334,8 @@ class Calculator(Output):
         erep=self.rep.get_repulsive_energy()
         self.stop_timing('energies')
         return erep+ebs+ecoul
+        #return erep
+        #return ebs
 
 
     def get_forces(self,atoms):
@@ -340,6 +347,7 @@ class Calculator(Output):
         fcoul=self.st.es.gamma_forces() #zero for non-SCC
         self.stop_timing('forces')
         return (fbs+frep+fcoul)*(Hartree/Bohr)
+        #return fbs #*(Hartree/Bohr)
 #        return frep*(Hartree/Bohr)
     
     
