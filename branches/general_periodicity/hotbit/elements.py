@@ -58,43 +58,8 @@ class Elements:
 
         if elements!=None:
             self.files.update(elements)
-        self._initialize()
+        self._elements_initialization()
         self.solved={'ground state':None,'energy':None,'forces':None,'stress':None}
-
-
-    def init2(self):
-        # TODO: these have to be divided into subroutines
-        #self.nranges=[(-3,3),(-3,3),(-3,3)]
-#        self.nranges=[(0,0),(0,0),(0,0)]
-        #self.nlists= [range(n[0],n[1]+1) for n in self.nranges]
-        #self.M=[len(l) for l in self.nlists]
-#        self.ntuples=[] # n-tuples
-#        for n1 in self.nlists[0]:
-#            for n2 in self.nlists[1]:
-#                for n3 in self.nlists[2]:
-#                    self.ntuples.append((n1,n2,n3))        
-        self.calc.start_timing('es.init2')
-        self.ntuples=[] # n-tuples
-        rang=[]
-        for i in range(3):
-            if self.atoms.pbc[i]:
-                rang.append([0,1,-1,2,-2,3,-3,4,-4,5,-5])
-            else:
-                rang.append([0])
-            
-        for n1 in rang[0]:
-            for n2 in rang[1]:
-                for n3 in rang[2]:
-                    self.ntuples.append((n1,n2,n3))
-                    
-#        self.copies = len(self.ntuples)
-        self.Rn = nu.zeros((self.N,len(self.ntuples),3))
-        self.Tn = nu.zeros((self.N,len(self.ntuples),3,3))
-        for i in range(self.N):
-            for n,nt in enumerate(self.ntuples):
-                self.Rn[i,n,:] = self.nvector(r=i,ntuple=nt)
-                self.Tn[i,n,:,:] = self.nvector(r=i,ntuple=nt,lst='dtensor')
-        self.calc.stop_timing('es.init2')
 
 
     def get_transforms(self):
@@ -175,8 +140,13 @@ class Elements:
         return len(self.symbols)
 
 
-    def _initialize(self):
-        """ Initialize element objects, orbital tables etc. Do it only once."""
+    def _elements_initialization(self):
+        '''
+        Initialize element objects, orbital tables etc.
+        
+        This initialization is done only once for given set of element info.
+        Initialization of any geometrical properties is done elsewhere. 
+        '''
         self.elements={}
         for symb in self.present:
             if symb not in self.files:
@@ -226,15 +196,67 @@ class Elements:
             self.atom_orb_indices2[i,:noi]=self.atom_orb_indices[i]
 
 
+    def get_number_of_transformations(self):
+        '''
+        Return the number of symmetry transformations in different directions.
+        '''
+        n = []
+        r = self.atoms.get_ranges()
+        for i in range(3):
+            if r[i,0]==-nu.Inf:
+                n.append(nu.Inf)
+            else:
+                n.append( r[i,1]-r[i,0]+1 )
+        return n                     
+
 
     def update_geometry(self):
-        # TODO: this method will become useless
         """ Update all properties related to geometry (calculate once/geometry)
 
-        (analogously for j): i=atom index, si=symbol, r=vector i-->j, rhat=unit vector,
-        ri=position of i, o1i=index of first orbital, noi=number of orbitals, oi=orbital indices of i
+#        (analogously for j): i=atom index, si=symbol, r=vector i-->j, rhat=unit vector,
+#        ri=position of i, o1i=index of first orbital, noi=number of orbitals, oi=orbital indices of i
         """
-        self.calc.start_timing('geometry')
+        self.calc.start_timing('geometry')      
+        self.ntuples=[] # n-tuples
+        r = self.atoms.get_ranges()
+        
+        # determine ranges, if they go to infinity
+        Mlarge = 4
+        ranges = []
+        for i in range(3):
+            assert r[i,0]<=r[i,1]
+            if not self.atoms.pbc[i]: assert r[i,0]==r[i,1]==0
+            if r[i,0]==-nu.Inf:
+                assert r[i,1]==nu.Inf
+                r[i,:] = [-Mlarge,Mlarge]
+            ranges.append( range(int(round(r[i,0])),int(round(r[i,1]))+1) )
+            ranges[-1].remove(0)
+            ranges[-1].append(0)
+            ranges[-1].reverse() # zero first
+        
+        # select the symmetry operations where atoms still interact chemically
+        cut = self.calc.ia.get_cutoff()
+        for n1 in ranges[0]:
+            for n2 in ranges[1]:
+                for n3 in ranges[2]:
+                    # Here check that any atoms interact with given tuple
+                    
+                    # here construct self.Rn, self.Tn (index ordering must change)
+                    self.ntuples.append((n1,n2,n3))
+                    
+                    
+                    
+        # TODO : select here only the atoms interacting chemically!!!!
+        # TODO: last ranges -> no interaction -check!
+        self.Rn = nu.zeros((self.N,len(self.ntuples),3))
+        self.Tn = nu.zeros((self.N,len(self.ntuples),3,3))
+        for i in range(self.N):
+            for n,nt in enumerate(self.ntuples):
+                self.Rn[i,n,:] = self.nvector(r=i,ntuple=nt)
+                self.Tn[i,n,:,:] = self.nvector(r=i,ntuple=nt,lst='dtensor')
+        
+        
+        
         #self.geometry={}
         #properties=['i','j','si','sj','r','dist','rhat','ri','rj','o1i','o1j','noi','noj','oi','oj']
         #self.ia_pairs={}
@@ -296,11 +318,16 @@ class Elements:
 
     def set_atoms(self,atoms):
         """ Set the atoms object ready for calculations. """
-        if type(atoms) == type(None) or not atoms == self.atoms:
+        # FIXME!!! HERE IMPORTANT
+        if type(atoms) == type(None) or True: #not atoms == self.atoms:
 #            self.atoms=Atoms(atoms)
-            self.atoms=BravaisAtoms(atoms)
+            if isinstance(atoms,Atoms):
+                self.atoms=BravaisAtoms(atoms)
+            else:
+                #            print '..',type(atoms)
+                from copy import copy
+                self.atoms = copy(atoms)
             self.update_geometry()
-            self.init2()
 
 
     def set_solved(self,quantities):

@@ -21,6 +21,7 @@ def matrix_square_root(A):
 
 def density_matrix(wf,occ):
     n=len(occ)
+    raise NotImplementedError('complexity?')
     rho=nu.zeros((n,n))
     for i in range(n):
         for j in range(n):

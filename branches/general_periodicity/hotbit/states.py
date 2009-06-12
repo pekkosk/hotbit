@@ -32,45 +32,60 @@ class States:
         self.SCC=calc.get('SCC')
         self.rho=None
         self.rhoe0=None
+        self.nk, self.k, self.kl, self.wk = self.setup_k_sampling( calc.get('kpts') )
+        self.occu=Occupations(calc.el.get_number_of_electrons(),width,self.wk)
         
-        kpts=calc.get('kpts')
+       
+    def setup_k_sampling(self,kpts,physical=True):
+        '''
+        Setup the k-point sampling and their weights.
+        
+        @param kpts: 3-tuple: number of k-points in different directions
+                     list of 3-tuples: k-points given explicitly
+        @param physical: No meaning for infinite periodicities. For physically
+                     periodic systems only certain number of k-points are allowed.
+                     (like wedge of angle 2*pi/N, only number of k-points that 
+                     divides N, is physically allowed). If physical=False,
+                     allow interpolation of this k-sampling.
+        '''
+        if kpts!=(1,1,1) and self.calc.get('width')<1E-10:
+            raise AssertionError('With k-point sampling width must be>0!')
+            
         if isinstance(kpts,tuple):
             # set up equal-weighted and spaced k-point mesh
             if 0 in kpts:
                 raise AssertionError('Each direction must have at least one k-point! (Gamma-point)')
             
-            self.kl=[]
+            kl=[]
             for i in range(3):
                 spacing = 2*pi/kpts[i]
-                self.kl.append( nu.linspace(-pi+spacing/2,pi-spacing/2,kpts[i]) )
+                kl.append( nu.linspace(-pi+spacing/2,pi-spacing/2,kpts[i]) )
             
-            self.k=[]    
+            k=[]    
             for a in range(kpts[0]):
                 for b in range(kpts[1]):
                     for c in range(kpts[2]):
-                        self.k.append( nu.array([self.kl[0][a],self.kl[1][b],self.kl[2][c]]) )
-            self.nk=nu.prod(kpts)
-            self.wk=nu.ones(self.nk)/self.nk
+                        k.append( nu.array([kl[0][a],kl[1][b],kl[2][c]]) )
+            nk=nu.prod(kpts)
+            wk=nu.ones(nk)/nk
             
         else:
             # work with a given set of k-points
-            self.nk=len(kpts)
-            self.k=kpts
-            self.wk=nu.ones(self.nk)/self.nk
-            self.kl=None
+            nk=len(kpts)
+            k=kpts
+            wk=nu.ones(nk)/nk
+            kl=None
             
-        assert sum(self.wk)-1.0<1E-13
-        pbc=self.calc.el.pbc
+        # now sampling is set up. Check the consistency.
         for i in range(3):
-            for k in self.k:
-                if k[i]>1E-10 and not pbc[i]:
-                    raise AssertionError('Do not set (non-zero) k-points in non-periodic direction!')
-            
-        self.occu=Occupations(calc.el.get_number_of_electrons(),width,self.wk)
-        # TODO: check what k-weights add up to one
-
-    def __del__(self):
-        pass
+            for kp in k:
+                if kp[i]>1E-10 and not self.calc.el.pbc[i]:
+                    raise AssertionError('Do not set (non-zero) k-points in non-periodic direction!')            
+                # TODO: 
+                # N = self.el.get_number_of_transformations()
+                # if Inf or not physical -> any
+                # elif finite -> discrete
+        return nk, k, kl, wk
 
 
     def guess_dq(self):
