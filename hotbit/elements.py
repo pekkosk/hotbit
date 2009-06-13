@@ -312,9 +312,7 @@ class Elements:
         # check that all quantities have been solved for identical atoms
         for quantity in quantities:
             solved_atoms=self.solved[quantity]
-            if type(solved_atoms) == type(None):
-                return True
-            elif not atoms == solved_atoms:
+            if type(solved_atoms) == type(None) or atoms!=solved_atoms:
                 return True
         return False
 
@@ -322,16 +320,18 @@ class Elements:
     def set_atoms(self,atoms):
         """ Set the atoms object ready for calculations. """
         # TODO: can this be done better?
-        if atoms!=self.atoms:
-            try:
-                # we have custom-made atoms
-                r = atoms.ranges
-                from copy import copy
-                self.atoms = copy(atoms)
-            except:
-                # we have original ase.Atoms; use BravaisAtoms
-                self.atoms=BravaisAtoms(atoms)
-            self.update_geometry()
+#        print atoms!=self.atoms, atoms[0].y, self.atoms[0].y
+#        if atoms!=self.atoms:
+        try:
+            # we have custom-made atoms
+            r = atoms.ranges
+            from copy import copy
+            self.atoms = copy(atoms)
+#            print "custom", self.atoms[0].y
+        except:
+            # we have original ase.Atoms; use BravaisAtoms
+            self.atoms=BravaisAtoms(atoms)
+        self.update_geometry()
 
 
     def set_solved(self,quantities):
