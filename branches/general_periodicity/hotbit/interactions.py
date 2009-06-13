@@ -224,8 +224,8 @@ class Interactions:
         norb=len(orbs)   
         self.H0  = nu.zeros((states.nk,norb,norb),complex)
         self.S   = nu.zeros((states.nk,norb,norb),complex)
-        self.dH0 = nu.zeros((states.nk,norb,norb,3),complex)
-        self.dS  = nu.zeros((states.nk,norb,norb,3),complex)
+        self.dH0 = nu.zeros((states.nk,norb,norb,2,3),complex)
+        self.dS  = nu.zeros((states.nk,norb,norb,2,3),complex)
         
         orbitals=[[orb['orbital'] for orb in el.orbitals(i)] for i in range(len(el))]
         orbindex=[el.orbitals(i,indices=True) for i in range(len(el))]
@@ -235,7 +235,8 @@ class Interactions:
         lst = el.get_property_lists(['i','s','no','o1'])
         
         for i,si,noi,o1i in lst:
-            for j,sj,noj,o1j in lst[i:]:
+            #for j,sj,noj,o1j in lst[i:]:
+            for j,sj,noj,o1j in lst:
                 Rijn = self.calc.el.Rn[j,:,:] - self.calc.el.Rn[i,0,:]
                 for n, rij in enumerate(Rijn):
                     # go through all symmetry operations
@@ -276,62 +277,59 @@ class Interactions:
                         a, b, c, d = o1i, o1i+noi, o1j, o1j+noj
                         
                         # Here we do the MEL transformation
-#                        R = self.calc.el.axis_rotation(nt)
-#                        Rh = nu.zeros((4,4))
-#                        Rh[1:,1:] = R
-#                        Rh[0,0] = 1
-#                        print 'before\n',ht
-#                        ht = nu.dot( ht,Rh )
-#                        st = nu.dot( st,Rh )
-#                        for l in range(3):
-#                            dht[:,:,l] = nu.dot( dht[:,:,l],Rh )
-#                            dst[:,:,l] = nu.dot( dst[:,:,l],Rh )
-#                        print nt[0],'after\n',ht
+                        assert noj==4 and noi==4
                         
-#                        dht, dst = -dht, -dst
-                        #dst=dst*0
+                        R = self.calc.el.axis_rotation(nt)
+                        Rh = nu.zeros((4,4))
+                        Rh[1:,1:] = R
+                        Rh[0,0] = 1
+                        ht = nu.dot( Rh,ht )
+                        st = nu.dot( Rh,st )
+                        for l in range(3):
+                            dht[:,:,l] = nu.dot( Rh,dht[:,:,l] )
+                            dst[:,:,l] = nu.dot( Rh,dst[:,:,l] )
+                        
                         for ik,k in enumerate(states.k):
                             # ht, st,... are real; phase determines the phase
                             phase = nu.exp(1j*nu.dot(nt,k))          
                             self.H0[ ik,a:b,c:d]   = self.H0[ ik,a:b,c:d]   + phase*ht 
                             self.S[  ik,a:b,c:d]   = self.S[  ik,a:b,c:d]   + phase*st
-                            self.dH0[ik,a:b,c:d,:] = self.dH0[ik,a:b,c:d,:] - phase*dht
-                            self.dS[ ik,a:b,c:d,:] = self.dS[ ik,a:b,c:d,:] - phase*dst
-                            if i==j:
-                                T = self.calc.el.Tn[i,n]
-                                hrot = nu.zeros_like(dht)
-                                srot = nu.zeros_like(dst)
-                                for p in range(noi):
-                                    for q in range(noj):
-                                        hrot[p,q,:] = nu.dot( dht[p,q,:],T )
-                                        srot[p,q,:] = nu.dot( dst[p,q,:],T )           
-                                self.dH0[ik,a:b,c:d,:] = self.dH0[ik,a:b,c:d,:] + phase*hrot
-                                self.dS[ ik,a:b,c:d,:] = self.dS[ ik,a:b,c:d,:] + phase*srot
-                            elif i!=j:
-                                # symmetrize (antisymmetrize) H and S (dH and dS)
-                                cphase = phase.conjugate()
-                                self.H0[ ik,c:d,a:b]   = self.H0[ ik,c:d,a:b]   + cphase*ht.transpose()
-                                self.S[  ik,c:d,a:b]   = self.S[  ik,c:d,a:b]   + cphase*st.transpose()
-                                self.dH0[ik,c:d,a:b,:] = self.dH0[ik,c:d,a:b,:] + cphase*dht.transpose((1,0,2))
-                                self.dS[ ik,c:d,a:b,:] = self.dS[ ik,c:d,a:b,:] + cphase*dst.transpose((1,0,2))
+                            self.dH0[ik,a:b,c:d,0,:] = self.dH0[ik,a:b,c:d,0,:] + phase*(-dht)
+                            self.dS[ ik,a:b,c:d,0,:] = self.dS[ ik,a:b,c:d,0,:] + phase*(-dst)
+
+                            T = self.calc.el.Tn[j,n]
+                            hmod = nu.zeros_like(dht)
+                            smod = nu.zeros_like(dst)
+                            for p in range(noi):
+                                for q in range(noj):
+                                    hmod[p,q,:] = nu.dot( dht[p,q,:],T )
+                                    smod[p,q,:] = nu.dot( dst[p,q,:],T )
+                            
+                            self.dH0[ik,a:b,c:d,1,:] = self.dH0[ik,a:b,c:d,1,:] + phase*hmod
+                            self.dS[ ik,a:b,c:d,1,:] = self.dS[ ik,a:b,c:d,1,:] + phase*smod
+                            
+#                            if i==j:
+#                                T = self.calc.el.Tn[i,n]
+#                                hrot = nu.zeros_like(dht)
+#                                srot = nu.zeros_like(dst)
+#                                for p in range(noi):
+#                                    for q in range(noj):
+#                                        hrot[p,q,:] = nu.dot( dht[p,q,:],T )
+#                                        srot[p,q,:] = nu.dot( dst[p,q,:],T )           
+#                                self.dH0[ik,a:b,c:d,:] = self.dH0[ik,a:b,c:d,:] + phase*hrot
+#                                self.dS[ ik,a:b,c:d,:] = self.dS[ ik,a:b,c:d,:] + phase*srot
+#                            elif i!=j:
+#                                # symmetrize (antisymmetrize) H and S (dH and dS)
+#                                cphase = phase.conjugate()
+#                                self.H0[ ik,c:d,a:b]   = self.H0[ ik,c:d,a:b]   + cphase*ht.transpose()
+#                                self.S[  ik,c:d,a:b]   = self.S[  ik,c:d,a:b]   + cphase*st.transpose()
+#                                self.dH0[ik,c:d,a:b,:] = self.dH0[ik,c:d,a:b,:] + cphase*dht.transpose((1,0,2))
+#                                self.dS[ ik,c:d,a:b,:] = self.dS[ ik,c:d,a:b,:] + cphase*dst.transpose((1,0,2))
                         
                         
                         if self.first:
                             nonzero+=sum( abs(ht.flatten())>1E-20 )*2
                         stop('fortran slako')
-
-
-#        print 'H',self.H0
-#        print 'dH',self.dH0
-#        for ik in range(len(states.k)):
-#            self.S[ik,:,:]=nu.eye(norb)+0j
-            
-            #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            
-            
-            
-            
-            
             
         if self.first:
             self.calc.out('Hamiltonian matrix is %.3f %% filled on first calculation.' %(nonzero*100.0/norb**2) )

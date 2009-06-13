@@ -252,6 +252,43 @@ end subroutine fortran_fbs
 
 
 ! Return the band-structure energy (complex version)
+! subroutine fortran_fbsc(rho,rhoe,dH,dS,norbs,indices,wk,f,norb,nat,nk)
+! implicit none
+! integer, intent(in) :: norb
+! integer, intent(in) :: nat
+! integer, intent(in) :: nk
+! complex(8), intent(in) :: rho(0:nk-1,0:norb-1,0:norb-1)
+! complex(8), intent(in) :: rhoe(0:nk-1,0:norb-1,0:norb-1)
+! complex(8), intent(in) :: dH(0:nk-1,0:norb-1,0:norb-1,0:2)
+! complex(8), intent(in) :: dS(0:nk-1,0:norb-1,0:norb-1,0:2)
+! integer, intent(in) :: norbs(0:nat-1)
+! integer, intent(in) :: indices(0:nat-1,0:8)
+! real(8), intent(in) :: wk(0:nk-1)
+! real(8), intent(out) :: f(0:nat-1,0:2)
+! complex(8) :: diff(0:norb-1)
+! integer :: a,i,noi,ik
+! complex(8) :: f2(0:nat-1,0:2)
+! 
+! f2=0d0
+! do ik=0,nk-1
+!   do a=0,2
+!       do i=0,norb-1
+!         ! diff is the diagonal of difference rho*dH - rhoe*dS
+!         diff(i) = sum(rho(ik,i,:)*dH(ik,:,i,a))-sum(rhoe(ik,i,:)*dS(ik,:,i,a))
+!       end do
+! 
+!       do i=0,nat-1
+!         noi = norbs(i)
+!         f2(i,a) = f2(i,a) + wk(ik)*sum( diff(indices(i,0:noi-1)) )
+!       end do
+!   end do
+! end do
+! f = 2*real(f2)
+! end subroutine fortran_fbsc      
+
+
+
+
 subroutine fortran_fbsc(rho,rhoe,dH,dS,norbs,indices,wk,f,norb,nat,nk)
 implicit none
 integer, intent(in) :: norb
@@ -259,29 +296,33 @@ integer, intent(in) :: nat
 integer, intent(in) :: nk
 complex(8), intent(in) :: rho(0:nk-1,0:norb-1,0:norb-1)
 complex(8), intent(in) :: rhoe(0:nk-1,0:norb-1,0:norb-1)
-complex(8), intent(in) :: dH(0:nk-1,0:norb-1,0:norb-1,0:2)
-complex(8), intent(in) :: dS(0:nk-1,0:norb-1,0:norb-1,0:2)
+complex(8), intent(in) :: dH(0:nk-1,0:norb-1,0:norb-1,0:1,0:2)
+complex(8), intent(in) :: dS(0:nk-1,0:norb-1,0:norb-1,0:1,0:2)
 integer, intent(in) :: norbs(0:nat-1)
 integer, intent(in) :: indices(0:nat-1,0:8)
 real(8), intent(in) :: wk(0:nk-1)
 real(8), intent(out) :: f(0:nat-1,0:2)
-complex(8) :: diff(0:norb-1)
+complex(8) :: diag(0:norb-1)
 integer :: a,i,noi,ik
 complex(8) :: f2(0:nat-1,0:2)
 
 f2=0d0
 do ik=0,nk-1
-  do a=0,2
+do a=0,2
       do i=0,norb-1
-        ! diff is the diagonal of difference rho*dH - rhoe*dS
-        diff(i) = sum(rho(ik,i,:)*dH(ik,:,i,a))-sum(rhoe(ik,i,:)*dS(ik,:,i,a))
+        ! diff is the diagonal of rho*dH2 + dH1*rho-rhoe*dS2-dS1*rhoe
+        diag(i) = sum(  rho(ik,i,:)*dH(ik,:,i,1,a) + dH(ik,i,:,0,a)*rho(ik,:,i) &
+                      -rhoe(ik,i,:)*dS(ik,:,i,1,a) - dS(ik,i,:,0,a)*rhoe(ik,:,i) )
       end do
 
       do i=0,nat-1
         noi = norbs(i)
-        f2(i,a) = f2(i,a) + wk(ik)*sum( diff(indices(i,0:noi-1)) )
+        f2(i,a) = f2(i,a) - wk(ik)*sum( diag(indices(i,0:noi-1)) )
       end do
-  end do
 end do
-f = 2*real(f2)
-end subroutine fortran_fbsc             
+end do
+if( any(abs(imag(f2))>1E-10) ) then
+  stop "complex forces"
+end if
+f = real(f2)
+end subroutine fortran_fbsc           
