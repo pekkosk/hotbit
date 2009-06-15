@@ -62,6 +62,10 @@ class Elements:
 
     def __del__(self):
         pass
+    
+    def get_N(self):
+        """ Return the number of atoms. """
+        return self.N
 
     def set_cutoffs(self,cutoffs):
         """ Set the maximum interaction cutoffs (dict of ranges for element pair SlaKo tables). """

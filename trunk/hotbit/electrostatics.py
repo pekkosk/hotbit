@@ -109,6 +109,7 @@ class Electrostatics:
         self.gamma_table, self.gamma_der=g, dg
         self.ext = [self.calc.env.phi(i) for i in range(self.N)]
         self.calc.stop_timing('es tables')
+                
 
     def gamma(self,i,j,der=0):
         """ Return the gamma function for atoms i and j. der=1 for gradient. """
