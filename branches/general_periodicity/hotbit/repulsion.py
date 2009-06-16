@@ -58,7 +58,7 @@ class Repulsion:
         lst=self.calc.el.get_property_lists(['i','s'])
         for i,si in lst: 
             for j,sj in lst:
-                Rijn = self.calc.el.Rn[j,:,:] - self.calc.el.Rn[i,0,:]
+                Rijn = self.calc.el.Rn[:,j,:] - self.calc.el.Rn[0,i,:]
                 for n,rijn in enumerate(Rijn): 
                     if i==j and n==0: continue
                     d = norm(rijn)
@@ -76,8 +76,8 @@ class Repulsion:
         for i,si in lst:
             for j,sj in lst:
                 V    = self.vrep[si+sj]
-                Rijn = self.calc.el.Rn[j,:,:] - self.calc.el.Rn[i,0,:]
-                Rjin = self.calc.el.Rn[i,:,:] - self.calc.el.Rn[j,0,:]
+                Rijn = self.calc.el.Rn[:,j,:] - self.calc.el.Rn[0,i,:]
+                Rjin = self.calc.el.Rn[:,i,:] - self.calc.el.Rn[0,j,:]
                 for n, (rijn, rjin) in enumerate(zip(Rijn,Rjin)):
                     if i==j and n==0: continue
                     dijn = norm(rijn)
@@ -85,7 +85,7 @@ class Repulsion:
                     if dijn<self.rmax: 
                         f[i,:]=f[i,:] + V(dijn,der=1)*rijn/dijn
                     if djin<self.rmax:
-                        T = self.calc.el.Tn[i,n]
+                        T = self.calc.el.Tn[n,i]
                         f[i,:]=f[i,:] - V(djin,der=1)*nu.dot(rjin,T)/djin
         f=0.5*f
         self.calc.stop_timing('f_rep')

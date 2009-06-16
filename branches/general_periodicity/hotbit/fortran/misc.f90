@@ -296,8 +296,8 @@ integer, intent(in) :: nat
 integer, intent(in) :: nk
 complex(8), intent(in) :: rho(0:nk-1,0:norb-1,0:norb-1)
 complex(8), intent(in) :: rhoe(0:nk-1,0:norb-1,0:norb-1)
-complex(8), intent(in) :: dH(0:nk-1,0:norb-1,0:norb-1,0:1,0:2)
-complex(8), intent(in) :: dS(0:nk-1,0:norb-1,0:norb-1,0:1,0:2)
+complex(8), intent(in) :: dH(0:nk-1,0:norb-1,0:norb-1,0:2)
+complex(8), intent(in) :: dS(0:nk-1,0:norb-1,0:norb-1,0:2)
 integer, intent(in) :: norbs(0:nat-1)
 integer, intent(in) :: indices(0:nat-1,0:8)
 real(8), intent(in) :: wk(0:nk-1)
@@ -311,8 +311,10 @@ do ik=0,nk-1
 do a=0,2
       do i=0,norb-1
         ! diff is the diagonal of rho*dH2 + dH1*rho-rhoe*dS2-dS1*rhoe
-        diag(i) = sum(  rho(ik,i,:)*dH(ik,:,i,1,a) + dH(ik,i,:,0,a)*rho(ik,:,i) &
-                      -rhoe(ik,i,:)*dS(ik,:,i,1,a) - dS(ik,i,:,0,a)*rhoe(ik,:,i) )
+        !diag(i) = sum(  rho(ik,i,:)*dH(ik,:,i,1,a) + dH(ik,i,:,0,a)*rho(ik,:,i) &
+        !              -rhoe(ik,i,:)*dS(ik,:,i,1,a) - dS(ik,i,:,0,a)*rhoe(ik,:,i) )
+        diag(i) = sum(  dH(ik,i,:,a)*rho(ik,:,i) &
+                      - dS(ik,i,:,a)*rhoe(ik,:,i) )
       end do
 
       do i=0,nat-1
@@ -321,8 +323,9 @@ do a=0,2
       end do
 end do
 end do
-if( any(abs(imag(f2))>1E-10) ) then
-  stop "complex forces"
-end if
-f = real(f2)
+! if( any(abs(imag(f2))>1E-10) ) then
+!   stop "complex forces"
+! end if
+f = 2*real(f2)
 end subroutine fortran_fbsc           
+

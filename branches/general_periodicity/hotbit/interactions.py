@@ -104,18 +104,6 @@ class Interactions:
         """ Return element pair cutoff dictionary. """
         return self.cut
 
-#    def check_box_size(self):
-#        """ Check that box is large enough. """
-#        # TODO: remove this completely
-#        gamma_cut, SCC=self.calc.get('gamma_cut') ,self.calc.get('SCC')
-#        pbc=self.calc.el.atoms.get_pbc()
-#        for periodic,length in zip(self.calc.el.get_box_lengths(),pbc):
-#            for ia in self.cut:
-#                if self.cut[ia]>length/2. and not periodic:
-#                    raise AssertionError('Too small box (one size %.2f, largest cut %.2f)' %(length,self.cut[ia]))
-#                if SCC and periodic and (gamma_cut!=None and gamma_cut<length/4):
-#                    raise AssertionError('gamma_cut should be small enough compared to %s Bohr' %length)
-
 
     def check_too_close_distances(self):
         # FIXME: move this to elements--it's their business; and call in geometry update
@@ -195,6 +183,13 @@ class Interactions:
                                 self.h[pair].add_function(table_ij[:,index+1],table,integrals[short])
                                 self.s[pair].add_function(table_ij[:,index+11],table,integrals[short])
                                 
+        # cutoffs for atom pair indices
+        N = self.calc.el.N
+        self.hscut=nu.zeros((N,N),float)
+        for i,si in enumerate(self.calc.el.symbols):
+            for j,sj in enumerate(self.calc.el.symbols):
+                self.hscut[i,j]=self.cut[si+sj]
+                                
 
     def plot_table(self,e1,e2,der=0):
         """ Plot SlaKo table for given elements. """
@@ -224,8 +219,8 @@ class Interactions:
         norb=len(orbs)   
         self.H0  = nu.zeros((states.nk,norb,norb),complex)
         self.S   = nu.zeros((states.nk,norb,norb),complex)
-        self.dH0 = nu.zeros((states.nk,norb,norb,2,3),complex)
-        self.dS  = nu.zeros((states.nk,norb,norb,2,3),complex)
+        self.dH0 = nu.zeros((states.nk,norb,norb,3),complex)
+        self.dS  = nu.zeros((states.nk,norb,norb,3),complex)
         
         orbitals=[[orb['orbital'] for orb in el.orbitals(i)] for i in range(len(el))]
         orbindex=[el.orbitals(i,indices=True) for i in range(len(el))]
@@ -235,50 +230,50 @@ class Interactions:
         lst = el.get_property_lists(['i','s','no','o1'])
         
         for i,si,noi,o1i in lst:
-            #for j,sj,noj,o1j in lst[i:]:
-            for j,sj,noj,o1j in lst:
-                Rijn = self.calc.el.Rn[j,:,:] - self.calc.el.Rn[i,0,:]
+            # on-site energies only for n==0
+            for orb in el.orbitals(i):
+                ind=orb['index']
+                for ik,k in enumerate(states.k):
+                    # phase is always one here 
+                    self.H0[ik,ind,ind] += orb['energy']
+                    self.S[ik,ind,ind]  += 1.0
+                nonzero+=1
+            for j,sj,noj,o1j in lst[i:]:
+                Rijn = self.calc.el.Rn[:,j,:] - self.calc.el.Rn[0,i,:]
                 for n, rij in enumerate(Rijn):
+                    if i==j and n==0: continue
                     # go through all symmetry operations
                     nt = el.ntuples[n]
-                    if i==j and n==0:
-                        for orb in el.orbitals(i):
-                            ind=orb['index']
-                            for ik,k in enumerate(states.k):
-                                # phase is always one here 
-                                self.H0[ik,ind,ind] += orb['energy']
-                                self.S[ik,ind,ind]  += 1.0
-                            nonzero+=1
-                    else:
-                        h, s, dh, ds = nu.zeros((14,)), nu.zeros((14,)), nu.zeros((14,3)), nu.zeros((14,3))
-                        pair  = si+sj
-                        dij   = norm(rij)
-                        rijh  = rij/dij
-                        assert dij>0.1
-                        a, b= self.h[pair].get_range()
-                        if not a<=dij<=b: continue
-                        
-                        # interpolate Slater-Koster tables and derivatives
-                        start('mel splint')
-                        hij, dhij = self.h[pair](dij)
-                        sij, dsij = self.s[pair](dij)
-                        stop('mel splint')
-                        
-                        start('setup pre-h')
-                        indices = self.h[pair].get_indices()
-                        h[indices], s[indices] = hij, sij
-                        dh[indices], ds[indices] = nu.outer(dhij,rijh), nu.outer(dsij,rijh)
-                        stop('setup pre-h')
-                                                        
-                        # make the Slater-Koster transformations
-                        start('fortran slako')
-                        obsi, obsj=orbindex[i], orbindex[j]
-                        ht, st, dht, dst = fast_slako_transformations(rijh,dij,noi,noj,h,s,dh,ds)
-                        a, b, c, d = o1i, o1i+noi, o1j, o1j+noj
-                        
-                        # Here we do the MEL transformation
-                        assert noj==4 and noi==4
-                        
+                    h, s, dh, ds = nu.zeros((14,)), nu.zeros((14,)), nu.zeros((14,3)), nu.zeros((14,3))
+                    pair  = si+sj
+                    dij   = norm(rij)
+                    rijh  = rij/dij
+                    assert dij>0.1
+                    a, b= self.h[pair].get_range()
+                    if not a<=dij<=b: continue
+                    
+                    # interpolate Slater-Koster tables and derivatives
+                    start('mel splint')
+                    hij, dhij = self.h[pair](dij)
+                    sij, dsij = self.s[pair](dij)
+                    stop('mel splint')
+                    
+                    start('setup pre-h')
+                    indices = self.h[pair].get_indices()
+                    h[indices], s[indices] = hij, sij
+                    dh[indices], ds[indices] = nu.outer(dhij,rijh), nu.outer(dsij,rijh)
+                    stop('setup pre-h')
+                                                    
+                    # make the Slater-Koster transformations
+                    start('fortran slako')
+                    obsi, obsj=orbindex[i], orbindex[j]
+                    ht, st, dht, dst = fast_slako_transformations(rijh,dij,noi,noj,h,s,dh,ds)
+                    stop('fortran slako')
+                    a, b, c, d = o1i, o1i+noi, o1j, o1j+noj
+                    
+                    # Here we do the MEL transformation
+                    start('rotation')
+                    if noj==4 and noi==4:
                         R = self.calc.el.axis_rotation(nt)
                         Rh = nu.zeros((4,4))
                         Rh[1:,1:] = R
@@ -288,49 +283,33 @@ class Interactions:
                         for l in range(3):
                             dht[:,:,l] = nu.dot( Rh,dht[:,:,l] )
                             dst[:,:,l] = nu.dot( Rh,dst[:,:,l] )
-                        
-                        for ik,k in enumerate(states.k):
-                            # ht, st,... are real; phase determines the phase
-                            phase = nu.exp(1j*nu.dot(nt,k))          
-                            self.H0[ ik,a:b,c:d]   = self.H0[ ik,a:b,c:d]   + phase*ht 
-                            self.S[  ik,a:b,c:d]   = self.S[  ik,a:b,c:d]   + phase*st
-                            self.dH0[ik,a:b,c:d,0,:] = self.dH0[ik,a:b,c:d,0,:] + phase*(-dht)
-                            self.dS[ ik,a:b,c:d,0,:] = self.dS[ ik,a:b,c:d,0,:] + phase*(-dst)
+                    stop('rotation')
 
-                            T = self.calc.el.Tn[j,n]
-                            hmod = nu.zeros_like(dht)
-                            smod = nu.zeros_like(dst)
-                            for p in range(noi):
-                                for q in range(noj):
-                                    hmod[p,q,:] = nu.dot( dht[p,q,:],T )
-                                    smod[p,q,:] = nu.dot( dst[p,q,:],T )
-                            
-                            self.dH0[ik,a:b,c:d,1,:] = self.dH0[ik,a:b,c:d,1,:] + phase*hmod
-                            self.dS[ ik,a:b,c:d,1,:] = self.dS[ ik,a:b,c:d,1,:] + phase*smod
-                            
-#                            if i==j:
-#                                T = self.calc.el.Tn[i,n]
-#                                hrot = nu.zeros_like(dht)
-#                                srot = nu.zeros_like(dst)
-#                                for p in range(noi):
-#                                    for q in range(noj):
-#                                        hrot[p,q,:] = nu.dot( dht[p,q,:],T )
-#                                        srot[p,q,:] = nu.dot( dst[p,q,:],T )           
-#                                self.dH0[ik,a:b,c:d,:] = self.dH0[ik,a:b,c:d,:] + phase*hrot
-#                                self.dS[ ik,a:b,c:d,:] = self.dS[ ik,a:b,c:d,:] + phase*srot
-#                            elif i!=j:
-#                                # symmetrize (antisymmetrize) H and S (dH and dS)
-#                                cphase = phase.conjugate()
-#                                self.H0[ ik,c:d,a:b]   = self.H0[ ik,c:d,a:b]   + cphase*ht.transpose()
-#                                self.S[  ik,c:d,a:b]   = self.S[  ik,c:d,a:b]   + cphase*st.transpose()
-#                                self.dH0[ik,c:d,a:b,:] = self.dH0[ik,c:d,a:b,:] + cphase*dht.transpose((1,0,2))
-#                                self.dS[ ik,c:d,a:b,:] = self.dS[ ik,c:d,a:b,:] + cphase*dst.transpose((1,0,2))
+                    start('k-points')
+                    phase = nu.array( [nu.exp(1j*nu.dot(nt,k)) for k in states.k] )
+                    
+                    hblock  = nu.outer( phase,ht.flatten() )
+                    sblock  = nu.outer( phase,st.flatten() )
+                    dhblock = nu.outer( phase,-dht.flatten() )
+                    dsblock = nu.outer( phase,-dst.flatten() )
+                    hblock.shape  = (states.nk,noi,noj)
+                    sblock.shape  = (states.nk,noi,noj)
+                    dhblock.shape = (states.nk,noi,noj,3)
+                    dsblock.shape = (states.nk,noi,noj,3)
+
+                    self.H0[  :,a:b,c:d]   = self.H0[  :,a:b,c:d] + hblock
+                    self.S[   :,a:b,c:d]   = self.S[   :,a:b,c:d] + sblock
+                    self.dH0[ :,a:b,c:d]   = self.dH0[ :,a:b,c:d] + dhblock
+                    self.dS[  :,a:b,c:d]   = self.dS[  :,a:b,c:d] + dsblock
+                    if i!=j:
+                        self.H0[  :,c:d,a:b]   = self.H0[  :,c:d,a:b] + hblock.transpose((0,2,1)).conjugate()
+                        self.S[   :,c:d,a:b]   = self.S[   :,c:d,a:b] + sblock.transpose((0,2,1)).conjugate()
+                        self.dH0[ :,c:d,a:b]   = self.dH0[ :,c:d,a:b] - dhblock.transpose((0,2,1,3)).conjugate()
+                        self.dS[  :,c:d,a:b]   = self.dS[  :,c:d,a:b] - dsblock.transpose((0,2,1,3)).conjugate()
+                    stop('k-points')
+                    if self.first:
+                        nonzero+=sum( abs(ht.flatten())>1E-20 )*2
                         
-                        
-                        if self.first:
-                            nonzero+=sum( abs(ht.flatten())>1E-20 )*2
-                        stop('fortran slako')
-            
         if self.first:
             self.calc.out('Hamiltonian matrix is %.3f %% filled on first calculation.' %(nonzero*100.0/norb**2) )
             self.first=False
