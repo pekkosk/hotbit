@@ -212,17 +212,14 @@ class Elements:
 
 
     def update_geometry(self):
-        """ Update all properties related to geometry (calculate once/geometry)
-
-#        (analogously for j): i=atom index, si=symbol, r=vector i-->j, rhat=unit vector,
-#        ri=position of i, o1i=index of first orbital, noi=number of orbitals, oi=orbital indices of i
-        """
+        '''
+        Update all properties related to geometry (calculate once/geometry)
+        '''
         self.calc.start_timing('geometry')      
-        self.ntuples=[] # n-tuples
-        r = self.atoms.get_ranges()
 
         # determine ranges if they go to infinity
-        Mlarge = 4 # TODO: chek Mlarge to be large enough (see TODO below)
+        r = self.atoms.get_ranges()
+        Mlarge = 4 # TODO: chek Mlarge to be large enough
         ranges = []
         for i in range(3):
             assert r[i,0]<=r[i,1]
@@ -231,70 +228,40 @@ class Elements:
                 assert r[i,1]==nu.Inf
                 r[i,:] = [-Mlarge,Mlarge]
             ranges.append( range(int(round(r[i,0])),int(round(r[i,1]))+1) )
-            ranges[-1].remove(0)
-            ranges[-1].append(0)
-            ranges[-1].reverse() # zero first
+       
         
-        
-        # select the symmetry operations where atoms still interact chemically
-        cut = self.calc.ia.get_cutoff()
+        # select the symmetry operations n where atoms still interact chemically
+        self.Rn = [[self.nvector(r=i,ntuple=(0,0,0)) for i in xrange(self.N)]]
+        self.Tn = [[self.nvector(r=i,ntuple=(0,0,0),lst='dtensor') for i in xrange(self.N)]]
+                
+        cut2 = self.calc.ia.hscut**2
+        self.ntuples = [(0,0,0)]
+        # calculate the distances from unit cell 0 to ALL other possible; select meaningful
         for n1 in ranges[0]:
             for n2 in ranges[1]:
                 for n3 in ranges[2]:
-                    # TODO: Here check that any atoms interact with given tuple
-                    
-                    # TODO: here construct self.Rn, self.Tn (index ordering must change)
-                    self.ntuples.append((n1,n2,n3))
-                    
-                    
-        # TODO : select here only the atoms interacting chemically!!!!
-        # TODO: last ranges -> no interaction -check!
-        self.Rn = nu.zeros((self.N,len(self.ntuples),3))
-        self.Tn = nu.zeros((self.N,len(self.ntuples),3,3))
-        for i in range(self.N):
-            for n,nt in enumerate(self.ntuples):
-                
-                self.Rn[i,n,:] = self.nvector(r=i,ntuple=nt)
-                self.Tn[i,n,:,:] = self.nvector(r=i,ntuple=nt,lst='dtensor')
-#                print 'atom',i,self.Rn[i,n,:]
+                    n = (n1,n2,n3)
+                    if n==(0,0,0): continue
+                    # check that any atom interacts with this unit cell
+                    add = False    
+                    R = [self.nvector(r=i,ntuple=n) for i in xrange(self.N)]
+                    for i in xrange(self.N):
+                        if add: break
+                        for j in xrange(self.N):
+                            dR = self.Rn[0][i]-R[j]
+                            if dR[0]**2+dR[1]**2+dR[2]**2 <= cut2[i,j]: 
+                                add = True
+                                break
+                    if add:
+                        T = [self.nvector(r=i,ntuple=n,lst='dtensor') for i in range(self.N)]
+                        self.ntuples.append(n)
+                        self.Rn.append(R)
+                        self.Tn.append(T)
         
-        
-        
-        #self.geometry={}
-        #properties=['i','j','si','sj','r','dist','rhat','ri','rj','o1i','o1j','noi','noj','oi','oj']
-        #self.ia_pairs={}
-        #for property in properties:
-        #    self.ia_pairs[property]=[]
-        #self.cut=self.calc.ia.get_cutoffs()
-
-#        for i in range(self.N):
-#            for j in range(i,self.N):
-#                dist=self.distance(i,j)
-#                r=self.vector(i,j)
-#                rhat=r/dist
-#                self.geometry[(i,j)]={'dist':dist,'r':r,'rhat':rhat}
-#                if i!=j:
-#                    self.geometry[(j,i)]={'dist':dist,'r':-r,'rhat':-rhat}
-#                si, sj=self.symbols[i], self.symbols[j]
-#                if dist<=self.cut[si+sj]:
-#                    ri, rj=self.vector(i), self.vector(j)
-#                    o1i, o1j=self.first_orbitals[i], self.first_orbitals[j]
-#                    noi, noj=self.nr_orbitals[i], self.nr_orbitals[j]
-#                    oi, oj=self.atom_orb_indices[i], self.atom_orb_indices[j]
-#                    for key,value in zip(properties,[i,j,si,sj,r,dist,rhat,ri,rj,o1i,o1j,noi,noj,oi,oj]):
-#                        self.ia_pairs[key].append(value)
-
-        # setup a table which orbitals are interacting
-        #self.ia_orbitals=nu.zeros((self.norb,self.norb),int)
-        #self.nr_ia_orbitals=nu.zeros((self.norb,),int)
-#        lst = self.get_property_lists([')
-        
-#        for oi, oj, noj in self.get_ia_atom_pairs(['oi','oj','noj']):
-#            # all orbitals oi and oj interact with each other
-#            for orbi in oi:
-#                ni=self.nr_ia_orbitals[orbi]
-#                self.ia_orbitals[orbi,ni:ni+noj]=oj
-#                self.nr_ia_orbitals[orbi]+=noj
+        # TODO: calc.ia should also know the smallest allowed distances between elements
+        # (maybe because of lacking repulsion or SlaKo tables), this should be checked here!
+        self.Rn = nu.array(self.Rn)
+        self.Tn = nu.array(self.Tn)
         self.calc.stop_timing('geometry')
 
 
@@ -390,73 +357,72 @@ class Elements:
         return self.atoms.get_atomic_numbers()
 
 
-    def vector(self, ri, rj=None, mic=True):
-        """
-        Return the vector ri or rj-ri, normally within the minimum image convention (mic).
-        
-        parameters:
-        -----------
-        ri: initial point (atom index or position)
-        rj: final point (atom index or position)
-        """
-        if not mic:
-            raise NotImplementedError('Why not use mic?')
-        R = self.atoms.get_positions() / Bohr
-        if type(ri) == type(1):
-            Ri = R[ri].copy()
-        else:
-            Ri = ri.copy()
-        if rj == None:
-            Rj = None
-        elif type(rj) == type(1):
-            Rj = R[rj].copy()
-        else:
-            Rj = rj
-
-        if Rj == None:
-            rij = Ri
-        else:
-            rij = Rj - Ri
-
-        L = self.get_cell_axes()
-        for a in range(3):
-            if self.atoms.pbc[a]:
-                rij[a] = nu.mod(rij[a]+0.5*L[a],L[a]) - 0.5*L[a]
-        return nu.array(rij)
-
-
-    def distance(self,ri,rj=None,mic=True):
-        """
-        Return the length of |ri| or |rj-ri|, normally within the minimum image convention.
-        """
-        if rj == None:
-            return mix.norm(self.vector(ri,mic))
-        else:
-            return mix.norm(self.vector(ri,rj,mic))
+#    def vector(self, ri, rj=None, mic=True):
+#        """
+#        Return the vector ri or rj-ri, normally within the minimum image convention (mic).
+#        
+#        parameters:
+#        -----------
+#        ri: initial point (atom index or position)
+#        rj: final point (atom index or position)
+#        """
+#        if not mic:
+#            raise NotImplementedError('Why not use mic?')
+#        R = self.atoms.get_positions() / Bohr
+#        if type(ri) == type(1):
+#            Ri = R[ri].copy()
+#        else:
+#            Ri = ri.copy()
+#        if rj == None:
+#            Rj = None
+#        elif type(rj) == type(1):
+#            Rj = R[rj].copy()
+#        else:
+#            Rj = rj
+#
+#        if Rj == None:
+#            rij = Ri
+#        else:
+#            rij = Rj - Ri
+#
+#        L = self.get_cell_axes()
+#        for a in range(3):
+#            if self.atoms.pbc[a]:
+#                rij[a] = nu.mod(rij[a]+0.5*L[a],L[a]) - 0.5*L[a]
+#        return nu.array(rij)
 
 
-    def distance_of_elements(self, si, sj, mode='minimum'):
-        """ Returns the closest distance between two elements. """
-        if type(si) != str or type(sj) != str:
-            raise AssertionError('Wrong types of parameters')
-        found_pair = False
-        distances = []
-        for i, a in enumerate(self.atoms):
-            for j, b in enumerate(self.atoms):
-                if i == j:
-                    pass
-                else:
-                    if (a.symbol == si and b.symbol == sj):
-                        found_pair = True
-                        d = self.distance(i, j)
-                        distances.append(d)
-        if found_pair:
-            if mode == 'minimum':
-                return min(distances)
-            else:
-                raise NotImplementedError('Only mode=minimum works')
-        else:
-            return None
+#    def distance(self,ri,rj=None,mic=True):
+#        """
+#        Return the length of |ri| or |rj-ri|, normally within the minimum image convention.
+#        """
+#        if rj == None:
+#            return mix.norm(self.vector(ri,mic))
+#        else:
+#            return mix.norm(self.vector(ri,rj,mic))
+
+#    def distance_of_elements(self, si, sj, mode='minimum'):
+#        """ Returns the closest distance between two elements. """
+#        if type(si) != str or type(sj) != str:
+#            raise AssertionError('Wrong types of parameters')
+#        found_pair = False
+#        distances = []
+#        for i, a in enumerate(self.atoms):
+#            for j, b in enumerate(self.atoms):
+#                if i == j:
+#                    pass
+#                else:
+#                    if (a.symbol == si and b.symbol == sj):
+#                        found_pair = True
+#                        d = self.distance(i, j)
+#                        distances.append(d)
+#        if found_pair:
+#            if mode == 'minimum':
+#                return min(distances)
+#            else:
+#                raise NotImplementedError('Only mode=minimum works')
+#        else:
+#            return None
 
 
     def get_cell_axes(self):

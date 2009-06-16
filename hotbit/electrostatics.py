@@ -96,8 +96,8 @@ class Electrostatics:
         lst=self.calc.el.get_property_lists(['i','s'])
         for i,si in lst:
             for j,sj in lst:
-                Rijn = self.calc.el.Rn[j,:,:] - self.calc.el.Rn[i,0,:]
-                Rjin = self.calc.el.Rn[i,:,:] - self.calc.el.Rn[j,0,:]
+                Rijn = self.calc.el.Rn[:,j,:] - self.calc.el.Rn[0,i,:]
+                Rjin = self.calc.el.Rn[:,i,:] - self.calc.el.Rn[0,j,:]
                 for n,(rij,rji) in enumerate(zip(Rijn,Rjin)):
                     # gamma function sum 
                     # TODO: this is the _one and only_ place where Ewald summations etc. can enter
@@ -107,7 +107,7 @@ class Electrostatics:
                     # the derivative of the gamma function sum
                     if (i==j and n==0): continue
                     dji = norm(rji)
-                    T = self.calc.el.Tn[i,n]
+                    T = self.calc.el.Tn[n,i]
                     dG1 = -g(si,sj,dij,der=1) * rij/dij 
                     dG2  = g(sj,si,dji,der=1) * nu.dot(rji,T)/dji
                     dG[i,j,:] = dG[i,j,:] + dG1 + dG2

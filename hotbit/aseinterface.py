@@ -342,7 +342,7 @@ class Calculator(Output):
         """ Return the forces of present system. """
         self.solve_ground_state(atoms)
         self.start_timing('forces')
-        fbs=self.st.band_structure_forces()
+        fbs=self.st.get_band_structure_forces()
         frep=self.rep.get_repulsive_forces()
         fcoul=self.st.es.gamma_forces() #zero for non-SCC
         self.stop_timing('forces')

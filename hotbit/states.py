@@ -267,7 +267,7 @@ class States:
         return ebs.real 
 
 
-    def band_structure_forces(self):
+    def get_band_structure_forces(self):
         """ Return forces from band structure. """
         self.calc.start_timing('f_bs')
         norbs=self.calc.el.nr_orbitals
