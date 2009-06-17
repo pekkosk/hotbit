@@ -121,11 +121,12 @@ class States:
                 raise NotImplementedError
                 self.es.construct_Gamma_matrix()
             self.e, self.wf = self.solver.get_states(self.calc,dq,self.H0,self.S,self.count)
-            self.calc.el.set_solved('ground state')
+            
             #self.check_mulliken_charges()
             self.large_update()
             self.count+=1
             self.calc.stop_timing('solve')
+            
 #        except Exception, ex:
 #            self.calc.stop_timing('solve')
 #            raise Exception(ex)
