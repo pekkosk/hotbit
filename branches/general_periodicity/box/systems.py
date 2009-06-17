@@ -112,6 +112,7 @@ def armchair_ribbon(n1,n2,R):
     elements=['C']*len(r)
     return vec(r),cell,elements
 
+
 def zigzag_ribbon(n1,n2,R):
     """
     Make ribbon out of graphene with zigzag edges.
@@ -128,7 +129,7 @@ def zigzag_ribbon(n1,n2,R):
             r.append(corner+vec([R*nu.cos(pi/6),2.5*R,0]))
     cell=[n1*2*R*nu.cos(pi/6),n2*3*R,0]   
     elements=['C']*len(r)         
-    return vec(r),cell,elements
+    return Atoms(elements,r,cell=cell)
             
 ##print help(make_zigzag_ribbon)
 #try:
