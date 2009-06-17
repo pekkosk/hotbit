@@ -209,10 +209,10 @@ class ChiralAtoms(ase_Atoms):
             self._check(n)
             atomsn=self.copy()
             atomsn.set_positions( [self.transform(r,n) for r in self.get_positions()] )
-            if atoms2==None:
-                atoms2 = atomsn
-            else:
+            try:
                 atoms2+=atomsn
+            except:
+                atoms2 = atomsn
         return atoms2
    
         
