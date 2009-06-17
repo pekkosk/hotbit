@@ -287,17 +287,13 @@ class Calculator(Output):
 
     def solve_ground_state(self,atoms):
         """ If atoms moved, solve electronic structure. """
-        
         if not self.init:
             self._initialize(atoms)
-
-        #print 'required?',self.el.calculation_required(atoms,'ground state')
-        #print atoms.get_positions()[1]
-        #print self.el.atoms.get_positions()[1]
         if self.el.calculation_required(atoms,'ground state'):
-            self.el.set_atoms(atoms)
+            self.el.update_geometry(atoms)
             t0 = time()
             self.st.solve()
+            self.el.set_solved('ground state')
             t1 = time()
             if self.verbose:
                 print >> self.get_output(), "Solved in %0.2f seconds" % (t1-t0)
@@ -316,39 +312,42 @@ class Calculator(Output):
         self.env=Environment(self)
         self.greetings()
         pbc=atoms.get_pbc()
+        # FIXME: gamma_cut -stuff
         if self.get('SCC') and nu.any(pbc) and self.get('gamma_cut')==None:
             raise NotImplementedError('SCC not implemented for periodic systems yet (see parameter gamma_cut).')
         if nu.any(pbc) and abs(self.get('charge'))>0.0:
             raise AssertionError('Charged system cannot be periodic.')
         self.flush()
-        #self.el.update_geometry()
+        self.el.set_atoms(atoms)
         self.stop_timing('initialization')
 
 
     def get_potential_energy(self,atoms):
         """ Return the potential energy of present system. """
-        self.solve_ground_state(atoms)
-        self.start_timing('energies')
-        ebs=self.get_band_structure_energy(atoms)
-        ecoul=self.get_coulomb_energy(atoms)
-        erep=self.rep.get_repulsive_energy()
-        self.stop_timing('energies')
-        return erep+ebs+ecoul
-        #return erep
-        #return ebs
+        if self.calculation_required(atoms,['energy']):
+            self.solve_ground_state(atoms)
+            self.start_timing('energies')
+            ebs=self.get_band_structure_energy(atoms)
+            ecoul=self.get_coulomb_energy(atoms)
+            erep=self.rep.get_repulsive_energy()
+            self.stop_timing('energies')
+            self.epot = erep+ebs+ecoul
+            self.el.set_solved('energy')
+        return self.epot
 
 
     def get_forces(self,atoms):
         """ Return the forces of present system. """
-        self.solve_ground_state(atoms)
-        self.start_timing('forces')
-        fbs=self.st.get_band_structure_forces()
-        frep=self.rep.get_repulsive_forces()
-        fcoul=self.st.es.gamma_forces() #zero for non-SCC
-        self.stop_timing('forces')
-        return (fbs+frep+fcoul)*(Hartree/Bohr)
-        #return fbs #*(Hartree/Bohr)
-#        return frep*(Hartree/Bohr)
+        if self.calculation_required(atoms, ['forces']):
+            self.solve_ground_state(atoms)
+            self.start_timing('forces')
+            fbs=self.st.get_band_structure_forces()
+            frep=self.rep.get_repulsive_forces()
+            fcoul=self.st.es.gamma_forces() #zero for non-SCC
+            self.stop_timing('forces')
+            self.f = (fbs+frep+fcoul)*(Hartree/Bohr)
+            self.el.set_solved('forces')
+        return self.f.copy()
     
     
     def get_DOS(self,width=0.1,window=None,npts=201):
@@ -413,23 +412,29 @@ class Calculator(Output):
 
 
     def get_band_structure_energy(self,atoms):
-        self.solve_ground_state(atoms)
-        return self.st.band_structure_energy()*Hartree
+        if self.calculation_required(atoms, ['ebs']):
+            self.solve_ground_state(atoms)
+            self.ebs = self.st.band_structure_energy()*Hartree
+            self.el.set_solved('ebs')
+        return self.ebs 
 
 
     def get_coulomb_energy(self,atoms):
-        self.solve_ground_state(atoms)
-        return self.st.es.coulomb_energy()*Hartree
+        if self.calculation_required(atoms,['ecoul']):
+            self.solve_ground_state(atoms)
+            self.ecoul = self.st.es.coulomb_energy()*Hartree 
+            self.st
+        return self.ecoul
 
 
-    #def calculation_required(self,atoms,quantities):
-        #""" Check if a calculation is required.
+    def calculation_required(self,atoms,quantities):
+        """ Check if a calculation is required.
 
-        #Check if the quantities in the quantities list have already been calculated
-        #for the atomic configuration atoms. The quantities can be one or more of:
-        #'ground state', 'energy', 'forces', and 'stress'.
-        #"""
-        #return self.el.calculation_required(atoms,quantities)
+        Check if the quantities in the quantities list have already been calculated
+        for the atomic configuration atoms. The quantities can be one or more of:
+        'ground state', 'energy', 'forces', and 'stress'.
+        """
+        return self.el.calculation_required(atoms,quantities)
 
 
     # some not implemented ASE-assumed methods
@@ -437,13 +442,13 @@ class Calculator(Output):
         return self.st.occu.get_mu() * Hartree
 
 
-#    def set_atoms(self,atoms):
-#        """ Initialize the calculator for given atomic system. """
-#        if self.init==True and atoms.get_chemical_symbols()!=self.el.atoms.get_chemical_symbols():
-#            raise RuntimeError('Calculator initialized for %s. Create new calculator for %s.'
-#                               %(self.el.get_name(),mix.parse_name_for_atoms(atoms)))
-#        else:
-#            self._initialize(atoms)
+    def set_atoms(self,atoms):
+        """ Initialize the calculator for given atomic system. """
+        if self.init==True and atoms.get_chemical_symbols()!=self.el.atoms.get_chemical_symbols():
+            raise RuntimeError('Calculator initialized for %s. Create new calculator for %s.'
+                               %(self.el.get_name(),mix.parse_name_for_atoms(atoms)))
+        else:
+            self._initialize(atoms)
 
 
     def get_occupation_numbers(self,kpt=0,spin=0):

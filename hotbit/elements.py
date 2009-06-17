@@ -60,7 +60,7 @@ class Elements:
         if elements!=None:
             self.files.update(elements)
         self._elements_initialization()
-        self.solved={'ground state':None,'energy':None,'forces':None,'stress':None}
+        self.solved={'ground state':None,'energy':None,'forces':None,'stress':None,'ebs':None,'ecoul':None}
 
 
     def get_transforms(self):
@@ -211,25 +211,12 @@ class Elements:
         return n                     
 
 
-    def update_geometry(self):
+    def update_geometry(self,atoms):
         '''
         Update all properties related to geometry (calculate once/geometry)
         '''
         self.calc.start_timing('geometry')      
-
-        # determine ranges if they go to infinity
-        r = self.atoms.get_ranges()
-        Mlarge = 4 # TODO: chek Mlarge to be large enough
-        ranges = []
-        for i in range(3):
-            assert r[i,0]<=r[i,1]
-            if not self.atoms.pbc[i]: assert r[i,0]==r[i,1]==0
-            if r[i,0]==-nu.Inf:
-                assert r[i,1]==nu.Inf
-                r[i,:] = [-Mlarge,Mlarge]
-            ranges.append( range(int(round(r[i,0])),int(round(r[i,1]))+1) )
-       
-        
+        self.atoms.set_positions( atoms.get_positions() )
         # select the symmetry operations n where atoms still interact chemically
         self.Rn = [[self.nvector(r=i,ntuple=(0,0,0)) for i in xrange(self.N)]]
         self.Tn = [[self.nvector(r=i,ntuple=(0,0,0),lst='dtensor') for i in xrange(self.N)]]
@@ -237,9 +224,9 @@ class Elements:
         cut2 = self.calc.ia.hscut**2
         self.ntuples = [(0,0,0)]
         # calculate the distances from unit cell 0 to ALL other possible; select meaningful
-        for n1 in ranges[0]:
-            for n2 in ranges[1]:
-                for n3 in ranges[2]:
+        for n1 in self.ranges[0]:
+            for n2 in self.ranges[1]:
+                for n3 in self.ranges[2]:
                     n = (n1,n2,n3)
                     if n==(0,0,0): continue
                     # check that any atom interacts with this unit cell
@@ -269,6 +256,7 @@ class Elements:
         """ Return True if quantities are solved for atoms.
 
         The quantities can be one or more of: 'ground state', 'energy', 'forces', and 'stress'.
+        'ebs' or 'ecoul'
         """
         if not isinstance(quantities,(list,tuple)):
             quantities=[quantities]
@@ -278,8 +266,8 @@ class Elements:
 
         # check that all quantities have been solved for identical atoms
         for quantity in quantities:
-            solved_atoms=self.solved[quantity]
-            if type(solved_atoms) == type(None) or atoms!=solved_atoms:
+            solved_atoms = self.solved[quantity]
+            if type(solved_atoms) == type(None) or not atoms.identical_to(solved_atoms):
                 return True
         return False
 
@@ -287,18 +275,27 @@ class Elements:
     def set_atoms(self,atoms):
         """ Set the atoms object ready for calculations. """
         # TODO: can this be done better?
-#        print atoms!=self.atoms, atoms[0].y, self.atoms[0].y
-#        if atoms!=self.atoms:
         try:
             # we have custom-made atoms
             r = atoms.ranges
             from copy import copy
             self.atoms = copy(atoms)
-#            print "custom", self.atoms[0].y
         except:
             # we have original ase.Atoms; use BravaisAtoms
             self.atoms=BravaisAtoms(atoms)
-        self.update_geometry()
+            
+        # determine ranges if they go to infinity
+        r = self.atoms.get_ranges()
+        Mlarge = 4 # TODO: chek Mlarge to be large enough
+        self.ranges = []
+        for i in range(3):
+            assert r[i,0]<=r[i,1]
+            if not self.atoms.pbc[i]: assert r[i,0]==r[i,1]==0
+            if r[i,0]==-nu.Inf:
+                assert r[i,1]==nu.Inf
+                r[i,:] = [-Mlarge,Mlarge]
+            self.ranges.append( range(int(round(r[i,0])),int(round(r[i,1]))+1) )
+        #self.update_geometry(atoms)
 
 
     def set_solved(self,quantities):
@@ -307,7 +304,7 @@ class Elements:
             quantities=[quantities]
         for quantity in quantities:
             # FIXME: more careful bookkeeping for solved stuff 
-            self.solved[quantity]=BravaisAtoms(self.atoms)
+            self.solved[quantity]=self.atoms.copy()
 
 
     def greetings(self):

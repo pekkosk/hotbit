@@ -297,27 +297,43 @@ class BravaisAtoms(ase_Atoms):
         return nu.eye(3)       
         
         
-    def __eq__(self,other):
-        if isinstance(other,BravaisAtoms):
-            # More strict comparison for BravaisAtoms
-            # TODO: check additional stuff for other generalized classes
-            # (angles, torsions ...)
-            if (self.positions-other.positions<1E-13).all() and \
-               (self.pbc==other.pbc).all() and \
-               self.get_chemical_symbols()==other.get_chemical_symbols() and \
-               (self.cell==other.cell).all():
-                return True
-            else:
-                return False
-        else:
-            # other is probably normal ase.Atoms; more loose check
-            if (self.positions-other.positions<1E-13).all() and \
-               (self.pbc==other.pbc).all() and \
-               self.get_chemical_symbols()==other.get_chemical_symbols() and \
-               (self.cell==other.cell).all():
-                return True
-            else:
-                return False
+#    def __eq__(self,other):
+#        #print 'comp'
+#        if (nu.abs(self.positions-other.positions)<1E-13).all() and \
+#           (self.pbc==other.pbc).all() and \
+#           self.get_chemical_symbols()==other.get_chemical_symbols() and \
+#           (self.cell==other.cell).all():
+#            #print 'ccccc'
+#            return True
+#        else:
+##            print self.positions
+##            print other.positions
+##            print self.pbc
+##            print other.pbc
+##            print self.cell
+##            print other.cell
+#            return False
+        
+#        if isinstance(other,BravaisAtoms):
+#            # More strict comparison for BravaisAtoms
+#            # TODO: check additional stuff for other generalized classes
+#            # (angles, torsions ...)
+#            if (self.positions-other.positions<1E-13).all() and \
+#               (self.pbc==other.pbc).all() and \
+#               self.get_chemical_symbols()==other.get_chemical_symbols() and \
+#               (self.cell==other.cell).all():
+#                return True
+#            else:
+#                return False
+#        else:
+#            # other is probably normal ase.Atoms; more loose check
+#            if (self.positions-other.positions<1E-13).all() and \
+#               (self.pbc==other.pbc).all() and \
+#               self.get_chemical_symbols()==other.get_chemical_symbols() and \
+#               (self.cell==other.cell).all():
+#                return True
+#            else:
+#                return False
            
         
 #    def get_number_of_cells(self):
