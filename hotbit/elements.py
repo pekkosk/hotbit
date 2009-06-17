@@ -267,7 +267,7 @@ class Elements:
         # check that all quantities have been solved for identical atoms
         for quantity in quantities:
             solved_atoms = self.solved[quantity]
-            if type(solved_atoms) == type(None) or not atoms.identical_to(solved_atoms):
+            if type(solved_atoms) == type(None) or solved_atoms != atoms:
                 return True
         return False
 
