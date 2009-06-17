@@ -2,6 +2,7 @@ from ase import Atoms as ase_Atoms
 import numpy as nu
 from box.mix import  phival
 from math import sin,cos
+from box import mix
 
 
 class WedgeAtoms(ase_Atoms):     
@@ -122,7 +123,11 @@ class WedgeAtoms(ase_Atoms):
 class ChiralAtoms(ase_Atoms):     
     def __init__(self, *args, **kwargs):
         ase_Atoms.__init__(self, *args, **kwargs)
-    
+        self.omega = 0.0
+        self.length = self.get_cell()[2,2]
+        self.pbc=nu.array([True,False,False],bool)
+        self.ranges=nu.array([[-nu.Inf,nu.Inf],[0,0],[0,0]])
+               
                
     def set(self,omega=None,length=None):
         # TODO: disable set_pbc and set_cell
@@ -130,8 +135,6 @@ class ChiralAtoms(ase_Atoms):
             self.omega=omega
         if length!=None:
             self.length=length
-        self.pbc=nu.array([True,False,False],bool)
-        self.ranges=nu.array([[-nu.Inf,nu.Inf],[0,0],[0,0]])                
         
     
     def get_ranges(self):
@@ -201,7 +204,25 @@ class ChiralAtoms(ase_Atoms):
         angle = n[0]*self.omega
         R = nu.array([[cos(angle),sin(angle),0],[-sin(angle),cos(angle),0],[0,0,1]])
         return R     
-     
+    
+    
+    def twist(self,angle):
+        L = self.get_cell()[2,2]
+        newr = []
+        for r in self.get_positions():
+            x,y = r[0],r[1]
+            rad = nu.sqrt( x**2+y**2 )
+            newphi = mix.phival(x,y) + r[2]/L * angle
+            newr.append( [rad*nu.cos(newphi),rad*nu.sin(newphi),r[2]] )
+        self.omega = self.omega + angle
+        self.set_positions(newr)
+        
+        
+    def stretch(self,length):
+        self.length=length
+        cell = self.get_cell()
+        self.set_cell([cell[0,0],cell[1,1],length],scale_atoms=True)
+        
      
     def multiply(self,operations):
         atoms2=None
