@@ -156,18 +156,6 @@ class States:
         # TODO: rhoS etc...
 #        self.rho0=fortran_rho0(self.wf,self.f,self.calc.el.nr_ia_orbitals,self.calc.el.ia_orbitals,self.norb)
         self.rho = fortran_rhoc(self.wf,self.f,self.norb,self.nk)
-        
-        
-#        for ik in range(self.nk):
-#            norm=0.0
-#            a=3
-#            print nu.dot( nu.dot(self.wf[ik,:,:].transpose().conjugate(),self.S[ik,:,:]),self.wf[ik,:,:] )
-#            for p in range(self.norb):
-#                norm+=nu.dot(self.wf[ik,:,a].conjugate(),self.S[ik,:,p])*self.wf[ik,a,p]
-#            print 'norm',norm    
-#            rr = self.rho[ik,:,:]
-#            ss = self.S[ik,:,:]
-#            print 'trace',ik,2*(nu.trace(nu.dot(rr,ss)) + nu.trace(nu.dot(ss,rr))).real 
         self.calc.stop_timing('rho')
 #        self.rho0S_diagonal=matmul_diagonal(self.rho0,self.S,self.norb)
         if self.SCC:
@@ -198,13 +186,13 @@ class States:
         self.calc.stop_timing('final update')
 
     def get_dq(self):
-        return self.dq
+        return self.dq.copy()
 
     def get_eigenvalues(self):
-        return self.e
+        return self.e.copy()
 
     def get_occupations(self):
-        return self.f
+        return self.f.copy()
 
     def get_homo(self):
         """ Return highest orbital with occu>0.99. """
@@ -254,17 +242,16 @@ class States:
 
     def band_structure_energy(self):
         """ Return band structure energy. """
-        # TODO: use rho0-version
-        ebs=0.0
-        for ik in range(self.nk):
-            ebs += self.wk[ik] * nu.trace(nu.dot(self.rho[ik],self.H0[ik]))
-        assert ebs.imag<1E-13
-        
-#        eb2=0.0
-#        for ik in range(self.nk):
-#            for a in range(self.norb):
-#                eb2+=self.e[ik,a]*self.wk[ik]*self.f[ik,a]
-#        print 'ebs,eb2',ebs,eb2
+        # TODO: use rho0-version; use numpy methods more efficiently
+        self.calc.start_timing('e_bs')
+        if self.SCC:
+            raise NotImplementedError
+            ebs = sum( [self.wk[ik]*nu.trace(nu.dot(self.rho[ik],self.H0[ik])) for ik in range(self.nk)] )
+            assert ebs.imag<1E-13
+        else:
+            # ebs = sum_k sum_a w_k * f_ak * e_ak
+            ebs = nu.dot( self.wk, (self.e*self.f).sum(axis=1) )
+        self.calc.stop_timing('e_bs')
         return ebs.real 
 
 

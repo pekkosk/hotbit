@@ -53,6 +53,7 @@ class Repulsion:
 
     def get_repulsive_energy(self):
         """ Calculate the repulsive energy. """
+        self.calc.start_timing('e_rep')
         erep=0.0
         # TODO: be more selective with n (for efficiency)
         lst=self.calc.el.get_property_lists(['i','s'])
@@ -61,10 +62,11 @@ class Repulsion:
                 Rijn = self.calc.el.Rn[:,j,:] - self.calc.el.Rn[0,i,:]
                 for n,rijn in enumerate(Rijn): 
                     if i==j and n==0: continue
-                    d = norm(rijn)
+                    d = nu.sqrt( rijn[0]**2+rijn[1]**2+rijn[2]**2 )
                     if d>self.rmax: continue
                     assert(d>1E-10)
-                    erep+=self.vrep[si+sj](d) 
+                    erep+=self.vrep[si+sj](d)
+        self.calc.stop_timing('e_rep') 
         return 0.5*erep*Hartree
 
 
