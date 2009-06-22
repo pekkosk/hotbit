@@ -331,7 +331,7 @@ class Calculator(Output):
             ecoul=self.get_coulomb_energy(atoms)
             erep=self.rep.get_repulsive_energy()
             self.stop_timing('energies')
-            self.epot = erep+ebs+ecoul
+            self.epot = erep+ebs+ecoul - self.el.efree*Hartree
             self.el.set_solved('energy')
         return self.epot
 

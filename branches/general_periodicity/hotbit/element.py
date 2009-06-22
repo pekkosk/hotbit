@@ -47,9 +47,10 @@ class Element:
         symb=find(f,'symbol').strip()
         assert symb==symbol
         
+        self.data['configuration']  = copy( data[symbol]['configuration'])
+        self.data['valence_number'] = copy( data[symbol]['valence_number'] )
+        self.data['valence_orbitals'] = copy( data[symbol]['valence_orbitals'] )
         # read data from elm-file
-        self.data['valence_number']=copy( data[symbol]['valence_number'] )
-        self.data['valence_orbitals']=copy( data[symbol]['valence_orbitals'] )
         self.data['U']=float(find(f,'U'))
         self.data['FWHM']=float(find(f,'FWHM'))
         self.data['epsilon']={}
@@ -73,6 +74,16 @@ class Element:
         
     def set(self,key,value):
         self.data[key]=value
+        
+        
+    def get_free_atom_energy(self):
+        '''
+        Return the energy of a free element (sum_i f_i*e_i)
+        '''
+        e=0.0
+        for valence in self.data['valence_orbitals']:
+            e += self.data['configuration'][valence]*self.get_epsilon(valence)
+        return e
                 
                 
     def get_comment(self):

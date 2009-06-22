@@ -86,7 +86,6 @@ class Elements:
         @param l:   list of properties to return, 'vec'=vector, 'hat'=unit vector, 'norm'=norm
                     'dtensor' = return the dyadic tensor (derivative) T(r,n)_ab = d rn_a/d r_b
         '''
-        self.calc.start_timing('nvec')
         if not isinstance(lst,(list,tuple)):
             lst=[lst]
         assert not( r0!=[0,0,0] and 'dtensor' in lst )
@@ -109,7 +108,6 @@ class Elements:
             else:
                 raise AssertionError('Keyword %s not defined' %l)
         
-        self.calc.stop_timing('nvec')
         if len(ret)==1: 
             return ret[0]
         else: 
@@ -156,6 +154,7 @@ class Elements:
                 self.elements[symb]=Element(self.files[symb])
             else:
                 self.elements[symb]=self.files[symb]
+        self.efree = self.get_free_atoms_energy()
 
         self.orb=[]
         self.pbc = self.atoms.pbc.copy()
@@ -581,6 +580,16 @@ class Elements:
         atomindex = orb['atomindex'] # atomindex states before this
         return max(0, min(2, n_el - 2*atomindex))
     
+    
+    def get_free_atoms_energy(self):
+        '''
+        Return the total of free atom energies for the system. 
+        '''
+        e = 0.0
+        for s in self.symbols:
+            e += self.elements[s].get_free_atom_energy()
+        return e
+        
 #    def get_efree(self):
 #        # TODO this one
 #        """ Return the energies of the isolated atoms."""
