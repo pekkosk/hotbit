@@ -74,7 +74,7 @@ class Environment:
            index if r is an integer
         """
         if isinstance(r,int):
-            r=self.calc.el.vector(r)
+            r=self.calc.el.nvector(r)
         pot=0.0
         for f in self.phis:
             pot+=f(r,self.t)

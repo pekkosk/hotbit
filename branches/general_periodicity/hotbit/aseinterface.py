@@ -76,8 +76,6 @@ class Calculator(Output):
         """
         from copy import copy
         import os
-        
-        if SCC: raise NotImplementedError
 
         if gamma_cut!=None: gamma_cut=gamma_cut/Bohr
         self.__dict__={ 'parameters':parameters,
