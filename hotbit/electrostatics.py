@@ -62,13 +62,13 @@ class Electrostatics:
             for j,o1j,noj in lst:
                 # internal electrostatics from Mulliken charges
                 eij = 0.5 * (self.epsilon[i] + self.epsilon[j])
-                h1[o1i:o1i+noi,o1j:o1j+noj]=eij
-                h1[o1j:o1j+noj,o1i:o1i+noi]=eij
+                h1[o1i:o1i+noi,o1j:o1j+noj] = eij
+                h1[o1j:o1j+noj,o1i:o1i+noi] = eij
                 # external electrostatics 
                 # NOTE: ext is the electrostatic potential, so we have minus-sign!
                 ext_ij = 0.5 * (-1)*(ext[i]+ext[j])
-                h1[o1i:o1i+noi,o1j:o1j+noj]+=ext_ij
-                h1[o1j:o1j+noj,o1i:o1i+noi]+=ext_ij
+                h1[o1i:o1i+noi,o1j:o1j+noj] += ext_ij
+                h1[o1j:o1j+noj,o1i:o1i+noi] += ext_ij
                 
         self.calc.stop_timing('h1')
         self.h1=h1
@@ -84,7 +84,7 @@ class Electrostatics:
         '''
         Construct the G-matrix and its derivative.
         
-        Done only once for each geometry; 
+        Done once for each geometry; 
         G_ij = sum_n gamma_ij(Rijn)
         dG_ij = -sum_n gamma'_ij(Rijn) hat(Rijn) + sum_n gamma'_ji(Rjin) hat(Rjin)*T_in
         '''

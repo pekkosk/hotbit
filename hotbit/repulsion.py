@@ -82,13 +82,13 @@ class Repulsion:
                 Rjin = self.calc.el.Rn[:,i,:] - self.calc.el.Rn[0,j,:]
                 for n, (rijn, rjin) in enumerate(zip(Rijn,Rjin)):
                     if i==j and n==0: continue
-                    dijn = norm(rijn)
-                    djin = norm(rjin)
+                    dijn = nu.sqrt( rijn[0]**2+rijn[1]**2+rijn[2]**2 )
+                    djin = nu.sqrt( rjin[0]**2+rjin[1]**2+rjin[2]**2 )
                     if dijn<self.rmax: 
-                        f[i,:]=f[i,:] + V(dijn,der=1)*rijn/dijn
+                        f[i,:] = f[i,:] + V(dijn,der=1)*rijn/dijn
                     if djin<self.rmax:
                         T = self.calc.el.Tn[n,i]
-                        f[i,:]=f[i,:] - V(djin,der=1)*nu.dot(rjin,T)/djin
+                        f[i,:] = f[i,:] - V(djin,der=1)*nu.dot(rjin,T)/djin
         f=0.5*f
         self.calc.stop_timing('f_rep')
         return f

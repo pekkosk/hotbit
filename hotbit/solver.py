@@ -81,18 +81,17 @@ class Solver:
         for i in range(self.maxiter):
             # diagonalize for all k-points at once
             for ik in range(st.nk):
-#                if self.SCC:
-#                    raise NotImplementedError
-#                    H=H0 + es.construct_h1(dq)*S
-#                else:
-                H=H0[ik,:,:]
+                if self.SCC:
+                    H=H0 + es.construct_h1(dq)*S
+                else:
+                    H=H0[ik,:,:]
                 e[ik,:], wf[ik,:,:] = self.diagonalize(H,S[ik,:,:])
-                # self.H, self.S=H,S
+                self.H, self.S=H,S
             st.update(e,wf)
             if not self.SCC:
                 break
             
-            raise NotImplementedError
+            #raise NotImplementedError
             dq_out=st.get_dq()
             done,dq=mixer(dq,dq_out)
             #convergence_plotter.draw(dq)

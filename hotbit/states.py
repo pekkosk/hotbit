@@ -4,15 +4,15 @@
 from solver import Solver
 from electrostatics import Electrostatics
 from occupations import Occupations
-from hotbit.fortran.misc import fortran_rho
-from hotbit.fortran.misc import fortran_rho0
-from hotbit.fortran.misc import fortran_rhoe0
+#from hotbit.fortran.misc import fortran_rho
+#from hotbit.fortran.misc import fortran_rho0
+#from hotbit.fortran.misc import fortran_rhoe0
 from hotbit.fortran.misc import fortran_rhoc
 from hotbit.fortran.misc import fortran_rhoec
 from hotbit.fortran.misc import symmetric_matmul
-from hotbit.fortran.misc import matmul_diagonal
-from hotbit.fortran.misc import fortran_fbs
-from hotbit.fortran.misc import fortran_fbsc
+#from hotbit.fortran.misc import matmul_diagonal
+#from hotbit.fortran.misc import fortran_fbs
+#from hotbit.fortran.misc import fortran_fbsc
 import numpy as nu
 from box import mix
 pi=nu.pi
@@ -118,11 +118,11 @@ class States:
 #        try:
         if True:
             if self.SCC:
-                raise NotImplementedError
+                #raise NotImplementedError
                 self.es.construct_Gamma_matrix()
             self.e, self.wf = self.solver.get_states(self.calc,dq,self.H0,self.S,self.count)
             
-            #self.check_mulliken_charges()
+            self.check_mulliken_charges()
             self.large_update()
             self.count+=1
             self.calc.stop_timing('solve')
@@ -159,7 +159,6 @@ class States:
         self.calc.stop_timing('rho')
 #        self.rho0S_diagonal=matmul_diagonal(self.rho0,self.S,self.norb)
         if self.SCC:
-            raise NotImplementedError
             self.dq=self.mulliken()
             self.es.set_dq(self.dq)
         self.calc.stop_timing('update')
@@ -172,10 +171,11 @@ class States:
         #self.rho=fortran_rho(self.wf,self.f,self.norb) # the complete density matrix (even needed?)
         self.dH = nu.zeros_like(self.dH0)
         if self.SCC:
-            raise NotImplementedError
             self.prev_dq=[self.dq, self.prev_dq[0]]
-            for a in range(3):
-                self.dH[:,:,a]=self.dH0[:,:,a] + self.es.get_h1()*self.dS[:,:,a]
+            # TODO: do k-sum with numpy
+            for ik in range(self.nk):
+                for a in range(3):
+                    self.dH[ik,:,:,a]=self.dH0[ik,:,:,a] + self.es.get_h1()*self.dS[:,:,:,a]
         else:
             self.dH = self.dH0
 
@@ -218,12 +218,29 @@ class States:
 
 
     def mulliken(self):
-        """ Return excess Mulliken populations. """
-        raise NotImplementedError
+        '''
+        Return excess Mulliken populations dq = dq(total)-dq0
+        
+        dq_I = sum_k w_k Trace_I Re[ rho(k)*S(k) ]
+             = sum_(i in I) Re [ sum_k w_k sum_j rho(k)_ij*S(k)_ji ] 
+             = sum_(i in I) Re [ sum_k w_k sum_j rho(k)_ij*S(k)^T_ij ]
+             = sum_(i in I) [ sum_k w_k diag(k)_i ],
+             = sum_(i in I) diag_i
+            
+               where diag(k)_i = Re [sum_j rho(k)_ij * S(k)^T_ij] 
+               and diag_i = sum_k w_k diag(k)_i 
+        '''
+        diag = nu.zeros((self.norb))
+        for ik in xrange(self.nk):
+            diag_k = ( self.rho[ik]*self.S[ik].transpose() ).sum(axis=1).real
+            diag = diag + self.wk[ik] * diag_k
+            
         q=[]
-        for i in range(self.nat):
-            orbitals=self.calc.el.orbitals(i,indices=True)
-            q.append( sum(self.rho0S_diagonal[orbitals]) )
+        for o1, no in self.calc.el.get_property_lists(['o1','no']):
+            q.append( diag[o1:o1+no].sum() )
+#        for i in range(self.nat):
+#            orbitals=self.calc.el.orbitals(i,indices=True)
+#            q.append( sum(self.rho0S_diagonal[orbitals]) )
         return nu.array(q)-self.calc.el.get_valences()
 
 
@@ -241,27 +258,47 @@ class States:
 
 
     def band_structure_energy(self):
-        """ Return band structure energy. """
-        # TODO: use rho0-version; use numpy methods more efficiently
+        '''
+        Return band structure energy.
+        
+        ebs = sum_k w_k ( sum_ij rho_ij * H0_ji )
+            = sum_k w_k ( sum_i [sum_j rho_ij * H0^T_ij] )
+        '''
+        # TODO: use rho0-version (maybe)
         self.calc.start_timing('e_bs')
-        if self.SCC:
-            raise NotImplementedError
-            ebs = sum( [self.wk[ik]*nu.trace(nu.dot(self.rho[ik],self.H0[ik])) for ik in range(self.nk)] )
-            assert ebs.imag<1E-13
-        else:
-            # ebs = sum_k sum_a w_k * f_ak * e_ak
-            ebs = nu.dot( self.wk, (self.e*self.f).sum(axis=1) )
+        ebs = 0.0
+        for ik in xrange(self.nk):
+            diagonal = ( self.rho[ik]*self.H0[ik].transpose() ).sum(axis=1)
+            ebs += self.wk[ik] * diagonal.sum() 
+        assert ebs.imag<1E-13
         self.calc.stop_timing('e_bs')
         return ebs.real 
 
 
     def get_band_structure_forces(self):
-        """ Return forces from band structure. """
-        self.calc.start_timing('f_bs')
-        norbs=self.calc.el.nr_orbitals
-        inds=self.calc.el.atom_orb_indices2
+        '''
+        Return band structure forces.
         
-        f=fortran_fbsc(self.rho,self.rhoe,self.dH,self.dS,norbs,inds,self.wk,self.norb,self.nat,self.nk)
+        F_I = - sum_k w_k Trace_I [ dH(k)*rho(k) - dS(k)*rhoe(k) ]
+            = - sum_k w_k sum_(i in I) diag_i(k),
+            
+                where diag_i(k) = [dH(k)*rho(k) - dS(k)*rhoe(k)]_ii
+                                = sum_j [dH(k)_ij*rho(k)_ji - dS(k)_ij*rhoe(k)_ji]
+                                = sum_j [dH(k)_ij*rho(k)^T_ij - dS(k)_ij*rhoe(k)^T_ij]
+        '''
+        self.calc.start_timing('f_bs')       
+        diag = nu.zeros((self.norb,3),complex)
+        for a in range(3):
+            for ik in range(self.nk):
+                diag_k = ( self.dH[ik,:,:,a]*self.rho[ik].transpose()  \
+                         - self.dS[ik,:,:,a]*self.rhoe[ik].transpose() ).sum(axis=1)
+                diag[:,a] = diag[:,a] - self.wk[ik] * diag_k
+            
+        f=[]            
+        for o1, no in self.calc.el.get_property_lists(['o1','no']):
+            f.append( 2*diag[o1:o1+no,:].sum(axis=0).real )
+            
+        #f=fortran_fbsc(self.rho,self.rhoe,self.dH,self.dS,norbs,inds,self.wk,self.norb,self.nat,self.nk)
         self.calc.stop_timing('f_bs')
         return f
 

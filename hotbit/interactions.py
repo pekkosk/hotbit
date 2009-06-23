@@ -214,9 +214,8 @@ class Interactions:
         @param n: 3-tuple of symmetry transformation
         '''
         R = self.calc.el.axis_rotation(n)
-        D = nu.zeros((9,9))
+        D = nu.eye(9)
         D[1:4,1:4] = R
-        D[0,0] = 1
         return D.transpose()
 
 
@@ -293,8 +292,11 @@ class Interactions:
                     # dht[:,:,l] = nu.dot( dht[:,:,l],DT[0:noj,0:noj] )
                     # dst[:,:,l] = nu.dot( dst[:,:,l],DT[0:noj,0:noj] )
 
-                    if noj>4: 
-                        raise NotImplementedError('Implement D-matrix for d-orbitals.')
+#                    try:
+#                        self.calc.el.atoms.omega
+#                        
+#                    if noj>4 and self.calc.el.atoms.: 
+#                        raise NotImplementedError('Implement D-matrix for d-orbitals.')
 
                     start('k-points')
                     phase = nu.array( [nu.exp(1j*nu.dot(nt,k)) for k in states.k] )
