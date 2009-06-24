@@ -34,6 +34,7 @@ class Calculator(Output):
                       charge=0.0,
                       SCC=True,
                       kpts=(1,1,1),
+                      physical_k_points=True,
                       maxiter=50,
                       gamma_cut=None,
                       txt=None,
@@ -69,6 +70,7 @@ class Calculator(Output):
         width             width of Fermi occupation (in eV)
         SCC               Self-Consistent Charge calculation
         kpts              number of k-points wrt different symmetries
+        physical_k_points True, if only physically exact k-point allowed in periodic (circular) systems
         maxiter           Maximum number of self-consistent iterations (for SCC)
         gamma_cut         Range for Coulomb interaction
         txt               Filename for log-file (stdout = None)
@@ -86,6 +88,7 @@ class Calculator(Output):
                         'width':width/Hartree,
                         'SCC':SCC,
                         'kpts':kpts,
+                        'physical_k_points':physical_k_points,
                         'maxiter':maxiter,
                         'gamma_cut':gamma_cut,
                         'txt':txt,
@@ -328,8 +331,8 @@ class Calculator(Output):
             ebs=self.get_band_structure_energy(atoms)
             ecoul=self.get_coulomb_energy(atoms)
             erep=self.rep.get_repulsive_energy()
+            self.epot = ebs + ecoul + erep - self.el.efree*Hartree
             self.stop_timing('energies')
-            self.epot = erep+ebs+ecoul - self.el.efree*Hartree
             self.el.set_solved('energy')
         return self.epot
 
@@ -371,10 +374,10 @@ class Calculator(Output):
         x=nu.array(x) 
         y=nu.array(y) 
         self.start_timing('broaden')
-        dos = mix.broaden(x, y, width=width, N=npts, a=mn, b=mx)
+        e,dos = mix.broaden(x, y, width=width, N=npts, a=mn, b=mx)
         self.stop_timing('broaden')
         self.stop_timing('DOS')
-        return dos
+        return e,dos
 
 
     def get_band_energies(self,kpts):

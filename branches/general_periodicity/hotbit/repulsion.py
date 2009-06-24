@@ -13,6 +13,7 @@ from weakref import proxy
 find=mix.find_value
 vec=nu.array
 norm=nu.linalg.norm
+sqrt=nu.sqrt
 
 class Repulsion:
     def __init__(self,calc):
@@ -75,15 +76,16 @@ class Repulsion:
         self.calc.start_timing('f_rep')
         f=nu.zeros((self.N,3))
         lst = self.calc.el.get_property_lists(['i','s'])
+        Rn = self.calc.el.Rn
         for i,si in lst:
             for j,sj in lst:
                 V    = self.vrep[si+sj]
-                Rijn = self.calc.el.Rn[:,j,:] - self.calc.el.Rn[0,i,:]
-                Rjin = self.calc.el.Rn[:,i,:] - self.calc.el.Rn[0,j,:]
+                Rijn = Rn[:,j,:] - Rn[0,i,:]
+                Rjin = Rn[:,i,:] - Rn[0,j,:]
                 for n, (rijn, rjin) in enumerate(zip(Rijn,Rjin)):
                     if i==j and n==0: continue
-                    dijn = nu.sqrt( rijn[0]**2+rijn[1]**2+rijn[2]**2 )
-                    djin = nu.sqrt( rjin[0]**2+rjin[1]**2+rjin[2]**2 )
+                    dijn = sqrt( rijn[0]**2+rijn[1]**2+rijn[2]**2 )
+                    djin = sqrt( rjin[0]**2+rjin[1]**2+rjin[2]**2 )
                     if dijn<self.rmax: 
                         f[i,:] = f[i,:] + V(dijn,der=1)*rijn/dijn
                     if djin<self.rmax:
