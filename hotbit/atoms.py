@@ -6,24 +6,44 @@ from box import mix
 
 
 class WedgeAtoms(ase_Atoms):     
+    
     def __init__(self, *args, **kwargs):
         ase_Atoms.__init__(self, *args, **kwargs)
-    
+        self.pbc=nu.array([True,False,False],bool)
                
-    def set(self,omega):
+               
+    def set(self,omega,physical=True):
         # TODO: disable set_pbc and set_cell
         self.omega=omega
-        self.pbc=nu.array([True,False,False],bool)
         M1 = round(2*nu.pi/omega)
-        if nu.abs(M1-2*nu.pi/omega)>1E-12 or omega>nu.pi:
-            raise AssertionError('omega not 2*pi/M !')
+        if omega<1E-6:
+            raise Warning('Too small omega may bring rounding problems.')
+        if omega>nu.pi:
+            raise AssertionError('Omega>2*pi')
+        if nu.abs(M1-2*nu.pi/omega)>1E-12 and physical: 
+            raise AssertionError('omega not physical 2*pi/M !')
+        if not physical and M1<20:
+            raise AssertionError('Too large, non-physical omega.')
         self.M1=int(M1)
         i = M1/2
         if nu.mod(M1,2)==1:
             self.ranges = nu.array([[-i,i],[0,0],[0,0]],int)
         else:
             self.ranges = nu.array([[-i+1,i],[0,0],[0,0]],int)
+    
         
+    def multiply(self,operations):
+        atoms2=None
+        for n in operations:
+            self._check(n)
+            atomsn=self.copy()
+            atomsn.set_positions( [self.transform(r,n) for r in self.get_positions()] )
+            try:
+                atoms2 += atomsn
+            except:
+                atoms2 = atomsn
+        return atoms2    
+    
     
     def get_ranges(self):
         '''
@@ -92,30 +112,42 @@ class WedgeAtoms(ase_Atoms):
         angle = n[0]*self.omega
         R = nu.array([[cos(angle),sin(angle),0],[-sin(angle),cos(angle),0],[0,0,1]])
         return R     
-        
-               
+                       
         
     def __eq__(self,other):
-        if isinstance(other,WedgeAtoms):
-            # More strict comparison for BravaisAtoms
-            # TODO: check additional stuff for other generalized classes
-            # (angles, torsions ...)
-            if (self.positions-other.positions<1E-13).all() and \
-               (self.pbc==other.pbc).all() and \
-               self.get_chemical_symbols()==other.get_chemical_symbols() and \
-               (self.cell==other.cell).all():
-                return True
-            else:
-                return False
+        if ase_Atoms.__eq__(self,other): # and self.omega==other.omega:
+            return True
         else:
-            # other is probably normal ase.Atoms; more loose check
-            if (self.positions-other.positions<1E-13).all() and \
-               (self.pbc==other.pbc).all() and \
-               self.get_chemical_symbols()==other.get_chemical_symbols() and \
-               (self.cell==other.cell).all():
-                return True
-            else:
-                return False
+            return False
+    
+    
+    def __ne__(self,other):
+        eq = self.__eq__(other)
+        if eq is NotImplemented:
+            return eq
+        else:
+            return not eq
+#        
+#        if isinstance(other,WedgeAtoms):
+#            # More strict comparison for BravaisAtoms
+#            # TODO: check additional stuff for other generalized classes
+#            # (angles, torsions ...)
+#            if (self.positions-other.positions<1E-13).all() and \
+#               (self.pbc==other.pbc).all() and \
+#               self.get_chemical_symbols()==other.get_chemical_symbols() and \
+#               (self.cell==other.cell).all():
+#                return True
+#            else:
+#                return False
+#        else:
+#            # other is probably normal ase.Atoms; more loose check
+#            if (self.positions-other.positions<1E-13).all() and \
+#               (self.pbc==other.pbc).all() and \
+#               self.get_chemical_symbols()==other.get_chemical_symbols() and \
+#               (self.cell==other.cell).all():
+#                return True
+#            else:
+#                return False
 
 
 

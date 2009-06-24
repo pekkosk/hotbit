@@ -12,7 +12,7 @@ from hotbit.fortran.misc import fortran_rhoec
 from hotbit.fortran.misc import symmetric_matmul
 #from hotbit.fortran.misc import matmul_diagonal
 #from hotbit.fortran.misc import fortran_fbs
-#from hotbit.fortran.misc import fortran_fbsc
+from hotbit.fortran.misc import fortran_fbsc
 import numpy as nu
 from box import mix
 pi=nu.pi
@@ -63,7 +63,7 @@ class States:
                     kl.append( nu.linspace(-pi+spacing/2,pi-spacing/2,kpts[i]) )
                 else:
                     # discrete, well-defined sampling 
-                    if (kpts[i]!=M[i] and physical) or ( kpts[i] not in mix.divisors(M[i]) ):
+                    if kpts[i] not in mix.divisors(M[i]) and physical:
                         print 'Allowed k-points for direction',i,'are',mix.divisors(M[i])
                         raise Warning('Non-physical k-point sampling!')
                     else:
@@ -106,7 +106,8 @@ class States:
 
     def solve(self):
         if self.nk==None:
-            self.nk, self.k, self.kl, self.wk = self.setup_k_sampling( self.calc.get('kpts') )
+            physical = self.calc.get('physical_k_points')
+            self.nk, self.k, self.kl, self.wk = self.setup_k_sampling( self.calc.get('kpts'),physical=physical )
             width=self.calc.get('width')
             self.occu = Occupations(self.calc.el.get_number_of_electrons(),width,self.wk)
         self.calc.start_timing('solve')
@@ -288,17 +289,34 @@ class States:
         '''
         self.calc.start_timing('f_bs')       
         diag = nu.zeros((self.norb,3),complex)
+        
+        
+#        for a in range(3):
+#            for ik in range(self.nk):
+#                diag_k = ( self.dH[ik,:,:,a]*self.rho[ik].transpose()  \
+#                         - self.dS[ik,:,:,a]*self.rhoe[ik].transpose() ).sum(axis=1)
+#                diag[:,a] = diag[:,a] - self.wk[ik] * diag_k
+#            
+#        f=[]            
+#        for o1, no in self.calc.el.get_property_lists(['o1','no']):
+#            f.append( 2*diag[o1:o1+no,:].sum(axis=0).real )
+#            
+            
         for a in range(3):
             for ik in range(self.nk):
-                diag_k = ( self.dH[ik,:,:,a]*self.rho[ik].transpose()  \
-                         - self.dS[ik,:,:,a]*self.rhoe[ik].transpose() ).sum(axis=1)
+                diag_k = ( self.dH[ik,:,:,0,a]*self.rho[ik].transpose()  \
+                         - self.dS[ik,:,:,0,a]*self.rhoe[ik].transpose() \
+                        +  self.rho[ik]*self.dH[ik,:,:,1,a].transpose() \
+                        -  self.rhoe[ik]*self.dS[ik,:,:,1,a].transpose() ).sum(axis=1)
                 diag[:,a] = diag[:,a] - self.wk[ik] * diag_k
             
         f=[]            
         for o1, no in self.calc.el.get_property_lists(['o1','no']):
-            f.append( 2*diag[o1:o1+no,:].sum(axis=0).real )
+            f.append( diag[o1:o1+no,:].sum(axis=0) )
             
-        #f=fortran_fbsc(self.rho,self.rhoe,self.dH,self.dS,norbs,inds,self.wk,self.norb,self.nat,self.nk)
+#        norbs=self.calc.el.nr_orbitals 
+#        inds=self.calc.el.atom_orb_indices2 
+#        f=fortran_fbsc(self.rho,self.rhoe,self.dH,self.dS,norbs,inds,self.wk,self.norb,self.nat,self.nk)
         self.calc.stop_timing('f_bs')
         return f
 
