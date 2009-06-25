@@ -297,7 +297,7 @@ class Elements:
             if r[i,0]==-nu.Inf:
                 assert r[i,1]==nu.Inf
                 r[i,:] = [-Mlarge,Mlarge]
-            elif r[i,0]<Mlarge:
+            elif r[i,0]<-Mlarge:
                 assert r[i,1]>=Mlarge
                 r[i,:] = [-Mlarge,Mlarge]
             self.ranges.append( range(int(round(r[i,0])),int(round(r[i,1]))+1) )
