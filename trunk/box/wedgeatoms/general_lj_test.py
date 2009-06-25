@@ -15,8 +15,22 @@ def test(test_ok, text='Test result: '):
         print text, '\t\t-> \t\t\t Error!'
 
 
+
 print 'GeneralizedLennardJones test.'
 viewer = 'ag'
+np.set_printoptions(suppress=True,precision=3)
+
+
+#test structure0 (One atom)
+d = 0.6
+wangle0 = radians(180)
+t1 = radians(0)
+t2 = wangle0 - t1 
+tc = wangle0 / 2.0
+
+structure0 = [[d * cos(tc), d * sin(tc), 0]]
+
+
 
 #test structure1 (One atom)
 d = 1.5
@@ -48,8 +62,9 @@ wangle3 = wangle2
 
 
 #Choose the structure
-structure = structure3
-wangle = wangle3
+#structure = structure2
+structure = structure2+[[d * cos(0), d * sin(0), 0]]
+wangle = wangle2
 
 # 2nd structure control
 atoms = WedgeAtoms(wangle, 'H' + str(len(structure)), structure)
@@ -61,7 +76,6 @@ atoms_ref = Atoms(atoms.get_copies(), pbc=[0, 0, 0])
 
 view(atoms_ref, viewer=viewer)
 view(atoms, viewer=viewer)
-
 
 
 # Compute Reference Calculator Results
@@ -112,12 +126,13 @@ e2 = e_ref / n_images
 #print 'Energy2 = %.20f' % e2
 #test(e == e2)
 print '|Energy1-Energy2| = %.3e' % abs(e - e2)
-test(abs(e - e2) < 1e-10, 'Energy test:')
+test(abs(e - e2) < 1e-7, 'Energy test:')
 #test(abs(e - e2) < 1e-20)
 
 # 2. Forces
 print; print;
-print 'Forces_ref = ', forces_ref
+print 'Forces_ref = ', forces_ref[:len(structure)]
+#print 'Forces_ref = ', forces_ref
 print 'Forces_ref/', n_images, ' = ', forces_ref[:len(structure)] / n_images
 print 'Forces = ', forces
 #test((forces == forces_ref/ n_images).all())

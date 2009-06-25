@@ -89,6 +89,7 @@ class GeneralizedLennardJones:
             #F = 0.0
             for i2, p2 in enumerate(positions):
                 for n0 in range(n_range[0]):
+                    print "n0 =", n0
                     p2_n = atoms.symmetry_operation(p2, (n0, 0, 0))
                     #print 'p2_n = ', p2_n
                     #print 'p1 = ', p1
@@ -102,19 +103,25 @@ class GeneralizedLennardJones:
                     c12 = c6 ** 2
                     
                     M1 = atoms.transform_der((n0, 0, 0));                       print "M1 = ", M1
-                    Matrix_n = (M1 + npy.identity(3))/2;                        print "Matrix_n = ", Matrix_n
-                    # FIXME: dot product, is it ok?
-                    vector_n = npy.dot(Matrix_n.T, diff);                       print "vector_n = ", vector_n
-                    dF = 24 * self.epsilon * (2 * c12 - c6) / d2 * vector_n;    print "dF = ", dF
+                    #Matrix_n = (M1 + npy.identity(3)) / 2;                        print "Matrix_n = ", Matrix_n
+                    ##Matrix_n = (M1 - npy.identity(3))/2;                        print "Matrix_n = ", Matrix_n
+                    Matrix_n = (npy.identity(3));                        print "Matrix_n = ", Matrix_n
+                    vector_n1 = npy.dot(Matrix_n.T, diff);                       print "vector_n1 = ", vector_n1
+                    #vector_n2 = npy.dot(diff, Matrix_n);                       print "vector_n2 = ", vector_n2
+                    if (npy.dot(Matrix_n.T, diff) - 
+                        npy.dot(diff, Matrix_n) > precision).any():
+                        raise Exceptiopn("Bug?")
+                    dF = 24 * self.epsilon * (2 * c12 - c6) / d2 * vector_n1;    print "dF = ", dF
                     #F += dF; print "F = ", F
                     
-                    self._forces[i1] += dF ; 
+                    # minus here (as for original J-L calc.); why?
+                    self._forces[i1] = self._forces[i1] - dF ; 
                     #print self._forces[i1] 
                     # FIXME: is sign ok?
                     
-            #self._forces[i1] += F
+            #self._forces[i1] = self._forces[i1] + F
             
-            #self._forces[i1] -= F
+            #self._forces[i1] = self._forces[i1] - F
             # FIXME: this ok?
             #if (i1!=i2):
             #self._forces[i2] += F
@@ -122,4 +129,4 @@ class GeneralizedLennardJones:
             
             
 
-        self.positions = positions.copy()    
+        self.positions = positions.copy()
