@@ -155,18 +155,18 @@ class WedgeAtoms(ase_Atoms):
 class ChiralAtoms(ase_Atoms):     
     def __init__(self, *args, **kwargs):
         ase_Atoms.__init__(self, *args, **kwargs)
-        self.omega = 0.0
+        self.angle = 0.0
         self.length = self.get_cell()[2,2]
-        self.pbc=nu.array([True,False,False],bool)
-        self.ranges=nu.array([[-nu.Inf,nu.Inf],[0,0],[0,0]])
+        self.pbc=nu.array([False,False,True],bool)
+        self.ranges=nu.array([[0,0],[0,0],[-nu.Inf,nu.Inf]])
                
                
-    def set(self,omega=None,length=None):
+    def set(self,angle=None,length=None):
         # TODO: disable set_pbc and set_cell
-        if omega!=None:
-            self.omega=omega
+        if angle!=None:
+            self.set_angle(angle)
         if length!=None:
-            self.length=length
+            self.set_length(length)
         
     
     def get_ranges(self):
@@ -199,9 +199,9 @@ class ChiralAtoms(ase_Atoms):
         x, y = r[0], r[1]
         rad = nu.sqrt(x**2+y**2)
         phi = phival(x,y)
-        rn[0] = rad * cos( phi+n[0]*self.omega )
-        rn[1] = rad * sin( phi+n[0]*self.omega )
-        rn[2] = r[2] + n[0]*self.length
+        rn[0] = rad * cos( phi+n[2]*self.angle )
+        rn[1] = rad * sin( phi+n[2]*self.angle )
+        rn[2] = r[2] + n[2]*self.length
         return rn
         
     
@@ -233,27 +233,47 @@ class ChiralAtoms(ase_Atoms):
         @param n: 3-tuple
         '''
         self._check(n)
-        angle = n[0]*self.omega
+        angle = n[2]*self.angle
         R = nu.array([[cos(angle),sin(angle),0],[-sin(angle),cos(angle),0],[0,0,1]])
         return R     
     
     
-    def twist(self,angle):
-        L = self.get_cell()[2,2]
-        newr = []
-        for r in self.get_positions():
-            x,y = r[0],r[1]
-            rad = nu.sqrt( x**2+y**2 )
-            newphi = mix.phival(x,y) + r[2]/L * angle
-            newr.append( [rad*nu.cos(newphi),rad*nu.sin(newphi),r[2]] )
-        self.omega = self.omega + angle
-        self.set_positions(newr)
+    def set_angle(self,angle,scale_atoms=True,absolute=True):
+        '''
+        Set the chiral angle.
+        
+        @param angle: the chiral angle in radians
+        @param scale_atoms: scale atoms according to twisting
+        @param absolute: if True, given angle is the absolute angle, otherwise
+                         it is addition to present chiral angle
+        '''
+        if absolute:
+            da = angle - self.angle
+            self.angle = angle
+        else:
+            da = angle
+            self.angle += da    
+        
+        if scale_atoms:
+            newr = []
+            for r in self.get_positions():
+                x,y = r[0],r[1]
+                rad = nu.sqrt( x**2+y**2 )
+                newphi = mix.phival(x,y) + r[2]/self.length * da
+                newr.append( [rad*nu.cos(newphi),rad*nu.sin(newphi),r[2]] )
+            self.set_positions(newr)
         
         
-    def stretch(self,length):
+    def set_length(self,length,scale_atoms=True):
+        '''
+        Set the length of the chiral system.
+        
+        @param length: set z-length in Angstroms
+        @param scale_atoms: scale atom positions accordingly
+        '''
         self.length=length
         cell = self.get_cell()
-        self.set_cell([cell[0,0],cell[1,1],length],scale_atoms=True)
+        self.set_cell([cell[0,0],cell[1,1],length],scale_atoms=scale_atoms)
         
      
     def multiply(self,operations):
@@ -263,33 +283,33 @@ class ChiralAtoms(ase_Atoms):
             atomsn=self.copy()
             atomsn.set_positions( [self.transform(r,n) for r in self.get_positions()] )
             try:
-                atoms2+=atomsn
+                atoms2 += atomsn
             except:
                 atoms2 = atomsn
         return atoms2
    
-        
-    def __eq__(self,other):
-        if isinstance(other,ChiralAtoms):
-            # More strict comparison for BravaisAtoms
-            # TODO: check additional stuff for other generalized classes
-            # (angles, torsions ...)
-            if (self.positions-other.positions<1E-13).all() and \
-               (self.pbc==other.pbc).all() and \
-               self.get_chemical_symbols()==other.get_chemical_symbols() and \
-               (self.cell==other.cell).all():
-                return True
-            else:
-                return False
-        else:
-            # other is probably normal ase.Atoms; more loose check
-            if (self.positions-other.positions<1E-13).all() and \
-               (self.pbc==other.pbc).all() and \
-               self.get_chemical_symbols()==other.get_chemical_symbols() and \
-               (self.cell==other.cell).all():
-                return True
-            else:
-                return False
+#        
+#    def __eq__(self,other):
+#        if isinstance(other,ChiralAtoms):
+#            # More strict comparison for BravaisAtoms
+#            # TODO: check additional stuff for other generalized classes
+#            # (angles, torsions ...)
+#            if (self.positions-other.positions<1E-13).all() and \
+#               (self.pbc==other.pbc).all() and \
+#               self.get_chemical_symbols()==other.get_chemical_symbols() and \
+#               (self.cell==other.cell).all():
+#                return True
+#            else:
+#                return False
+#        else:
+#            # other is probably normal ase.Atoms; more loose check
+#            if (self.positions-other.positions<1E-13).all() and \
+#               (self.pbc==other.pbc).all() and \
+#               self.get_chemical_symbols()==other.get_chemical_symbols() and \
+#               (self.cell==other.cell).all():
+#                return True
+#            else:
+#                return False
 
 
 
