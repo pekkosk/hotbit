@@ -270,7 +270,7 @@ class Elements:
 #                print quantity, solved_atoms != atoms, atoms.positions[0], solved_atoms.positions[0]
 #            except:
 #                pass
-            if solved_atoms==None or solved_atoms!=atoms:
+            if type(solved_atoms)==type(None) or solved_atoms!=atoms: 
                 return True
         return False
 
@@ -289,13 +289,16 @@ class Elements:
             
         # determine ranges if they go to infinity
         r = self.atoms.get_ranges()
-        Mlarge = 4 # TODO: chek Mlarge to be large enough
+        Mlarge = 5 # TODO: chek Mlarge to be large enough
         self.ranges = []
         for i in range(3):
             assert r[i,0]<=r[i,1]
             if not self.atoms.pbc[i]: assert r[i,0]==r[i,1]==0
             if r[i,0]==-nu.Inf:
                 assert r[i,1]==nu.Inf
+                r[i,:] = [-Mlarge,Mlarge]
+            elif r[i,0]<Mlarge:
+                assert r[i,1]>=Mlarge
                 r[i,:] = [-Mlarge,Mlarge]
             self.ranges.append( range(int(round(r[i,0])),int(round(r[i,1]))+1) )
         #self.update_geometry(atoms)
