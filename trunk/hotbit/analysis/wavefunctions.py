@@ -3,7 +3,7 @@ import numpy as nu
 import math
 import os, pickle
 from box import mix
-from time import time
+import time
 from ase import *
 acos=math.acos
 cos=math.cos
@@ -296,7 +296,7 @@ class WaveFunctions:
 class JelliumAnalysis:
 
 
-    def __init__(self, atoms, origin=None, maxl=3, R_0=3, a=0.2):
+    def __init__(self, atoms, origin=None, maxl=3, R_0=3, a=0.2, file='ylm_expansion.hb'):
         """
         A class to analyse the wave functions of the system by projecting
         them onto the spherical harmonics.
@@ -310,6 +310,7 @@ class JelliumAnalysis:
         a:      The approximate length of the side of cubic grid box (Ang)
         N:      Number of grid points in expansion sphere in one dimension
                 (the total number is then N^3).
+        file:   The filename where the ylm-expansion data is saved.
         """
         # values that are saved/loaded
         self.data = ['R_0',
@@ -323,42 +324,49 @@ class JelliumAnalysis:
                      'e',
                      'occ',
                      'fermi_level',
+                     'finished',
                      'c_nl',
                      'weights',
                      'dim',
-                     'N_wf',
-                     'needed_orbitals']
+                     'norb',
+                     'analyzed_states',
+                     'needed_orbitals',
+                     'norb_needed',
+                     'file']
         self.letters = "spdfghi"
-        self.loaded = None
-
-        if type(atoms) == str:
-            self.load(atoms)
+        self.loaded = False
+        if os.path.isfile(file):
+            self.load(file)
         else:
-            self.calc = atoms.get_calculator()
+            atoms.get_potential_energy()
+            calc = atoms.get_calculator()
             self.R_0 = R_0 / Bohr
-
-            self.atoms = atoms
+            self.finished = False
             if origin == None:
-                self.origin = self.calc.el.get_center_of_mass()
+                self.origin = calc.el.get_center_of_mass()
             else:
                 self.origin = nu.array(origin)/Bohr
+            self.create_uniform_cubic_grid(a)
             self.maxl = maxl
             self.l_array = range(min(7, maxl+1))
-            self.N_wf = self.calc.st.norb
-            self.fermi_level = self.calc.get_fermi_level()
-            self.e = self.calc.st.get_eigenvalues() * Hartree
-            self.occ = self.calc.st.get_occupations()
+            self.norb = calc.st.norb
+            self.fermi_level = calc.get_fermi_level()
+            self.e = calc.st.get_eigenvalues() * Hartree
+            self.occ = calc.st.get_occupations()
+            self.file = file
+            self.c_nl = nu.zeros((self.norb, len(self.l_array)))
+            self.weights = nu.zeros(self.norb)
+            self.analyzed_states = nu.zeros(self.norb, dtype=bool)
 
-            # the expansion coefficients
-            self.c_nl = nu.zeros((self.calc.st.norb, len(self.l_array)))
+        self.atoms = atoms
+        self.calc = atoms.get_calculator()
 
-            # The amount of states inside the expansion radius
-            self.weights = nu.zeros(self.calc.st.norb)
-            self.basis_functions = {}
+        self.basis_functions = {}
 
-            self.create_uniform_cubic_grid(a)
-            self.mark_grids()
-            self.mark_needed_basis_functions()
+        self.mark_grids()
+        self.mark_needed_basis_functions()
+
+        self.log = open('jellium_analysis.log','a')
         self.greetings()
 
 
@@ -371,13 +379,13 @@ class JelliumAnalysis:
                 self.__dict__[name] = data
             except EOFError:
                 break
-        self.loaded = file
+        self.loaded = True
         f.close()
 
 
-    def write(self, file):
+    def write(self):
         """ Write expansion data to file. """
-        f = open(file, 'w')
+        f = open(self.file, 'w')
         for name in self.data:
             pickle.dump([name, self.__dict__[name]], f)
         f.close()
@@ -409,13 +417,11 @@ class JelliumAnalysis:
         """ Give an approximation on how much the arrays need memory. """
         # grid points for one state
         N = nu.prod(self.dim)
-        #n_orb = self.calc.el.norb
-        n_orb = nu.sum(nu.where(self.needed_orbitals, 1, 0))
         mem = 0.0
         # the spherical harmonics
-        mem += 0.5 * self.maxl * (self.maxl+1) * nu.array([1], nu.complex).itemsize * N
+        mem += (self.maxl+1)**2 * nu.array([1], nu.complex).itemsize * N
         # the basis functions
-        mem += n_orb * nu.array([1], nu.float).itemsize * N
+        mem += self.norb_needed * nu.array([1], nu.float).itemsize * N
         # working arrays
         mem += 4 * nu.array([1], nu.float).itemsize * N
         f = 'byte'
@@ -459,10 +465,10 @@ class JelliumAnalysis:
     def mark_needed_basis_functions(self):
         """ Chech which basis functions are needed in order to calculate
             the wave functions inside the expansion sphere. """
-        self.needed_orbitals = nu.zeros(self.calc.st.norb ,dtype=bool)
+        self.needed_orbitals = nu.zeros(self.norb ,dtype=bool)
         positions = self.calc.el.get_positions()
         orbitals = self.calc.el.orbitals()
-        for m in range(self.calc.st.norb):
+        for m in range(self.norb):
             orbital = orbitals[m]
             atom = orbital['atom']
             orbital_type = orbital['orbital']
@@ -473,6 +479,7 @@ class JelliumAnalysis:
             R = positions[atom]
             if nu.linalg.norm(R - self.origin) < self.R_0 + wf_range:
                 self.needed_orbitals[m] = True
+        self.norb_needed = nu.sum(nu.where(self.needed_orbitals, 1, 0))
 
 
     def ylms_to_grid(self):
@@ -483,36 +490,33 @@ class JelliumAnalysis:
         for l in self.l_array:
             for m in range(-l,l+1):
                 y_lm = Ylm(l, m)
-                t1 = time()
-                print "Calculating Y_(l=%i, m=%s) to grid..." % (l, repr(m).rjust(2)),
+                t1 = time.time()
+                print >> self.log, "Calculating Y_(l=%i, m=%s) to grid..." % (l, repr(m).rjust(2))
+                self.log.flush()
                 values = nu.zeros(self.dim, dtype=nu.complex)
                 for i, x in enumerate(self.grid_points[0]):
                     for j, y in enumerate(self.grid_points[1]):
                         for k, z in enumerate(self.grid_points[2]):
                             r, theta, phi = to_spherical_coordinates(nu.array((x,y,z))-self.origin)
                             values[i,j,k] = y_lm((theta, phi))
-                print "in %i seconds." % (time() - t1)
+                print >> self.log, "  in %i seconds." % (time.time() - t1)
                 self.ylms[l,m] = values
 
 
-    def get_ylm(self, l, m):
-        """ Return spherical harmonic Y_lm on grid. """
-        return self.ylms[l,m]
-
-
-    def get_basis_function(self, m):
-        """ Return m:th basis function on grid. """
-        if not m in self.basis_functions:
+    def basis_functions_to_grid(self):
+        """ Calculate the basis functions into the grid. """
+        for m in range(self.norb):
             orbital = self.calc.el.orbitals()[m]
             atom = orbital['atom']
             R = self.calc.el.get_positions()[atom]
             orbital_type = orbital['orbital']
             if self.needed_orbitals[m] == False:
-                print "  Basis function %i/%i is outside the range." % (orbital['index']+1, self.calc.st.norb)
+                print >> self.log, "Basis function %i/%i is outside the range." % (orbital['index']+1, self.norb)
                 self.basis_functions[m] = None
             else:
-                t1 = time()
-                print "  Calculating basis function %i/%i to grid..." % (orbital['index']+1, self.calc.st.norb),
+                t1 = time.time()
+                print >> self.log, "Calculating basis function %i/%i to grid..." % (orbital['index']+1, self.norb)
+                self.log.flush()
                 r_nl = orbital['Rnl']
                 basis_function = nu.zeros(self.dim, dtype=nu.float)
                 for i, x in enumerate(self.grid_points[0]):
@@ -521,8 +525,16 @@ class JelliumAnalysis:
                             vec = nu.array((x,y,z))-nu.array(R)
                             r, theta, phi = to_spherical_coordinates(vec)
                             basis_function[i,j,k] = r_nl(r)*angular(vec, orbital_type)
-                print "  in %i seconds." % (time() - t1)
+                print >> self.log, "  in %i seconds." % (time.time() - t1)
                 self.basis_functions[m] = basis_function
+
+    def get_ylm(self, l, m):
+        """ Return spherical harmonic Y_lm on grid. """
+        return self.ylms[l,m]
+
+
+    def get_basis_function(self, m):
+        """ Return m:th basis function on grid. """
         return self.basis_functions[m]
 
 
@@ -530,7 +542,7 @@ class JelliumAnalysis:
         """ Return the k:th wave function inside the expansion grid. """
         wf_coeffs = self.calc.st.wf[:,k]
         state_grid = nu.zeros(self.dim, dtype=nu.float)
-        t1 = time()
+        t1 = time.time()
         for wf_coef, orb in zip(wf_coeffs, self.calc.el.orbitals()):
             basis_function = self.get_basis_function(orb['index'])
             if basis_function != None:
@@ -540,18 +552,25 @@ class JelliumAnalysis:
 
     def analyse_states(self):
         """ Perform the angular momentum analysis on all states. """
-        for n in range(self.calc.st.norb):
-            print "Analysing state %i..." % n
-            t1 = time()
-            state_grid = self.get_state(n)
-            state_grid_squared = state_grid.conjugate() * state_grid
-            self.weights[n] = nu.sum(state_grid_squared * nu.where(self.shell_index_grid != 0, 1, 0)) * self.dV
-            for l in self.l_array:
-                self.c_nl[n,l] = self.weights[n] * self.analyse_state(state_grid, l)
-            print "State %i analyzed in %i seconds." % (n, time() -  t1)
-        for n in range(self.calc.st.norb):
+        for n in range(self.norb):
+            if self.analyzed_states[n] == False:
+                print >> self.log, "Analysing state no. %i (%i/%i)..." % (n, n+1, self.norb)
+                self.log.flush()
+                t1 = time.time()
+                state_grid = self.get_state(n)
+                state_grid_squared = state_grid.conjugate() * state_grid
+                self.weights[n] = nu.sum(state_grid_squared * nu.where(self.shell_index_grid != 0, 1, 0)) * self.dV
+                for l in self.l_array:
+                    self.c_nl[n,l] = self.weights[n] * self.analyse_state(state_grid, l)
+                print >> self.log, "  %i seconds." % (time.time() -  t1)
+                self.analyzed_states[n] = True
+                self.write()
+                time.sleep(5)
+        self.finished = True
+        for n in range(self.norb):
             if float(nu.sum(self.c_nl[n,:])) > 0.01:
                 self.c_nl[n,:] = self.c_nl[n,:]/float(nu.sum(self.c_nl[n,:]))
+        self.log.flush()
 
 
     def analyse_state(self, state_grid, l):
@@ -573,20 +592,23 @@ class JelliumAnalysis:
 
 
     def greetings(self):
-        print "\n*** Starting the angular momentum analysis. ***"
-        if self.loaded != None:
-            print "Using data from %s" % self.loaded
-        print "The grid contains %i x %i x %i grid points" % tuple(self.dim)
-        print "The grid spacing is %0.3f (Ang)" % (self.a*Bohr)
-        print "The center of the expansion (Ang): %0.2f, %0.2f, %0.2f" % tuple(self.origin * Bohr)
-        print "The radius of the expansion: %0.2f (ang)" % (self.R_0 * Bohr)
-        print "The analysis is performed on angular momenta:",
+        print >> self.log, "\n*** Starting the angular momentum analysis. ***"
+        if self.loaded:
+            print >> self.log, "Using data from %s" % self.file
+        print >> self.log, "The grid contains %i x %i x %i grid points" % tuple(self.dim)
+        print >> self.log, "The grid spacing is %0.3f (Ang)" % (self.a*Bohr)
+        print >> self.log, "The center of the expansion (Ang): %0.2f, %0.2f, %0.2f" % tuple(self.origin * Bohr)
+        print >> self.log, "The radius of the expansion: %0.2f (ang)" % (self.R_0 * Bohr)
+        print >> self.log, "The analysis is performed on angular momenta:",
         for l in self.l_array:
-            print self.letters[l],
-        print ""
-        if self.loaded == None:
-            print "Estimated amount of memory required: %s" % self.estimate_memory_consumption(human_readable=True)
-        print ""
+            print >> self.log, self.letters[l],
+        print >> self.log, ""
+        print >> self.log, "There are %i basis functions, %i are needed." % (self.norb, self.norb_needed)
+        print >> self.log, "There are %i/%i states left to analyze." % (nu.sum(nu.where(self.analyzed_states, 0, 1)), self.norb)
+        if self.finished == False:
+            print >> self.log, "Estimated amount of memory required: %s" % (self.estimate_memory_consumption(human_readable=True))
+        print >> self.log, ""
+        self.log.flush()
 
 
     def write_readable(self, file):
@@ -599,7 +621,7 @@ class JelliumAnalysis:
         for l in self.l_array:
             print >> f, "%6s" % self.letters[l],
         print >> f, ""
-        for n in range(self.calc.st.norb):
+        for n in range(self.norb):
             print >> f, "%5i %12.4f %7.4f %7.4f" % (n, e[n], w[n], occ[n]),
             for l in self.l_array:
                 print >> f, "%6.3f" % self.c_nl[n,l],
@@ -611,20 +633,21 @@ class JelliumAnalysis:
         return exp( - (x-x0)**2 / (4*width**2) )
 
 
-    def make_plot(self, width=0.1, bands=None, limits=None, out=None):
+    def make_plot(self, width=0.1, bands=None, xlimits=None, ylimits=None, out=None):
         import pylab
+        pylab.figure()
         colors = ['#FFFF00','#FF0000','#2758D3','#5FD300',
                   '#058C00','#E1AB18','#50E1D0']
 
         if bands == None:
-            bands = self.N_wf
+            bands = self.norb
         c_nl = self.c_nl
         e = self.e[:bands] - self.fermi_level
-        if limits == None:
+        if xlimits == None:
             e_min, e_max = min(e), max(e)
             empty = 0.1*(e_max - e_min)
         else:
-            e_min, e_max = limits
+            e_min, e_max = xlimits
             empty = 0.0
         x_grid = nu.linspace(e_min-empty, e_max+empty, 2000)
         y_0 = nu.zeros(len(x_grid))
@@ -639,16 +662,18 @@ class JelliumAnalysis:
         pylab.ylabel("Arbitrary units")
         pylab.title("Angular momentum analysis")
         pylab.legend()
+        pylab.ylim(ylimits)
         if out == None:
-            out = 'Jellium_analysis_w%0.3f.eps'
-        pylab.savefig(out)
-        pylab.show()
+            pylab.show()
+        else:
+            pylab.savefig(out)
 
 
     def run(self):
-        if self.loaded == None:
+        if self.finished == False:
+            self.atoms.get_potential_energy()
             self.ylms_to_grid()
+            self.basis_functions_to_grid()
             self.analyse_states()
-            self.write("ylm_expansion.hb")
-
+            self.write()
 
