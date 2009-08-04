@@ -1,5 +1,6 @@
 from element import Element
-from ase import Atoms
+from ase import Atoms as ase_Atoms
+from hotbit.atoms import Atoms
 import numpy as nu
 import hotbit.auxil as aux
 import box.mix as mix
@@ -7,9 +8,10 @@ from numpy.linalg.linalg import norm
 from ase.units import Hartree,Bohr
 from os import environ
 from weakref import proxy
+from copy import copy, deepcopy
 
-from atoms import BravaisAtoms
-from atoms import WedgeAtoms
+#from atoms import BravaisAtoms
+#from atoms import WedgeAtoms
 
 
 
@@ -26,7 +28,7 @@ class Elements:
         if elements!=None:
             elements=elements.copy()
 
-        if not isinstance(atoms, Atoms):
+        if not isinstance(atoms, ase_Atoms):
             raise AssertionError('Given atoms object has to be ase.Atoms type.')
         self.atoms = atoms.copy()
             #raise AssertionError('Given atoms object has to be box.Atoms, not ase.Atoms type.')
@@ -67,13 +69,13 @@ class Elements:
         return self.ntuples
 
        
-    def axis_rotation(self,n):
+    def rotation_of_axes(self,n):
         '''
         Return the quantization axis rotation matrix for given symmetry operation.
          
         @param n: 3-tuple for transformation 
         '''
-        return self.atoms.axis_rotation(n)
+        return self.atoms.rotation_of_axes(n)
         
     
     def nvector(self,r,ntuple=(0,0,0),r0=[0,0,0],lst='vec'):
@@ -84,11 +86,11 @@ class Elements:
         @param ntuple:   operate on r with S(n)
         @param r0:  if integer, use atom r0's position as r0
         @param l:   list of properties to return, 'vec'=vector, 'hat'=unit vector, 'norm'=norm
-                    'dtensor' = return the dyadic tensor (derivative) T(r,n)_ab = d rn_a/d r_b
+                    'tensor' = return the dyadic tensor (derivative) T(r,n)_ab = d rn_a/d r_b
         '''
         if not isinstance(lst,(list,tuple)):
             lst=[lst]
-        assert not( r0!=[0,0,0] and 'dtensor' in lst )
+        assert not( r0!=[0,0,0] and 'tensor' in lst )
         if isinstance(r,int):  r=self.atoms.positions[r]
         if isinstance(r0,int): r0=self.atoms.positions[r0]
         vec=(self.atoms.transform(r,ntuple)-r0) / Bohr
@@ -103,8 +105,8 @@ class Elements:
                 ret.append( vec/norm )
             elif l=='norm': 
                 ret.append( nu.linalg.norm(vec) )
-            elif l=='dtensor': 
-                ret.append( self.atoms.dtensor(r,ntuple) )
+            elif l=='tensor': 
+                ret.append( self.atoms.tensor(r,ntuple) )
             else:
                 raise AssertionError('Keyword %s not defined' %l)
         
@@ -218,7 +220,7 @@ class Elements:
         self.atoms.set_positions( atoms.get_positions() )
         # select the symmetry operations n where atoms still interact chemically
         self.Rn = [[self.nvector(r=i,ntuple=(0,0,0)) for i in xrange(self.N)]]
-        self.Tn = [[self.nvector(r=i,ntuple=(0,0,0),lst='dtensor') for i in xrange(self.N)]]
+        self.Tn = [[self.nvector(r=i,ntuple=(0,0,0),lst='tensor') for i in xrange(self.N)]]
                 
         cut2 = self.calc.ia.hscut**2
         self.ntuples = [(0,0,0)]
@@ -239,10 +241,26 @@ class Elements:
                                 add = True
                                 break
                     if add:
-                        T = [self.nvector(r=i,ntuple=n,lst='dtensor') for i in range(self.N)]
+                        T = [self.nvector(r=i,ntuple=n,lst='tensor') for i in range(self.N)]
                         self.ntuples.append(n)
                         self.Rn.append(R)
                         self.Tn.append(T)
+                        
+        
+#===============================================================================
+#        # TODO                
+#        def check_too_close_distances(self):
+#        # FIXME: move this to elements--it's their business; and call in geometry update
+#        """ If some element pair doesn't have repulsive potential,
+#            check that they are not too close to each other. """
+#        for si in self.present:
+#            for sj in self.present:
+#                d = self.calc.el.distance_of_elements(si,sj,mode='minimum')
+#                if d != None and self.kill_radii[si,sj] != None:
+#                    if d < self.kill_radii[si,sj]:
+#                        raise AssertionError("Atoms with no repulsive potential are too close to each other: %s and %s" % (si, sj))
+#===============================================================================
+
         
         # TODO: calc.ia should also know the smallest allowed distances between elements
         # (maybe because of lacking repulsion or SlaKo tables), this should be checked here!
@@ -266,26 +284,25 @@ class Elements:
         # check that all quantities have been solved for identical atoms
         for quantity in quantities:
             solved_atoms = self.solved[quantity]
-#            try:
-#                print quantity, solved_atoms != atoms, atoms.positions[0], solved_atoms.positions[0]
-#            except:
-#                pass
-            if type(solved_atoms)==type(None) or solved_atoms!=atoms: 
+            if type(solved_atoms)==type(None):
+                return True                 
+            if solved_atoms!=atoms:
                 return True
         return False
 
 
     def set_atoms(self,atoms):
         """ Set the atoms object ready for calculations. """
-        # TODO: can this be done better?
         try:
             # we have custom-made atoms
-            r = atoms.ranges
-            from copy import copy
-            self.atoms = copy(atoms)
+            r = atoms.get_ranges()
+            self.atoms = atoms.copy()
         except:
-            # we have original ase.Atoms; use BravaisAtoms
-            self.atoms=BravaisAtoms(atoms)
+            # we have original ase.Atoms; use Bravais -type generalized class
+            self.atoms = Atoms(container={'type':'Bravais'},cell=atoms.get_cell(),
+                               pbc=atoms.get_pbc() )
+            self.atoms += atoms
+            
             
         # determine ranges if they go to infinity
         r = self.atoms.get_ranges()
@@ -301,7 +318,6 @@ class Elements:
                 assert r[i,1]>=Mlarge
                 r[i,:] = [-Mlarge,Mlarge]
             self.ranges.append( range(int(round(r[i,0])),int(round(r[i,1]))+1) )
-        #self.update_geometry(atoms)
 
 
     def set_solved(self,quantities):
@@ -309,9 +325,7 @@ class Elements:
         if not isinstance(quantities,(list,tuple)):
             quantities=[quantities]
         for quantity in quantities:
-            # FIXME: more careful bookkeeping for solved stuff 
             self.solved[quantity]=self.atoms.copy()
-
 
     def greetings(self):
         """ Return documentation for elements from .elm files. """
@@ -359,75 +373,6 @@ class Elements:
         """ Return the atomic numbers. """
         return self.atoms.get_atomic_numbers()
 
-
-#    def vector(self, ri, rj=None, mic=True):
-#        """
-#        Return the vector ri or rj-ri, normally within the minimum image convention (mic).
-#        
-#        parameters:
-#        -----------
-#        ri: initial point (atom index or position)
-#        rj: final point (atom index or position)
-#        """
-#        if not mic:
-#            raise NotImplementedError('Why not use mic?')
-#        R = self.atoms.get_positions() / Bohr
-#        if type(ri) == type(1):
-#            Ri = R[ri].copy()
-#        else:
-#            Ri = ri.copy()
-#        if rj == None:
-#            Rj = None
-#        elif type(rj) == type(1):
-#            Rj = R[rj].copy()
-#        else:
-#            Rj = rj
-#
-#        if Rj == None:
-#            rij = Ri
-#        else:
-#            rij = Rj - Ri
-#
-#        L = self.get_cell_axes()
-#        for a in range(3):
-#            if self.atoms.pbc[a]:
-#                rij[a] = nu.mod(rij[a]+0.5*L[a],L[a]) - 0.5*L[a]
-#        return nu.array(rij)
-
-
-#    def distance(self,ri,rj=None,mic=True):
-#        """
-#        Return the length of |ri| or |rj-ri|, normally within the minimum image convention.
-#        """
-#        if rj == None:
-#            return mix.norm(self.vector(ri,mic))
-#        else:
-#            return mix.norm(self.vector(ri,rj,mic))
-
-#    def distance_of_elements(self, si, sj, mode='minimum'):
-#        """ Returns the closest distance between two elements. """
-#        if type(si) != str or type(sj) != str:
-#            raise AssertionError('Wrong types of parameters')
-#        found_pair = False
-#        distances = []
-#        for i, a in enumerate(self.atoms):
-#            for j, b in enumerate(self.atoms):
-#                if i == j:
-#                    pass
-#                else:
-#                    if (a.symbol == si and b.symbol == sj):
-#                        found_pair = True
-#                        d = self.distance(i, j)
-#                        distances.append(d)
-#        if found_pair:
-#            if mode == 'minimum':
-#                return min(distances)
-#            else:
-#                raise NotImplementedError('Only mode=minimum works')
-#        else:
-#            return None
-
-
     def get_cell_axes(self):
         """
         Lengths of the unit cell axes (currently for orthorhombic cell).
@@ -436,7 +381,6 @@ class Elements:
         x,y,z = self.atoms.get_cell()
         assert (nu.dot(x,y) == 0 and nu.dot(x,z) == 0 and nu.dot(y,z) == 0)
         return nu.diag(self.atoms.get_cell()) / Bohr
-
 
     def get_box_lengths(self):
         """ Return lengths of box sizes in orthorombic box. """
@@ -596,17 +540,3 @@ class Elements:
         for s in self.symbols:
             e += self.elements[s].get_free_atom_energy()
         return e
-        
-#    def get_efree(self):
-#        # TODO this one
-#        """ Return the energies of the isolated atoms."""
-#        e=0.0
-#        for i,symb in enumerate(self.symbols):
-#            el = self.elements(s)
-#            e += el.
-            
-            
-#        
-#        e=0.0
-#        for i in range(self.norb):
-#            e += self.get_free_population(i)*

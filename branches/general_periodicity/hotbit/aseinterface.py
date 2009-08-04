@@ -19,7 +19,6 @@ from hotbit.output import Output
 import box.mix as mix
 from time import time
 
-from atoms import WedgeAtoms
 
 
 
@@ -267,7 +266,7 @@ class Calculator(Output):
 
     def set_text(self,txt):
         """ Set up the output file. """
-        if txt is '-':
+        if txt=='-' or txt=='null':
             self.txt = open('/dev/null','w')
         elif txt is None:
             from sys import stdout
@@ -334,12 +333,12 @@ class Calculator(Output):
             self.epot = ebs + ecoul + erep - self.el.efree*Hartree
             self.stop_timing('energies')
             self.el.set_solved('energy')
-        return self.epot
+        return self.epot.copy()
 
 
     def get_forces(self,atoms):
         """ Return the forces of present system. """
-        if self.calculation_required(atoms, ['forces']):
+        if self.calculation_required(atoms,['forces']):
             self.solve_ground_state(atoms)
             self.start_timing('forces')
             fbs=self.st.get_band_structure_forces()
@@ -351,7 +350,7 @@ class Calculator(Output):
         return self.f.copy()
     
     
-    def get_DOS(self,width=0.1,window=None,npts=201):
+    def get_DOS(self,width=0.1,window=None,npts=201,broaden=False):
         '''
         Return the full density of states, including k-points.
         Zero is the Fermi-level; spin-degeneracy is not counted.
@@ -373,9 +372,12 @@ class Calculator(Output):
             y = nu.concatenate( (y,self.st.wk) )
         x=nu.array(x) 
         y=nu.array(y) 
-        self.start_timing('broaden')
-        e,dos = mix.broaden(x, y, width=width, N=npts, a=mn, b=mx)
-        self.stop_timing('broaden')
+        if broaden:
+            self.start_timing('broaden')
+            e,dos = mix.broaden(x, y, width=width, N=npts, a=mn, b=mx)
+            self.stop_timing('broaden')
+        else:
+            e,dos = x,y
         self.stop_timing('DOS')
         return e,dos
 

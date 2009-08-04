@@ -21,11 +21,6 @@ class Solver:
     def __del__(self):
         pass
 
-#    def set_matrices(self,H,S):
-#        """ Set the non-SCC DFTB matrices """
-#        self.H, self.S = H,S
-#        self.norb=len(self.H[0,:,0])
-
     def get_nr_iterations(self):
         return self.iterations
 
@@ -82,7 +77,7 @@ class Solver:
             # diagonalize for all k-points at once
             for ik in range(st.nk):
                 if self.SCC:
-                    H=H0 + es.construct_h1(dq)*S
+                    H=H0[ik,:,:] + es.construct_h1(dq)*S[ik,:,:]
                 else:
                     H=H0[ik,:,:]
                 e[ik,:], wf[ik,:,:] = self.diagonalize(H,S[ik,:,:])

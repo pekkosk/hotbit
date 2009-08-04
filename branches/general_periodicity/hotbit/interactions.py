@@ -105,19 +105,6 @@ class Interactions:
         """ Return element pair cutoff dictionary. """
         return self.cut
 
-
-    def check_too_close_distances(self):
-        # FIXME: move this to elements--it's their business; and call in geometry update
-        """ If some element pair doesn't have repulsive potential,
-            check that they are not too close to each other. """
-        for si in self.present:
-            for sj in self.present:
-                d = self.calc.el.distance_of_elements(si,sj,mode='minimum')
-                if d != None and self.kill_radii[si,sj] != None:
-                    if d < self.kill_radii[si,sj]:
-                        raise AssertionError("Atoms with no repulsive potential are too close to each other: %s and %s" % (si, sj))
-
-
     def greetings(self):
         """ Return the interaction specifications """
         txt='Interactions:\n'
@@ -213,12 +200,36 @@ class Interactions:
         '''
         Return the transpose of 9x9 rotation transformation matrix for given symmetry operation.
         
+            | 1   0   0   0    0    0    0   0   0 |   s  } s-orbital 
+            | 0  ca -sa   0    0    0    0   0   0 |   px
+            | 0  sa  ca   0    0    0    0   0   0 |   py } p-orbitals         ca = cos(a)
+            | 0   0   0   1    0    0    0   0   0 |   pz                      sa = sin(a)
+         D= | 0   0   0   0   c2a   0    0 s2a   0 |   dxy                     c2a = cos(2a)
+            | 0   0   0   0    0   ca   sa   0   0 |   dyz                     s2a = sin(2a)
+            | 0   0   0   0    0  -sa   ca   0   0 |   dzx } d-orbitals
+            | 0   0   0   0 -s2a    0    0 c2a   0 |   dx2-y2
+            | 0   0   0   0    0    0    0   0   1 |   d3z2-r2
+        
         @param n: 3-tuple of symmetry transformation
         '''
-        R = self.calc.el.axis_rotation(n)
-        D = nu.eye(9)
-        D[1:4,1:4] = R
-        return D.transpose()
+        R = self.calc.el.rotation_of_axes(n)
+        assert abs(R[2,2]-1)<1E-13 #rotation only about z-axis
+        if abs(R[0,0]-1)<1E-13: #no rotation in xy-plane
+            return nu.eye(9)
+                
+        ca, sa = R[0,0:2]
+        c2a, s2a = 2*ca**2-1, 2*sa*ca
+        
+        D = nu.diag((1.0,ca,ca,1.0,c2a,ca,ca,c2a,1.0))
+        D[1,2] = -sa
+        D[2,1] = sa
+        D[5,6] = sa
+        D[6,5] = -sa
+        D[4,7] = s2a
+        D[7,4] = -s2a
+                
+        #D[1:4,1:4] = R
+        return D #.transpose()
 
 
     def construct_matrices(self):
@@ -268,6 +279,7 @@ class Interactions:
 
                     dij   = norm(rij)
                     rijh  = rij/dij
+                    #print i,j,el.ntuples[n],rij
                     assert dij>0.1
                     if not r1<=dij<=r2: continue
                     ij_interact = True
@@ -294,8 +306,8 @@ class Interactions:
                     dst = dot( dst.transpose((2,0,1)),DT[0:noj,0:noj] ).transpose((1,2,0))
                     stop('splint+SlaKo+DH')
                                             
-                    if noj>4: 
-                        raise NotImplementedError('Implement D-matrix for d-orbitals.')
+                    #if noj>4: 
+                    #    raise NotImplementedError('Implement D-matrix for d-orbitals.')
 
                     start('k-points')
                     phase = nu.array( [nu.exp(1j*nu.dot(nt,k)) for k in states.k] )
