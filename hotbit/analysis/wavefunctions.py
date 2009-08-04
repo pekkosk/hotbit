@@ -5,6 +5,7 @@ import os, pickle
 from box import mix
 import time
 from ase import *
+from box.fold import *
 acos=math.acos
 cos=math.cos
 sin=math.sin
@@ -12,7 +13,6 @@ atan=math.atan
 sqrt=math.sqrt
 pi=math.pi
 exp=nu.exp
-
 
 
 def phival(x,y):
@@ -528,6 +528,7 @@ class JelliumAnalysis:
                 print >> self.log, "  in %i seconds." % (time.time() - t1)
                 self.basis_functions[m] = basis_function
 
+
     def get_ylm(self, l, m):
         """ Return spherical harmonic Y_lm on grid. """
         return self.ylms[l,m]
@@ -629,20 +630,22 @@ class JelliumAnalysis:
         f.close()
 
 
-    def gaussian_peak(self, x, x0, width):
-        return exp( - (x-x0)**2 / (4*width**2) )
-
-
-    def make_plot(self, width=0.1, bands=None, xlimits=None, ylimits=None, out=None):
+    def make_plot(self, width=0.1, xlimits=None, ylimits=None, out=None):
+        """ Make a cumulative plot from the angular momentum analysis
+            of the electron states.
+            
+            width: the FWHM of the gaussians used to broaden the energies
+            xlimits: the limits of the x-axis [xmin, xmax]
+            ylimits: the limits of the y-axis [ymin, ymax]
+            out: the output file
+        """
         import pylab
         pylab.figure()
         colors = ['#FFFF00','#FF0000','#2758D3','#5FD300',
                   '#058C00','#E1AB18','#50E1D0']
 
-        if bands == None:
-            bands = self.norb
-        c_nl = self.c_nl
-        e = self.e[:bands] - self.fermi_level
+        weights = self.c_nl.transpose()
+        e = self.e - self.fermi_level
         if xlimits == None:
             e_min, e_max = min(e), max(e)
             empty = 0.1*(e_max - e_min)
@@ -650,14 +653,8 @@ class JelliumAnalysis:
             e_min, e_max = xlimits
             empty = 0.0
         x_grid = nu.linspace(e_min-empty, e_max+empty, 2000)
-        y_0 = nu.zeros(len(x_grid))
-        for l in self.l_array:
-            y_1 = y_0.copy()
-            for n, eig in enumerate(e):
-                y_1 += c_nl[n,l]*self.gaussian_peak(x_grid, eig, width)
-            x, y = pylab.poly_between(x_grid, y_0, y_1)
-            pylab.fill(x, y, facecolor=colors[l], edgecolor='none', label=self.letters[l])
-            y_0 = y_1
+        make_cumulative_plot(x_grid, e, width, weights,
+                             labels=self.letters, colors=colors)
         pylab.xlabel("Energy (eV)")
         pylab.ylabel("Arbitrary units")
         pylab.title("Angular momentum analysis")
