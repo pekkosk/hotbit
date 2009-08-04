@@ -8,5 +8,5 @@ from wfpropagation import WFPropagation
 from environment import Environment, LinearlyPolarizedLaser
 from output import Output
 from states import States
-
-from hotbit.wa import WedgeAtoms, BendAtoms
+from hotbit.atoms import Atoms
+#from hotbit.wa import WedgeAtoms, BendAtoms

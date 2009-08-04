@@ -106,7 +106,45 @@ def microcanonical(atoms,dt=1.0,steps=100,output=1,name=None,verbose=False):
     md.attach(traj.write,interval=output)    
     md.run(steps)    
     return rec
+
+
+def check_energy_conservation(atoms,dt=1.0*fs,steps=200,tol=0.01,plot=False):
+    """
+    For given initial atoms, check the energy conservation with NVE simulation.
+     
+    @param atoms: ase atoms instance
+    @param dt:    time step
+    @param steps: number of time steps used in the check
+    @param plot:  use maplotlib to plot the etot,epot -graph
     
+    Energy is conserved if fluctuation of total energy is tolerance times
+    the fluctuation of potential energy.
+    """
+    dyn = VelocityVerlet(atoms,dt=dt)
+    epot = []
+    ekin = []
+    for i in range(steps):
+        dyn.run(1)
+        epot.append( atoms.get_potential_energy() )
+        ekin.append( atoms.get_kinetic_energy() )
+    epot = nu.array(epot)
+    ekin = nu.array(ekin)
+    etot = epot + ekin
+    depot = nu.sqrt( nu.var(epot) )
+    detot = nu.sqrt( nu.var(etot) )
+    if plot:
+        import pylab as pl
+        pl.plot(epot,label='epot')
+        pl.plot(etot,label='etot')
+        pl.legend()
+        pl.xlabel('time step')
+        pl.ylabel('energy (eV)')
+        pl.show()
+    if detot < tol*depot:
+        return True
+    else:
+        return False    
+        
     
 def energy_conservation(atoms,dt=1.0,steps=100,name=None,verbose=False):
     """ Make microcanonical simulation, check energy conservation. 

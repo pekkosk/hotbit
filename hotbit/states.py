@@ -65,7 +65,7 @@ class States:
                     # discrete, well-defined sampling 
                     if kpts[i] not in mix.divisors(M[i]) and physical:
                         print 'Allowed k-points for direction',i,'are',mix.divisors(M[i])
-                        raise Warning('Non-physical k-point sampling!')
+                        raise Warning('Non-physical k-point sampling! ')
                     else:
                         kl.append( nu.linspace(0,2*pi-2*pi/kpts[i],kpts[i]) )
                 
@@ -111,9 +111,8 @@ class States:
             width=self.calc.get('width')
             self.occu = Occupations(self.calc.el.get_number_of_electrons(),width,self.wk)
         self.calc.start_timing('solve')
+        
         # TODO: enable fixed dq-calculations in SCC (for band-structures)
-        # TODO: move this from here to elements
-        #self.calc.ia.check_too_close_distances() 
         dq=self.guess_dq()
         self.H0, self.S, self.dH0, self.dS = self.calc.ia.get_matrices()
 #        try:
@@ -176,7 +175,9 @@ class States:
             # TODO: do k-sum with numpy
             for ik in range(self.nk):
                 for a in range(3):
-                    self.dH[ik,:,:,a]=self.dH0[ik,:,:,a] + self.es.get_h1()*self.dS[:,:,:,a]
+                    for p in range(2):
+                    #print self.dH.shape, self.dH0.shape, self.es.get_h1().shape, self.dS.shape
+                        self.dH[ik,:,:,p,a]=self.dH0[ik,:,:,p,a] + self.es.get_h1()*self.dS[ik,:,:,p,a]
         else:
             self.dH = self.dH0
 
