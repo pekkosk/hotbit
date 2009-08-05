@@ -164,7 +164,10 @@ class Atoms(ase_Atoms):
         """Return a copy."""
         cp = Atoms()
         cp += self
-        cp.set_container( **self._container )
+        cp.set_pbc( self.get_pbc() )
+        cp.set_cell( self.get_cell() )
+        if self._container!={}:
+            cp.set_container( **self._container )
         return cp
         
 

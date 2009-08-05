@@ -241,10 +241,16 @@ class Interactions:
         start('matrix construction')
         orbs=el.orbitals()
         norb=len(orbs)   
-        self.H0  = nu.zeros((states.nk,norb,norb),complex)
-        self.S   = nu.zeros((states.nk,norb,norb),complex)
-        self.dH0 = nu.zeros((states.nk,norb,norb,2,3),complex)
-        self.dS  = nu.zeros((states.nk,norb,norb,2,3),complex)
+        try:
+            self.H0.fill(0)
+            self.S.fill(0)
+            self.dH0.fill(0)
+            self.dS.fill(0)
+        except:
+            self.H0  = nu.zeros((states.nk,norb,norb),complex)
+            self.S   = nu.zeros((states.nk,norb,norb),complex)
+            self.dH0 = nu.zeros((states.nk,norb,norb,2,3),complex)
+            self.dS  = nu.zeros((states.nk,norb,norb,2,3),complex)
         
         orbitals=[[orb['orbital'] for orb in el.orbitals(i)] for i in range(len(el))]
         orbindex=[el.orbitals(i,indices=True) for i in range(len(el))]

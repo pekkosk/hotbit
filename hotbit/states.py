@@ -74,13 +74,14 @@ class States:
                 for b in range(kpts[1]):
                     for c in range(kpts[2]):
                         k.append( nu.array([kl[0][a],kl[1][b],kl[2][c]]) )
+            k=nu.array(k)
             nk=nu.prod(kpts)
             wk=nu.ones(nk)/nk
             
         else:
             # work with a given set of k-points
             nk=len(kpts)
-            k=kpts
+            k=nu.array(kpts)
             wk=nu.ones(nk)/nk
             kl=None
             

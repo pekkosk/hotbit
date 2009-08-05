@@ -320,6 +320,16 @@ class Calculator(Output):
         self.flush()
         self.el.set_atoms(atoms)
         self.stop_timing('initialization')
+        
+        
+    def calculation_required(self,atoms,quantities):
+        """ Check if a calculation is required.
+
+        Check if the quantities in the quantities list have already been calculated
+        for the atomic configuration atoms. The quantities can be one or more of:
+        'ground state', 'energy', 'forces', and 'stress'.
+        """
+        return self.el.calculation_required(atoms,quantities)
 
 
     def get_potential_energy(self,atoms):
@@ -428,16 +438,6 @@ class Calculator(Output):
             self.ecoul = self.st.es.coulomb_energy()*Hartree 
             self.st
         return self.ecoul
-
-
-    def calculation_required(self,atoms,quantities):
-        """ Check if a calculation is required.
-
-        Check if the quantities in the quantities list have already been calculated
-        for the atomic configuration atoms. The quantities can be one or more of:
-        'ground state', 'energy', 'forces', and 'stress'.
-        """
-        return self.el.calculation_required(atoms,quantities)
 
 
     # some not implemented ASE-assumed methods
