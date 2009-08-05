@@ -159,7 +159,7 @@ class Elements:
         self.efree = self.get_free_atoms_energy()
 
         self.orb=[]
-        self.pbc = self.atoms.pbc.copy()
+        self.pbc = self.atoms.get_pbc()
         # index: the number of the orbital
         # atomindex: the number of the orbital on the atom
         # atom: the number of atom the orbital is centered on

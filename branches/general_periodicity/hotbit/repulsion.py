@@ -72,29 +72,26 @@ class Repulsion:
 
 
     def get_repulsive_forces(self):
-        """ Calculate the forces from repulsions. """
+        """ 
+        Return repulsive forces. 
+        
+        F_i = sum_(j,n) V'(rijn) rijn/dijn, with rijn = r_j^n -r_i and dijn=|rijn|
+        """
         self.calc.start_timing('f_rep')
         f=nu.zeros((self.N,3))
         lst = self.calc.el.get_property_lists(['i','s'])
         Rn = self.calc.el.Rn
         for i,si in lst:
             for j,sj in lst:
-                V    = self.vrep[si+sj]
+                V = self.vrep[si+sj]
                 Rijn = Rn[:,j,:] - Rn[0,i,:]
-                Rjin = Rn[:,i,:] - Rn[0,j,:]
-                for n, (rijn, rjin) in enumerate(zip(Rijn,Rjin)):
+                for n,rijn in enumerate(Rijn):
                     if i==j and n==0: continue
                     dijn = sqrt( rijn[0]**2+rijn[1]**2+rijn[2]**2 )
-                    djin = sqrt( rjin[0]**2+rjin[1]**2+rjin[2]**2 )
-                    if dijn<self.rmax: 
+                    if dijn<self.rmax:
                         f[i,:] = f[i,:] + V(dijn,der=1)*rijn/dijn
-                    if djin<self.rmax:
-                        T = self.calc.el.Tn[n,i]
-                        f[i,:] = f[i,:] - V(djin,der=1)*nu.dot(rjin,T)/djin
-        f=0.5*f
         self.calc.stop_timing('f_rep')
         return f
-
 
 
 class RepulsivePotential:
