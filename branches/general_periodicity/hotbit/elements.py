@@ -283,6 +283,7 @@ class Elements:
 
         # check that all quantities have been solved for identical atoms
         for quantity in quantities:
+#            print type(self),type(atoms)
             solved_atoms = self.solved[quantity]
             if type(solved_atoms)==type(None):
                 return True                 
