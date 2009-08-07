@@ -249,8 +249,8 @@ class Interactions:
         except:
             self.H0  = nu.zeros((states.nk,norb,norb),complex)
             self.S   = nu.zeros((states.nk,norb,norb),complex)
-            self.dH0 = nu.zeros((states.nk,norb,norb,2,3),complex)
-            self.dS  = nu.zeros((states.nk,norb,norb,2,3),complex)
+            self.dH0 = nu.zeros((states.nk,norb,norb,3),complex)
+            self.dS  = nu.zeros((states.nk,norb,norb,3),complex)
         
         orbitals=[[orb['orbital'] for orb in el.orbitals(i)] for i in range(len(el))]
         orbindex=[el.orbitals(i,indices=True) for i in range(len(el))]
@@ -268,8 +268,8 @@ class Interactions:
                     self.H0[ik,ind,ind] += orb['energy']
                     self.S[ik,ind,ind]  += 1.0
                 nonzero+=1
-            #for j,sj,noj,o1j in lst[i:]:
-            for j,sj,noj,o1j in lst:
+            for j,sj,noj,o1j in lst[i:]:
+            #for j,sj,noj,o1j in lst:
                 Rijn = Rn[:,j,:] - Rn[0,i,:]
                 a, b, c, d = o1i, o1i+noi, o1j, o1j+noj
                 ij_interact = False
@@ -277,6 +277,7 @@ class Interactions:
                 stable = self.s[si+sj]
                 ij_interact = False
                 r1, r2= htable.get_range()
+                                    
                 for n, rij in enumerate(Rijn):
                     if i==j and n==0: continue
                     # go through all symmetry operations
@@ -311,9 +312,6 @@ class Interactions:
                     dht = dot( dht.transpose((2,0,1)),DT[0:noj,0:noj] ).transpose((1,2,0))
                     dst = dot( dst.transpose((2,0,1)),DT[0:noj,0:noj] ).transpose((1,2,0))
                     stop('splint+SlaKo+DH')
-                                            
-                    #if noj>4: 
-                    #    raise NotImplementedError('Implement D-matrix for d-orbitals.')
 
                     start('k-points')
                     phase = nu.array( [nu.exp(1j*nu.dot(nt,k)) for k in states.k] )
@@ -326,40 +324,36 @@ class Interactions:
                     sblock.shape  = (states.nk,noi,noj)
                     dhblock.shape = (states.nk,noi,noj,3)
                     dsblock.shape = (states.nk,noi,noj,3)
-
+                    
                     self.H0[  :,a:b,c:d]   = self.H0[  :,a:b,c:d] + hblock
                     self.S[   :,a:b,c:d]   = self.S[   :,a:b,c:d] + sblock
-                    #self.dH0[ :,a:b,c:d]   = self.dH0[ :,a:b,c:d] + dhblock
-                    #self.dS[  :,a:b,c:d]   = self.dS[  :,a:b,c:d] + dsblock
-                    
-                    #=======================================================================
-                    # 2 dim gradients
-                    self.dH0[ :,a:b,c:d,0,:]   = self.dH0[ :,a:b,c:d,0,:] + dhblock
-                    self.dS[  :,a:b,c:d,0,:]   = self.dS[  :,a:b,c:d,0,:] + dsblock
-                    
-                    T = self.calc.el.Tn[n,j]
-                    dht2 = dot( dht,T )
-                    dst2 = dot( dst,T ) 
-                    dh2block = outer( phase,dht2.flatten() )
-                    ds2block = outer( phase,dst2.flatten() )
-                    dh2block.shape = (states.nk,noi,noj,3)
-                    ds2block.shape = (states.nk,noi,noj,3)
-                    self.dH0[ :,a:b,c:d,1,:]   = self.dH0[ :,a:b,c:d,1,:] + dh2block
-                    self.dS[  :,a:b,c:d,1,:]   = self.dS[  :,a:b,c:d,1,:] + ds2block
-                    #=======================================================================
-  
+                    self.dH0[ :,a:b,c:d,:] = self.dH0[ :,a:b,c:d,:] + dhblock
+                    self.dS[  :,a:b,c:d,:] = self.dS[  :,a:b,c:d,:] + dsblock                      
                     stop('k-points')
+                    
                     if self.first:
                         nonzero+=sum( abs(ht.flatten())>1E-20 )*2
                         
-#                if i!=j and ij_interact:
-#                    start('symm')        
-#                    # Hermitian (and anti-Hermitian) conjugates; only if matrix block non-zero
-#                    self.H0[ :,c:d,a:b]   =  self.H0[ :,a:b,c:d].transpose((0,2,1)).conjugate()
-#                    self.S[  :,c:d,a:b]   =  self.S[  :,a:b,c:d].transpose((0,2,1)).conjugate()
-#                    self.dH0[:,c:d,a:b,:] = -self.dH0[:,a:b,c:d,:].transpose((0,2,1,3)).conjugate()
-#                    self.dS[ :,c:d,a:b,:] = -self.dS[ :,a:b,c:d,:].transpose((0,2,1,3)).conjugate()
-#                    stop('symm')
+                    if i!=j and ij_interact:
+                        # construct the other derivatives wrt. atom j.
+                        T = self.calc.el.Tn[n,j]
+                        dht2 = dot( dht,T )
+                        dst2 = dot( dst,T ) 
+                        dh2block = outer( phase,dht2.flatten() )
+                        ds2block = outer( phase,dst2.flatten() )
+                        dh2block.shape = (states.nk,noi,noj,3)
+                        ds2block.shape = (states.nk,noi,noj,3)
+                                           
+                        self.dH0[:,c:d,a:b,:] = self.dH0[:,c:d,a:b,:] + dh2block.transpose((0,2,1,3)).conjugate()
+                        self.dS[ :,c:d,a:b,:] = self.dS[ :,c:d,a:b,:] + ds2block.transpose((0,2,1,3)).conjugate()
+                        
+                if i!=j and ij_interact:
+                    start('symm')
+                    # Hermitian (and anti-Hermitian) conjugates; only if matrix block non-zero        
+                    # ( H(k) and S(k) can be (anti)symmetrized as a whole )
+                    self.H0[ :,c:d,a:b]   =  self.H0[ :,a:b,c:d].transpose((0,2,1)).conjugate()
+                    self.S[  :,c:d,a:b]   =  self.S[  :,a:b,c:d].transpose((0,2,1)).conjugate()
+                    stop('symm')
                         
         if self.first:
             self.calc.out('Hamiltonian matrix is %.3f %% filled on first calculation.' %(nonzero*100.0/norb**2) )
