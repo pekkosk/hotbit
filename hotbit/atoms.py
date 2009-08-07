@@ -4,6 +4,7 @@ from box.mix import  phival
 from math import sin,cos
 from box import mix
 from copy import copy 
+from weakref import proxy
 
 
 class Atoms(ase_Atoms):
@@ -17,14 +18,15 @@ class Atoms(ase_Atoms):
                  cell=None, pbc=None,
                  constraint=None,
                  calculator=None,
-                 container=None):
+                 container='Bravais'):
         """ 
         Modified atoms class for hotbit.
         
         Input parameters as for ase.Atoms, except for keyword container.
         
-        @param container: dictionary describing the generalized unit cell. 
-                          container['type'] selects the cell class; for other items,
+        @param container: either container type ('Bravais','Wedge','Chiral'), or
+                          dictionary describing the generalized unit cell, where                     
+                          container['type'] selects the cell class; for other keywords,
                           look at the selected class
         """
         ase_Atoms.__init__(self,symbols=symbols,
@@ -36,43 +38,44 @@ class Atoms(ase_Atoms):
              constraint=constraint,
              calculator=calculator)
         
-        self._ranges = None
-        self._container = {}
+        self._ranges = None                
+        if type(container)==type(''):
+            dict = {'type':container}
+        else:
+            dict = container.copy()
+                
+        # create the container instance
+        assert 'type' in dict
+        exec( 'self.container_class = %s' %dict['type'] )
+        self.container = self.container_class(self,**dict)
+        dict.pop('type')
+        if dict!={}:
+            self.container.set(**dict)
+                    
+        # these are just for shorter references
+        self._transform = self.container.transform
+        self._tensor = self.container.tensor
+        self._rotation_of_axes = self.container.rotation_of_axes
+                
         
-        if container is not None:
-            self.set_container(**container)
-            
-        
-    def set_container(self,**container):
+    def set_container(self,**dict):
         '''
         Set the container class and its parameters
         
-        @param container: dict for container parameters
+        @param dict: dictionary of container parameters
         '''
-        if self._container == {}:
-            self._container.update(container)
-            exec( 'self.container_class = %s' %container['type'] )
-            self.cont = self.container_class(self,**self._container)
-            #self._container.pop('type')
-            
-            self._transform = self.cont.transform
-            self._tensor = self.cont.tensor
-            self._rotation_of_axes = self.cont.rotation_of_axes
-            self._ranges = self.cont.get_ranges()
-    
-            self.set_pbc( self.cont.get_pbc(self) )
-            self.set_cell( self.cont.get_ase_cell(self) )
-            
-        else:
-             self._container.update(container)
-             self.cont.set(atoms=self,**self._container)
+        if 'type' in dict:
+            if dict['type']!=self.container.type: 
+                raise AssertionError('Container type cannot be changed.')
+        assert 'type' not in dict
+        self.container.set(**dict)        
         
         
     def get_ranges(self):
         '''
         Return the ranges for symmetry operations in different directions.
         '''
-        return self._ranges.copy()
+        return self.container.get_ranges()
     
     
     def _check_symmetry_operation(self,n):
@@ -82,7 +85,7 @@ class Atoms(ase_Atoms):
         @param n: tuple for number of symmetry operations
         '''
         for i in range(3):
-            a,b=self._ranges[i]
+            a,b=self.container.ranges[i]
             if not a<=n[i]<=b:
                 raise ValueError('Illegal symmetry operation: %i %i %i. For direction %i span [%i,%i] allowed.' %(n[0],n[1],n[2],i,a,b) )
             
@@ -124,7 +127,10 @@ class Atoms(ase_Atoms):
                 
                 
     def extended_copy(self,n_list):
-        """ Get copies of atoms for all listed symmetry operations n. """ 
+        """ Get copies of atoms for all listed symmetry operations n. 
+        
+        Return normal ase.Atoms -instance.
+        """ 
         atoms2=None
         for n in n_list:
             self._check_symmetry_operation(n)
@@ -140,34 +146,34 @@ class Atoms(ase_Atoms):
 
 
     def __eq__(self,other):       
-        if ase_Atoms.__eq__(self,other) and self.same_container(other):
-            return True
+        if ase_Atoms.__eq__(self,other):
+            # for Bravais ase's Atoms.__eq__ is enough
+            if self.container.type == 'Bravais':
+                return True
+            else:
+                try:
+                    same_container = self.same_container(other) 
+                except:
+                    raise ValueError('Comparing Bravais and non-Bravais containers should not happen. Check code.')
+                if same_container:
+                    return True
+                else:
+                    return False
         else:
             return False    
         
-    def same_container(self,atoms):
+    def same_container(self,other):
         """ Check if atoms has the same container. """
-        try:
-            if atoms.cont==self.cont:
-                return True
-            else:
-                return False
-        except:
-            # atoms is ase.Atoms class -> Bravais lattice
-            if all( (abs(self.get_cell()-atoms.get_cell())<1E-10).flat ) \
-               and all( self.get_pbc()==atoms.get_pbc() ):
-                return True
-            else:
-                return False
+        return self.container==other.container
         
     def copy(self):    
         """Return a copy."""
-        cp = Atoms()
+        cp = Atoms(container=self.container.type)
         cp += self
         cp.set_pbc( self.get_pbc() )
         cp.set_cell( self.get_cell() )
-        if self._container!={}:
-            cp.set_container( **self._container )
+        if self.container.type!='Bravais':
+            cp.set_container(container=self.container)
         return cp
         
 
@@ -179,7 +185,8 @@ class Bravais:
         
         More documentation for the methods can be found from hotbit.Atoms -class. 
         """
-        assert type=='Bravais'
+        self.type = 'Bravais'
+        assert type==self.type
         
         ranges = []
         for i in range(3):
@@ -187,24 +194,29 @@ class Bravais:
                 ranges.append([-nu.Inf,nu.Inf])
             else:
                 ranges.append([0,0])
-        self.ranges = nu.array(ranges)
-        self.cell = atoms.get_cell()
-        self.pbc = atoms.get_pbc()
+        self.ranges = nu.array(ranges)    
+        self.atoms = proxy(atoms)
         
     def set(self,**args):
-        raise NotImplementedError('No changing of parameters for Bravais')
+        #print args
+        #print args['container'].type
+        #print args['container'].type!='Bravais'
+        #print args
+        #print 'container' in args and args['container'].type=='Bravais'
+        if args!={}: # or not ('container' in args and args['container'].type=='Bravais'):
+            raise NotImplementedError('For Bravais use set_pbc and set_cell normally.')
     
-    def get_pbc(self,atoms):
-        """ Wedge direction always periodic, but how about z-direction?."""
-        return atoms.get_pbc()
+    def get_pbc(self):
+        """ Return atoms's pbc as normal."""
+        return self.atoms.get_pbc()
     
-    def get_ase_cell(self,atoms):
+    def get_ase_cell(self):
         """ cell used for visualization """
-        return atoms.get_cell()
+        return self.atoms.get_cell()
     
     def __eq__(self,other):
-        if isinstance(other,Bravais) and self.ranges==other.ranges \
-           and self.cell==other.cell and self.pbc==other.pbc:
+        if isinstance(other,Bravais) and self.get_pbc()==other.get_pbc() \
+           and self.get_cell()==other.get_cell():
             return True
         else:
             return False        
@@ -216,7 +228,7 @@ class Bravais:
         """ Symmetry transformation n for position r. """
         rn=r.copy()
         for a in range(3):
-            rn = rn + n[a]*self.cell[a,:]
+            rn = rn + n[a]*self.atoms._cell[a,:]
         return rn
         
     def tensor(self,r,n):
@@ -232,7 +244,7 @@ class Bravais:
 
 class Wedge:
     
-    def __init__(self,atoms,type,height=1.0,angle=None,M=None,physical_angle=True):
+    def __init__(self,atoms,type):
         '''
         Class for wedge boundary conditions.
         
@@ -243,74 +255,89 @@ class Wedge:
            | /  angle 
            +----------> x-axis
         
-        
+        @param: atoms    hotbit.Atoms instance
         @param: type     Should equal to "Wedge"
-        @param: height   Height of the primitive cell in z-direction
-        @param: angle    angle (in radians) of the wedge (and M=None)
-        @param: M        set angle to 2*pi/M (with angle=None)
-        @param: physical_angle (only for M=None) if angle is small, it does not be
-                         exactly 2*pi/integer, i.e. situation has no physical meaning
-                         (use for calculating stuff continuously)  
         
         More documentation for the methods can be found from hotbit.Atoms -class. 
         '''
-        assert type=='Wedge'
-        assert not (angle!=None and M!=None)
-        self.height = height
-        
-        if angle is None:
-            assert isinstance(M,int)
-            self.angle = 2*nu.pi/M
-            self.M = M
-        else:
-            self.M = int( round(2*nu.pi/angle) )
-            self.angle = angle
+        self.type='Wedge'
+        assert type==self.type
+        self.atoms = proxy(atoms)
+        self.height = 1.0
+        self.angle = 1E-12
+        self.physical = True
+                
             
-        # check parameters
-        if self.angle<1E-6:
-            raise Warning('Too small angle (%f) may bring rounding problems.' %self.angle)
-        if self.angle>nu.pi:
-            raise AssertionError('angle>pi')
-        if nu.abs(self.M-2*nu.pi/self.angle)>1E-12 and physical_angle: 
-            raise AssertionError('angle not physical; angle != 2*pi/M')
-        if not physical_angle and self.M<20:
-            raise AssertionError('Too large, non-physical angle.')
+            
+    def set(self, angle=None, height=None, M=None, physical_angle=True, pbcz=None, scale_atoms=False, container=None):
+        """ Only height can be reset, not angle. 
 
-        i = self.M/2
-        if nu.mod(self.M,2)==1:
-            self.ranges = nu.array([[-i,i],[0,0],[0,0]],int)
-        else:
-            self.ranges = nu.array([[-i+1,i],[0,0],[0,0]],int)
-            
-            
-    def set(self,angle,height,atoms,scale_atoms=False):
-        """ Only height can be reset, not angle. """
-        assert angle==self.angle
-        if height != None:
+        @param: angle    angle (in radians) of the wedge (and M=None)
+        @param: height   Height of the primitive cell in z-direction
+        @param: M        set angle to 2*pi/M (with angle=None)
+        @param: physical_angle (only for M=None) if angle is small, it does not be
+                         exactly 2*pi/integer, i.e. situation has no physical meaning
+                         (use for calculating stuff continuously)
+        @param: pbcz     True if wedge is periodic in z-direction
+        @param: scale_atoms Scale atoms according to changes in parameters 
+        """
+        if container!=None:
+            assert angle==None and height==None and M==None and pbcz==None
+            self.set(angle=container.angle,height=container.height,\
+                     physical_angle=container.physical, pbcz=container.atoms.get_pbc()[2])
+        
+        if angle!=None or M!=None:
+            assert not scale_atoms
+            assert not (angle!=None and M!=None)
+            if angle is None:
+                assert isinstance(M,int)
+                self.angle = 2*nu.pi/M
+                self.M = M
+            else:
+                self.M = int( round(2*nu.pi/angle) )
+                self.angle = angle
+                
+            # check parameters
+            self.physical = physical_angle
+            if self.angle<1E-6:
+                raise Warning('Too small angle (%f) may bring rounding problems.' %self.angle)
+            if self.angle>nu.pi:
+                raise AssertionError('angle>pi')
+            if nu.abs(self.M-2*nu.pi/self.angle)>1E-12 and physical_angle: 
+                raise AssertionError('angle not physical; angle != 2*pi/M')
+            if not physical_angle and self.M<20:
+                raise AssertionError('Too large, non-physical angle.')
+    
+            i = self.M/2
+            if nu.mod(self.M,2)==1:
+                self.ranges = nu.array([[-i,i],[0,0],[0,0]],int)
+            else:
+                self.ranges = nu.array([[-i+1,i],[0,0],[0,0]],int)
+                
+        if height!=None:
             if scale_atoms:
-                r = atoms.get_positions()
+                r = self.atoms.get_positions()
                 r[:,2] = r[:,2] * height/self.height
                 atoms.set_positions(r)
             self.height = height
-            cell = atoms.get_cell()
-            cell[2,2] = self.height
-            atoms.set_cell(cell)
+            self.atoms.set_cell( self.get_ase_cell() )
+            
+        if pbcz!=None:
+            self.atoms.set_pbc((True,False,pbcz))
+            
+        self.atoms.set_cell(self.get_ase_cell())  
+                   
             
     def __eq__(self,other):
-        if isinstance(other,Wedge) and self.ranges==other.ranges \
-           and self.height==other.height and self.angle==other.angle:
+        if isinstance(other,Wedge) and abs(self.height-other.height)<1E-12 \
+           and abs(self.angle-other.angle)<1E-12 and self.atoms.get_pbc()==other.atoms.get_pbc():
             return True
         else:
             return False
-            
     
-    def get_pbc(self,atoms):
-        """ Wedge direction always periodic, but how about z-direction?."""
-        return (True,False,atoms.pbc[2])
-    
-    def get_ase_cell(self,atoms):
+    def get_ase_cell(self):
         """ cell used for visualization """
-        l = max(atoms.get_positions()[:,0])*1.5
+        l = max(self.atoms.get_positions()[:,0])*1.5
         return nu.array( [[l,0,0],[l*cos(self.angle),l*sin(self.angle),0],[0,0,self.height]] )
         
     def get_ranges(self):
@@ -349,36 +376,71 @@ class Wedge:
 
 class Chiral:
     
-    def __init__(self,atoms,type,angle,height):
+    def __init__(self,atoms,type):
         '''
         Class for chiral boundary conditions.
         
-        
+        @param: atoms    hotbit.Atoms -instance
         @param: type     Should equal to "Chiral"
-        @param: height   Height of the primitive cell in z-direction
-        @param: angle    angle (in radians) of rotation
         
         More documentation for the methods can be found from hotbit.Atoms -class. 
         '''
-        assert type=='Chiral'
+        self.type='Chiral'
+        assert type==self.type
+        self.atoms = proxy(atoms)
+        self.angle = 0.0
+        self.height = 1.0
         self.ranges = nu.array( [[0,0],[0,0],[-nu.Inf,nu.Inf]] )
-        self.angle = angle
-        self.height = height
+        
+        
+    def set(self,angle=None,height=None,scale_atoms=False,container=None):
+        """
+        Reset angle or height, and maybe scale atoms.
+         
+        @param: height   Height of the primitive cell in z-direction
+        @param: angle    angle (in radians) of rotation
+        """
+        if container!=None:
+            self.set(angle=container.angle,height=container.height)
+        if not scale_atoms:
+            if angle!=None: self.angle = angle
+            if height!=None: self.height = height
+        else:
+            if angle is None:
+                da = 0.0
+            else:
+                da = angle - self.angle
+                self.angle = angle
+                
+            if height is None:
+                fact = 1.0
+            else:
+                fact = height/self.height
+                self.height = height
+                
+            newr = []
+            for r in atoms.get_positions():
+                x,y = r[0],r[1]
+                rad = nu.sqrt( x**2+y**2 )
+                r[2] = fact*r[2]
+                # twist atoms z/h * da *more*
+                newphi = mix.phival(x,y) + r[2]/self.height * da
+                newr.append( [rad*nu.cos(newphi),rad*nu.sin(newphi),r[2]] )
+            atoms.set_positions(newr)     
+        
+        self.atoms.set_pbc((False,False,True))
+        self.atoms.set_cell(self.get_ase_cell())
         
     def __eq__(self,other):
-        if isinstance(other,Chiral) and self.ranges==other.ranges \
-           and self.angle==other.angle and self.height==other.height:
+        if isinstance(other,Chiral) and abs(self.angle-other.angle)<1E-12 \
+           and abs(self.height-other.height)<1E-12:
             return True
         else:
             return False
     
-    def get_pbc(self,atoms):
-        """ Only z-direction is periodic."""
-        return (False,False,True)
-    
-    def get_ase_cell(self,atoms):
+    def get_ase_cell(self):
         """ cell used for visualization """
-        l = max(atoms.get_positions()[:,0])*1.5
+        l = max(self.atoms.get_positions()[:,0])*1.5
         return nu.array( [[l,0,0],[l*cos(self.angle),l*sin(self.angle),0],[0,0,self.height]] )
         
     def get_ranges(self):
@@ -411,31 +473,4 @@ class Chiral:
         R = nu.array([[cos(angle),sin(angle),0],[-sin(angle),cos(angle),0],[0,0,1]])
         return R  
     
-    def set(self,angle=None,height=None,scale_atoms=False,atoms=None):
-        """ Reset angle or height, and scale atoms. """
-        if not scale_atoms:
-            if angle!=None: self.angle = angle
-            if height!=None: self.height = height
-        else:
-            if angle is None:
-                da = 0.0
-            else:
-                da = angle - self.angle
-                self.angle = angle
-                
-            if height is None:
-                fact = 1.0
-            else:
-                fact = height/self.height
-                self.height = height
-                
-            newr = []
-            for r in atoms.get_positions():
-                x,y = r[0],r[1]
-                rad = nu.sqrt( x**2+y**2 )
-                r[2] = fact*r[2]
-                # twist atoms z/h * da *more*
-                newphi = mix.phival(x,y) + r[2]/self.height * da
-                newr.append( [rad*nu.cos(newphi),rad*nu.sin(newphi),r[2]] )
-            atoms.set_positions(newr)
-              
+                  
