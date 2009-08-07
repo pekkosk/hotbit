@@ -176,9 +176,8 @@ class States:
             # TODO: do k-sum with numpy
             for ik in range(self.nk):
                 for a in range(3):
-                    for p in range(2):
                     #print self.dH.shape, self.dH0.shape, self.es.get_h1().shape, self.dS.shape
-                        self.dH[ik,:,:,p,a]=self.dH0[ik,:,:,p,a] + self.es.get_h1()*self.dS[ik,:,:,p,a]
+                    self.dH[ik,:,:,a]=self.dH0[ik,:,:,a] + self.es.get_h1()*self.dS[ik,:,:,a]
         else:
             self.dH = self.dH0
 
@@ -282,8 +281,8 @@ class States:
         '''
         Return band structure forces.
         
-        F_I = - sum_k w_k Trace_I [ dH(k)*rho(k) - dS(k)*rhoe(k) ]
-            = - sum_k w_k sum_(i in I) diag_i(k),
+        F_I = - sum_k w_k Trace_I [ dH(k)*rho(k) - dS(k)*rhoe(k) + c.c ]
+            = - sum_k w_k sum_(i in I) diag_i(k) + c.c.,
             
                 where diag_i(k) = [dH(k)*rho(k) - dS(k)*rhoe(k)]_ii
                                 = sum_j [dH(k)_ij*rho(k)_ji - dS(k)_ij*rhoe(k)_ji]
@@ -292,33 +291,16 @@ class States:
         self.calc.start_timing('f_bs')       
         diag = nu.zeros((self.norb,3),complex)
         
-        
-#        for a in range(3):
-#            for ik in range(self.nk):
-#                diag_k = ( self.dH[ik,:,:,a]*self.rho[ik].transpose()  \
-#                         - self.dS[ik,:,:,a]*self.rhoe[ik].transpose() ).sum(axis=1)
-#                diag[:,a] = diag[:,a] - self.wk[ik] * diag_k
-#            
-#        f=[]            
-#        for o1, no in self.calc.el.get_property_lists(['o1','no']):
-#            f.append( 2*diag[o1:o1+no,:].sum(axis=0).real )
-#            
-            
         for a in range(3):
             for ik in range(self.nk):
-                diag_k = ( self.dH[ik,:,:,0,a]*self.rho[ik].transpose()  \
-                         - self.dS[ik,:,:,0,a]*self.rhoe[ik].transpose() \
-                        +  self.rho[ik]*self.dH[ik,:,:,1,a].transpose() \
-                        -  self.rhoe[ik]*self.dS[ik,:,:,1,a].transpose() ).sum(axis=1)
+                diag_k = ( self.dH[ik,:,:,a]*self.rho[ik].transpose()  \
+                         - self.dS[ik,:,:,a]*self.rhoe[ik].transpose() ).sum(axis=1)
                 diag[:,a] = diag[:,a] - self.wk[ik] * diag_k
             
         f=[]            
         for o1, no in self.calc.el.get_property_lists(['o1','no']):
-            f.append( diag[o1:o1+no,:].sum(axis=0) )
+            f.append( 2*diag[o1:o1+no,:].sum(axis=0).real )
             
-#        norbs=self.calc.el.nr_orbitals 
-#        inds=self.calc.el.atom_orb_indices2 
-#        f=fortran_fbsc(self.rho,self.rhoe,self.dH,self.dS,norbs,inds,self.wk,self.norb,self.nat,self.nk)
         self.calc.stop_timing('f_bs')
         return f
 
