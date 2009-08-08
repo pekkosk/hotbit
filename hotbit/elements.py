@@ -131,7 +131,9 @@ class Elements:
         if self.name == None:
             self.name = mix.parse_name_for_atoms(self.atoms)
         return self.name
-
+    
+    def container_info(self):
+        return repr(self.atoms.container)
 
     def set_name(self, name):
         self.name = name
@@ -283,7 +285,6 @@ class Elements:
 
         # check that all quantities have been solved for identical atoms
         for quantity in quantities:
-#            print type(self),type(atoms)
             solved_atoms = self.solved[quantity]
             if type(solved_atoms)==type(None):
                 return True                 
@@ -300,10 +301,9 @@ class Elements:
             self.atoms = atoms.copy()
         except:
             # we have original ase.Atoms; use Bravais -type generalized class
-            self.atoms = Atoms(container={'type':'Bravais'},cell=atoms.get_cell(),
+            self.atoms = Atoms(container='Bravais',cell=atoms.get_cell(),
                                pbc=atoms.get_pbc() )
             self.atoms += atoms
-            
             
         # determine ranges if they go to infinity
         r = self.atoms.get_ranges()
@@ -311,7 +311,7 @@ class Elements:
         self.ranges = []
         for i in range(3):
             assert r[i,0]<=r[i,1]
-            if not self.atoms.pbc[i]: assert r[i,0]==r[i,1]==0
+            if not self.atoms.get_pbc()[i]: assert r[i,0]==r[i,1]==0
             if r[i,0]==-nu.Inf:
                 assert r[i,1]==nu.Inf
                 r[i,:] = [-Mlarge,Mlarge]

@@ -17,9 +17,9 @@ e1 = straight.get_potential_energy()
 
 # same thing, but calculate by twisting 2*pi/5 while translating
 height = straight.get_cell()[2,2]
-chiral = Atoms()
+chiral = Atoms(container='Chiral')
 chiral += straight
-chiral.set_container(type='Chiral',height=height,angle=2*pi/5)
+chiral.set_container(height=height,angle=2*pi/5)
 calc = Hotbit(SCC=False,txt='chiral.cal',kpts=(1,1,nkpts))
 chiral.set_calculator(calc)
 e2 = chiral.get_potential_energy()

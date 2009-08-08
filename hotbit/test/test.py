@@ -3,7 +3,7 @@ tests=['atom_dimer.py','standard_set.py','forces.py','parametrization.py',\
        'Au_chain.py','graphene.py','CNT5_0_chiral.py','CNT5_0_SCC.py','C6H6_wedge.py',\
        'linear_response.py','save_load.py','copy_calculator.py']
        
-skip = ['linear_response.py','save_load.py','copy_calculator.py']
+skip = ['linear_response.py','save_load.py','copy_calculator.py','CNT5_0_SCC.py']
 
 for test in tests:
     if test in skip:

@@ -249,8 +249,7 @@ class Calculator(Output):
         print>>self.txt,  'System:',self.el.get_name()        
         print>>self.txt,  '       Charge=%4.1f' % self.charge
         # TODO: change box and pbc-info here
-        print>>self.txt,  '       Box: (Ang)', nu.array(self.el.get_box_lengths())*Bohr
-        print>>self.txt,  '       PBC:',self.el.atoms.get_pbc()
+        print>>self.txt,  '       Container', self.el.container_info()
         print>>self.txt,  '       Electronic temperature:', self.width*Hartree,'eV'
         mixer = self.st.solver.mixer
         print>>self.txt,  '       Mixer:', mixer.get('name'), 'with memory =', mixer.get('memory'), ', mixing constant =', mixer.get('beta')
