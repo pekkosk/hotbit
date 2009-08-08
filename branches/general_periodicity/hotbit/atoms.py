@@ -84,8 +84,9 @@ class Atoms(ase_Atoms):
         
         @param n: tuple for number of symmetry operations
         '''
+        r = self.container.get_ranges()
         for i in range(3):
-            a,b=self.container.ranges[i]
+            a,b=r[i]
             if not a<=n[i]<=b:
                 raise ValueError('Illegal symmetry operation: %i %i %i. For direction %i span [%i,%i] allowed.' %(n[0],n[1],n[2],i,a,b) )
             
@@ -187,23 +188,24 @@ class Bravais:
         """
         self.type = 'Bravais'
         assert type==self.type
-        
-        ranges = []
-        for i in range(3):
-            if atoms.get_pbc()[i]:
-                ranges.append([-nu.Inf,nu.Inf])
-            else:
-                ranges.append([0,0])
-        self.ranges = nu.array(ranges)    
         self.atoms = proxy(atoms)
         
+    def __repr__(self):
+        pbc=self.atoms.get_pbc()
+        cell=self.atoms.get_cell()
+        d = []
+        for a in range(3):
+            d.append( nu.linalg.norm(cell[a,:]) )
+            
+        a12 = nu.dot(cell[0],cell[1])/(d[0]*d[1])
+        a13 = nu.dot(cell[0],cell[2])/(d[0]*d[2])
+        a23 = nu.dot(cell[1],cell[2])/(d[1]*d[2])
+        x='Bravais: pbc:[%i,%i,%i], ' %(pbc[0],pbc[1],pbc[2])
+        x+='cell:[%.2f,%.2f,%.2f] Ang, angles(12,13,23):[%.2f,%.2f,%.2f]' %(d[0],d[1],d[2],a12,a13,a23) 
+        return x
+        
     def set(self,**args):
-        #print args
-        #print args['container'].type
-        #print args['container'].type!='Bravais'
-        #print args
-        #print 'container' in args and args['container'].type=='Bravais'
-        if args!={}: # or not ('container' in args and args['container'].type=='Bravais'):
+        if args!={}: 
             raise NotImplementedError('For Bravais use set_pbc and set_cell normally.')
     
     def get_pbc(self):
@@ -222,7 +224,14 @@ class Bravais:
             return False        
         
     def get_ranges(self):
-        return self.ranges.copy()
+        """ Return ranges for symmetry operations. """
+        ranges = []
+        for i in range(3):
+            if self.atoms.get_pbc()[i]:
+                ranges.append([-nu.Inf,nu.Inf])
+            else:
+                ranges.append([0,0])
+        return nu.array(ranges)
     
     def transform(self,r,n):
         """ Symmetry transformation n for position r. """
@@ -263,11 +272,22 @@ class Wedge:
         self.type='Wedge'
         assert type==self.type
         self.atoms = proxy(atoms)
-        self.height = 1.0
-        self.angle = 1E-12
-        self.physical = True
-                
-            
+        self.height = None
+        self.angle = None
+        self.physical = None
+        
+    def __repr__(self):
+        x='Wedge: angle=%.4f (2*pi/%.2f, ' %(self.angle,2*nu.pi/self.angle)
+        if self.physical:
+            x+='physical), '
+        else:
+            x+='not physical), '
+        x+='height=%.4f Ang ' %self.height
+        if self.atoms.get_pbc()[2]:
+            x+='(pbc)'
+        else:
+            x+='(no pbc)'
+        return x
             
     def set(self, angle=None, height=None, M=None, physical_angle=True, pbcz=None, scale_atoms=False, container=None):
         """ Only height can be reset, not angle. 
@@ -287,13 +307,16 @@ class Wedge:
                      physical_angle=container.physical, pbcz=container.atoms.get_pbc()[2])
         
         if angle!=None or M!=None:
-            assert not scale_atoms
+            #assert not scale_atoms
             assert not (angle!=None and M!=None)
-            if angle is None:
+            if self.angle==None and scale_atoms:
+                raise AssertionError('Atoms cannot be scaled; angle was not set yet.')
+            old_angle = self.angle
+            if M != None:
                 assert isinstance(M,int)
                 self.angle = 2*nu.pi/M
                 self.M = M
-            else:
+            elif angle != None:
                 self.M = int( round(2*nu.pi/angle) )
                 self.angle = angle
                 
@@ -307,18 +330,23 @@ class Wedge:
                 raise AssertionError('angle not physical; angle != 2*pi/M')
             if not physical_angle and self.M<20:
                 raise AssertionError('Too large, non-physical angle.')
-    
-            i = self.M/2
-            if nu.mod(self.M,2)==1:
-                self.ranges = nu.array([[-i,i],[0,0],[0,0]],int)
-            else:
-                self.ranges = nu.array([[-i+1,i],[0,0],[0,0]],int)
+            
+            if scale_atoms:
+                if abs(old_angle)<1E-10:
+                    raise ValueError('Atoms cannot be scaled; old wedge angle too small.')
+                newr = []
+                for r in self.atoms.get_positions():
+                    x,y = r[0],r[1]
+                    rad = nu.sqrt( x**2+y**2 )
+                    newphi = mix.phival(x,y)*(self.angle/old_angle)
+                    newr.append( [rad*nu.cos(newphi),rad*nu.sin(newphi),r[2]] )
+                self.atoms.set_positions(newr)
                 
         if height!=None:
             if scale_atoms:
                 r = self.atoms.get_positions()
                 r[:,2] = r[:,2] * height/self.height
-                atoms.set_positions(r)
+                self.atoms.set_positions(r)
             self.height = height
             self.atoms.set_cell( self.get_ase_cell() )
             
@@ -341,7 +369,15 @@ class Wedge:
         return nu.array( [[l,0,0],[l*cos(self.angle),l*sin(self.angle),0],[0,0,self.height]] )
         
     def get_ranges(self):
-        return self.ranges.copy()
+        """ Return ranges for symmetry operations. """
+        if self.height==None or self.angle==None or self.physical==None:
+            raise RuntimeError("Wedge's angle or height is not set yet.")
+        i = self.M/2
+        if nu.mod(self.M,2)==1:
+            ranges = nu.array([[-i,i],[0,0],[0,0]],int)
+        else:
+            ranges = nu.array([[-i+1,i],[0,0],[0,0]],int)
+        return ranges
     
     def transform(self,r,n):
         """ Symmetry transformation n for position r. """
@@ -388,10 +424,13 @@ class Chiral:
         self.type='Chiral'
         assert type==self.type
         self.atoms = proxy(atoms)
-        self.angle = 0.0
-        self.height = 1.0
-        self.ranges = nu.array( [[0,0],[0,0],[-nu.Inf,nu.Inf]] )
+        self.angle = None 
+        self.height = atoms.get_cell()[2,2] 
         
+    def __repr__(self):
+        x='Chiral: angle=%.4f (2*pi/%.2f), height=%.4f Ang' %(self.angle,2*nu.pi/self.angle,self.height)
+        return x
+
         
     def set(self,angle=None,height=None,scale_atoms=False,container=None):
         """
@@ -409,24 +448,24 @@ class Chiral:
             if angle is None:
                 da = 0.0
             else:
+                if self.angle==None:
+                    raise AssertionError('Positions cannot be scaled; initial angle was not given.')
                 da = angle - self.angle
                 self.angle = angle
                 
-            if height is None:
-                fact = 1.0
-            else:
-                fact = height/self.height
+            old_height = self.height
+            if height != None:
                 self.height = height
                 
             newr = []
-            for r in atoms.get_positions():
+            for r in self.atoms.get_positions():
                 x,y = r[0],r[1]
                 rad = nu.sqrt( x**2+y**2 )
-                r[2] = fact*r[2]
-                # twist atoms z/h * da *more*
-                newphi = mix.phival(x,y) + r[2]/self.height * da
-                newr.append( [rad*nu.cos(newphi),rad*nu.sin(newphi),r[2]] )
-            atoms.set_positions(newr)     
+                frac = r[2]/old_height
+                # twist atoms z/h * da (more)
+                newphi = mix.phival(x,y) + frac * da
+                newr.append( [rad*nu.cos(newphi),rad*nu.sin(newphi),frac*self.height] )
+            self.atoms.set_positions(newr)     
         
         self.atoms.set_pbc((False,False,True))
         self.atoms.set_cell(self.get_ase_cell())
@@ -444,7 +483,10 @@ class Chiral:
         return nu.array( [[l,0,0],[l*cos(self.angle),l*sin(self.angle),0],[0,0,self.height]] )
         
     def get_ranges(self):
-        return self.ranges.copy()
+        """ Return ranges for symmetry operations. """
+        if self.angle==None or self.height==None:
+            raise RuntimeError("Chiral's angle or height is not set yet.")
+        return nu.array( [[0,0],[0,0],[-nu.Inf,nu.Inf]] )
     
     def transform(self,r,n):
         """ Symmetry transformation n for position r. """
