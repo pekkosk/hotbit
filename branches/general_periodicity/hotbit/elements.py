@@ -64,6 +64,149 @@ class Elements:
         self._elements_initialization()
         self.solved={'ground state':None,'energy':None,'forces':None,'stress':None,'ebs':None,'ecoul':None}
 
+    def __len__(self):
+        return len(self.symbols)
+
+    def __del__(self):
+        pass
+    
+
+    def greetings(self):
+        """ Return documentation for elements from .elm files. """
+        txt='%i atoms, %i states, %.1f electrons (%.1f filled states)\n' %(self.N,self.norb,self.electrons,self.electrons/2)
+        for s in self.present:
+            el=self.elements[s]
+            comment=el.get_comment()
+            if len(comment) > 0:
+                if type(self.files[s])==type(''):
+                    file=self.files[s]
+                    txt+='Element %s in %s\n' %(s,file)
+                else:
+                    txt+='Element %s (object given)\n' %s
+                for line in comment:
+                    txt+='    *'+line.lstrip()+'\n'
+        if txt=='':
+            txt='No comments for elements.'
+        return txt    
+    
+    def set_atoms(self,atoms):
+        """ Set the atoms object ready for calculations. """
+        self._update_atoms(atoms)
+            
+        # determine ranges if they go to infinity
+        r = self.atoms.get_ranges()
+        Mlarge = 5 # TODO: chek Mlarge to be large enough
+        self.ranges = []
+        for i in range(3):
+            assert r[i,0]<=r[i,1]
+            if not self.atoms.get_pbc()[i]: assert r[i,0]==r[i,1]==0
+            if r[i,0]==-nu.Inf:
+                assert r[i,1]==nu.Inf
+                r[i,:] = [-Mlarge,Mlarge]
+            elif r[i,0]<-Mlarge:
+                assert r[i,1]>=Mlarge
+                r[i,:] = [-Mlarge,Mlarge]
+            self.ranges.append( range(int(round(r[i,0])),int(round(r[i,1]))+1) )
+
+
+    def calculation_required(self,atoms,quantities):
+        """ Return True if quantities are solved for atoms.
+
+        The quantities can be one or more of: 'ground state', 'energy', 'forces', and 'stress'.
+        'ebs' or 'ecoul'
+        """
+        if not isinstance(quantities,(list,tuple)):
+            quantities=[quantities]
+
+        if type(self.solved['ground state']) == type(None):
+            return True
+
+        # check that all quantities have been solved for identical atoms
+        for quantity in quantities:
+            solved_atoms = self.solved[quantity]
+            if type(solved_atoms)==type(None):
+                return True                 
+            if solved_atoms!=atoms:
+                return True
+        return False
+
+
+    def set_solved(self,quantities):
+        """ Set quantities solved for current atoms. """
+        if not isinstance(quantities,(list,tuple)):
+            quantities=[quantities]
+        for quantity in quantities:
+            self.solved[quantity]=self.atoms.copy()
+            
+
+    def _update_atoms(self,atoms):
+        """ Update atoms-object, whether it is ase.Atoms or hotbit.Atoms. """
+        
+        if hasattr(atoms,'container'):
+            self.atoms = atoms.copy()
+        else:
+            bravais = Atoms(atoms,container='Bravais')
+            self.atoms = bravais.copy()
+
+
+    def update_geometry(self,atoms):
+        '''
+        Update all properties related to geometry (calculate once/geometry)
+        '''
+        self.calc.start_timing('geometry')    
+        self._update_atoms(atoms) 
+        # select the symmetry operations n where atoms still interact chemically
+        self.Rn = [[self.nvector(r=i,ntuple=(0,0,0)) for i in xrange(self.N)]]
+        self.Tn = [[self.nvector(r=i,ntuple=(0,0,0),lst='tensor') for i in xrange(self.N)]]
+                
+        cut2 = self.calc.ia.hscut**2
+        self.ntuples = [(0,0,0)]
+        # calculate the distances from unit cell 0 to ALL other possible; select meaningful
+        for n1 in self.ranges[0]:
+            for n2 in self.ranges[1]:
+                for n3 in self.ranges[2]:
+                    n = (n1,n2,n3)
+                    if n==(0,0,0): continue
+                    # check that any atom interacts with this unit cell
+                    add = False    
+                    R = [self.nvector(r=i,ntuple=n) for i in xrange(self.N)]
+                    for i in xrange(self.N):
+                        if add: break
+                        for j in xrange(self.N):
+                            dR = self.Rn[0][i]-R[j]
+                            if dR[0]**2+dR[1]**2+dR[2]**2 <= cut2[i,j]: 
+                                add = True
+                                break
+                    if add:
+                        T = [self.nvector(r=i,ntuple=n,lst='tensor') for i in range(self.N)]
+                        self.ntuples.append(n)
+                        self.Rn.append(R)
+                        self.Tn.append(T)
+                        
+        
+#===============================================================================
+#        # TODO                
+#        def check_too_close_distances(self):
+#        # FIXME: move this to elements--it's their business; and call in geometry update
+#        """ If some element pair doesn't have repulsive potential,
+#            check that they are not too close to each other. """
+#        for si in self.present:
+#            for sj in self.present:
+#                d = self.calc.el.distance_of_elements(si,sj,mode='minimum')
+#                if d != None and self.kill_radii[si,sj] != None:
+#                    if d < self.kill_radii[si,sj]:
+#                        raise AssertionError("Atoms with no repulsive potential are too close to each other: %s and %s" % (si, sj))
+#===============================================================================
+
+        
+        # TODO: calc.ia should also know the smallest allowed distances between elements
+        # (maybe because of lacking repulsion or SlaKo tables), this should be checked here!
+        self.Rn = nu.array(self.Rn)
+        self.Tn = nu.array(self.Tn)
+        self.calc.stop_timing('geometry')
+        
+    def get_pbc(self):
+        return self.atoms.get_pbc()
 
     def get_transforms(self):
         return self.ntuples
@@ -115,8 +258,6 @@ class Elements:
         else: 
             return ret
 
-    def __del__(self):
-        pass
 
     def set_cutoffs(self,cutoffs):
         """ Set the maximum interaction cutoffs (dict of ranges for element pair SlaKo tables). """
@@ -137,10 +278,6 @@ class Elements:
 
     def set_name(self, name):
         self.name = name
-
-
-    def __len__(self):
-        return len(self.symbols)
 
 
     def _elements_initialization(self):
@@ -211,142 +348,8 @@ class Elements:
                 n.append(nu.Inf)
             else:
                 n.append( int(round(r[i,1]-r[i,0]+1)) )
-        return n                     
-
-
-    def update_geometry(self,atoms):
-        '''
-        Update all properties related to geometry (calculate once/geometry)
-        '''
-        self.calc.start_timing('geometry')      
-        self.atoms.set_positions( atoms.get_positions() )
-        # select the symmetry operations n where atoms still interact chemically
-        self.Rn = [[self.nvector(r=i,ntuple=(0,0,0)) for i in xrange(self.N)]]
-        self.Tn = [[self.nvector(r=i,ntuple=(0,0,0),lst='tensor') for i in xrange(self.N)]]
-                
-        cut2 = self.calc.ia.hscut**2
-        self.ntuples = [(0,0,0)]
-        # calculate the distances from unit cell 0 to ALL other possible; select meaningful
-        for n1 in self.ranges[0]:
-            for n2 in self.ranges[1]:
-                for n3 in self.ranges[2]:
-                    n = (n1,n2,n3)
-                    if n==(0,0,0): continue
-                    # check that any atom interacts with this unit cell
-                    add = False    
-                    R = [self.nvector(r=i,ntuple=n) for i in xrange(self.N)]
-                    for i in xrange(self.N):
-                        if add: break
-                        for j in xrange(self.N):
-                            dR = self.Rn[0][i]-R[j]
-                            if dR[0]**2+dR[1]**2+dR[2]**2 <= cut2[i,j]: 
-                                add = True
-                                break
-                    if add:
-                        T = [self.nvector(r=i,ntuple=n,lst='tensor') for i in range(self.N)]
-                        self.ntuples.append(n)
-                        self.Rn.append(R)
-                        self.Tn.append(T)
-                        
-        
-#===============================================================================
-#        # TODO                
-#        def check_too_close_distances(self):
-#        # FIXME: move this to elements--it's their business; and call in geometry update
-#        """ If some element pair doesn't have repulsive potential,
-#            check that they are not too close to each other. """
-#        for si in self.present:
-#            for sj in self.present:
-#                d = self.calc.el.distance_of_elements(si,sj,mode='minimum')
-#                if d != None and self.kill_radii[si,sj] != None:
-#                    if d < self.kill_radii[si,sj]:
-#                        raise AssertionError("Atoms with no repulsive potential are too close to each other: %s and %s" % (si, sj))
-#===============================================================================
-
-        
-        # TODO: calc.ia should also know the smallest allowed distances between elements
-        # (maybe because of lacking repulsion or SlaKo tables), this should be checked here!
-        self.Rn = nu.array(self.Rn)
-        self.Tn = nu.array(self.Tn)
-        self.calc.stop_timing('geometry')
-
-
-    def calculation_required(self,atoms,quantities):
-        """ Return True if quantities are solved for atoms.
-
-        The quantities can be one or more of: 'ground state', 'energy', 'forces', and 'stress'.
-        'ebs' or 'ecoul'
-        """
-        if not isinstance(quantities,(list,tuple)):
-            quantities=[quantities]
-
-        if type(self.solved['ground state']) == type(None):
-            return True
-
-        # check that all quantities have been solved for identical atoms
-        for quantity in quantities:
-            solved_atoms = self.solved[quantity]
-            if type(solved_atoms)==type(None):
-                return True                 
-            if solved_atoms!=atoms:
-                return True
-        return False
-
-
-    def set_atoms(self,atoms):
-        """ Set the atoms object ready for calculations. """
-        try:
-            # we have custom-made atoms
-            r = atoms.get_ranges()
-            self.atoms = atoms.copy()
-        except:
-            # we have original ase.Atoms; use Bravais -type generalized class
-            self.atoms = Atoms(container='Bravais',cell=atoms.get_cell(),
-                               pbc=atoms.get_pbc() )
-            self.atoms += atoms
-            
-        # determine ranges if they go to infinity
-        r = self.atoms.get_ranges()
-        Mlarge = 5 # TODO: chek Mlarge to be large enough
-        self.ranges = []
-        for i in range(3):
-            assert r[i,0]<=r[i,1]
-            if not self.atoms.get_pbc()[i]: assert r[i,0]==r[i,1]==0
-            if r[i,0]==-nu.Inf:
-                assert r[i,1]==nu.Inf
-                r[i,:] = [-Mlarge,Mlarge]
-            elif r[i,0]<-Mlarge:
-                assert r[i,1]>=Mlarge
-                r[i,:] = [-Mlarge,Mlarge]
-            self.ranges.append( range(int(round(r[i,0])),int(round(r[i,1]))+1) )
-
-
-    def set_solved(self,quantities):
-        """ Set quantities solved for current atoms. """
-        if not isinstance(quantities,(list,tuple)):
-            quantities=[quantities]
-        for quantity in quantities:
-            self.solved[quantity]=self.atoms.copy()
-
-    def greetings(self):
-        """ Return documentation for elements from .elm files. """
-        txt='%i atoms, %i states, %.1f electrons (%.1f filled states)\n' %(self.N,self.norb,self.electrons,self.electrons/2)
-        for s in self.present:
-            el=self.elements[s]
-            comment=el.get_comment()
-            if len(comment) > 0:
-                if type(self.files[s])==type(''):
-                    file=self.files[s]
-                    txt+='Element %s in %s\n' %(s,file)
-                else:
-                    txt+='Element %s (object given)\n' %s
-                for line in comment:
-                    txt+='    *'+line.lstrip()+'\n'
-        if txt=='':
-            txt='No comments for elements.'
-        return txt
-
-
+        return n
+    
     def get_valences(self):
         """ Number of valence electrons for atoms. """
         return self.nr_of_valences
@@ -373,21 +376,6 @@ class Elements:
     def get_atomic_numbers(self):
         """ Return the atomic numbers. """
         return self.atoms.get_atomic_numbers()
-
-    def get_cell_axes(self):
-        """
-        Lengths of the unit cell axes (currently for orthorhombic cell).
-        """
-        # TODO: get rid of this 
-        x,y,z = self.atoms.get_cell()
-        assert (nu.dot(x,y) == 0 and nu.dot(x,z) == 0 and nu.dot(y,z) == 0)
-        return nu.diag(self.atoms.get_cell()) / Bohr
-
-    def get_box_lengths(self):
-        """ Return lengths of box sizes in orthorombic box. """
-        c=self.atoms.get_cell()/Bohr
-        return c[0,0],c[1,1],c[2,2]
-
 
     def get_symbols(self):
         return self.symbols

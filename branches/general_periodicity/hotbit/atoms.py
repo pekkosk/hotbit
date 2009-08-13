@@ -37,8 +37,7 @@ class Atoms(ase_Atoms):
              cell=cell, pbc=pbc,
              constraint=constraint,
              calculator=calculator)
-        
-        self._ranges = None                
+                        
         if type(container)==type(''):
             dict = {'type':container}
         else:
@@ -127,11 +126,40 @@ class Atoms(ase_Atoms):
         return self._rotation_of_axes(n)
                 
                 
-    def extended_copy(self,n_list):
-        """ Get copies of atoms for all listed symmetry operations n. 
+    def extended_copy(self,n):
+        """ Get copies of atoms for all listed symmetry operations n.
+        
+        @param: n  can be a list of 3-tuples for transformations, or 3-tuple
+                   for telling how many copies in each direction is made.  
         
         Return normal ase.Atoms -instance.
         """ 
+        r = self.container.get_ranges()
+        if isinstance(n,list):
+            n_list = n.copy()
+        elif isinstance(n,tuple):
+            a = []
+            for i in range(3):
+                if r[i,0]==-nu.inf:
+                    a.append(0)
+                else:
+                    M = r[i,1] + 1
+                    # try to start copies from primitive cell 0 first
+                    if n[i]>M:
+                        M = r[i,1] - r[i,0] + 1
+                        a.append(r[i,0])
+                    else:
+                        a.append(0)
+                    #M = r[i,1] - r[i,0] + 1
+                    if n[i]>M:
+                        raise AssertionError('Too many extended copies for direction %i.' %i)
+                            
+            n_list=[]
+            for n1 in range(n[0]):
+                for n2 in range(n[1]):
+                    for n3 in range(n[2]):
+                        n_list.append( (a[0]+n1,a[1]+n2,a[2]+n3) )
+        
         atoms2=None
         for n in n_list:
             self._check_symmetry_operation(n)
@@ -146,20 +174,19 @@ class Atoms(ase_Atoms):
         return atoms2       
 
 
-    def __eq__(self,other):       
+    def __eq__(self,other):
+        #print self._cell
+        #print other._cell
+        #print ase_Atoms.__eq__(self,other)
         if ase_Atoms.__eq__(self,other):
             # for Bravais ase's Atoms.__eq__ is enough
             if self.container.type == 'Bravais':
                 return True
             else:
-                try:
-                    same_container = self.same_container(other) 
-                except:
-                    raise ValueError('Comparing Bravais and non-Bravais containers should not happen. Check code.')
-                if same_container:
-                    return True
+                if hasattr(other,'container'):
+                    return self.same_container(other)
                 else:
-                    return False
+                    raise AssertionError('Comparing Bravais and non-Bravais containers should not happen. Check the code.')
         else:
             return False    
         
@@ -171,10 +198,16 @@ class Atoms(ase_Atoms):
         """Return a copy."""
         cp = Atoms(container=self.container.type)
         cp += self
+        # set cell and pbc for initialization
         cp.set_pbc( self.get_pbc() )
         cp.set_cell( self.get_cell() )
         if self.container.type!='Bravais':
             cp.set_container(container=self.container)
+        # reset cell (for ase and visualization use) exactly the same
+        # (ase cell in set_container is taken from present atom positions,
+        # even though originally it might have been set earlier)
+        assert all( self.get_pbc()==cp.get_pbc() ) 
+        cp.set_cell( self.get_cell() )
         return cp
         
 
@@ -236,8 +269,9 @@ class Bravais:
     def transform(self,r,n):
         """ Symmetry transformation n for position r. """
         rn=r.copy()
+        cell = self.atoms.get_cell()
         for a in range(3):
-            rn = rn + n[a]*self.atoms._cell[a,:]
+            rn = rn + n[a]*cell[a,:]
         return rn
         
     def tensor(self,r,n):
@@ -425,10 +459,16 @@ class Chiral:
         assert type==self.type
         self.atoms = proxy(atoms)
         self.angle = None 
-        self.height = atoms.get_cell()[2,2] 
+        cell = atoms.get_cell()
+        self.height = cell[2,2] 
         
     def __repr__(self):
-        x='Chiral: angle=%.4f (2*pi/%.2f), height=%.4f Ang' %(self.angle,2*nu.pi/self.angle,self.height)
+        if self.angle==None:
+            raise AssertionError('Chiral angle was not set yet.')
+        if self.angle<1E-14:
+            x='Chiral: angle=0.0, height=%.4f Ang' %self.height
+        else:
+            x='Chiral: angle=%.4f (2*pi/%.2f), height=%.4f Ang' %(self.angle,2*nu.pi/self.angle,self.height)
         return x
 
         
@@ -440,32 +480,35 @@ class Chiral:
         @param: angle    angle (in radians) of rotation
         """
         if container!=None:
+            # copy container
+            assert angle==None and height==None and scale_atoms==False
             self.set(angle=container.angle,height=container.height)
-        if not scale_atoms:
-            if angle!=None: self.angle = angle
-            if height!=None: self.height = height
         else:
-            if angle is None:
-                da = 0.0
+            if not scale_atoms:
+                if angle!=None: self.angle = angle
+                if height!=None: self.height = height
             else:
-                if self.angle==None:
-                    raise AssertionError('Positions cannot be scaled; initial angle was not given.')
-                da = angle - self.angle
-                self.angle = angle
-                
-            old_height = self.height
-            if height != None:
-                self.height = height
-                
-            newr = []
-            for r in self.atoms.get_positions():
-                x,y = r[0],r[1]
-                rad = nu.sqrt( x**2+y**2 )
-                frac = r[2]/old_height
-                # twist atoms z/h * da (more)
-                newphi = mix.phival(x,y) + frac * da
-                newr.append( [rad*nu.cos(newphi),rad*nu.sin(newphi),frac*self.height] )
-            self.atoms.set_positions(newr)     
+                if angle is None:
+                    da = 0.0
+                else:
+                    if self.angle==None:
+                        raise AssertionError('Positions cannot be scaled; initial angle was not given.')
+                    da = angle - self.angle
+                    self.angle = angle
+                    
+                old_height = self.height
+                if height != None:
+                    self.height = height
+                    
+                newr = []
+                for r in self.atoms.get_positions():
+                    x,y = r[0],r[1]
+                    rad = nu.sqrt( x**2+y**2 )
+                    frac = r[2]/old_height
+                    # twist atoms z/h * da (more)
+                    newphi = mix.phival(x,y) + frac * da
+                    newr.append( [rad*nu.cos(newphi),rad*nu.sin(newphi),frac*self.height] )
+                self.atoms.set_positions(newr)     
         
         self.atoms.set_pbc((False,False,True))
         self.atoms.set_cell(self.get_ase_cell())
@@ -479,8 +522,11 @@ class Chiral:
     
     def get_ase_cell(self):
         """ cell used for visualization """
+        if self.angle==None:
+            raise AssertionError('Chiral angle is not set yet.')
         l = max(self.atoms.get_positions()[:,0])*1.5
-        return nu.array( [[l,0,0],[l*cos(self.angle),l*sin(self.angle),0],[0,0,self.height]] )
+        cell = nu.array( [[l,0,0],[l*cos(self.angle),l*sin(self.angle),0],[0,0,self.height]] )
+        return cell
         
     def get_ranges(self):
         """ Return ranges for symmetry operations. """
