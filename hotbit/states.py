@@ -86,9 +86,10 @@ class States:
             kl=None
             
         # now sampling is set up. Check the consistency.
+        pbc = self.calc.el.get_pbc()
         for i in range(3):
             for kp in k:
-                if kp[i]>1E-10 and not self.calc.el.pbc[i]:
+                if kp[i]>1E-10 and not pbc[i]:
                     raise AssertionError('Do not set (non-zero) k-points in non-periodic direction!')            
         return nk, k, kl, wk
 
@@ -119,7 +120,6 @@ class States:
 #        try:
         if True:
             if self.SCC:
-                #raise NotImplementedError
                 self.es.construct_Gamma_matrix()
             self.e, self.wf = self.solver.get_states(self.calc,dq,self.H0,self.S,self.count)
             

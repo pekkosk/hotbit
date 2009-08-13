@@ -30,10 +30,14 @@ class Electrostatics:
 
     def coulomb_energy(self):
         """ Return Coulomb energy. """
+        self.calc.start_timing('ecoul')
+        ecoul = 0.0
         if not self.SCC:
-            return 0.0
+            ecoul = 0.0
         else:
-            return 0.5 * dot(self.dq,self.epsilon)
+            ecoul = 0.5 * dot(self.dq,self.epsilon)
+        self.calc.stop_timing('ecoul')
+        return ecoul
 
 
     def gamma_forces(self):

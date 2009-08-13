@@ -29,7 +29,7 @@ class Calculator(Output):
     def __init__(self,parameters=None,
                       elements=None,
                       tables=None,
-                      verbose=True,
+                      verbose=False,
                       charge=0.0,
                       SCC=True,
                       kpts=(1,1,1),
@@ -248,7 +248,6 @@ class Calculator(Output):
         print>>self.txt,  'Dir:',abspath(curdir)
         print>>self.txt,  'System:',self.el.get_name()        
         print>>self.txt,  '       Charge=%4.1f' % self.charge
-        # TODO: change box and pbc-info here
         print>>self.txt,  '       Container', self.el.container_info()
         print>>self.txt,  '       Electronic temperature:', self.width*Hartree,'eV'
         mixer = self.st.solver.mixer
@@ -309,7 +308,6 @@ class Calculator(Output):
         self.st=States(self)
         self.rep=Repulsion(self)
         self.env=Environment(self)
-        self.greetings()
         pbc=atoms.get_pbc()
         # FIXME: gamma_cut -stuff
         if self.get('SCC') and nu.any(pbc) and self.get('gamma_cut')==None:
@@ -318,6 +316,7 @@ class Calculator(Output):
             raise AssertionError('Charged system cannot be periodic.')
         self.flush()
         self.el.set_atoms(atoms)
+        self.greetings()
         self.stop_timing('initialization')
         
         
@@ -335,12 +334,12 @@ class Calculator(Output):
         """ Return the potential energy of present system. """
         if self.calculation_required(atoms,['energy']):
             self.solve_ground_state(atoms)
-            self.start_timing('energies')
+            self.start_timing('energy')
             ebs=self.get_band_structure_energy(atoms)
             ecoul=self.get_coulomb_energy(atoms)
             erep=self.rep.get_repulsive_energy()
             self.epot = ebs + ecoul + erep - self.el.efree*Hartree
-            self.stop_timing('energies')
+            self.stop_timing('energy')
             self.el.set_solved('energy')
         return self.epot.copy()
 
