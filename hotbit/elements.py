@@ -183,6 +183,18 @@ class Elements:
                         self.ntuples.append(n)
                         self.Rn.append(R)
                         self.Tn.append(T)
+            
+        self.Rn = nu.array(self.Rn)
+        self.Tn = nu.array(self.Tn)
+        
+        rijn = nu.zeros((len(self.ntuples),self.N,self.N,3))            
+        dijn = nu.zeros((len(self.ntuples),self.N,self.N)) 
+        for i in range(self.N):
+            for j in range(self.N):
+                rijn[:,i,j,:] = self.Rn[:,j,:] - self.Rn[0,i,:]
+                dijn[:,i,j]   = nu.sqrt( rijn[:,i,j,0]**2+rijn[:,i,j,1]**2+rijn[:,i,j,2]**2 )
+        self.rijn = rijn
+        self.dijn = dijn
                         
         
 #===============================================================================
@@ -202,8 +214,7 @@ class Elements:
         
         # TODO: calc.ia should also know the smallest allowed distances between elements
         # (maybe because of lacking repulsion or SlaKo tables), this should be checked here!
-        self.Rn = nu.array(self.Rn)
-        self.Tn = nu.array(self.Tn)
+
         self.calc.stop_timing('geometry')
         
     def get_pbc(self):

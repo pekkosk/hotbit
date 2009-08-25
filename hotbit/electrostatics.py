@@ -59,21 +59,20 @@ class Electrostatics:
         self.calc.start_timing('h1')
         if dq!=None:
             self.set_dq(dq)
-        h1=nu.zeros((self.norb,self.norb))
-
-        ext=self.ext            
+                          
         lst = self.calc.el.get_property_lists(['i','o1','no'])
+        
+        aux = nu.zeros((self.norb,self.norb))
         for i,o1i,noi in lst:
-            for j,o1j,noj in lst:
-                # internal electrostatics from Mulliken charges
-                eij = 0.5 * (self.epsilon[i] + self.epsilon[j])
-                h1[o1i:o1i+noi,o1j:o1j+noj] = eij
-                h1[o1j:o1j+noj,o1i:o1i+noi] = eij
-                # external electrostatics 
-                # NOTE: ext is the electrostatic potential, so we have minus-sign!
-                ext_ij = 0.5 * (-1)*(ext[i]+ext[j])
-                h1[o1i:o1i+noi,o1j:o1j+noj] += ext_ij
-                h1[o1j:o1j+noj,o1i:o1i+noi] += ext_ij
+            aux[o1i:o1i+noi,:] = self.epsilon[i]        
+        h1 = 0.5 * ( aux+aux.transpose() )
+                
+        # external electrostatics
+        if any(abs(self.ext)>1E-12):
+            aux = nu.zeros((self.norb,self.norb))
+            for i,o1i,noi in lst:
+                aux[o1i:o1i+noi,:] = self.ext[i]
+            h1 = h1 + 0.5 * (-1) * (aux+aux.transpose())
                 
         self.calc.stop_timing('h1')
         self.h1=h1
@@ -97,19 +96,23 @@ class Electrostatics:
         g=self.gamma
         G=nu.zeros((self.N,self.N))
         dG=nu.zeros((self.N,self.N,3))
+        rijn = self.calc.el.rijn
+        dijn = self.calc.el.dijn
         
         lst=self.calc.el.get_property_lists(['i','s'])
         for i,si in lst:
             for j,sj in lst:
-                Rijn = self.calc.el.Rn[:,j,:] - self.calc.el.Rn[0,i,:]
-                for n,rij in enumerate(Rijn):
-                    dij = sqrt( rij[0]**2+rij[1]**2+rij[2]**2 )
-                    G[i,j] = G[i,j] + g(si,sj,dij)
-                    if i==j and n==0: continue
-                    dG[i,j,:] = dG[i,j,:] + g(si,sj,dij,der=1)*rij/dij 
+                # TODO: these sums can probably be improved 
+                G[i,j] = sum( [g(si,sj,d) for d in dijn[:,i,j]] )
+                
+                dGij = nu.zeros((3))
+                for d,r in zip( dijn[:,i,j],rijn[:,i,j,:] ):
+                    if d>1E-10:                  
+                        dGij = dGij + g(si,sj,d,der=1)*r/d
+                dG[i,j] = dG[i,j] + dGij
         self.G, self.dG = G, dG
                 
-        self.ext = [self.calc.env.phi(i) for i in range(self.N)]
+        self.ext = nu.array( [self.calc.env.phi(i) for i in range(self.N)] )
         self.calc.stop_timing('gamma matrix')
 
                             
@@ -131,8 +134,11 @@ class Electrostatics:
         wi, wj = ei.get_FWHM(), ej.get_FWHM()
         const=2*nu.sqrt( nu.log(2.0)/(wi**2+wj**2) )
         if r<1E-10:
-            assert (der==0 and si==sj)
-            return ei.get_U()
+            assert si==sj
+            if der==1:
+                return nu.zeros((3))
+            else:
+                return ei.get_U()
         else:
             ecr=erf(const*r)
             if der==0:
