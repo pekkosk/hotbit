@@ -30,7 +30,8 @@ class Elements:
 
         if not isinstance(atoms, ase_Atoms):
             raise AssertionError('Given atoms object has to be ase.Atoms type.')
-        self.atoms = atoms.copy()
+        #self.atoms = atoms.copy()
+        self._update_atoms(atoms)
             #raise AssertionError('Given atoms object has to be box.Atoms, not ase.Atoms type.')
         #if isinstance(atoms,Atoms):
         #    self.atoms=atoms.copy()
@@ -94,7 +95,7 @@ class Elements:
         self._update_atoms(atoms)
             
         # determine ranges if they go to infinity
-        r = self.atoms.get_ranges()
+        r = self.atoms.get_symmetry_operation_ranges()
         Mlarge = 5 # TODO: chek Mlarge to be large enough
         self.ranges = []
         for i in range(3):
@@ -145,7 +146,7 @@ class Elements:
         if hasattr(atoms,'container'):
             self.atoms = atoms.copy()
         else:
-            bravais = Atoms(atoms,container='Bravais')
+            bravais = Atoms(atoms=atoms,container='Bravais')
             self.atoms = bravais.copy()
 
 
@@ -342,7 +343,7 @@ class Elements:
         Return the number of symmetry transformations in different directions.
         '''
         n = []
-        r = self.atoms.get_ranges()
+        r = self.atoms.get_symmetry_operation_ranges()
         for i in range(3):
             if r[i,0]==-nu.Inf:
                 n.append(nu.Inf)
