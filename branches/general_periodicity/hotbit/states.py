@@ -176,7 +176,6 @@ class States:
             # TODO: do k-sum with numpy
             for ik in range(self.nk):
                 for a in range(3):
-                    #print self.dH.shape, self.dH0.shape, self.es.get_h1().shape, self.dS.shape
                     self.dH[ik,:,:,a]=self.dH0[ik,:,:,a] + self.es.get_h1()*self.dS[ik,:,:,a]
         else:
             self.dH = self.dH0

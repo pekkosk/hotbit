@@ -32,7 +32,7 @@ chiral += straight
 chiral.set_container(height=height,angle=2*pi/5)
 calc = Hotbit(SCC=SCC,txt='chiral.cal',kpts=(1,1,nkpts),gamma_cut=cut)
 chiral.set_calculator(calc)
-#view(chiral)
+view(chiral)
 e2 = chiral.get_potential_energy()
 assert abs(e1-e2)<1E-6
 

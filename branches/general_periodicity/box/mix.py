@@ -48,6 +48,7 @@ def phival(x,y):
     elif y<-e and abs(x)<=e:
         return 3*pi/2
     else:
+        #print x,y
         raise RuntimeError('Strange things in phival')
 
 
