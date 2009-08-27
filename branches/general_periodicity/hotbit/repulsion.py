@@ -55,20 +55,25 @@ class Repulsion:
     def get_repulsive_energy(self):
         """ Calculate the repulsive energy. """
         self.calc.start_timing('e_rep')
-        erep=0.0
+        
         # TODO: be more selective with n (for efficiency)
         lst=self.calc.el.get_property_lists(['i','s'])
+        Rijn = self.calc.el.rijn
+        erep=0.0
         for i,si in lst: 
-            for j,sj in lst:
-                Rijn = self.calc.el.Rn[:,j,:] - self.calc.el.Rn[0,i,:]
-                for n,rijn in enumerate(Rijn): 
+            for j,sj in lst[i:]:
+                for n,rijn in enumerate(Rijn[:,i,j]): 
                     if i==j and n==0: continue
                     d = nu.sqrt( rijn[0]**2+rijn[1]**2+rijn[2]**2 )
                     if d>self.rmax: continue
+                    # TODO: remove following assert
                     assert(d>1E-10)
-                    erep+=self.vrep[si+sj](d)
+                    if i==j:
+                        erep+=0.5*self.vrep[si+sj](d)
+                    else:
+                        erep+=self.vrep[si+sj](d)
         self.calc.stop_timing('e_rep') 
-        return 0.5*erep*Hartree
+        return erep*Hartree
 
 
     def get_repulsive_forces(self):
@@ -80,12 +85,11 @@ class Repulsion:
         self.calc.start_timing('f_rep')
         f=nu.zeros((self.N,3))
         lst = self.calc.el.get_property_lists(['i','s'])
-        Rn = self.calc.el.Rn
+        Rijn = self.calc.el.rijn
         for i,si in lst:
             for j,sj in lst:
                 V = self.vrep[si+sj]
-                Rijn = Rn[:,j,:] - Rn[0,i,:]
-                for n,rijn in enumerate(Rijn):
+                for n,rijn in enumerate(Rijn[:,i,j]):
                     if i==j and n==0: continue
                     dijn = sqrt( rijn[0]**2+rijn[1]**2+rijn[2]**2 )
                     if dijn<self.rmax:

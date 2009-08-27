@@ -100,16 +100,20 @@ class Electrostatics:
         dijn = self.calc.el.dijn
         
         lst=self.calc.el.get_property_lists(['i','s'])
+        
         for i,si in lst:
-            for j,sj in lst:
-                # TODO: these sums can probably be improved 
+            for j,sj in lst[i:]:
                 G[i,j] = sum( [g(si,sj,d) for d in dijn[:,i,j]] )
                 
-                dGij = nu.zeros((3))
-                for d,r in zip( dijn[:,i,j],rijn[:,i,j,:] ):
-                    if d>1E-10:                  
-                        dGij = dGij + g(si,sj,d,der=1)*r/d
-                dG[i,j] = dG[i,j] + dGij
+                aux = nu.array([ g(si,sj,d,der=1)*r/d for (d,r) in zip(dijn[:,i,j],rijn[:,i,j]) ])
+                if i==j:
+                    # exclude n=(0,0,0) from derivatives
+                    dG[i,j] = aux[1:,:].sum(axis=0)
+                elif i!=j:
+                    G[j,i] = G[i,j] 
+                    dG[i,j] = aux.sum(axis=0)
+                    dG[j,i] = -dG[i,j]
+
         self.G, self.dG = G, dG
                 
         self.ext = nu.array( [self.calc.env.phi(i) for i in range(self.N)] )

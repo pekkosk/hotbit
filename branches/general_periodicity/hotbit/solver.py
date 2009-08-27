@@ -28,40 +28,6 @@ class Solver:
         avg, mx, mn=nu.mean(self.iter_history), min(self.iter_history), max(self.iter_history)
         return 'Solved %i times; Iterations: avg %.1f, max %i, min %i' %(len(self.iter_history),avg,mx,mn)
 
-    #def get_states(self,st,dq,H0,S,count):
-        #""" Solve the (non)SCC generalized eigenvalue problem. """
-        #self.es=self.calc.es
-        #self.norb=len(self.calc.el)
-        #if self.SCC:
-            #self.es.construct_tables()
-        #if True:
-            #mixer=AndersonMixer(self.beta,self.mmax,self.limit,chop=0.2)
-        #for i in range(self.maxiter):
-            #if self.SCC:
-                #H=H0+self.es.construct_H1(dq)*S
-            #else:
-                #H=H0
-            #e,wf=self.diagonalize(H,S)
-            #st.update(e,wf)
-            #if not self.SCC:
-                #break
-            #dq_out=st.get_dq()
-            #done,dq=mixer(dq,dq_out)
-
-            #if self.verbose:
-                #mixer.echo()
-            #if done:
-                #self.iterations=i
-                #self.iter_history.append(i)
-                #break
-            #if i==self.maxiter-1:
-                #mixer.out_of_iterations(self.calc.get_output())
-                #raise RuntimeError('Out of iterations.')
-        #if self.verbose:
-            #mixer.final_echo()
-        #return st.e,st.wf
-
-
     def get_states(self,calc,dq,H0,S,count):
         """ Solve the (non)SCC generalized eigenvalue problem. """
         st = calc.st
@@ -80,7 +46,7 @@ class Solver:
                     H=H0[ik,:,:] + es.construct_h1(dq)*S[ik,:,:]
                 else:
                     H=H0[ik,:,:]
-                e[ik,:], wf[ik,:,:] = self.diagonalize(H,S[ik,:,:])
+                e[ik,:], wf[ik,:,:] = self.diagonalize(H,S[ik,:,:],st.nk)
                 self.H, self.S=H,S
             st.update(e,wf)
             if not self.SCC:
@@ -108,13 +74,16 @@ class Solver:
         return st.e,st.wf
 
 
-    def diagonalize(self,H,S):
+    def diagonalize(self,H,S,nk):
         """ Solve the eigenstates. """
         self.calc.start_timing('eigensolver')
         if True:
             # via Fortran wrapper
-#            e,wf=geig(self.H,self.S,self.norb)
-            e, wf = geigc(H,S,self.norb)
+            if nk==1:
+                e, wf = geig(H,S,self.norb)
+                wf = wf*(1.0+0.0j)
+            else:
+                e, wf = geigc(H,S,self.norb)
         if False:
             raise NotImplementedError('Not checked for complex stuff')
             # using numpy lapack_lite

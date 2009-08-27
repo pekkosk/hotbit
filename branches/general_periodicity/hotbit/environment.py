@@ -55,7 +55,7 @@ class Environment:
 
 
     def add_phi(self,phi):
-        """ Add external electrostatic potential function.
+        """ Add external electrostatic potential function in atomic units.
 
         phi=phi(r,t) is any function, where r is position (Bohrs)
         and t time (atomic units, ~fs)
