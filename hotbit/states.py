@@ -154,13 +154,10 @@ class States:
         self.wf=wf
         self.f=self.occu.occupy(e)
         self.calc.start_timing('rho')
-        # TODO: rhoS etc...
-#        self.rho0=fortran_rho0(self.wf,self.f,self.calc.el.nr_ia_orbitals,self.calc.el.ia_orbitals,self.norb)
         self.rho = fortran_rhoc(self.wf,self.f,self.norb,self.nk)
         self.calc.stop_timing('rho')
-#        self.rho0S_diagonal=matmul_diagonal(self.rho0,self.S,self.norb)
         if self.SCC:
-            self.dq=self.mulliken()
+            self.dq = self.mulliken()
             self.es.set_dq(self.dq)
         self.calc.stop_timing('update')
 
@@ -169,20 +166,17 @@ class States:
         """ Update stuff from eigenstates needed later for forces etc. """
         self.calc.start_timing('final update')
         self.Swf = None
-        #self.rho=fortran_rho(self.wf,self.f,self.norb) # the complete density matrix (even needed?)
         self.dH = nu.zeros_like(self.dH0)
         if self.SCC:
             self.prev_dq=[self.dq, self.prev_dq[0]]
             # TODO: do k-sum with numpy
             for ik in range(self.nk):
                 for a in range(3):
-                    self.dH[ik,:,:,a]=self.dH0[ik,:,:,a] + self.es.get_h1()*self.dS[ik,:,:,a]
+                    self.dH[ik,:,:,a] = self.dH0[ik,:,:,a] + self.es.get_h1()*self.dS[ik,:,:,a]
         else:
             self.dH = self.dH0
 
         # density matrix weighted by eigenenergies
-        # TODO: rhoe0 ...
-#        self.rhoe0=fortran_rhoe0(self.wf,self.f,self.e,self.calc.el.nr_ia_orbitals,self.calc.el.ia_orbitals,self.norb)
         self.rhoe=fortran_rhoec(self.wf,self.f,self.e,self.norb,self.nk)
         self.calc.stop_timing('final update')
 
@@ -195,28 +189,21 @@ class States:
     def get_occupations(self):
         return self.f.copy()
 
-    def get_homo(self):
-        """ Return highest orbital with occu>0.99. """
-        raise NotImplementedError
+    def get_homo(self,occu=0.99):
+        """ Return highest *largely* occupied orbital (>occu)
+        
+        0<=occu<=2. Recommended use only for molecules.
+        """
         for i in range(self.norb)[::-1]:
-            if self.f[i]>0.99: return i
+            if any( self.f[:,i]>occu ): return i
 
-    def get_lumo(self):
-        """ Return lowest orbital with occu<1.01. """
-        raise NotImplementedError
+    def get_lumo(self,occu=1.01):
+        """ Return lowest *largely* unuccopied orbital (<occu)
+        
+        0<=occu<=2. Recommended use only for molecules.
+        """
         for i in range(self.norb):
-            if self.f[i]<1.01: return i
-
-    def get_hoc(self):
-        """ Return highest partially occupied orbital. """
-        raise NotImplementedError
-        for i in range(self.norb)[::-1]:
-            if self.f[i]>1E-9: return i
-
-
-    def get_fermi_level(self):
-        raise NotImplementedError('getting Fermi-level is a matter of occu-instance. Use it instead.')
-
+            if any( self.f[:,i]<occu ): return i
 
     def mulliken(self):
         '''
@@ -235,27 +222,10 @@ class States:
         for ik in xrange(self.nk):
             diag_k = ( self.rho[ik]*self.S[ik].transpose() ).sum(axis=1).real
             diag = diag + self.wk[ik] * diag_k
-            
         q=[]
         for o1, no in self.calc.el.get_property_lists(['o1','no']):
             q.append( diag[o1:o1+no].sum() )
-#        for i in range(self.nat):
-#            orbitals=self.calc.el.orbitals(i,indices=True)
-#            q.append( sum(self.rho0S_diagonal[orbitals]) )
         return nu.array(q)-self.calc.el.get_valences()
-
-
-    def mulliken_transfer(self,k,l):
-        """ Return Mulliken transfer charges between states k and l. """
-        raise NotImplementedError
-        if self.Swf==None:
-            self.Swf=symmetric_matmul(self.S,self.wf)
-        q=[]
-        for i in range(self.nat):
-            iorb=self.calc.el.orbitals(i,indices=True)
-            qi=sum( [self.wf[oi,k]*self.Swf[oi,l]+self.wf[oi,l]*self.Swf[oi,k] for oi in iorb] )
-            q.append(qi/2)
-        return nu.array(q)
 
 
     def band_structure_energy(self):

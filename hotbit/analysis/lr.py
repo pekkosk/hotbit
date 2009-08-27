@@ -29,10 +29,15 @@ class LinearResponse:
         self.es=calc.st.es
         self.energy_cut=energy_cut/Hartree
         #self.noc=self.st.get_hoc()+1 #number of occupied states (not index)
+        # do not use HOC
         self.nel=self.el.get_number_of_electrons()
         self.norb=self.el.get_nr_orbitals()
-        self.e=self.st.get_eigenvalues()
-        self.f=self.st.get_occupations()
+        self.e=self.st.get_eigenvalues()[0,:]
+        self.f=self.st.get_occupations()[0,:]
+        if any( abs(self.st.wf.flatten().imag)>1E-10 ):
+            raise ValueError('Wave functions should not be complex.')
+        self.wf = self.st.wf[0].real
+        self.S = self.st.S[0].real
         self.N=len(self.el)
         if self.calc.get('SCC')==False:
             raise AssertionError('SCC should be True. (Otherwise, just plot DOS)')
@@ -53,12 +58,30 @@ class LinearResponse:
         self.timer=Timer('Linear Response',txt=self.txt)   
         self.timing=timing  
         self.done=False       
+        self.allowed_cut = 1E-2 #if osc.strength is smaller, transition is not allowed
+        self._initialize()
+        
+    def _initialize(self):
+        """
+        Perform some initialization calculations.
+        """
+        self.timer.start('init')
+        self.Swf = nu.dot(self.S,self.wf)
+        self.timer.stop('init')
             
         
     def get_linear_response(self):
         """ Get linear response spectrum in eV. """
         return self.omega*Hartree, self.F      
         
+        
+    def mulliken_transfer(self,k,l):
+        """ Return Mulliken transfer charges between states k and l. """
+        q=[]
+        for i,o1,no in self.el.get_property_lists(['i','o1','no']):
+            qi=sum( [self.wf[a,k]*self.Swf[a,l]+self.wf[a,l]*self.Swf[a,k] for a in range(o1,o1+no)] )
+            q.append(qi/2)
+        return nu.array(q)
         
     def run(self):
         """ Run the calculation. """
@@ -75,6 +98,7 @@ class LinearResponse:
         de=[] 
         df=[] 
         particle_holes=[]
+        gammafct = self.es.gamma
         self.timer.start('setup ph pairs')
         for i in range(self.norb):
             for j in range(i+1,self.norb):
@@ -98,13 +122,10 @@ class LinearResponse:
         if not 0<dim<100000:
             raise RuntimeError('Coupling matrix too large or small (%i)' %dim)
         r=self.el.get_positions()            
-        transfer_q=nu.array([self.st.mulliken_transfer(ph[0],ph[1]) for ph in particle_holes])
+        transfer_q=nu.array([self.mulliken_transfer(ph[0],ph[1]) for ph in particle_holes])
         rv=nu.array([dot(tq,r) for tq in transfer_q])
-        gamma=nu.zeros((self.N,self.N))
-        for i in range(self.N):
-            for j in range(self.N):
-                gamma[i,j]=self.es.gamma(i,j)                
         
+        gamma = self.es.G.copy()        
         gamma_tq=nu.zeros((dim,self.N))
         for k in range(dim):
             gamma_tq[k,:]=dot(gamma,transfer_q[k,:])            
@@ -155,14 +176,29 @@ class LinearResponse:
         """ Some info about excitations (energy, main p-h excitations,...) """
         print '\n#e(eV), f, collectivity, transitions ...'
         for ex in range(self.dim):
-            if self.F[ex]<1E-2:
+            if self.F[ex]<self.allowed_cut:
                 continue
             print '%.5f %.5f %8.1f' %(self.omega[ex]*Hartree,self.F[ex],self.collectivity[ex]), 
             order=nu.argsort(abs(self.eigv[:,ex]))[::-1]
             for ph in order[:4]:
                 i,j=self.particle_holes[ph]
                 print '%3i-%-3i:%-10.3f' %(i,j,self.eigv[ph,ex]**2),
-            print                 
+            print         
+            
+    def get_excitation(self,i,allowed=True):
+        """ Return energy (eV) and oscillation strength for i'th allowed excitation index.
+        
+        i=0 means first excitation
+        """
+        if allowed==False:
+            return self.omega[i]*Hartree, self.F[i]
+        else:
+            p=-1
+            for k in range(self.dim):
+                if self.F[k]>=self.allowed_cut: p+=1
+                if p==i:
+                    return self.omega[k]*Hartree, self.F[k]                    
+                
             
     def write_spectrum(self,filename=None):
         """ Write the linear response spectrum into file. """
@@ -197,8 +233,7 @@ class LinearResponse:
         if not self.done:
             self.run()
         
-        e,f=mix.broaden(self.omega*Hartree,self.F,width=width,N=1000,function='lorenzian')
-        #e,f=mix.broaden(self.omega*Hartree,self.collectivity,width=width,N=1000,function='lorenzian')
+        e,f=mix.broaden(self.omega*Hartree,self.F,width=width,N=1000,extend=True) 
         f=f/max(abs(f))
         
         pl.plot(e,f,lw=2)
