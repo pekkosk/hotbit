@@ -177,6 +177,7 @@ class Interactions:
         for i,si in enumerate(self.calc.el.symbols):
             for j,sj in enumerate(self.calc.el.symbols):
                 self.hscut[i,j]=self.cut[si+sj]
+        self.calc.el.set_cutoffs(self.cut)
                                 
 
     def plot_table(self,e1,e2,der=0):
@@ -234,6 +235,7 @@ class Interactions:
 
     def construct_matrices(self):
         """ Hamiltonian and overlap matrices. """
+        timing = False 
         el = self.calc.el
         states = self.calc.st
         start = self.calc.start_timing
@@ -254,45 +256,49 @@ class Interactions:
         
         orbitals=[[orb['orbital'] for orb in el.orbitals(i)] for i in range(len(el))]
         orbindex=[el.orbitals(i,indices=True) for i in range(len(el))]
+        h, s, dh, ds = zeros((14,)), zeros((14,)), zeros((14,3)), zeros((14,3))
+        
+        phases=[]
+        for n in range(len(el.ntuples)):
+            nt = el.ntuples[n]  
+            phases.append( nu.array([nu.exp(1j*nu.dot(nt,k)) for k in states.k]) )
 
-        el.set_cutoffs(self.cut)
-        nonzero=0
         lst = el.get_property_lists(['i','s','no','o1'])
-        Rn = self.calc.el.Rn
+        Rijn = self.calc.el.rijn
+        dijn = self.calc.el.dijn
         for i,si,noi,o1i in lst:
+            a, b = o1i, o1i+noi
             # on-site energies only for n==0
             for orb in el.orbitals(i):
                 ind=orb['index']
-                for ik,k in enumerate(states.k):
+                for ik in range(states.nk):
                     # phase is always one here 
                     self.H0[ik,ind,ind] += orb['energy']
                     self.S[ik,ind,ind]  += 1.0
-                nonzero+=1
             for j,sj,noj,o1j in lst[i:]:
-            #for j,sj,noj,o1j in lst:
-                Rijn = Rn[:,j,:] - Rn[0,i,:]
-                a, b, c, d = o1i, o1i+noi, o1j, o1j+noj
-                ij_interact = False
+                c, d = o1j, o1j+noj
                 htable = self.h[si+sj]
                 stable = self.s[si+sj]
                 ij_interact = False
                 r1, r2= htable.get_range()
                                     
-                for n, rij in enumerate(Rijn):
+                for n, (rij,dij) in enumerate(zip(Rijn[:,i,j],dijn[:,i,j])):
                     if i==j and n==0: continue
                     # go through all symmetry operations
                     nt = el.ntuples[n]
-                    h, s, dh, ds = zeros((14,)), zeros((14,)), zeros((14,3)), zeros((14,3))
+                    h.fill(0)
+                    s.fill(0)
+                    dh.fill(0)
+                    ds.fill(0)
 
-                    dij   = norm(rij)
                     rijh  = rij/dij
-                    #print i,j,el.ntuples[n],rij
                     assert dij>0.1
                     if not r1<=dij<=r2: continue
                     ij_interact = True
                     
                     # interpolate Slater-Koster tables and derivatives
-                    start('splint+SlaKo+DH')
+                    
+                    if timing: start('splint+SlaKo+DH')
                     hij, dhij = htable(dij)
                     sij, dsij = stable(dij)
                     
@@ -311,52 +317,42 @@ class Interactions:
                     st = dot( st,DT[0:noj,0:noj] )
                     dht = dot( dht.transpose((2,0,1)),DT[0:noj,0:noj] ).transpose((1,2,0))
                     dst = dot( dst.transpose((2,0,1)),DT[0:noj,0:noj] ).transpose((1,2,0))
-                    stop('splint+SlaKo+DH')
-
-                    start('k-points')
-                    phase = nu.array( [nu.exp(1j*nu.dot(nt,k)) for k in states.k] )
+                    if timing: stop('splint+SlaKo+DH')
                     
-                    hblock  = outer( phase,ht.flatten() )
-                    sblock  = outer( phase,st.flatten() )
-                    dhblock = outer( phase,-dht.flatten() )
-                    dsblock = outer( phase,-dst.flatten() )
-                    hblock.shape  = (states.nk,noi,noj)
-                    sblock.shape  = (states.nk,noi,noj)
-                    dhblock.shape = (states.nk,noi,noj,3)
-                    dsblock.shape = (states.nk,noi,noj,3)
+                    if timing: start('k-points')
+                    phase = phases[n] 
+                    hblock  = outer(phase,ht.flatten()).reshape(states.nk,noi,noj)
+                    sblock  = outer(phase,st.flatten()).reshape(states.nk,noi,noj)
+                    dhblock = outer(phase,-dht.flatten()).reshape(states.nk,noi,noj,3)
+                    dsblock = outer(phase,-dst.flatten()).reshape(states.nk,noi,noj,3)
                     
-                    self.H0[  :,a:b,c:d]   = self.H0[  :,a:b,c:d] + hblock
-                    self.S[   :,a:b,c:d]   = self.S[   :,a:b,c:d] + sblock
-                    self.dH0[ :,a:b,c:d,:] = self.dH0[ :,a:b,c:d,:] + dhblock
-                    self.dS[  :,a:b,c:d,:] = self.dS[  :,a:b,c:d,:] + dsblock                      
-                    stop('k-points')
-                    
-                    if self.first:
-                        nonzero+=sum( abs(ht.flatten())>1E-20 )*2
-                        
+                    self.H0[  :,a:b,c:d]   += hblock 
+                    self.S[   :,a:b,c:d]   += sblock
+                    self.dH0[ :,a:b,c:d,:] += dhblock
+                    self.dS[  :,a:b,c:d,:] += dsblock
+                    if timing: stop('k-points')
+                     
                     if i!=j and ij_interact:
                         # construct the other derivatives wrt. atom j.
                         T = self.calc.el.Tn[n,j]
                         dht2 = dot( dht,T )
                         dst2 = dot( dst,T ) 
-                        dh2block = outer( phase,dht2.flatten() )
-                        ds2block = outer( phase,dst2.flatten() )
-                        dh2block.shape = (states.nk,noi,noj,3)
-                        ds2block.shape = (states.nk,noi,noj,3)
-                                           
-                        self.dH0[:,c:d,a:b,:] = self.dH0[:,c:d,a:b,:] + dh2block.transpose((0,2,1,3)).conjugate()
-                        self.dS[ :,c:d,a:b,:] = self.dS[ :,c:d,a:b,:] + ds2block.transpose((0,2,1,3)).conjugate()
+                        dh2block = outer(phase,dht2.flatten()).reshape(states.nk,noi,noj,3)
+                        ds2block = outer(phase,dst2.flatten()).reshape(states.nk,noi,noj,3)                        
+                        self.dH0[:,c:d,a:b,:] += dh2block.transpose((0,2,1,3)).conjugate()
+                        self.dS[ :,c:d,a:b,:] += ds2block.transpose((0,2,1,3)).conjugate()
                         
                 if i!=j and ij_interact:
-                    start('symm')
+                    if timing: start('symm')
                     # Hermitian (and anti-Hermitian) conjugates; only if matrix block non-zero        
                     # ( H(k) and S(k) can be (anti)symmetrized as a whole )
                     self.H0[ :,c:d,a:b]   =  self.H0[ :,a:b,c:d].transpose((0,2,1)).conjugate()
-                    self.S[  :,c:d,a:b]   =  self.S[  :,a:b,c:d].transpose((0,2,1)).conjugate()
-                    stop('symm')
+                    self.S[  :,c:d,a:b]   =  self.S[  :,a:b,c:d].transpose((0,2,1)).conjugate()                    
+                    if timing: stop('symm')
                         
         if self.first:
-            self.calc.out('Hamiltonian matrix is %.3f %% filled on first calculation.' %(nonzero*100.0/norb**2) )
+            nonzero = sum( abs(self.S[0].flatten())>1E-15 )
+            self.calc.out('Hamiltonian ~%.3f %% filled.' %(nonzero*100.0/norb**2) )
             self.first=False
 
         stop('matrix construction')

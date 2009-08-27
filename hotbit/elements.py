@@ -162,7 +162,7 @@ class Elements:
                 
         cut2 = self.calc.ia.hscut**2
         self.ntuples = [(0,0,0)]
-        # calculate the distances from unit cell 0 to ALL other possible; select meaningful
+        # calculate the distances from unit cell 0 to ALL other possible; select chemically interacting
         for n1 in self.ranges[0]:
             for n2 in self.ranges[1]:
                 for n3 in self.ranges[2]:
