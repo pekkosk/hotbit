@@ -243,25 +243,27 @@ class Interactions:
         start('matrix construction')
         orbs=el.orbitals()
         norb=len(orbs)   
-        try:
-            self.H0.fill(0)
-            self.S.fill(0)
-            self.dH0.fill(0)
-            self.dS.fill(0)
-        except:
-            self.H0  = nu.zeros((states.nk,norb,norb),complex)
-            self.S   = nu.zeros((states.nk,norb,norb),complex)
-            self.dH0 = nu.zeros((states.nk,norb,norb,3),complex)
-            self.dS  = nu.zeros((states.nk,norb,norb,3),complex)
+        #try:
+        #    self.H0.fill(0)
+        #    self.S.fill(0)
+        #    self.dH0.fill(0)
+        #    self.dS.fill(0)
+        #except:
+        H0  = nu.zeros((states.nk,norb,norb),complex)
+        S   = nu.zeros((states.nk,norb,norb),complex)
+        dH0 = nu.zeros((states.nk,norb,norb,3),complex)
+        dS  = nu.zeros((states.nk,norb,norb,3),complex)
         
         orbitals=[[orb['orbital'] for orb in el.orbitals(i)] for i in range(len(el))]
         orbindex=[el.orbitals(i,indices=True) for i in range(len(el))]
         h, s, dh, ds = zeros((14,)), zeros((14,)), zeros((14,3)), zeros((14,3))
         
-        phases=[]
+        phases = []
+        DTn = []
         for n in range(len(el.ntuples)):
             nt = el.ntuples[n]  
             phases.append( nu.array([nu.exp(1j*nu.dot(nt,k)) for k in states.k]) )
+            DTn.append( self.rotation_transformation(nt) )
 
         lst = el.get_property_lists(['i','s','no','o1'])
         Rijn = self.calc.el.rijn
@@ -271,10 +273,8 @@ class Interactions:
             # on-site energies only for n==0
             for orb in el.orbitals(i):
                 ind=orb['index']
-                for ik in range(states.nk):
-                    # phase is always one here 
-                    self.H0[ik,ind,ind] += orb['energy']
-                    self.S[ik,ind,ind]  += 1.0
+                H0[:,ind,ind] = orb['energy']
+                S[:,ind,ind]  = 1.0
             for j,sj,noj,o1j in lst[i:]:
                 c, d = o1j, o1j+noj
                 htable = self.h[si+sj]
@@ -283,8 +283,8 @@ class Interactions:
                 r1, r2= htable.get_range()
                                     
                 for n, (rij,dij) in enumerate(zip(Rijn[:,i,j],dijn[:,i,j])):
-                    if i==j and n==0: continue
-                    # go through all symmetry operations
+                    if i==j and n==0: 
+                        continue
                     nt = el.ntuples[n]
                     h.fill(0)
                     s.fill(0)
@@ -293,11 +293,11 @@ class Interactions:
 
                     rijh  = rij/dij
                     assert dij>0.1
-                    if not r1<=dij<=r2: continue
+                    if not r1<=dij<=r2: 
+                        continue
                     ij_interact = True
                     
                     # interpolate Slater-Koster tables and derivatives
-                    
                     if timing: start('splint+SlaKo+DH')
                     hij, dhij = htable(dij)
                     sij, dsij = stable(dij)
@@ -310,9 +310,8 @@ class Interactions:
                     obsi, obsj=orbindex[i], orbindex[j]
                     ht, st, dht, dst = fast_slako_transformations(rijh,dij,noi,noj,h,s,dh,ds)
                     
-                    # Here we do the MEL transformation
-                    DT = self.rotation_transformation(nt)
-                    # H'_ij = sum_k H_ik * D_kj^T
+                    # Here we do the MEL transformation; H'_ij = sum_k H_ik * D_kj^T
+                    DT = DTn[n]
                     ht = dot( ht,DT[0:noj,0:noj] )
                     st = dot( st,DT[0:noj,0:noj] )
                     dht = dot( dht.transpose((2,0,1)),DT[0:noj,0:noj] ).transpose((1,2,0))
@@ -326,10 +325,10 @@ class Interactions:
                     dhblock = outer(phase,-dht.flatten()).reshape(states.nk,noi,noj,3)
                     dsblock = outer(phase,-dst.flatten()).reshape(states.nk,noi,noj,3)
                     
-                    self.H0[  :,a:b,c:d]   += hblock 
-                    self.S[   :,a:b,c:d]   += sblock
-                    self.dH0[ :,a:b,c:d,:] += dhblock
-                    self.dS[  :,a:b,c:d,:] += dsblock
+                    H0[ :,a:b,c:d]   += hblock 
+                    S[  :,a:b,c:d]   += sblock
+                    dH0[:,a:b,c:d,:] += dhblock
+                    dS[ :,a:b,c:d,:] += dsblock
                     if timing: stop('k-points')
                      
                     if i!=j and ij_interact:
@@ -339,21 +338,24 @@ class Interactions:
                         dst2 = dot( dst,T ) 
                         dh2block = outer(phase,dht2.flatten()).reshape(states.nk,noi,noj,3)
                         ds2block = outer(phase,dst2.flatten()).reshape(states.nk,noi,noj,3)                        
-                        self.dH0[:,c:d,a:b,:] += dh2block.transpose((0,2,1,3)).conjugate()
-                        self.dS[ :,c:d,a:b,:] += ds2block.transpose((0,2,1,3)).conjugate()
+                        dH0[:,c:d,a:b,:] += dh2block.transpose((0,2,1,3)).conjugate()
+                        dS[ :,c:d,a:b,:] += ds2block.transpose((0,2,1,3)).conjugate()
                         
                 if i!=j and ij_interact:
                     if timing: start('symm')
                     # Hermitian (and anti-Hermitian) conjugates; only if matrix block non-zero        
                     # ( H(k) and S(k) can be (anti)symmetrized as a whole )
-                    self.H0[ :,c:d,a:b]   =  self.H0[ :,a:b,c:d].transpose((0,2,1)).conjugate()
-                    self.S[  :,c:d,a:b]   =  self.S[  :,a:b,c:d].transpose((0,2,1)).conjugate()                    
-                    if timing: stop('symm')
+                    # TODO: symmetrization should be done afterwards
+                    H0[ :,c:d,a:b]   =  H0[ :,a:b,c:d].transpose((0,2,1)).conjugate()
+                    S[  :,c:d,a:b]   =  S[  :,a:b,c:d].transpose((0,2,1)).conjugate()                    
+                    if timing: stop('symm') 
+                        
+        self.H0, self.S, self.dH0, self.dS = H0, S, dH0, dS       
                         
         if self.first:
-            nonzero = sum( abs(self.S[0].flatten())>1E-15 )
+            nonzero = sum( abs(S[0].flatten())>1E-15 )
             self.calc.out('Hamiltonian ~%.3f %% filled.' %(nonzero*100.0/norb**2) )
-            self.first=False
+            self.first=False            
 
         stop('matrix construction')
 

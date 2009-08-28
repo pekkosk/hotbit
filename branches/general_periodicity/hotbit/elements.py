@@ -437,23 +437,7 @@ class Elements:
     def get_nr_orbitals(self):
         """ Total number of orbitals. """
         return self.norb
-
-    def get_ia_atom_pairs(self,get):
-        # TODO: get rid of this!
-        """
-        List interacting atom pairs with desired properties:
-
-        get : list of strings to get.
-            Options: 'i','j','si','sj','r','rhat','dist','ri','rj','o1i','o1j','noi','noj','oi','oj'
-            ( 'i'=atom index, 'si'=symbol, 'r'=vector i-->j, 'rhat'=unit vector, 'dist'=distance
-            'ri'=position of i, 'o1i'=index of first orbital, 'noi'=number of orbitals,
-            'oi'=orbital indices for i, and some anagolously for j.)
-        """
-        lst=[]
-        for item in get:
-            lst.append(self.ia_pairs[item])
-        return zip(*lst)
-    
+   
     
     def get_property_lists(self,lst=['i']):
         '''
