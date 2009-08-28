@@ -358,11 +358,12 @@ class Calculator(Output):
         return self.f.copy()
     
     
-    def get_DOS(self,width=0.1,window=None,npts=201,broaden=False):
+    def get_DOS(self,broaden=False,width=0.1,window=None,npts=201):
         '''
         Return the full density of states, including k-points.
         Zero is the Fermi-level; spin-degeneracy is not counted.
         
+        @param broaden: broaden states in the first place?
         @param width:  Gaussian broadening, in eV
         @param window: energy window 2-tuple, in eV
         @param npts:   number of data points in output
@@ -396,6 +397,7 @@ class Calculator(Output):
         
         @param kpts: list of k-points; e.g. kpts=[(0,0,0),(pi/2,0,0),(pi,0,0)]
         '''
+        raise NotImplementerError
         
 
     def get_stress(self,atoms):

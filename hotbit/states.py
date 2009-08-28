@@ -62,7 +62,7 @@ class States:
                     spacing = 2*pi/kpts[i]
                     kl.append( nu.linspace(-pi+spacing/2,pi-spacing/2,kpts[i]) )
                 else:
-                    # discrete, well-defined sampling 
+                    # discrete, well-defined sampling; any k-point is not allowed 
                     if kpts[i] not in mix.divisors(M[i]) and physical:
                         print 'Allowed k-points for direction',i,'are',mix.divisors(M[i])
                         raise Warning('Non-physical k-point sampling! ')
@@ -70,14 +70,25 @@ class States:
                         kl.append( nu.linspace(0,2*pi-2*pi/kpts[i],kpts[i]) )
                 
             k=[]    
+            wk=[]
+            nk0 = nu.prod(kpts)
             for a in range(kpts[0]):
                 for b in range(kpts[1]):
                     for c in range(kpts[2]):
-                        k.append( nu.array([kl[0][a],kl[1][b],kl[2][c]]) )
+                        newk = nu.array([kl[0][a],kl[1][b],kl[2][c]])
+                        inv_exists = False
+                        # if newk's inverse exists, increase its weight by default
+                        for ik, oldk in enumerate(k):
+                            if nu.linalg.norm(oldk+newk)<1E-10: 
+                                inv_exists = True
+                                wk[ik]+=1.0/nk0
+                        # newk's inverse does not exist; make new k-point
+                        if not inv_exists:
+                            k.append( newk )
+                            wk.append( 1.0/nk0 ) 
+            nk=len(k)            
             k=nu.array(k)
-            nk=nu.prod(kpts)
-            wk=nu.ones(nk)/nk
-            
+            wk=nu.array(wk)
         else:
             # work with a given set of k-points
             nk=len(kpts)
@@ -235,7 +246,6 @@ class States:
         ebs = sum_k w_k ( sum_ij rho_ij * H0_ji )
             = sum_k w_k ( sum_i [sum_j rho_ij * H0^T_ij] )
         '''
-        # TODO: use rho0-version (maybe)
         self.calc.start_timing('e_bs')
         ebs = 0.0
         for ik in xrange(self.nk):

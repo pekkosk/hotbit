@@ -27,8 +27,8 @@ assert abs(e1-e2)<1E-6
 
 
 # check the energy conservation for the chiral situation
-chiral.rattle(0.1)
-calc = Hotbit(SCC=False,txt='chiral.cal',kpts=(1,1,1))
-chiral.set_calculator(calc)
-conv = check_energy_conservation(chiral,dt=0.5*fs,steps=50,tol=0.01,plot=False)
-assert conv
+#chiral.rattle(0.1)
+#calc = Hotbit(SCC=False,txt='chiral.cal',kpts=(1,1,1))
+#chiral.set_calculator(calc)
+#conv = check_energy_conservation(chiral,dt=0.5*fs,steps=50,tol=0.01,plot=False)
+#assert conv
