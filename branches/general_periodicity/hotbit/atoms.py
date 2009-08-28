@@ -38,7 +38,7 @@ class Atoms(ase_Atoms):
              constraint=constraint,
              calculator=calculator)
         
-        if atoms!=None:
+        if type(atoms)!=type(None):
             self += atoms
             self.set_pbc( atoms.get_pbc() )
             self.set_cell( atoms.get_cell() )
