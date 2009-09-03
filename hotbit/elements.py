@@ -158,11 +158,12 @@ class Elements:
         self._update_atoms(atoms) 
         # select the symmetry operations n where atoms still interact chemically
         self.Rn = [[self.nvector(r=i,ntuple=(0,0,0)) for i in xrange(self.N)]]
-        self.Tn = [[self.nvector(r=i,ntuple=(0,0,0),lst='tensor') for i in xrange(self.N)]]
+        self.Rot = [ self.rotation((0,0,0)) ]
                 
         cut2 = self.calc.ia.hscut**2
         self.ntuples = [(0,0,0)]
         # calculate the distances from unit cell 0 to ALL other possible; select chemically interacting
+        self.calc.start_timing('operations')
         for n1 in self.ranges[0]:
             for n2 in self.ranges[1]:
                 for n3 in self.ranges[2]:
@@ -179,22 +180,24 @@ class Elements:
                                 add = True
                                 break
                     if add:
-                        T = [self.nvector(r=i,ntuple=n,lst='tensor') for i in range(self.N)]
                         self.ntuples.append(n)
                         self.Rn.append(R)
-                        self.Tn.append(T)
+                        self.Rot.append( self.rotation(n) )
             
         self.Rn = nu.array(self.Rn)
-        self.Tn = nu.array(self.Tn)
+        self.Rot = nu.array(self.Rot)
+        self.calc.stop_timing('operations')
         
+        self.calc.start_timing('displacements')
         rijn = nu.zeros((len(self.ntuples),self.N,self.N,3))            
         dijn = nu.zeros((len(self.ntuples),self.N,self.N)) 
         for i in range(self.N):
             for j in range(self.N):
                 rijn[:,i,j,:] = self.Rn[:,j,:] - self.Rn[0,i,:]
-                dijn[:,i,j]   = nu.sqrt( rijn[:,i,j,0]**2+rijn[:,i,j,1]**2+rijn[:,i,j,2]**2 )
+                dijn[:,i,j]   = nu.sqrt( (rijn[:,i,j,:]**2).sum(axis=1) )
         self.rijn = rijn
         self.dijn = dijn
+        self.calc.stop_timing('displacements')
                         
         
 #===============================================================================
@@ -231,6 +234,15 @@ class Elements:
         @param n: 3-tuple for transformation 
         '''
         return self.atoms.rotation_of_axes(n)
+    
+    
+    def rotation(self,n):
+        '''
+        Return the quantization axis rotation matrix for given symmetry operation.
+         
+        @param n: 3-tuple for transformation 
+        '''
+        return self.atoms.rotation(n)
         
     
     def nvector(self,r,ntuple=(0,0,0),r0=[0,0,0],lst='vec'):
@@ -241,7 +253,6 @@ class Elements:
         @param ntuple:   operate on r with S(n)
         @param r0:  if integer, use atom r0's position as r0
         @param l:   list of properties to return, 'vec'=vector, 'hat'=unit vector, 'norm'=norm
-                    'tensor' = return the dyadic tensor (derivative) T(r,n)_ab = d rn_a/d r_b
         '''
         if not isinstance(lst,(list,tuple)):
             lst=[lst]
@@ -260,8 +271,6 @@ class Elements:
                 ret.append( vec/norm )
             elif l=='norm': 
                 ret.append( nu.linalg.norm(vec) )
-            elif l=='tensor': 
-                ret.append( self.atoms.tensor(r,ntuple) )
             else:
                 raise AssertionError('Keyword %s not defined' %l)
         

@@ -213,7 +213,7 @@ class Interactions:
         
         @param n: 3-tuple of symmetry transformation
         '''
-        R = self.calc.el.rotation_of_axes(n)
+        R = self.calc.el.rotation(n)
         assert abs(R[2,2]-1)<1E-13 #rotation only about z-axis
         if abs(R[0,0]-1)<1E-13: #no rotation in xy-plane
             return nu.eye(9)
@@ -230,7 +230,7 @@ class Interactions:
         D[7,4] = -s2a
                 
         #D[1:4,1:4] = R
-        return D #.transpose()
+        return D.transpose()
 
 
     def construct_matrices(self):
@@ -260,10 +260,12 @@ class Interactions:
         
         phases = []
         DTn = []
+        Rot = []
         for n in range(len(el.ntuples)):
             nt = el.ntuples[n]  
             phases.append( nu.array([nu.exp(1j*nu.dot(nt,k)) for k in states.k]) )
             DTn.append( self.rotation_transformation(nt) )
+            Rot.append( self.calc.el.rotation(nt) )
 
         lst = el.get_property_lists(['i','s','no','o1'])
         Rijn = self.calc.el.rijn
@@ -333,9 +335,9 @@ class Interactions:
                      
                     if i!=j and ij_interact:
                         # construct the other derivatives wrt. atom j.
-                        T = self.calc.el.Tn[n,j]
-                        dht2 = dot( dht,T )
-                        dst2 = dot( dst,T ) 
+                        Rot = self.calc.el.Rot[n]
+                        dht2 = dot( dht,Rot )
+                        dst2 = dot( dst,Rot ) 
                         dh2block = outer(phase,dht2.flatten()).reshape(states.nk,noi,noj,3)
                         ds2block = outer(phase,dst2.flatten()).reshape(states.nk,noi,noj,3)                        
                         dH0[:,c:d,a:b,:] += dh2block.transpose((0,2,1,3)).conjugate()

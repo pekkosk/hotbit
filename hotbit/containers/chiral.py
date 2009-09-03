@@ -65,7 +65,7 @@ class Chiral:
                     rad = nu.sqrt( x**2+y**2 )
                     frac = r[2]/old_height
                     # twist atoms z/h * da (more)
-                    newphi = mix.phival(x,y) + frac * da
+                    newphi = phival(x,y) + frac * da
                     newr.append( [rad*nu.cos(newphi),rad*nu.sin(newphi),frac*self.height] )
                 self.atoms.set_positions(newr)     
         
@@ -94,34 +94,13 @@ class Chiral:
         return nu.array( [[0,0],[0,0],[-nu.Inf,nu.Inf]] )
     
     def transform(self,r,n):
-        """ Symmetry transformation n for position r. """
-        rn=nu.zeros_like(r)
-        x, y = r[0], r[1]
-        rad = nu.sqrt(x**2+y**2)
-        phi = phival(x,y)
-        rn[0] = rad * cos( phi+n[2]*self.angle )
-        rn[1] = rad * sin( phi+n[2]*self.angle )
-        rn[2] = r[2] + n[2]*self.height
-        return rn
-
-    def tensor(self,r,n):
-        """ Dyadic tensor at r for symmetry operation n."""
-        rn = self.transform(r,n)
-        rad = nu.sqrt(r[0]**2+r[1]**2)
-        #assert rad>1E-10
-        if rad>1E-10:
-            T = nu.array([[r[0]*rn[0]+r[1]*rn[1],-(r[0]*rn[1]-r[1]*rn[0]),0],\
-                          [r[0]*rn[1]-r[1]*rn[0],  r[0]*rn[0]+r[1]*rn[1] ,0],\
-                          [       0,                      0,         rad**2]])/rad**2
-        else:
-            # atom on z-axis
-            T = nu.zeros((3,3))
-            T[2,2] = 1
-        return T   
+        """ Rotate r by n2*angle + translate (in z) by n2*height."""
+        R = self.rotation(n)
+        return nu.dot(R,r) + (0,0,n[2]*self.height)
     
-    def rotation_of_axes(self,n):
-        """ Rotation of axes for symmetry operation n."""
+    def rotation(self,n):
+        """ Return the (active) rotation matrix for symmetry operation n. """
         angle = n[2]*self.angle
-        R = nu.array([[cos(angle),sin(angle),0],[-sin(angle),cos(angle),0],[0,0,1]])
-        return R  
+        R = nu.array([[cos(angle),-sin(angle),0],[sin(angle),cos(angle),0],[0,0,1]])
+        return R 
     

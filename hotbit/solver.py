@@ -76,14 +76,18 @@ class Solver:
 
     def diagonalize(self,H,S,nk):
         """ Solve the eigenstates. """
-        self.calc.start_timing('eigensolver')
+        
         if True:
             # via Fortran wrapper
             if nk==1:
+                self.calc.start_timing('eigensolver (real)')
                 e, wf = geig(H,S,self.norb)
                 wf = wf*(1.0+0.0j)
+                self.calc.stop_timing('eigensolver (real)')
             else:
+                self.calc.start_timing('eigensolver (cplx)')
                 e, wf = geigc(H,S,self.norb)
+                self.calc.stop_timing('eigensolver (cplx)')
         if False:
             raise NotImplementedError('Not checked for complex stuff')
             # using numpy lapack_lite
@@ -95,7 +99,7 @@ class Solver:
                 wf[i,:]=wf[i,order]
             for i in range(self.norb): #normalize properly
                 wf[:,i]=wf[:,i]/nu.sqrt( nu.dot(wf[:,i],nu.dot(self.S0,wf[:,i])) )
-        self.calc.stop_timing('eigensolver')
+        
         return e,wf
 
 

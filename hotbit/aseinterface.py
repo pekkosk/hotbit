@@ -358,7 +358,7 @@ class Calculator(Output):
         return self.f.copy()
     
     
-    def get_DOS(self,broaden=False,width=0.1,window=None,npts=201):
+    def get_DOS(self,broaden=False,width=0.1,window=None,npts=501):
         '''
         Return the full density of states, including k-points.
         Zero is the Fermi-level; spin-degeneracy is not counted.

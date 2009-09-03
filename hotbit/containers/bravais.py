@@ -66,13 +66,9 @@ class Bravais:
         for a in range(3):
             rn = rn + n[a]*cell[a,:]
         return rn
-        
-    def tensor(self,r,n):
-        """ Dyadic tensor at r for symmetry operation n."""
-        return nu.eye(3)
-            
-    def rotation_of_axes(self,n):
-        """ Rotation of axes for symmetry operation n."""
+    
+    def rotation(self,n):
+        """ No rotation in translations. """
         return nu.eye(3)
     
     
