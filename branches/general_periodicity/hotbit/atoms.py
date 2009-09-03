@@ -58,8 +58,7 @@ class Atoms(ase_Atoms):
                     
         # these are just for shorter references
         self._transform = self.container.transform
-        self._tensor = self.container.tensor
-        self._rotation_of_axes = self.container.rotation_of_axes
+        self._rotation = self.container.rotation
                 
         
     def set_container(self,**cont):
@@ -117,6 +116,7 @@ class Atoms(ase_Atoms):
         @param r: position vector
         @param n: symmetry operation 3-tuple
         '''
+        assert False
         self._check_symmetry_operation(n)
         return self._tensor(r,n)
     
@@ -127,8 +127,13 @@ class Atoms(ase_Atoms):
         
         @param n: 3-tuple for symmetry operation
         '''
+        assert False
         self._check_symmetry_operation(n)
         return self._rotation_of_axes(n)
+    
+    def rotation(self,n):
+        self._check_symmetry_operation(n)
+        return self._rotation(n)
                 
                 
     def extended_copy(self,n):

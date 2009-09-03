@@ -11,7 +11,7 @@
 '''
 import numpy as nu
 import time
-from math import atan,pi
+from math import atan,pi,cos,sin,sqrt
 
 def divisors(x):
     '''
@@ -24,6 +24,17 @@ def divisors(x):
     for i in range(x/2,0,-1):
         if nu.mod(x,i)==0: lst.append(i)        
     return lst
+
+
+def rotation_matrix(axis,angle):
+    """ Return the active rotation matrix with given axis and rotation angle. """
+    n1, n2, n3 = axis/nu.linalg.norm(axis)
+    c, s = cos(angle), sin(angle)
+    cc = 1-c
+    R = [[n1**2*cc + c,    n1*n2*cc - n3*s, n1*n3*cc + n2*s],
+         [n1*n2*cc + n3*s, n2**2*cc + c,    n2*n3*cc - n1*s],
+         [n1*n3*cc - n2*s, n2*n3*cc + n1*s, n3**2*cc + c   ]]
+    return nu.array(R)
     
 
 def phival(x,y):

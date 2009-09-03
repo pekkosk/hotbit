@@ -67,7 +67,7 @@ sin=nu.sin
 #def make_sc():
     #not_implemented()
     
-def graphene(n1,n2,R):
+def graphene(n1,n2,R,height=5.0):
     """
     Construct graphene lattice, multiply the primitive cell
     n1 x n2 times in corresponding directions.
@@ -81,7 +81,7 @@ def graphene(n1,n2,R):
     """
     a1=vec([R*nu.cos(pi/6)*2,0.,0.])
     a2=0.5*a1 + vec([0.,1.5*R,0.])
-    assert n2%2==0
+    #assert n2%2==0
         
     r=[]
     for i1 in range(n1):
@@ -90,9 +90,9 @@ def graphene(n1,n2,R):
             r.append(corner)
             r.append(corner+a1+vec([0.0,R,0.0]))
                 
-    cell=( n1*a1[0], n2*a2[1], 0 )                
+    cell=[[n1*a1[0], 0, 0],[n2*a2[0],n2*a2[1],0],[0,0,10]]                
     atoms=Atoms('C'*len(r),positions=r,cell=cell)
-    atoms.center(vacuum=5,axis=2)
+    atoms.center(vacuum=height/2,axis=2)
     atoms.set_pbc((True,True,False))
     return atoms
                          
