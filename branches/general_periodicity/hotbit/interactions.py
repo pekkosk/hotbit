@@ -214,22 +214,32 @@ class Interactions:
         @param n: 3-tuple of symmetry transformation
         '''
         R = self.calc.el.rotation(n)
-        assert abs(R[2,2]-1)<1E-13 #rotation only about z-axis
-        if abs(R[0,0]-1)<1E-13: #no rotation in xy-plane
+        
+        if any(nu.array(self.calc.el.get_property_lists(['no']))>4) and abs(R[2,2]-1)>1E-12:
+            raise NotImplementedError('Non-z-axis rotation not implemented for d-orbitals')
+        
+        if all(abs(R.diagonal()-1)<1E-12): #no rotation 
             return nu.eye(9)
-                
-        ca, sa = R[0,0:2]
+        
+        ca, sa = R[0,0], -R[0,1] 
         c2a, s2a = 2*ca**2-1, 2*sa*ca
         
         D = nu.diag((1.0,ca,ca,1.0,c2a,ca,ca,c2a,1.0))
-        D[1,2] = -sa
-        D[2,1] = sa
-        D[5,6] = sa
-        D[6,5] = -sa
-        D[4,7] = s2a
-        D[7,4] = -s2a
-                
-        #D[1:4,1:4] = R
+        #D[1,2] = -sa
+        #D[2,1] = sa
+        #D[5,6] = sa
+        #D[6,5] = -sa
+        #D[4,7] = s2a
+        #D[7,4] = -s2a
+        
+        D[1,2] = sa
+        D[2,1] = -sa
+        D[5,6] = -sa
+        D[6,5] = sa
+        D[4,7] = -s2a
+        D[7,4] = s2a
+        
+        D[1:4,1:4] = R[:,:].transpose()
         return D.transpose()
 
 
