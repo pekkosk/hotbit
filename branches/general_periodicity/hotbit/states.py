@@ -2,21 +2,15 @@
 # Please see the accompanying LICENSE file for further information.
 
 from solver import Solver
+from weakref import proxy
 from electrostatics import Electrostatics
 from occupations import Occupations
-#from hotbit.fortran.misc import fortran_rho
-#from hotbit.fortran.misc import fortran_rho0
-#from hotbit.fortran.misc import fortran_rhoe0
 from hotbit.fortran.misc import fortran_rhoc
 from hotbit.fortran.misc import fortran_rhoec
-from hotbit.fortran.misc import symmetric_matmul
-#from hotbit.fortran.misc import matmul_diagonal
-#from hotbit.fortran.misc import fortran_fbs
-from hotbit.fortran.misc import fortran_fbsc
 import numpy as nu
 from box import mix
 pi=nu.pi
-from weakref import proxy
+
 
 class States:
 
