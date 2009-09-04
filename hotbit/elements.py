@@ -10,10 +10,6 @@ from os import environ
 from weakref import proxy
 from copy import copy, deepcopy
 
-#from atoms import BravaisAtoms
-#from atoms import WedgeAtoms
-
-
 
 
 class Elements:
