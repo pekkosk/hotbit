@@ -112,7 +112,7 @@ class Wedge:
             
     def __eq__(self,other):
         if isinstance(other,Wedge) and abs(self.height-other.height)<1E-12 \
-           and abs(self.angle-other.angle)<1E-12 and all(self.atoms.get_pbc()==other.atoms.get_pbc())\
+           and abs(self.angle-other.angle)<1E-12 and nu.all(self.atoms.get_pbc()==other.atoms.get_pbc())\
            and self.physical==other.physical:
             return True
         else:

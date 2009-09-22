@@ -68,7 +68,7 @@ class Electrostatics:
         h1 = 0.5 * ( aux+aux.transpose() )
                 
         # external electrostatics
-        if any(abs(self.ext)>1E-12):
+        if nu.any(abs(self.ext)>1E-12):
             aux = nu.zeros((self.norb,self.norb))
             for i,o1i,noi in lst:
                 aux[o1i:o1i+noi,:] = self.ext[i]

@@ -215,10 +215,10 @@ class Interactions:
         '''
         R = self.calc.el.rotation(n)
         
-        if any(nu.array(self.calc.el.get_property_lists(['no']))>4) and abs(R[2,2]-1)>1E-12:
+        if nu.any(nu.array(self.calc.el.get_property_lists(['no']))>4) and abs(R[2,2]-1)>1E-12:
             raise NotImplementedError('Non-z-axis rotation not implemented for d-orbitals')
         
-        if all(abs(R.diagonal()-1)<1E-12): #no rotation 
+        if nu.all(abs(R.diagonal()-1)<1E-12): #no rotation 
             return nu.eye(9)
         
         ca, sa = R[0,0], -R[0,1] 
