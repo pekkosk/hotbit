@@ -13,19 +13,20 @@
 !
 subroutine fast_slako_transformations(rhat,dist,noi,noj,h,s,dh,ds,ht,st,dht,dst)
 implicit none
-real(8), intent(in) :: rhat(0:2),dist
+integer, parameter :: dp = SELECTED_REAL_KIND(12)
+real(dp), intent(in) :: rhat(0:2),dist
 integer, intent(in) :: noi,noj
-real(8), intent(in) :: h(0:13)
-real(8), intent(in) :: s(0:13)
-real(8), intent(in) :: dh(0:13,0:2)
-real(8), intent(in) :: ds(0:13,0:2)
-real(8), intent(out) :: ht(0:noi-1,0:noj-1)
-real(8), intent(out) :: st(0:noi-1,0:noj-1)
-real(8), intent(out) :: dht(0:noi-1,0:noj-1,0:2)
-real(8), intent(out) :: dst(0:noi-1,0:noj-1,0:2)
+real(dp), intent(in) :: h(0:13)
+real(dp), intent(in) :: s(0:13)
+real(dp), intent(in) :: dh(0:13,0:2)
+real(dp), intent(in) :: ds(0:13,0:2)
+real(dp), intent(out) :: ht(0:noi-1,0:noj-1)
+real(dp), intent(out) :: st(0:noi-1,0:noj-1)
+real(dp), intent(out) :: dht(0:noi-1,0:noj-1,0:2)
+real(dp), intent(out) :: dst(0:noi-1,0:noj-1,0:2)
 
-real(8) :: l,m,n,ll,mm,nn,dl(0:2),dm(0:2),dn(0:2),dll(0:2),dmm(0:2),dnn(0:2),s3
-real(8) :: mat(0:8,0:8,0:13), der(0:8,0:8,0:13,0:2)
+real(dp) :: l,m,n,ll,mm,nn,dl(0:2),dm(0:2),dn(0:2),dll(0:2),dmm(0:2),dnn(0:2),s3
+real(dp) :: mat(0:8,0:8,0:13), der(0:8,0:8,0:13,0:2)
 integer :: ind(0:8,0:8,0:13), cnt(0:8,0:8)
 integer :: i,j,a,b,nc,mxorb
 

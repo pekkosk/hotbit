@@ -34,7 +34,7 @@ class LinearResponse:
         self.norb=self.el.get_nr_orbitals()
         self.e=self.st.get_eigenvalues()[0,:]
         self.f=self.st.get_occupations()[0,:]
-        if any( abs(self.st.wf.flatten().imag)>1E-10 ):
+        if nu.any( abs(self.st.wf.flatten().imag)>1E-10 ):
             raise ValueError('Wave functions should not be complex.')
         self.wf = self.st.wf[0].real
         self.S = self.st.S[0].real

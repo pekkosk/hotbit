@@ -1,15 +1,16 @@
 ! return density matrix, where elements only with non-zero S are calculated
 subroutine fortran_rho0(wf,occ,nr_ia_orbitals,ia_orbitals,norb,rho)
 implicit none
+integer, parameter :: dp = SELECTED_REAL_KIND(12)
 integer, intent(in) :: norb
-real(8), intent(in) :: wf(0:norb-1,0:norb-1)
-real(8), intent(in) :: occ(0:norb-1)
+real(dp), intent(in) :: wf(0:norb-1,0:norb-1)
+real(dp), intent(in) :: occ(0:norb-1)
 integer, intent(in) :: nr_ia_orbitals(0:norb-1)
 integer, intent(in) :: ia_orbitals(0:norb-1,0:norb-1)
-real(8), intent(out) :: rho(0:norb-1,0:norb-1)
+real(dp), intent(out) :: rho(0:norb-1,0:norb-1)
 integer :: i,j,k,high,fully
-real(8) :: wft(0:norb-1,0:norb-1)
-real(8), external ::ddot
+real(dp) :: wft(0:norb-1,0:norb-1)
+real(dp), external ::ddot
 rho=0d0
 wft=transpose(wf)
 
@@ -36,14 +37,15 @@ end subroutine fortran_rho0
 ! return density matrix weighted by energies only with non-zero S are calculated
 subroutine fortran_rhoe0(wf,occ,e,nr_ia_orbitals,ia_orbitals,norb,rhoe)
 implicit none
+integer, parameter :: dp = SELECTED_REAL_KIND(12)
 integer, intent(in) :: norb
-real(8), intent(in) :: wf(0:norb-1,0:norb-1)
-real(8), intent(in) :: occ(0:norb-1)
-real(8), intent(in) :: e(0:norb-1)
+real(dp), intent(in) :: wf(0:norb-1,0:norb-1)
+real(dp), intent(in) :: occ(0:norb-1)
+real(dp), intent(in) :: e(0:norb-1)
 integer, intent(in) :: nr_ia_orbitals(0:norb-1)
 integer, intent(in) :: ia_orbitals(0:norb-1,0:norb-1)
-real(8), intent(out) :: rhoe(0:norb-1,0:norb-1)
-real(8) :: wft(0:norb-1,0:norb-1)
+real(dp), intent(out) :: rhoe(0:norb-1,0:norb-1)
+real(dp) :: wft(0:norb-1,0:norb-1)
 integer :: i,j,k,mx
 rhoe=0d0
 wft=transpose(wf)
@@ -70,12 +72,13 @@ end subroutine fortran_rhoe0
 ! return density matrix
 subroutine fortran_rho(wf,occ,norb,rho)
 implicit none
+integer, parameter :: dp = SELECTED_REAL_KIND(12)
 integer, intent(in) :: norb
-real(8), intent(in) :: wf(0:norb-1,0:norb-1)
-real(8), intent(in) :: occ(0:norb-1)
-real(8), intent(out) :: rho(0:norb-1,0:norb-1)
+real(dp), intent(in) :: wf(0:norb-1,0:norb-1)
+real(dp), intent(in) :: occ(0:norb-1)
+real(dp), intent(out) :: rho(0:norb-1,0:norb-1)
 integer :: i,j,mx
-real(8) :: wft(0:norb-1,0:norb-1)
+real(dp) :: wft(0:norb-1,0:norb-1)
 rho=0d0
 wft=transpose(wf)
 
@@ -99,13 +102,14 @@ end subroutine fortran_rho
 ! return complex density matrix
 subroutine fortran_rhoc(wf,occ,norb,nk,rho)
 implicit none
+integer, parameter :: dp = SELECTED_REAL_KIND(12)
 integer,    intent(in) :: norb
 integer,    intent(in) :: nk
-complex(8), intent(in)  :: wf(0:nk-1,0:norb-1,0:norb-1)
-real(8),    intent(in)  :: occ(0:nk-1,0:norb-1)
-complex(8), intent(out) :: rho(0:nk-1,0:norb-1,0:norb-1)
+complex(2*dp), intent(in)  :: wf(0:nk-1,0:norb-1,0:norb-1)
+real(dp),    intent(in)  :: occ(0:nk-1,0:norb-1)
+complex(2*dp), intent(out) :: rho(0:nk-1,0:norb-1,0:norb-1)
 integer :: i,j,k,mx
-complex(8) :: wft(0:norb-1,0:norb-1)
+complex(2*dp) :: wft(0:norb-1,0:norb-1)
 
 
 first: do i=norb-1,0,-1
@@ -137,11 +141,12 @@ end subroutine fortran_rhoc
 ! return density matrix weighted by energies
 subroutine fortran_rhoe(wf,occ,e,norb,rhoe)
 implicit none
+integer, parameter :: dp = SELECTED_REAL_KIND(12)
 integer, intent(in) :: norb
-real(8), intent(in) :: wf(0:norb-1,0:norb-1)
-real(8), intent(in) :: occ(0:norb-1),e(0:norb-1)
-real(8), intent(out) :: rhoe(0:norb-1,0:norb-1)
-real(8) :: wft(0:norb-1,0:norb-1)
+real(dp), intent(in) :: wf(0:norb-1,0:norb-1)
+real(dp), intent(in) :: occ(0:norb-1),e(0:norb-1)
+real(dp), intent(out) :: rhoe(0:norb-1,0:norb-1)
+real(dp) :: wft(0:norb-1,0:norb-1)
 integer :: i,j,mx
 rhoe=0d0
 wft=transpose(wf)
@@ -165,13 +170,14 @@ end subroutine fortran_rhoe
 ! return complex energy-weighted density matrix
 subroutine fortran_rhoec(wf,occ,e,norb,nk,rho)
 implicit none
+integer, parameter :: dp = SELECTED_REAL_KIND(12)
 integer,    intent(in) :: norb,nk
-complex(8), intent(in)  :: wf(0:nk-1,0:norb-1,0:norb-1)
-real(8),    intent(in)  :: occ(0:nk-1,0:norb-1)
-real(8),    intent(in)  :: e(0:nk-1,0:norb-1)
-complex(8), intent(out) :: rho(0:nk-1,0:norb-1,0:norb-1)
+complex(2*dp), intent(in)  :: wf(0:nk-1,0:norb-1,0:norb-1)
+real(dp),    intent(in)  :: occ(0:nk-1,0:norb-1)
+real(dp),    intent(in)  :: e(0:nk-1,0:norb-1)
+complex(2*dp), intent(out) :: rho(0:nk-1,0:norb-1,0:norb-1)
 integer :: i,j,k,mx
-complex(8) :: wft(0:norb-1,0:norb-1)
+complex(2*dp) :: wft(0:norb-1,0:norb-1)
 
 rho=0d0
 first: do i=norb-1,0,-1

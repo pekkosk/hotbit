@@ -1,13 +1,14 @@
 subroutine geig(A,B,n,ev,vec)
 implicit none
-real(8), intent(in) :: A(n,n)
-real(8), intent(in) :: B(n,n)
+integer, parameter :: dp = SELECTED_REAL_KIND(12)
+real(dp), intent(in) :: A(n,n)
+real(dp), intent(in) :: B(n,n)
 integer, intent(in) :: n
-real(8), intent(out) :: ev(n)
-real(8), intent(out) :: vec(n,n)
+real(dp), intent(out) :: ev(n)
+real(dp), intent(out) :: vec(n,n)
 integer :: liwork, lwork, info, i
 integer, allocatable, save :: iwork(:)
-real(8), allocatable, save :: work(:), B2(:,:)
+real(dp), allocatable, save :: work(:), B2(:,:)
 
 liwork = 3+5*n 
 lwork  = 1+6*n+2*n**2 
@@ -61,17 +62,18 @@ end subroutine geig
 subroutine geigc(A,B,n,ev,vec)
 ! complex version for generalized eigenvalue problem
 implicit none
-complex(8), intent(in) :: A(n,n)
-complex(8), intent(in) :: B(n,n)
+integer, parameter :: dp = SELECTED_REAL_KIND(12)
+complex(2*dp), intent(in) :: A(n,n)
+complex(2*dp), intent(in) :: B(n,n)
 integer, intent(in) :: n
-real(8), intent(out) :: ev(n)
-complex(8), intent(out) :: vec(n,n)
+real(dp), intent(out) :: ev(n)
+complex(2*dp), intent(out) :: vec(n,n)
 integer, save :: lwork, liwork, lrwork
 integer :: info, i
 
 integer, allocatable, save :: iwork(:)
-real(8), allocatable, save :: rwork(:)
-complex(8), allocatable, save :: work(:), B2(:,:)
+real(dp), allocatable, save :: rwork(:)
+complex(2*dp), allocatable, save :: work(:), B2(:,:)
 
 
 

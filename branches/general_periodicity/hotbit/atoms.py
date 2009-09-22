@@ -217,7 +217,7 @@ class Atoms(ase_Atoms):
         # reset cell (for ase and visualization use) exactly the same
         # (ase cell in set_container is taken from present atom positions,
         # even though originally it might have been set earlier)
-        assert all( self.get_pbc()==cp.get_pbc() ) 
+        assert nu.all( self.get_pbc()==cp.get_pbc() ) 
         cp.set_cell( self.get_cell() )
         return cp
         
