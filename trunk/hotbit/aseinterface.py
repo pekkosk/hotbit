@@ -21,6 +21,7 @@ from time import time
 
 
 
+
 class Calculator(Output):
     """
     ASE-calculator frontend for HOTBIT calculations.
@@ -28,9 +29,11 @@ class Calculator(Output):
     def __init__(self,parameters=None,
                       elements=None,
                       tables=None,
-                      verbose=True,
+                      verbose=False,
                       charge=0.0,
                       SCC=True,
+                      kpts=(1,1,1),
+                      physical_k_points=True,
                       maxiter=50,
                       gamma_cut=None,
                       txt=None,
@@ -65,6 +68,8 @@ class Calculator(Output):
         charge            total electric charge for system (-1 means an additional electron)
         width             width of Fermi occupation (in eV)
         SCC               Self-Consistent Charge calculation
+        kpts              number of k-points wrt different symmetries
+        physical_k_points True, if only physically exact k-point allowed in periodic (circular) systems
         maxiter           Maximum number of self-consistent iterations (for SCC)
         gamma_cut         Range for Coulomb interaction
         txt               Filename for log-file (stdout = None)
@@ -81,6 +86,8 @@ class Calculator(Output):
                         'charge':charge,
                         'width':width/Hartree,
                         'SCC':SCC,
+                        'kpts':kpts,
+                        'physical_k_points':physical_k_points,
                         'maxiter':maxiter,
                         'gamma_cut':gamma_cut,
                         'txt':txt,
@@ -208,6 +215,7 @@ class Calculator(Output):
         else:
             self.__dict__[key]=value
 
+
     def get_atoms(self):
         """ Return the current atoms object. """
         atoms = self.el.atoms.copy()
@@ -218,6 +226,7 @@ class Calculator(Output):
     def add_note(self,note):
         """ Add warning (etc) note to be printed in log file end. """
         self.notes.append(note)
+
 
     def greetings(self):
         """ Simple greetings text """
@@ -240,10 +249,9 @@ class Calculator(Output):
         print>>self.txt,  'Nodename:',dat[1]
         print>>self.txt,  'Arch:',dat[4]
         print>>self.txt,  'Dir:',abspath(curdir)
-        print>>self.txt,  'System:',self.el.get_name()
+        print>>self.txt,  'System:',self.el.get_name()        
         print>>self.txt,  '       Charge=%4.1f' % self.charge
-        print>>self.txt,  '       Box: (Ang)', nu.array(self.el.get_box_lengths())*Bohr
-        print>>self.txt,  '       PBC:',self.el.atoms.get_pbc()
+        print>>self.txt,  '       Container', self.el.container_info()
         print>>self.txt,  '       Electronic temperature:', self.width*Hartree,'eV'
         mixer = self.st.solver.mixer
         print>>self.txt,  '       Mixer:', mixer.get('name'), 'with memory =', mixer.get('memory'), ', mixing constant =', mixer.get('beta')
@@ -259,7 +267,7 @@ class Calculator(Output):
 
     def set_text(self,txt):
         """ Set up the output file. """
-        if txt is '-':
+        if txt=='-' or txt=='null':
             self.txt = open('/dev/null','w')
         elif hasattr(txt, 'write'):
             self.txt = txt
@@ -284,14 +292,11 @@ class Calculator(Output):
         """ If atoms moved, solve electronic structure. """
         if not self.init:
             self._initialize(atoms)
-
-        #print 'required?',self.el.calculation_required(atoms,'ground state')
-        #print atoms.get_positions()[1]
-        #print self.el.atoms.get_positions()[1]
         if self.el.calculation_required(atoms,'ground state'):
-            self.el.set_atoms(atoms)
+            self.el.update_geometry(atoms)
             t0 = time()
             self.st.solve()
+            self.el.set_solved('ground state')
             t1 = time()
             if self.verbose:
                 print >> self.get_output(), "Solved in %0.2f seconds" % (t1-t0)
@@ -308,38 +313,97 @@ class Calculator(Output):
         self.st=States(self)
         self.rep=Repulsion(self)
         self.env=Environment(self)
-        self.greetings()
         pbc=atoms.get_pbc()
+        # FIXME: gamma_cut -stuff
         if self.get('SCC') and nu.any(pbc) and self.get('gamma_cut')==None:
             raise NotImplementedError('SCC not implemented for periodic systems yet (see parameter gamma_cut).')
         if nu.any(pbc) and abs(self.get('charge'))>0.0:
             raise AssertionError('Charged system cannot be periodic.')
         self.flush()
+        self.el.set_atoms(atoms)
+        self.greetings()
         self.stop_timing('initialization')
-        self.el.update_geometry()
+        
+        
+    def calculation_required(self,atoms,quantities):
+        """ Check if a calculation is required.
+
+        Check if the quantities in the quantities list have already been calculated
+        for the atomic configuration atoms. The quantities can be one or more of:
+        'ground state', 'energy', 'forces', and 'stress'.
+        """
+        return self.el.calculation_required(atoms,quantities)
 
 
     def get_potential_energy(self,atoms):
         """ Return the potential energy of present system. """
-        self.solve_ground_state(atoms)
-        self.start_timing('energies')
-        ebs=self.get_band_structure_energy(atoms)
-        ecoul=self.get_coulomb_energy(atoms)
-        erep=self.rep.get_repulsive_energy()
-        self.stop_timing('energies')
-        return ebs+ecoul+erep
+        if self.calculation_required(atoms,['energy']):
+            self.solve_ground_state(atoms)
+            self.start_timing('energy')
+            ebs=self.get_band_structure_energy(atoms)
+            ecoul=self.get_coulomb_energy(atoms)
+            erep=self.rep.get_repulsive_energy()
+            self.epot = ebs + ecoul + erep - self.el.efree*Hartree
+            self.stop_timing('energy')
+            self.el.set_solved('energy')
+        return self.epot.copy()
 
 
     def get_forces(self,atoms):
         """ Return the forces of present system. """
-        self.solve_ground_state(atoms)
-        self.start_timing('forces')
-        fbs=self.st.band_structure_forces()
-        frep=self.rep.get_repulsive_forces()
-        fcoul=self.st.es.gamma_forces() #zero for non-SCC
-        self.stop_timing('forces')
-        return (fbs+frep+fcoul)*(Hartree/Bohr)
+        if self.calculation_required(atoms,['forces']):
+            self.solve_ground_state(atoms)
+            self.start_timing('forces')
+            fbs=self.st.get_band_structure_forces()
+            frep=self.rep.get_repulsive_forces()
+            fcoul=self.st.es.gamma_forces() #zero for non-SCC
+            self.stop_timing('forces')
+            self.f = (fbs+frep+fcoul)*(Hartree/Bohr)
+            self.el.set_solved('forces')
+        return self.f.copy()
+    
+    
+    def get_DOS(self,broaden=False,width=0.1,window=None,npts=501):
+        '''
+        Return the full density of states, including k-points.
+        Zero is the Fermi-level; spin-degeneracy is not counted.
+        
+        @param broaden: broaden states in the first place?
+        @param width:  Gaussian broadening, in eV
+        @param window: energy window 2-tuple, in eV
+        @param npts:   number of data points in output
+        '''
+        self.start_timing('DOS')
+        e = self.st.e.copy()*Hartree - self.get_fermi_level()
+        flat = e.flatten()
+        mn, mx = flat.min(), flat.max()
+        if window is not None:
+            mn, mx = window
+            
+        x, y = [],[]
+        for a in range(self.el.norb):
+            x = nu.concatenate( (x,e[:,a]) )
+            y = nu.concatenate( (y,self.st.wk) )
+        x=nu.array(x) 
+        y=nu.array(y) 
+        if broaden:
+            self.start_timing('broaden')
+            e,dos = mix.broaden(x, y, width=width, N=npts, a=mn, b=mx)
+            self.stop_timing('broaden')
+        else:
+            e,dos = x,y
+        self.stop_timing('DOS')
+        return e,dos
 
+
+    def get_band_energies(self,kpts):
+        '''
+        Return band energies for explicitly given list of k-points.
+        
+        @param kpts: list of k-points; e.g. kpts=[(0,0,0),(pi/2,0,0),(pi,0,0)]
+        '''
+        raise NotImplementerError
+        
 
     def get_stress(self,atoms):
         self.solve_ground_state(atoms)
@@ -366,28 +430,24 @@ class Calculator(Output):
 
 
     def get_band_structure_energy(self,atoms):
-        self.solve_ground_state(atoms)
-        return self.st.band_structure_energy()*Hartree
+        if self.calculation_required(atoms, ['ebs']):
+            self.solve_ground_state(atoms)
+            self.ebs = self.st.band_structure_energy()*Hartree
+            self.el.set_solved('ebs')
+        return self.ebs 
 
 
     def get_coulomb_energy(self,atoms):
-        self.solve_ground_state(atoms)
-        return self.st.es.coulomb_energy()*Hartree
-
-
-    #def calculation_required(self,atoms,quantities):
-        #""" Check if a calculation is required.
-
-        #Check if the quantities in the quantities list have already been calculated
-        #for the atomic configuration atoms. The quantities can be one or more of:
-        #'ground state', 'energy', 'forces', and 'stress'.
-        #"""
-        #return self.el.calculation_required(atoms,quantities)
+        if self.calculation_required(atoms,['ecoul']):
+            self.solve_ground_state(atoms)
+            self.ecoul = self.st.es.coulomb_energy()*Hartree 
+            self.st
+        return self.ecoul
 
 
     # some not implemented ASE-assumed methods
     def get_fermi_level(self):
-        return self.st.get_fermi_level() * Hartree
+        return self.st.occu.get_mu() * Hartree
 
 
     def set_atoms(self,atoms):

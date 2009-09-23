@@ -12,6 +12,8 @@ from weakref import proxy
 #import cgitb; cgitb.enable()
 find=mix.find_value
 vec=nu.array
+norm=nu.linalg.norm
+sqrt=nu.sqrt
 
 class Repulsion:
     def __init__(self,calc):
@@ -21,6 +23,7 @@ class Repulsion:
         self.vrep={}
         present=calc.el.get_present()
         self.files=self.calc.ia.get_files()
+        self.rmax=0.0
         for si in present:
             for sj in present:
                 try:
@@ -29,6 +32,8 @@ class Repulsion:
                 except KeyError:
                     raise KeyError('Interaction file for %s-%s or %s-%s not found.' %(si,sj,sj,si))
                 self.vrep[si+sj]=RepulsivePotential(self.files[si+sj])
+                self.rmax = max( self.rmax, self.vrep[si+sj].get_r_cut() )
+        self.N=calc.el.get_N()
 
     def __del__(self):
         pass
@@ -48,28 +53,49 @@ class Repulsion:
         return txt
 
     def get_repulsive_energy(self):
-        """ Calculate the repulsive energy with included element pairs. """
+        """ Calculate the repulsive energy. """
+        self.calc.start_timing('e_rep')
+        
+        # TODO: be more selective with n (for efficiency)
+        lst=self.calc.el.get_property_lists(['i','s'])
+        Rijn = self.calc.el.rijn
         erep=0.0
-        for i,j,si,sj,dist in self.calc.el.get_ia_atom_pairs(['i','j','si','sj','dist']):
-            if i==j:
-                continue
-            erep+=self.vrep[si+sj](dist)
+        for i,si in lst: 
+            for j,sj in lst[i:]:
+                for n,rijn in enumerate(Rijn[:,i,j]): 
+                    if i==j and n==0: continue
+                    d = nu.sqrt( rijn[0]**2+rijn[1]**2+rijn[2]**2 )
+                    if d>self.rmax: continue
+                    # TODO: remove following assert
+                    assert(d>1E-10)
+                    if i==j:
+                        erep+=0.5*self.vrep[si+sj](d)
+                    else:
+                        erep+=self.vrep[si+sj](d)
+        self.calc.stop_timing('e_rep') 
         return erep*Hartree
 
+
     def get_repulsive_forces(self):
-        """ Calculate the forces due to repulsive potentials for element pairs. """
+        """ 
+        Return repulsive forces. 
+        
+        F_i = sum_(j,n) V'(rijn) rijn/dijn, with rijn = r_j^n -r_i and dijn=|rijn|
+        """
         self.calc.start_timing('f_rep')
-        f=nu.zeros((len(self.calc.el),3))
-        for i,j,si,sj,dist,rhat in self.calc.el.get_ia_atom_pairs(['i','j','si','sj','dist','rhat']):
-            if i==j:
-                continue
-            frep=self.vrep[si+sj](dist,der=1)*rhat
-            f[i,:]=f[i,:]+frep
-            f[j,:]=f[j,:]-frep
+        f=nu.zeros((self.N,3))
+        lst = self.calc.el.get_property_lists(['i','s'])
+        Rijn = self.calc.el.rijn
+        for i,si in lst:
+            for j,sj in lst:
+                V = self.vrep[si+sj]
+                for n,rijn in enumerate(Rijn[:,i,j]):
+                    if i==j and n==0: continue
+                    dijn = sqrt( rijn[0]**2+rijn[1]**2+rijn[2]**2 )
+                    if dijn<self.rmax:
+                        f[i,:] = f[i,:] + V(dijn,der=1)*rijn/dijn
         self.calc.stop_timing('f_rep')
         return f
-
-
 
 
 class RepulsivePotential:
@@ -78,6 +104,11 @@ class RepulsivePotential:
             self.read_repulsion(repulsion)
         else:
             self.v=repulsion
+        self.range=None
+            
+    def get_r_cut(self):
+        """ Return the cut-off of the potential. """
+        return self.r_cut
 
     def __call__(self,r,der=0):
         """ Return V_rep(r) or V_rep'(r) """
