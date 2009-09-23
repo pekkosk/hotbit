@@ -6,7 +6,9 @@ from hotbit.test.misc import default_param
 import sys
 
 systems=['C2H6','CH3CH2O','H2COH','H2','C2H6CHOH','isobutane']
-energies=[-153.471502365,-232.206844117,-166.801950557,-19.356876265,-313.487801685,-287.534640343]
+energies0=[-153.471502365,-232.206844117,-166.801950557,-19.356876265,-313.487801685,-287.534640343]
+free = [-113.81982575044,-191.66618644170001,-141.09652875422,-12.680510375480001,-248.57609931692002,-214.95914112540004]
+energies = [e-ef for e,ef in zip(energies0,free)]
 
 eps=1E-3
 for system,e in zip(systems,energies):
