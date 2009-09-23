@@ -11,6 +11,57 @@
 '''
 import numpy as nu
 import time
+from math import atan,pi,cos,sin,sqrt
+
+def divisors(x):
+    '''
+    Return all divisors of x.
+    
+    @param x: integer
+    '''
+    assert isinstance(x,int)
+    lst=[x]
+    for i in range(x/2,0,-1):
+        if nu.mod(x,i)==0: lst.append(i)        
+    return lst
+
+
+def rotation_matrix(axis,angle):
+    """ Return the active rotation matrix with given axis and rotation angle. """
+    n1, n2, n3 = axis/nu.linalg.norm(axis)
+    c, s = cos(angle), sin(angle)
+    cc = 1-c
+    R = [[n1**2*cc + c,    n1*n2*cc - n3*s, n1*n3*cc + n2*s],
+         [n1*n2*cc + n3*s, n2**2*cc + c,    n2*n3*cc - n1*s],
+         [n1*n3*cc - n2*s, n2*n3*cc + n1*s, n3**2*cc + c   ]]
+    return nu.array(R)
+    
+
+def phival(x,y):
+    """ Return azimuthal angle for ALL x,y. """
+    e=1E-16
+    if x>e and y>e:
+        return atan(y/x)
+    elif x<-e and y>e:
+        return atan(y/x) + pi
+    elif x<-e and y<-e:
+        return atan(y/x) + pi
+    elif x>e and y<-e:
+        return atan(y/x)+2*pi
+    elif abs(x)<=e and abs(y)<=e:
+        return 0.0
+    elif x>e and abs(y)<=e:
+        return 0.0
+    elif y>e and abs(x)<=e:
+        return pi/2
+    elif x<-e and abs(y)<=e:
+        return pi
+    elif y<-e and abs(x)<=e:
+        return 3*pi/2
+    else:
+        #print x,y
+        raise RuntimeError('Strange things in phival')
+
 
 def kronecker(i,j):
     if i==j:
@@ -224,7 +275,7 @@ def lorenzian(x,mean,width):
     """ Return normalized Lorenzian with given mean and broadening. """
     return (width/nu.pi)/((x-mean)**2+width**2)
 
-def broaden(x,y=None,width=0.05,function='gaussian',extend=True,N=200,a=None,b=None):
+def broaden(x,y=None,width=0.05,function='gaussian',extend=False,N=200,a=None,b=None):
     """ 
     Broaden a peaked distribution (DOS,optical spectra,...).
     
@@ -241,14 +292,9 @@ def broaden(x,y=None,width=0.05,function='gaussian',extend=True,N=200,a=None,b=N
     
     return: xgrid, broadened distribution
     """
-    if function=='gaussian':
-        f=gauss_fct
-        param={'mean':0.0,'sigma':width}
-    elif function=='lorenzian':
-        f=lorenzian
-        param={'mean':0.0,'width':width}          
-    else:            
-        raise NotImplementedError('function %s not implemented.' %function)
+    if function=='lorenzian':
+        raise NotImplementedError('Only Gaussian works now for efficiency reasons')
+    
     if y==None:
         y=nu.ones_like(x)
     dx=[0.0,4*width][extend]
@@ -260,11 +306,13 @@ def broaden(x,y=None,width=0.05,function='gaussian',extend=True,N=200,a=None,b=N
         mx=max(x)+dx
     else:
         mx=b
-    xgrid=nu.linspace(mn,mx,N)
-    ybroad=nu.zeros((N,))
-    for ig,xg in enumerate(xgrid):
-        ybroad[ig]=sum( [yi*f(xi-xg,**param) for xi,yi in zip(x,y)] )
-    return xgrid,ybroad
+        
+    xgrid = nu.linspace(mn,mx,N)
+    ybroad= nu.zeros_like(xgrid)
+    for xi,yi in zip(x,y):
+        h = yi*nu.exp( -(xgrid-xi)**2/(2*width**2) ) / (nu.sqrt(2*nu.pi)*width)
+        ybroad = ybroad + h
+    return xgrid, ybroad 
     
 
 def grid(min,max,N):
