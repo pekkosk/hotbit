@@ -1,0 +1,4 @@
+all:
+	f2py -m slako -c --fcompiler=gnu95 --f90flags='-O3 -fPIC' slako.f90
+	f2py -m misc -c --fcompiler=gnu95 --f90flags='-O3 -fPIC' -L/usr/local/lib64  -lblas_gfortran misc.f90
+	f2py -m eigensolver -c --fcompiler=gnu95 --f90flags='-O3 -fPIC' -L/usr/local/lib64  -llapack_gfortran -lblas_gfortran eigensolver.f90

@@ -65,6 +65,8 @@ end do
 end subroutine fortran_rhoe0
 
 
+
+
 ! return density matrix
 subroutine fortran_rho(wf,occ,norb,rho)
 implicit none
@@ -91,6 +93,45 @@ do j=i,norb-1
 end do
 end do
 end subroutine fortran_rho
+
+
+
+! return complex density matrix
+subroutine fortran_rhoc(wf,occ,norb,nk,rho)
+implicit none
+integer,    intent(in) :: norb
+integer,    intent(in) :: nk
+complex(8), intent(in)  :: wf(0:nk-1,0:norb-1,0:norb-1)
+real(8),    intent(in)  :: occ(0:nk-1,0:norb-1)
+complex(8), intent(out) :: rho(0:nk-1,0:norb-1,0:norb-1)
+integer :: i,j,k,mx
+complex(8) :: wft(0:norb-1,0:norb-1)
+
+
+first: do i=norb-1,0,-1
+    do k=0,nk-1
+    if( occ(k,i)>1E-15 ) then
+        mx=i
+        exit first
+    end if
+    end do
+end do first
+
+rho=0d0
+do k=0,nk-1
+   ! because the first index must be faster:
+   wft=transpose(wf(k,:,:))
+   do i=0,norb-1
+   do j=i,norb-1
+       rho(k,i,j)=sum( occ(k,0:mx)*wft(0:mx,i)*conjg(wft(0:mx,j)) )
+       if(i/=j) then
+          rho(k,j,i)=conjg(rho(k,i,j))
+       end if
+   end do
+   end do
+end do
+end subroutine fortran_rhoc
+
 
 
 ! return density matrix weighted by energies
@@ -121,55 +162,40 @@ end do
 end subroutine fortran_rhoe
 
 
-! matrix multiplication a*b, where a is a symmetric matrix
-subroutine symmetric_matmul(a,b,c,n)
+! return complex energy-weighted density matrix
+subroutine fortran_rhoec(wf,occ,e,norb,nk,rho)
 implicit none
-integer, intent(in) :: n
-real(8), intent(in) :: a(0:n-1,0:n-1),b(0:n-1,0:n-1)
-real(8), intent(out) :: c(0:n-1,0:n-1)
-call dsymm('L','U',n,n,1d0,a,n,b,n,0,c,n)
-end subroutine symmetric_matmul
+integer,    intent(in) :: norb,nk
+complex(8), intent(in)  :: wf(0:nk-1,0:norb-1,0:norb-1)
+real(8),    intent(in)  :: occ(0:nk-1,0:norb-1)
+real(8),    intent(in)  :: e(0:nk-1,0:norb-1)
+complex(8), intent(out) :: rho(0:nk-1,0:norb-1,0:norb-1)
+integer :: i,j,k,mx
+complex(8) :: wft(0:norb-1,0:norb-1)
 
-
-! return diagonal of matrix multiplication a*b
-subroutine matmul_diagonal(a,b,c,n)
-implicit none
-integer, intent(in) :: n
-real(8), intent(in) :: a(0:n-1,0:n-1),b(0:n-1,0:n-1)
-real(8), intent(out) :: c(0:n-1)
-integer :: i
-do i=0,n-1
-    c(i)=sum( a(i,:)*b(:,i) )
-end do
-end subroutine matmul_diagonal
-
-
-
-! Return the band-structure energy
-subroutine fortran_fbs(rho,rhoe,dH,dS,norbs,indices,f,norb,nat)
-implicit none
-integer, intent(in) :: norb
-integer, intent(in) :: nat
-real(8), intent(in) :: rho(0:norb-1,0:norb-1)
-real(8), intent(in) :: rhoe(0:norb-1,0:norb-1)
-real(8), intent(in) :: dH(0:norb-1,0:norb-1,0:2)
-real(8), intent(in) :: dS(0:norb-1,0:norb-1,0:2)
-integer, intent(in) :: norbs(0:nat-1)
-integer, intent(in) :: indices(0:nat-1,0:8)
-real(8), intent(out) :: f(0:nat-1,0:2)
-real(8) :: diff(0:norb-1)
-integer :: a,i,noi
-
-f=0d0
-do a=0,2
-    do i=0,norb-1
-        ! diff is the diagonal of difference rho*dH - rhoe*dS
-        diff(i)=sum(rho(i,:)*dH(:,i,a))-sum(rhoe(i,:)*dS(:,i,a))
+rho=0d0
+first: do i=norb-1,0,-1
+    do k=0,nk-1
+    if( occ(k,i)>1E-15 ) then
+        mx=i
+        exit first
+    end if
     end do
+end do first
 
-    do i=0,nat-1
-        noi=norbs(i)
-        f(i,a)=sum( diff(indices(i,0:noi-1)) )
-    end do
+do k=0,nk-1
+   ! because the state index must be faster, it must come first
+   wft=transpose(wf(k,:,:))
+   do i=0,norb-1
+   do j=i,norb-1
+       rho(k,i,j)=sum( e(k,0:mx)*occ(k,0:mx)*wft(0:mx,i)*conjg(wft(0:mx,j)) )
+       rho(k,j,i)=conjg(rho(k,i,j))
+   end do
+   end do
 end do
-end subroutine fortran_fbs                
+end subroutine fortran_rhoec
+
+
+
+
+
