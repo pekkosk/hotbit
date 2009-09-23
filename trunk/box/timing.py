@@ -53,7 +53,9 @@ class Timer:
         self.enabled=enabled
         if level==0:
             self.start()
-        self.durations=[]
+        #self.durations=[]
+        self.elapsed_time=0.0
+        self.nr_of_calls=0
         self.smry=False
 
             
@@ -63,12 +65,12 @@ class Timer:
     def get_time(self):
         if self.running:
             self.stop()          
-        return sum(self.durations)
+        return self.elapsed_time
         
     def get_calls(self):
         if self.running:
             self.stop()
-        return len(self.durations)        
+        return self.nr_of_calls        
         
     def get_timer(self,label):
         """ Does timer or any of it's timers have given label (recursively)? """
@@ -131,7 +133,8 @@ class Timer:
                 raise AssertionError('Timer %s cannot be stopped; it is not running!' %self.label)
             self.running=False
             self.t2=time()
-            self.durations.append( self.t2-self.t1 )
+            self.elapsed_time += self.t2-self.t1
+            self.nr_of_calls += 1
         else:
             tr=self.get_timer(label)
             if tr==None:

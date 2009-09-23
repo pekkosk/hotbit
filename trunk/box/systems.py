@@ -3,11 +3,14 @@
     
     #P. Koskinen 31.1 2008
 #"""
-from ase import Atoms
+from ase import Atoms,Atom
 import numpy as nu
 from numpy import pi
 vec=nu.array
-
+sqrt=nu.sqrt
+dot=nu.dot
+cos=nu.cos
+sin=nu.sin
 
 #def xyz_output(elements,coords,cell,file='out.xyz'):
     #f=open(file,'w')
@@ -64,7 +67,7 @@ vec=nu.array
 #def make_sc():
     #not_implemented()
     
-def graphene(n1,n2,R):
+def graphene(n1,n2,R,height=5.0):
     """
     Construct graphene lattice, multiply the primitive cell
     n1 x n2 times in corresponding directions.
@@ -78,7 +81,7 @@ def graphene(n1,n2,R):
     """
     a1=vec([R*nu.cos(pi/6)*2,0.,0.])
     a2=0.5*a1 + vec([0.,1.5*R,0.])
-    assert n2%2==0
+    #assert n2%2==0
         
     r=[]
     for i1 in range(n1):
@@ -87,9 +90,9 @@ def graphene(n1,n2,R):
             r.append(corner)
             r.append(corner+a1+vec([0.0,R,0.0]))
                 
-    cell=( n1*a1[0], n2*a2[1], 0 )                
+    cell=[[n1*a1[0], 0, 0],[n2*a2[0],n2*a2[1],0],[0,0,10]]                
     atoms=Atoms('C'*len(r),positions=r,cell=cell)
-    atoms.center(vacuum=5,axis=2)
+    atoms.center(vacuum=height/2,axis=2)
     atoms.set_pbc((True,True,False))
     return atoms
                          
@@ -112,6 +115,7 @@ def armchair_ribbon(n1,n2,R):
     elements=['C']*len(r)
     return vec(r),cell,elements
 
+
 def zigzag_ribbon(n1,n2,R):
     """
     Make ribbon out of graphene with zigzag edges.
@@ -128,7 +132,86 @@ def zigzag_ribbon(n1,n2,R):
             r.append(corner+vec([R*nu.cos(pi/6),2.5*R,0]))
     cell=[n1*2*R*nu.cos(pi/6),n2*3*R,0]   
     elements=['C']*len(r)         
-    return vec(r),cell,elements
+    return Atoms(elements,r,cell=cell)
+
+
+
+def gcd(a, b):
+    if b == 0:
+        return a
+    if a == 0:
+        return b
+    
+    h = min(a, b)
+    while float(a)/float(h)-int(a/h) != 0 or float(b)/float(h)-int(b/h) != 0:
+        h -= 1
+
+    return h
+
+
+def nanotube(el, a0, n, m, ncopy=1, verbose=False):
+    '''
+    Create a nanotube.
+    
+    @param el: element symbol
+    @param a0: nearest neighbor distance
+    @param n:  first index
+    @param m:  second index
+    @param ncopy: number of copies along z-axis
+    @param verbose: print info related to carbon nanotubes 
+    '''
+    at = Atoms( pbc = ( False, False, True ) )
+
+    sq3 = sqrt(3.0)
+
+    gcn = gcd(n, m)
+    
+    a1 = nu.array( [ sq3/2,  0.5 ] ) * a0 * sq3
+    a2 = nu.array( [ sq3/2, -0.5 ] ) * a0 * sq3
+
+    h = float(float(n)-float(m))/float(3*gcn)
+
+    if h-int(h) == 0.0:
+        R = 3
+    else:
+        R = 1
+
+    c = n*a1 + m*a2
+    abs_c = sqrt(dot(c, c))
+
+    a = ( -(2*m+n)*a1 + (2*n+m)*a2 )/(gcn*R)
+    abs_a = sqrt(dot(a, a))
+
+    eps = 0.01
+    b = [ [ 1./3-eps, 1./3-eps ], [ 2./3-eps, 2./3-eps ] ]
+
+    nxy = max(n, m)+100
+    eps = 0.00001
+    
+    for x in xrange(-nxy, nxy):
+        for y in xrange(-nxy, nxy):
+            for b1, b2 in b:
+                p = (x+b1)*a1 + (y+b2)*a2
+                abs_p = sqrt(dot(p, p))
+
+                sa = dot(p, a)/(abs_a**2)
+                sc = dot(p, c)/(abs_c**2)
+
+                if sa >= 0 and sa < 1-eps and sc >= 0 and sc < 1-eps:
+                    r = ( cos(2*pi*sc)*abs_c/(2*pi), sin(2*pi*sc)*abs_c/(2*pi), sa*abs_a )
+                    at += Atom( el, r ) 
+    at.set_cell( ( 2*abs_c/(2*pi), 2*abs_c/(2*pi), ncopy*abs_a ) )
+    b = at.copy()
+
+    for i in range(ncopy-1):
+        b.translate( ( 0.0, 0.0, abs_a ) )
+        for j in b:
+            at += j
+    at.center(axis=2)
+    at.set_pbc((False,False,True))
+    if verbose:
+        print 'D=',nu.sqrt(3)*a0/nu.pi * nu.sqrt( n**2+m**2+n*m )
+    return at
             
 ##print help(make_zigzag_ribbon)
 #try:
