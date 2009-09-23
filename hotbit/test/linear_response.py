@@ -16,4 +16,11 @@ calc.solve_ground_state(atoms)
 lr=LinearResponse(calc,energy_cut=2000,txt='linear_response.txt')
 lr.run()
 lr.plot_spectrum('Na3+_lr.png',width=0.08)
-#lr.info()
+
+el = [1.81951,1.81951,7.43599,7.43599]
+fl = [0.43036,0.43036,4.27744,4.27744]
+
+for i in range(4):
+    e,f = lr.get_excitation(i)
+    assert abs(e-el[i])<1E-4 and abs(f-fl[i])<1E-4
+    
