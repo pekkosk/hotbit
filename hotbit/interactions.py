@@ -12,13 +12,15 @@ from box.interpolation import MultipleSplineFunction
 from weakref import proxy
 dot=nu.dot
 array=nu.array
+norm=nu.linalg.norm
+outer=nu.outer
+zeros=nu.zeros
 
 aux={'s':0,'p':1,'d':2}
 itypes={'ss':['s'],'sp':['s'],'ps':['s'],'sd':['s'],'ds':['s'],
         'pp':['s','p'],'pd':['s','p'],'dp':['s','p'],'dd':['s','p','d']}
 integrals={'dds':0,'ddp':1,'ddd':2,'pds':3,'pdp':4,'pps':5,'ppp':6,\
            'sds':7,'sps':8,'sss':9,'dps':10,'dpp':11,'dss':12,'pss':13}
-
 
 
 
@@ -89,7 +91,7 @@ class Interactions:
         self.present=present
         self.max_cut=0.0 # maximum interaction range in Bohrs
         self.read_tables()
-        self.check_box_size()
+#        self.check_box_size()
         self.first=True
 
     def __del__(self):
@@ -102,29 +104,6 @@ class Interactions:
     def get_cutoffs(self):
         """ Return element pair cutoff dictionary. """
         return self.cut
-
-    def check_box_size(self):
-        """ Check that box is large enough. """
-        gamma_cut, SCC=self.calc.get('gamma_cut') ,self.calc.get('SCC')
-        pbc=self.calc.el.atoms.get_pbc()
-        for periodic,length in zip(self.calc.el.get_box_lengths(),pbc):
-            for ia in self.cut:
-                if self.cut[ia]>length/2. and not periodic:
-                    raise AssertionError('Too small box (one size %.2f, largest cut %.2f)' %(length,self.cut[ia]))
-                if SCC and periodic and (gamma_cut!=None and gamma_cut<length/4):
-                    raise AssertionError('gamma_cut should be small enough compared to %s Bohr' %length)
-
-
-    def check_too_close_distances(self):
-        """ If some element pair doesn't have repulsive potential,
-            check that they are not too close to each other. """
-        for si in self.present:
-            for sj in self.present:
-                d = self.calc.el.distance_of_elements(si,sj,mode='minimum')
-                if d != None and self.kill_radii[si,sj] != None:
-                    if d < self.kill_radii[si,sj]:
-                        raise AssertionError("Atoms with no repulsive potential are too close to each other: %s and %s" % (si, sj))
-
 
     def greetings(self):
         """ Return the interaction specifications """
@@ -139,6 +118,7 @@ class Interactions:
                 txt+='    *'+line.lstrip()+'\n'
             shown.append(file)
         return txt
+
 
     def read_tables(self):
         """
@@ -190,7 +170,15 @@ class Interactions:
                                 index=integrals[short]
                                 self.h[pair].add_function(table_ij[:,index+1],table,integrals[short])
                                 self.s[pair].add_function(table_ij[:,index+11],table,integrals[short])
-
+                                
+        # cutoffs for atom pair indices
+        N = self.calc.el.N
+        self.hscut=nu.zeros((N,N),float)
+        for i,si in enumerate(self.calc.el.symbols):
+            for j,sj in enumerate(self.calc.el.symbols):
+                self.hscut[i,j]=self.cut[si+sj]
+        self.calc.el.set_cutoffs(self.cut)
+                                
 
     def plot_table(self,e1,e2,der=0):
         """ Plot SlaKo table for given elements. """
@@ -207,80 +195,191 @@ class Interactions:
             pl.xlabel('r (Bohr)')
             pl.ylabel('H (Hartree) and S')
         pl.show()
+        
+        
+    def rotation_transformation(self,n):
+        '''
+        Return the transpose of 9x9 rotation transformation matrix for given symmetry operation.
+        
+            | 1   0   0   0    0    0    0   0   0 |   s  } s-orbital 
+            | 0  ca -sa   0    0    0    0   0   0 |   px
+            | 0  sa  ca   0    0    0    0   0   0 |   py } p-orbitals         ca = cos(a)
+            | 0   0   0   1    0    0    0   0   0 |   pz                      sa = sin(a)
+         D= | 0   0   0   0   c2a   0    0 s2a   0 |   dxy                     c2a = cos(2a)
+            | 0   0   0   0    0   ca   sa   0   0 |   dyz                     s2a = sin(2a)
+            | 0   0   0   0    0  -sa   ca   0   0 |   dzx } d-orbitals
+            | 0   0   0   0 -s2a    0    0 c2a   0 |   dx2-y2
+            | 0   0   0   0    0    0    0   0   1 |   d3z2-r2
+        
+        @param n: 3-tuple of symmetry transformation
+        '''
+        R = self.calc.el.rotation(n)
+        
+        if nu.any(nu.array(self.calc.el.get_property_lists(['no']))>4) and abs(R[2,2]-1)>1E-12:
+            raise NotImplementedError('Non-z-axis rotation not implemented for d-orbitals')
+        
+        if nu.all(abs(R.diagonal()-1)<1E-12): #no rotation 
+            return nu.eye(9)
+        
+        ca, sa = R[0,0], -R[0,1] 
+        c2a, s2a = 2*ca**2-1, 2*sa*ca
+        
+        D = nu.diag((1.0,ca,ca,1.0,c2a,ca,ca,c2a,1.0))
+        #D[1,2] = -sa
+        #D[2,1] = sa
+        #D[5,6] = sa
+        #D[6,5] = -sa
+        #D[4,7] = s2a
+        #D[7,4] = -s2a
+        
+        D[1,2] = sa
+        D[2,1] = -sa
+        D[5,6] = -sa
+        D[6,5] = sa
+        D[4,7] = -s2a
+        D[7,4] = s2a
+        
+        D[1:4,1:4] = R[:,:].transpose()
+        return D.transpose()
+
 
     def construct_matrices(self):
         """ Hamiltonian and overlap matrices. """
+        timing = False 
         el = self.calc.el
+        states = self.calc.st
         start = self.calc.start_timing
         stop = self.calc.stop_timing
         start('matrix construction')
         orbs=el.orbitals()
-        norb=len(orbs)
-        self.H0=nu.zeros((norb,norb))
-        self.dH0, self.dS=nu.zeros((norb,norb,3)),nu.zeros((norb,norb,3))
-        self.S=nu.identity(norb)
-
+        norb=len(orbs)   
+        #try:
+        #    self.H0.fill(0)
+        #    self.S.fill(0)
+        #    self.dH0.fill(0)
+        #    self.dS.fill(0)
+        #except:
+        H0  = nu.zeros((states.nk,norb,norb),complex)
+        S   = nu.zeros((states.nk,norb,norb),complex)
+        dH0 = nu.zeros((states.nk,norb,norb,3),complex)
+        dS  = nu.zeros((states.nk,norb,norb,3),complex)
+        
         orbitals=[[orb['orbital'] for orb in el.orbitals(i)] for i in range(len(el))]
         orbindex=[el.orbitals(i,indices=True) for i in range(len(el))]
+        h, s, dh, ds = zeros((14,)), zeros((14,)), zeros((14,3)), zeros((14,3))
+        
+        phases = []
+        DTn = []
+        Rot = []
+        for n in range(len(el.ntuples)):
+            nt = el.ntuples[n]  
+            phases.append( nu.array([nu.exp(1j*nu.dot(nt,k)) for k in states.k]) )
+            DTn.append( self.rotation_transformation(nt) )
+            Rot.append( self.calc.el.rotation(nt) )
 
-        el.set_cutoffs(self.cut)
-        nonzero=0
-        for i,j,si,sj,dist,r,rhat in el.get_ia_atom_pairs(['i','j','si','sj','dist','r','rhat']):
-            if i==j:
-                for orb in el.orbitals(i):
-                    self.H0[orb['index'],orb['index']]=orb['energy']
-                    nonzero+=1
-            else:
-                # make interpolated mels, also derivatives
-                h, s, dh, ds=nu.zeros((14,)), nu.zeros((14,)), nu.zeros((14,3)), nu.zeros((14,3))
-                pair=si+sj
+        lst = el.get_property_lists(['i','s','no','o1'])
+        Rijn = self.calc.el.rijn
+        dijn = self.calc.el.dijn
+        for i,si,noi,o1i in lst:
+            a, b = o1i, o1i+noi
+            # on-site energies only for n==0
+            for orb in el.orbitals(i):
+                ind=orb['index']
+                H0[:,ind,ind] = orb['energy']
+                S[:,ind,ind]  = 1.0
+            for j,sj,noj,o1j in lst[i:]:
+                c, d = o1j, o1j+noj
+                htable = self.h[si+sj]
+                stable = self.s[si+sj]
+                ij_interact = False
+                r1, r2= htable.get_range()
+                                    
+                for n, (rij,dij) in enumerate(zip(Rijn[:,i,j],dijn[:,i,j])):
+                    if i==j and n==0: 
+                        continue
+                    nt = el.ntuples[n]
+                    h.fill(0)
+                    s.fill(0)
+                    dh.fill(0)
+                    ds.fill(0)
 
-                start('mel splint')
-                hi, dhi=self.h[pair](dist)
-                si, dsi=self.s[pair](dist)
-                stop('mel splint')
-
-                start('setup pre-h')
-                indices=self.h[pair].get_indices()
-                h[indices], s[indices]=hi, si
-                dh[indices], ds[indices]=nu.outer(dhi,rhat), nu.outer(dsi,rhat)
-                stop('setup pre-h')
-
-                start('fortran slako')
-                obsi, obsj=orbindex[i], orbindex[j]
-                noi, noj=len(obsi), len(obsj)
-                #ht,st,dht,dst=slako_transformations(rhat,dist,noi,noj,h,s,dh,ds)
-                ht, st, dht, dst=fast_slako_transformations(rhat,dist,noi,noj,h,s,dh,ds)
-
-                i1, i2, j1, j2=obsi[0], obsi[-1]+1, obsj[0], obsj[-1]+1
-                self.H0[i1:i2,j1:j2]=ht
-                self.S[i1:i2,j1:j2]=st
-                self.dH0[i1:i2,j1:j2,:]=dht
-                self.dS[i1:i2,j1:j2,:]=dst
-
-                # symmetrize (antisymmetrize) H and S (dH and dS)
-                self.H0[j1:j2,i1:i2]=ht.transpose()
-                self.S[j1:j2,i1:i2]=st.transpose()
-                self.dH0[j1:j2,i1:i2,:]=-dht.transpose((1,0,2))
-                self.dS[j1:j2,i1:i2,:]=-dst.transpose((1,0,2))
-
-                if self.first:
-                    nonzero+=sum( abs(ht.flatten())>1E-20 )*2
-                stop('fortran slako')
-
+                    rijh  = rij/dij
+                    assert dij>0.1
+                    if not r1<=dij<=r2: 
+                        continue
+                    ij_interact = True
+                    
+                    # interpolate Slater-Koster tables and derivatives
+                    if timing: start('splint+SlaKo+DH')
+                    hij, dhij = htable(dij)
+                    sij, dsij = stable(dij)
+                    
+                    indices = htable.get_indices()
+                    h[indices], s[indices] = hij, sij
+                    dh[indices], ds[indices] = outer(dhij,rijh), outer(dsij,rijh)
+                    
+                    # make the Slater-Koster transformations
+                    obsi, obsj=orbindex[i], orbindex[j]
+                    ht, st, dht, dst = fast_slako_transformations(rijh,dij,noi,noj,h,s,dh,ds)
+                    
+                    # Here we do the MEL transformation; H'_ij = sum_k H_ik * D_kj^T
+                    DT = DTn[n]
+                    ht = dot( ht,DT[0:noj,0:noj] )
+                    st = dot( st,DT[0:noj,0:noj] )
+                    dht = dot( dht.transpose((2,0,1)),DT[0:noj,0:noj] ).transpose((1,2,0))
+                    dst = dot( dst.transpose((2,0,1)),DT[0:noj,0:noj] ).transpose((1,2,0))
+                    if timing: stop('splint+SlaKo+DH')
+                    
+                    if timing: start('k-points')
+                    phase = phases[n] 
+                    hblock  = outer(phase,ht.flatten()).reshape(states.nk,noi,noj)
+                    sblock  = outer(phase,st.flatten()).reshape(states.nk,noi,noj)
+                    dhblock = outer(phase,-dht.flatten()).reshape(states.nk,noi,noj,3)
+                    dsblock = outer(phase,-dst.flatten()).reshape(states.nk,noi,noj,3)
+                    
+                    H0[ :,a:b,c:d]   += hblock 
+                    S[  :,a:b,c:d]   += sblock
+                    dH0[:,a:b,c:d,:] += dhblock
+                    dS[ :,a:b,c:d,:] += dsblock
+                    if timing: stop('k-points')
+                     
+                    if i!=j and ij_interact:
+                        # construct the other derivatives wrt. atom j.
+                        Rot = self.calc.el.Rot[n]
+                        dht2 = dot( dht,Rot )
+                        dst2 = dot( dst,Rot ) 
+                        dh2block = outer(phase,dht2.flatten()).reshape(states.nk,noi,noj,3)
+                        ds2block = outer(phase,dst2.flatten()).reshape(states.nk,noi,noj,3)                        
+                        dH0[:,c:d,a:b,:] += dh2block.transpose((0,2,1,3)).conjugate()
+                        dS[ :,c:d,a:b,:] += ds2block.transpose((0,2,1,3)).conjugate()
+                        
+                if i!=j and ij_interact:
+                    if timing: start('symm')
+                    # Hermitian (and anti-Hermitian) conjugates; only if matrix block non-zero        
+                    # ( H(k) and S(k) can be (anti)symmetrized as a whole )
+                    # TODO: symmetrization should be done afterwards
+                    H0[ :,c:d,a:b]   =  H0[ :,a:b,c:d].transpose((0,2,1)).conjugate()
+                    S[  :,c:d,a:b]   =  S[  :,a:b,c:d].transpose((0,2,1)).conjugate()                    
+                    if timing: stop('symm') 
+                        
+        self.H0, self.S, self.dH0, self.dS = H0, S, dH0, dS       
+                        
         if self.first:
-            self.calc.out('Hamiltonian matrix is %.3f %% filled on first calculation.' %(nonzero*100.0/norb**2) )
-            self.first=False
+            nonzero = sum( abs(S[0].flatten())>1E-15 )
+            self.calc.out('Hamiltonian ~%.3f %% filled.' %(nonzero*100.0/norb**2) )
+            self.first=False            
 
         stop('matrix construction')
 
     def get_matrices(self):
         self.construct_matrices()
-        return self.H0,self.S,self.dH0,self.dS
+        return self.H0, self.S, self.dH0, self.dS
+        
 
-    def get_cut(self):
+    def get_cutoff(self):
         """ Maximum cutoff. """
         return self.max_cut
+
 
 def simple_table_notation(table):
     a,b,i=table[2:].split('-')

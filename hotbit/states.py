@@ -2,25 +2,22 @@
 # Please see the accompanying LICENSE file for further information.
 
 from solver import Solver
+from weakref import proxy
 from electrostatics import Electrostatics
 from occupations import Occupations
-from hotbit.fortran.misc import fortran_rho
-from hotbit.fortran.misc import fortran_rho0
-from hotbit.fortran.misc import fortran_rhoe0
-from hotbit.fortran.misc import symmetric_matmul
-from hotbit.fortran.misc import matmul_diagonal
-from hotbit.fortran.misc import fortran_fbs
+from hotbit.fortran.misc import fortran_rhoc
+from hotbit.fortran.misc import fortran_rhoec
 import numpy as nu
-from weakref import proxy
+from box import mix
+pi=nu.pi
+
 
 class States:
 
     def __init__(self,calc):
         self.es=Electrostatics(calc)
         self.solver=Solver(calc)
-        self.calc=proxy(calc)
-        width=calc.get('width')
-        self.occu=Occupations(calc.el.get_number_of_electrons(),width=width)
+        self.calc=proxy(calc)       
         self.nat=len(calc.el)
         self.norb=calc.el.get_nr_orbitals()
         self.prev_dq=[None,None]
@@ -28,9 +25,79 @@ class States:
         self.SCC=calc.get('SCC')
         self.rho=None
         self.rhoe0=None
+        self.nk=None
+        
+       
+    def setup_k_sampling(self,kpts,physical=True):
+        '''
+        Setup the k-point sampling and their weights.
+        
+        @param kpts: 3-tuple: number of k-points in different directions
+                     list of 3-tuples: k-points given explicitly
+        @param physical: No meaning for infinite periodicities. For physically
+                     periodic systems only certain number of k-points are allowed.
+                     (like wedge of angle 2*pi/N, only number of k-points that 
+                     divides N, is physically allowed). If physical=False,
+                     allow interpolation of this k-sampling.
+        '''
+        if kpts!=(1,1,1) and self.calc.get('width')<1E-10:
+            raise AssertionError('With k-point sampling width must be>0!')
+            
+        M = self.calc.el.get_number_of_transformations()
+        if isinstance(kpts,tuple):
+            # set up equal-weighted and spaced k-point mesh
+            if 0 in kpts:
+                raise AssertionError('Each direction must have at least one k-point! (Gamma-point)')
+            
+            kl=[]
+            for i in range(3):
+                if M[i]==nu.Inf:
+                    # arbitrary sampling is allowed
+                    spacing = 2*pi/kpts[i]
+                    kl.append( nu.linspace(-pi+spacing/2,pi-spacing/2,kpts[i]) )
+                else:
+                    # discrete, well-defined sampling; any k-point is not allowed 
+                    if kpts[i] not in mix.divisors(M[i]) and physical:
+                        print 'Allowed k-points for direction',i,'are',mix.divisors(M[i])
+                        raise Warning('Non-physical k-point sampling! ')
+                    else:
+                        kl.append( nu.linspace(0,2*pi-2*pi/kpts[i],kpts[i]) )
+                
+            k=[]    
+            wk=[]
+            nk0 = nu.prod(kpts)
+            for a in range(kpts[0]):
+                for b in range(kpts[1]):
+                    for c in range(kpts[2]):
+                        newk = nu.array([kl[0][a],kl[1][b],kl[2][c]])
+                        inv_exists = False
+                        # if newk's inverse exists, increase its weight by default
+                        for ik, oldk in enumerate(k):
+                            if nu.linalg.norm(oldk+newk)<1E-10: 
+                                inv_exists = True
+                                wk[ik]+=1.0/nk0
+                        # newk's inverse does not exist; make new k-point
+                        if not inv_exists:
+                            k.append( newk )
+                            wk.append( 1.0/nk0 ) 
+            nk=len(k)            
+            k=nu.array(k)
+            wk=nu.array(wk)
+        else:
+            # work with a given set of k-points
+            nk=len(kpts)
+            k=nu.array(kpts)
+            wk=nu.ones(nk)/nk
+            kl=None
+            
+        # now sampling is set up. Check the consistency.
+        pbc = self.calc.el.get_pbc()
+        for i in range(3):
+            for kp in k:
+                if kp[i]>1E-10 and not pbc[i]:
+                    raise AssertionError('Do not set (non-zero) k-points in non-periodic direction!')            
+        return nk, k, kl, wk
 
-    def __del__(self):
-        pass
 
     def guess_dq(self):
         n=len(self.calc.el)
@@ -45,22 +112,30 @@ class States:
 
 
     def solve(self):
+        if self.nk==None:
+            physical = self.calc.get('physical_k_points')
+            self.nk, self.k, self.kl, self.wk = self.setup_k_sampling( self.calc.get('kpts'),physical=physical )
+            width=self.calc.get('width')
+            self.occu = Occupations(self.calc.el.get_number_of_electrons(),width,self.wk)
         self.calc.start_timing('solve')
-        self.calc.ia.check_too_close_distances()
+        
+        # TODO: enable fixed dq-calculations in SCC (for band-structures)
         dq=self.guess_dq()
-        self.H0, self.S, self.dH0, self.dS=self.calc.ia.get_matrices()
-        try:
+        self.H0, self.S, self.dH0, self.dS = self.calc.ia.get_matrices()
+#        try:
+        if True:
             if self.SCC:
-                self.es.construct_tables()
-            self.e, self.wf=self.solver.get_states(self.calc,dq,self.H0,self.S,self.count)
-            self.calc.el.set_solved('ground state')
+                self.es.construct_Gamma_matrix()
+            self.e, self.wf = self.solver.get_states(self.calc,dq,self.H0,self.S,self.count)
+            
             self.check_mulliken_charges()
             self.large_update()
             self.count+=1
             self.calc.stop_timing('solve')
-        except Exception, ex:
-            self.calc.stop_timing('solve')
-            raise Exception(ex)
+            
+#        except Exception, ex:
+#            self.calc.stop_timing('solve')
+#            raise Exception(ex)
 
 
     def check_mulliken_charges(self):
@@ -84,11 +159,10 @@ class States:
         self.wf=wf
         self.f=self.occu.occupy(e)
         self.calc.start_timing('rho')
-        self.rho0=fortran_rho0(self.wf,self.f,self.calc.el.nr_ia_orbitals,self.calc.el.ia_orbitals,self.norb)
+        self.rho = fortran_rhoc(self.wf,self.f,self.norb,self.nk)
         self.calc.stop_timing('rho')
-        self.rho0S_diagonal=matmul_diagonal(self.rho0,self.S,self.norb)
         if self.SCC:
-            self.dq=self.mulliken()
+            self.dq = self.mulliken()
             self.es.set_dq(self.dq)
         self.calc.stop_timing('update')
 
@@ -96,109 +170,110 @@ class States:
     def large_update(self):
         """ Update stuff from eigenstates needed later for forces etc. """
         self.calc.start_timing('final update')
-        self.Swf=None
-        #self.rho=fortran_rho(self.wf,self.f,self.norb) # the complete density matrix (even needed?)
-        self.dH=nu.zeros_like(self.dH0)
+        self.Swf = None
+        self.dH = nu.zeros_like(self.dH0)
         if self.SCC:
             self.prev_dq=[self.dq, self.prev_dq[0]]
-            for a in range(3):
-                self.dH[:,:,a]=self.dH0[:,:,a] + self.es.get_H1()*self.dS[:,:,a]
+            # TODO: do k-sum with numpy
+            for ik in range(self.nk):
+                for a in range(3):
+                    self.dH[ik,:,:,a] = self.dH0[ik,:,:,a] + self.es.get_h1()*self.dS[ik,:,:,a]
         else:
-            self.dH=self.dH0
+            self.dH = self.dH0
 
         # density matrix weighted by eigenenergies
-        self.rhoe0=fortran_rhoe0(self.wf,self.f,self.e,self.calc.el.nr_ia_orbitals,self.calc.el.ia_orbitals,self.norb)
+        self.rhoe=fortran_rhoec(self.wf,self.f,self.e,self.norb,self.nk)
         self.calc.stop_timing('final update')
 
     def get_dq(self):
-        return self.dq
+        return self.dq.copy()
 
     def get_eigenvalues(self):
-        return self.e
+        return self.e.copy()
 
     def get_occupations(self):
-        return self.f
+        return self.f.copy()
 
-    def get_homo(self):
-        """ Return highest orbital with occu>0.99. """
+    def get_homo(self,occu=0.99):
+        """ Return highest *largely* occupied orbital (>occu)
+        
+        0<=occu<=2. Recommended use only for molecules.
+        """
         for i in range(self.norb)[::-1]:
-            if self.f[i]>0.99: return i
+            if any( self.f[:,i]>occu ): return i
 
-    def get_lumo(self):
-        """ Return lowest orbital with occu<1.01. """
+    def get_lumo(self,occu=1.01):
+        """ Return lowest *largely* unuccopied orbital (<occu)
+        
+        0<=occu<=2. Recommended use only for molecules.
+        """
         for i in range(self.norb):
-            if self.f[i]<1.01: return i
-
-    def get_hoc(self):
-        """ Return highest partially occupied orbital. """
-        for i in range(self.norb)[::-1]:
-            if self.f[i]>1E-9: return i
-
-    def get_fermi_level(self):
-        """ Return the Fermi level of the system. The Fermi level
-            is defined by the fit of 
-
-                               2
-              f(e) =  --------------------
-                      exp((e-e_F)/kbT) + 1
-
-            to the eigenenergy-occupation -points (kbT is the width of
-            the Fermi distribution and e_F the Fermi energy).
-            If the kbT is smaller than 0.004 Ha the eigenenergy
-            of the HOMO is considered as the Fermi level. """
-        e = self.get_eigenvalues()
-        f = self.get_occupations()
-        from scipy.optimize import leastsq
-        fermifunc = lambda p, e:    2./(nu.exp((e-p[0])/p[1]) + 1)
-        errfunc   = lambda p, e, y: fermifunc(p, e) - y
-        # p = [Fermi_level, width]
-        p = [0.5 * (e[self.get_homo()] + e[self.get_lumo()]), 1.0]
-        p, success = leastsq(errfunc, p[:], args=(e,f), ftol=0.0001, xtol=0.001)
-        e_g = nu.linspace(e[0], e[-1], 500)
-        #import pylab
-        #pylab.figure()
-        #pylab.plot(e,f,"b^", e_g, fermifunc(p, e_g), "r-")
-        #pylab.show()
-        if success:
-            if p[1] < 0.004:
-                return e[self.get_homo()]
-            else:
-                return p[0]
-        else:
-            raise RuntimeError("Could not define the Fermi level.")
-
+            if any( self.f[:,i]<occu ): return i
 
     def mulliken(self):
-        """ Return excess Mulliken populations. """
+        '''
+        Return excess Mulliken populations dq = dq(total)-dq0
+        
+        dq_I = sum_k w_k Trace_I Re[ rho(k)*S(k) ]
+             = sum_(i in I) Re [ sum_k w_k sum_j rho(k)_ij*S(k)_ji ] 
+             = sum_(i in I) Re [ sum_k w_k sum_j rho(k)_ij*S(k)^T_ij ]
+             = sum_(i in I) [ sum_k w_k diag(k)_i ],
+             = sum_(i in I) diag_i
+            
+               where diag(k)_i = Re [sum_j rho(k)_ij * S(k)^T_ij] 
+               and diag_i = sum_k w_k diag(k)_i 
+        '''
+        diag = nu.zeros((self.norb))
+        for ik in xrange(self.nk):
+            diag_k = ( self.rho[ik]*self.S[ik].transpose() ).sum(axis=1).real
+            diag = diag + self.wk[ik] * diag_k
         q=[]
-        for i in range(self.nat):
-            orbitals=self.calc.el.orbitals(i,indices=True)
-            q.append( sum(self.rho0S_diagonal[orbitals]) )
+        for o1, no in self.calc.el.get_property_lists(['o1','no']):
+            q.append( diag[o1:o1+no].sum() )
         return nu.array(q)-self.calc.el.get_valences()
 
-    def mulliken_transfer(self,k,l):
-        """ Return Mulliken transfer charges between states k and l. """
-        if self.Swf==None:
-            self.Swf=symmetric_matmul(self.S,self.wf)
-        q=[]
-        for i in range(self.nat):
-            iorb=self.calc.el.orbitals(i,indices=True)
-            qi=sum( [self.wf[oi,k]*self.Swf[oi,l]+self.wf[oi,l]*self.Swf[oi,k] for oi in iorb] )
-            q.append(qi/2)
-        return nu.array(q)
 
     def band_structure_energy(self):
-        """ Return band structure energy. """
-        return nu.trace(nu.dot(self.rho0,self.H0))
+        '''
+        Return band structure energy.
+        
+        ebs = sum_k w_k ( sum_ij rho_ij * H0_ji )
+            = sum_k w_k ( sum_i [sum_j rho_ij * H0^T_ij] )
+        '''
+        self.calc.start_timing('e_bs')
+        ebs = 0.0
+        for ik in xrange(self.nk):
+            diagonal = ( self.rho[ik]*self.H0[ik].transpose() ).sum(axis=1)
+            ebs += self.wk[ik] * diagonal.sum() 
+        assert ebs.imag<1E-13
+        self.calc.stop_timing('e_bs')
+        return ebs.real 
 
-    def band_structure_forces(self):
-        """ Return forces arising from band structure. """
-        self.calc.start_timing('f_bs')
 
-        norbs=self.calc.el.nr_orbitals
-        inds=self.calc.el.atom_orb_indices2
-
-        f=fortran_fbs(self.rho0,self.rhoe0,self.dH,self.dS,norbs,inds,self.norb,self.nat)
+    def get_band_structure_forces(self):
+        '''
+        Return band structure forces.
+        
+        F_I = - sum_k w_k Trace_I [ dH(k)*rho(k) - dS(k)*rhoe(k) + c.c ]
+            = - sum_k w_k sum_(i in I) diag_i(k) + c.c.,
+            
+                where diag_i(k) = [dH(k)*rho(k) - dS(k)*rhoe(k)]_ii
+                                = sum_j [dH(k)_ij*rho(k)_ji - dS(k)_ij*rhoe(k)_ji]
+                                = sum_j [dH(k)_ij*rho(k)^T_ij - dS(k)_ij*rhoe(k)^T_ij]
+        '''
+        self.calc.start_timing('f_bs')       
+        diag = nu.zeros((self.norb,3),complex)
+        
+        for a in range(3):
+            for ik in range(self.nk):
+                diag_k = ( self.dH[ik,:,:,a]*self.rho[ik].transpose()  \
+                         - self.dS[ik,:,:,a]*self.rhoe[ik].transpose() ).sum(axis=1)
+                diag[:,a] = diag[:,a] - self.wk[ik] * diag_k
+            
+        f=[]            
+        for o1, no in self.calc.el.get_property_lists(['o1','no']):
+            f.append( 2*diag[o1:o1+no,:].sum(axis=0).real )
+            
         self.calc.stop_timing('f_bs')
-        return -2*nu.real(f)
+        return f
 
