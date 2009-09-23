@@ -66,13 +66,10 @@ class Elements:
 
     def __del__(self):
         pass
-<<<<<<< .working
     
     def get_N(self):
         """ Return the number of atoms. """
-        return self.N
-=======
-    
+        return self.N    
 
     def greetings(self):
         """ Return documentation for elements from .elm files. """
@@ -280,8 +277,6 @@ class Elements:
             return ret[0]
         else: 
             return ret
-
->>>>>>> .merge-right.r200
 
     def set_cutoffs(self,cutoffs):
         """ Set the maximum interaction cutoffs (dict of ranges for element pair SlaKo tables). """
