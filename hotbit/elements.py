@@ -59,7 +59,7 @@ class Elements:
         if elements!=None:
             self.files.update(elements)
         self._elements_initialization()
-        self.solved={'ground state':None,'energy':None,'forces':None,'stress':None,'ebs':None,'ecoul':None}
+        self.solved={'ground state':None,'energy':None,'forces':None,'stress':None,'ebs':None,'ecoul':None,'magmoms':None}
 
     def __len__(self):
         return len(self.symbols)
@@ -113,7 +113,7 @@ class Elements:
         """ Return True if quantities are solved for atoms.
 
         The quantities can be one or more of: 'ground state', 'energy', 'forces', and 'stress'.
-        'ebs' or 'ecoul'
+        'ebs' or 'ecoul', 'magmoms'
         """
         if not isinstance(quantities,(list,tuple)):
             quantities=[quantities]
