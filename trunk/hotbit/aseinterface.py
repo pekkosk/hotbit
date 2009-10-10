@@ -330,7 +330,7 @@ class Calculator(Output):
 
         Check if the quantities in the quantities list have already been calculated
         for the atomic configuration atoms. The quantities can be one or more of:
-        'ground state', 'energy', 'forces', and 'stress'.
+        'ground state', 'energy', 'forces', 'magmoms', and 'stress'.
         """
         return self.el.calculation_required(atoms,quantities)
 
