@@ -244,7 +244,7 @@ class Elements:
         return self.atoms.rotation(n)
         
     
-    def nvector(self,r,ntuple=(0,0,0),r0=[0,0,0],lst='vec'):
+    def nvector(self,r,ntuple=(0,0,0),r0=nu.array([0,0,0]),lst='vec'):
         '''
         Return position vector rn-r0, when r is operated by S(n)r=rn.
         
@@ -255,9 +255,9 @@ class Elements:
         '''
         if not isinstance(lst,(list,tuple)):
             lst=[lst]
-        assert not( r0!=[0,0,0] and 'tensor' in lst )
-        if isinstance(r,int):  r=self.atoms.positions[r]
-        if isinstance(r0,int): r0=self.atoms.positions[r0]
+        #assert not( r0!=nu.array([0,0,0]) and 'tensor' in lst )
+        if isinstance(r,int):  r=self.atoms.positions[r]/Bohr
+        if isinstance(r0,int): r0=self.atoms.positions[r0]/Bohr
         vec=(self.atoms.transform(r,ntuple)-r0) / Bohr
         
         ret=[]

@@ -202,17 +202,17 @@ class WaveFunctions:
         self.el=calc.el
         self.st=calc.st
         self.L=self.atoms.get_cell().diagonal() / Bohr
-        self.N=ceil(self.L / (dr/Bohr) )
+        self.N=nu.ceil(self.L / (dr/Bohr) )
         self.grid=[]
         for i in range(3):
             self.grid.append( nu.linspace(0,self.L[i],self.N[i]) )
         self.dr=self.L/self.N
-        self.dV=prod(self.dr)
+        self.dV=nu.prod(self.dr)
 
 
-    def get_wf(self,i):
+    def get_wf(self,i,k=0):
         """ Return wave function i on given grid. """
-        wf=self.st.wf[:,i].copy()
+        wf=self.st.wf[k,i,:].copy()
         orbs=self.el.orbitals()
         wfg=nu.zeros(self.N,type(wf))
         for orb,c in zip(orbs,wf):
@@ -221,8 +221,9 @@ class WaveFunctions:
             for i,x in enumerate(self.grid[0]):
                 for j,y in enumerate(self.grid[1]):
                     for k,z in enumerate(self.grid[2]):
-                        r0=nu.array([x,y,z])
-                        r=self.el.vector(orb['atom'],rj=r0)
+                        xyz=nu.array([x,y,z])
+                        r=self.el.nvector(xyz,r0=orb['atom'])
+                        #print xyz, self.el.nvector(orb['atom'])
                         wfg[i,j,k] += c*Rnl(mix.norm(r))*angular(r,orbtype)
         return wfg
 
@@ -237,7 +238,7 @@ class WaveFunctions:
     def get_pseudo_density(self):
         """ Return the valence electron density from pseudo wave functions."""
         rho=None
-        for i,f in enumerate(self.st.f):
+        for i,f in enumerate(self.st.f[0,:]):
             if f<1E-4: break
             rhoi = self.get_wf_pseudo_density(i)
             if rho==None: rho = rhoi*float(f)
@@ -245,11 +246,10 @@ class WaveFunctions:
                 rho+=rhoi*float(f)
         return rho
 
-
-        rho=self.get_wf(i)
-        rho*=rho.conjugate()
-        rho/=rho.flatten().sum() #ensure normalization
-        return rho
+        #rho=self.get_wf(i)
+        #rho*=rho.conjugate()
+        #rho/=rho.flatten().sum() #ensure normalization
+        #return rho
 
 
     def write_vtk(self,i,fname=None):
