@@ -25,6 +25,13 @@ def divisors(x):
         if nu.mod(x,i)==0: lst.append(i)        
     return lst
 
+def gcd(a,b):
+    """ Return greatest common divisor of a and b."""
+    while b!=0:
+        rem = a%b
+        a,b = b,rem
+    return a
+
 
 def rotation_matrix(axis,angle):
     """ Return the active rotation matrix with given axis and rotation angle. """
