@@ -34,7 +34,7 @@ class Grids:
         @param spacing: grid spacing in Bohrs
         """
         self.calc.start_timing('make grid')
-        if any(self.calc.el.atoms.get_pbc()):
+        if nu.any(self.calc.el.atoms.get_pbc()):
             raise AssertionError('Grid stuff not implemented for periodic systems yet.')
         if self.spacing==spacing:
             return
@@ -150,7 +150,7 @@ class Grids:
         for i,f in enumerate(self.calc.st.f[k,:]):
             if f<1E-6: break
             dens = dens + self.get_wf_density(i,k)*float(f) #TODO: k-point weights 
-        assert all(abs(dens.flatten().imag)<1E-10)
+        assert nu.all(abs(dens.flatten().imag)<1E-10)
         assert abs(dens.flatten().sum()*self.dV-self.calc.el.get_number_of_electrons())<1E-9
         return dens.real
         
