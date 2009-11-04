@@ -256,7 +256,7 @@ class Elements:
         '''
         if not isinstance(lst,(list,tuple)):
             lst=[lst]
-        assert not( all(r0!=nu.array([0,0,0])) and 'tensor' in lst )
+        assert not( nu.all(r0!=nu.array([0,0,0])) and 'tensor' in lst )
         if isinstance(r,int):  
             r=self.atoms.positions[r] 
         else:
