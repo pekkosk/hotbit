@@ -15,6 +15,7 @@ from interactions import Interactions
 from environment import Environment
 from repulsion import Repulsion
 from states import States
+from grids import Grids
 from hotbit.output import Output
 import box.mix as mix
 from time import time
@@ -313,6 +314,7 @@ class Calculator(Output):
         self.st=States(self)
         self.rep=Repulsion(self)
         self.env=Environment(self)
+        self.gd=Grids(self)
         pbc=atoms.get_pbc()
         # FIXME: gamma_cut -stuff
         if self.get('SCC') and nu.any(pbc) and self.get('gamma_cut')==None:
@@ -444,6 +446,23 @@ class Calculator(Output):
             self.st
         return self.ecoul
 
+    def get_grid_density(self,spacing=0.2,pad=False):
+        """
+        Return the valence electron density
+        
+        @param spacing: grid spacing. Uses the ASE cell.
+        @param pad: if True, the grid spans the whole ASE cell
+                    (otherwise one grid point short)
+        """
+        self.gd.make_grid(spacing=spacing,pad=pad)
+        return self.gd.get_density()
+    
+    
+    def get_grid_wf(self,i,k=0,spacing=0.2):
+        """ Return state i with given k-point on grid. """
+        self.gd.make_grid(spacing=spacing)
+        return self.gd.get_grid_wf(i)
+    
 
     # some not implemented ASE-assumed methods
     def get_fermi_level(self):
@@ -464,7 +483,8 @@ class Calculator(Output):
 
 
     def get_number_of_bands(self):
-        raise NotImplementedError
+        """ Return the total number of orbitals. """
+        return self.st.norb
 
 
     def start_timing(self, label):

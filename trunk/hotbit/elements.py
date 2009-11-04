@@ -248,6 +248,7 @@ class Elements:
         '''
         Return position vector rn-r0, when r is operated by S(n)r=rn.
         
+        Positions should be in atomic units.
         @param r:   position (array) or atom index (integer) which is operated
         @param ntuple:   operate on r with S(n)
         @param r0:  if integer, use atom r0's position as r0
@@ -255,10 +256,16 @@ class Elements:
         '''
         if not isinstance(lst,(list,tuple)):
             lst=[lst]
-        #assert not( r0!=nu.array([0,0,0]) and 'tensor' in lst )
-        if isinstance(r,int):  r=self.atoms.positions[r]/Bohr
-        if isinstance(r0,int): r0=self.atoms.positions[r0]/Bohr
-        vec=(self.atoms.transform(r,ntuple)-r0) / Bohr
+        assert not( all(r0!=nu.array([0,0,0])) and 'tensor' in lst )
+        if isinstance(r,int):  
+            r=self.atoms.positions[r] 
+        else:
+            r=r*Bohr
+        if isinstance(r0,int): 
+            r0=self.atoms.positions[r0] 
+        else:
+            r0=r0*Bohr
+        vec=(self.atoms.transform(r,ntuple)-r0)/Bohr
         
         ret=[]
         for l in lst:
@@ -324,6 +331,7 @@ class Elements:
         self.atomorb=[]
         self.nr_orbitals=[]
         self.first_orbitals=[]
+        self.orbital_atoms=[]
         self.norb=0
         for i,symb in enumerate(self.symbols):
             el=self.elements[symb]
@@ -332,6 +340,7 @@ class Elements:
             for k,(ao,e) in enumerate(zip(el.get_orbital_types(),el.get_onsite_energies())):
                 self.norb+=1
                 Rnl=el.get_Rnl_function(ao)
+                self.orbital_atoms.append(i)
                 atomorb.append({'atom':i,'symbol':symb,'orbital':ao,\
                                 'index':self.norb-1,'energy':e,'atomindex':k,'Rnl':Rnl})
             self.nr_orbitals.append(len(atomorb))
@@ -343,10 +352,10 @@ class Elements:
         self.electrons=self.get_valences().sum()-self.charge
 
         # set list of element pairs
-        self.el_pair_list=[]
-        for i,si in enumerate(self.present):
-            for j,sj in enumerate(self.present):
-                self.el_pair_list.append([si,sj])
+        #self.el_pair_list=[]
+        #for i,si in enumerate(self.present):
+        #    for j,sj in enumerate(self.present):
+        #        self.el_pair_list.append([si,sj])
 
         self.atom_orb_indices=[[orb['index'] for orb in self.atomorb[i]] for i in range(self.N)]
 
@@ -417,29 +426,33 @@ class Elements:
         else: 
             return self.elements[i]
 
-    def get_element_pairs(self):
-        """ Return list of element pairs. """
-        return self.el_pair_list
 
-    def orbitals(self,i=None,indices=False,number=False):
+    def orbitals(self,i=None,basis=False,atom=False,indices=False,number=False):
         """ Return data related to system orbitals.
 
         Parameters:
         -----------
         Default: return list of orbital-dictionaries for all atoms.
         i: return dict of orbitals for given atom  (dict incluldes 'atom','symbol','orbital',...)
+        basis: return the date for basis orbital i.
+        atom: return atom index for the basis orbital index i.
         indices: return orbital indices for atom i.
         number: return number of orbitals for atom i.
         """
         if i==None:
             return self.orb
         elif i!=None:
-            if indices:
+            if atom:
+                return self.orbital_atoms[i]
+            elif indices:
                 return self.atom_orb_indices[i] #[orb['index'] for orb in self.atomorb[i]]
             elif number:
                 return self.nr_orbitals[i] #len(self.atomorb[i])
+            elif basis:
+                return self.orb[i]
             else:
                 return self.atomorb[i]
+
 
     def get_nr_orbitals(self):
         """ Total number of orbitals. """
@@ -462,57 +475,15 @@ class Elements:
         l = [ get_list(item) for item in lst ]
         return zip(*l)
             
-
-    def get_atom_pairs(self,mode=1,cut=None,include=None):
-        # TODO get rid of this method !!
-        """
-        List atom pairs with distance cutoff / only given element pairs.
-        Different modes:
-        1: return (i,j)
-        2: return (i,si,j,sj)
-        3: return (i,si,j,sj,dist)
-        4: return (i,si,j,sj,dist,r)             (r from i to j)
-        5: return (i,si,j,sj,dist,r,rhat)        (    -"-      )
-        6: return (i,si,ri,j,sj,rj,dist,r,rhat)  (    -"-      )
-        7: return (i,o1i,noi,j,o1j,noj) (o1i=first orbital index, noi=number of orbitals)
-        """
-        if include==None:
-            included=self.get_element_pairs()
-        else:
-            included=include
-
-        lst=[]
-        if cut!=None:
-            assert cut<=self.cut
-        for (i,j) in self.ia_pairs:
-                si, sj=self.symbols[i], self.symbols[j]
-                if not ([si,sj] in included or [sj,si] in included):
-                    continue
-                d=self.geometry[(i,j)]['dist']
-                if cut==None or (cut!=None and d<cut):
-                    if mode==4 or mode==5 or mode==6:
-                        rvec=self.geometry[(i,j)]['r']
-                    if mode==1:
-                        lst.append((i,j))
-                    elif mode==2:
-                        lst.append((i,si,j,sj))
-                    elif mode==3:
-                        lst.append((i,si,j,sj,d))
-                    elif mode==4:
-                        lst.append((i,si,j,sj,d,rvec))
-                    elif mode==5:
-                        lst.append((i,si,j,sj,d,rvec,rvec/norm(rvec)))
-                    elif mode==6:
-                        ri=self.vector(i)
-                        rj=self.vector(j)
-                        lst.append((i,si,ri,j,sj,rj,d,rvec,rvec/norm(rvec)))
-                    elif mode==7:
-                        noi, noj=self.nr_orbitals[i], self.nr_orbitals[j]
-                        o1i, o1j=self.first_orbitals[i], self.first_orbitals[j]
-                        noi, noj=self.nr_orbitals[i], self.nr_orbitals[j]
-                        lst.append((i,o1i,noi,j,o1j,noj))
-        return lst
-
+            
+    def get_cube(self):
+        """ Return the (orthorhombic) unit cell cube dimensions. """
+        cell=abs(self.atoms.get_cell())
+        e=1E-10
+        if cell[0,1]>e or cell[0,2]>e or cell[1,2]>e:
+            raise AssertionError('For cube the unit cell has to be orthorombic')
+        return self.atoms.get_cell().diagonal()/Bohr
+        
 
     def get_free_population(self, m):
         """ Return the population of the basis state m when the atom
