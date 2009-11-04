@@ -1,4 +1,4 @@
-# Fraunheims CH tables
+# Standard CH tables
 
 
 # C H REPULSION
@@ -106,7 +106,7 @@ repulsion=
   3.70000000  0.00000000
 
 
-# H C Slater-Koster table (Fraunheims)
+# H C Slater-Koster table 
 # 480
 H_C_table=
 4.0000000000E-01    0 0 0 0 0 0 0 0     4.5124918492E-01    5.1410296637E-01    0 0 0 0 0 0 0 0     -3.3030812449E-01   -7.5403697942E-01                       
