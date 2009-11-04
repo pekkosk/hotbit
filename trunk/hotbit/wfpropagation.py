@@ -13,7 +13,7 @@ def matrix_square_root(A):
     """
     assert matrix_has_property(A,'symmetric')
     D, U=nu.linalg.eigh(A)
-    assert all(D>=0)
+    assert nu.all(D>=0)
     assert matrix_has_property(U,'orthogonal')
     d=nu.sqrt(D)
     return dot( dot(U,nu.diag(d)),U.transpose().conjugate() )

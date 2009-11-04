@@ -27,7 +27,7 @@ def wf_dot_product(wf1,wf2,S):
     
     
 def same_matrix(M1,M2,tol=1E-13): 
-    return all( abs(M1.flatten()-M2.flatten())<tol )    
+    return nu.all( abs(M1.flatten()-M2.flatten())<tol )    
     
     
 def matrix_has_property(A,property,tol=1E-12):

@@ -42,7 +42,7 @@ class Bravais:
         return self.atoms.get_cell()
     
     def __eq__(self,other):
-        if isinstance(other,Bravais) and all(self.get_pbc()==other.get_pbc()) \
+        if isinstance(other,Bravais) and nu.all(self.get_pbc()==other.get_pbc()) \
            and self.get_cell()==other.get_cell():
             return True
         else:

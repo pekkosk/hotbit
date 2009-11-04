@@ -200,7 +200,7 @@ class States:
         0<=occu<=2. Recommended use only for molecules.
         """
         for i in range(self.norb)[::-1]:
-            if any( self.f[:,i]>occu ): return i
+            if nu.any( self.f[:,i]>occu ): return i
 
     def get_lumo(self,occu=1.01):
         """ Return lowest *largely* unuccopied orbital (<occu)
@@ -208,7 +208,7 @@ class States:
         0<=occu<=2. Recommended use only for molecules.
         """
         for i in range(self.norb):
-            if any( self.f[:,i]<occu ): return i
+            if nu.any( self.f[:,i]<occu ): return i
 
     def mulliken(self):
         '''
