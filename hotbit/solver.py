@@ -88,6 +88,7 @@ class Solver:
                 self.calc.start_timing('eigensolver (cplx)')
                 e, wf = geigc(H,S,self.norb)
                 self.calc.stop_timing('eigensolver (cplx)')
+            wf = wf.transpose()
         if False:
             raise NotImplementedError('Not checked for complex stuff')
             # using numpy lapack_lite

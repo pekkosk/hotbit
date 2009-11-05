@@ -75,9 +75,9 @@ real(8), intent(in) :: wf(0:norb-1,0:norb-1)
 real(8), intent(in) :: occ(0:norb-1)
 real(8), intent(out) :: rho(0:norb-1,0:norb-1)
 integer :: i,j,mx
-real(8) :: wft(0:norb-1,0:norb-1)
+!real(8) :: wft(0:norb-1,0:norb-1) this is not needed anymore
 rho=0d0
-wft=transpose(wf)
+!wft=transpose(wf) 
 
 do i=norb-1,0,-1
     if( occ(i)>1E-15 ) then
@@ -88,7 +88,7 @@ end do
 
 do i=0,norb-1
 do j=i,norb-1
-    rho(i,j)=sum( occ(0:mx)*wft(0:mx,i)*wft(0:mx,j) )
+    rho(i,j)=sum( occ(0:mx)*wf(0:mx,i)*wf(0:mx,j) )
     rho(j,i)=rho(i,j)
 end do
 end do
@@ -105,7 +105,7 @@ complex(8), intent(in)  :: wf(0:nk-1,0:norb-1,0:norb-1)
 real(8),    intent(in)  :: occ(0:nk-1,0:norb-1)
 complex(8), intent(out) :: rho(0:nk-1,0:norb-1,0:norb-1)
 integer :: i,j,k,mx
-complex(8) :: wft(0:norb-1,0:norb-1)
+!complex(8) :: wft(0:norb-1,0:norb-1) not needed anymore
 
 
 first: do i=norb-1,0,-1
@@ -120,10 +120,10 @@ end do first
 rho=0d0
 do k=0,nk-1
    ! because the first index must be faster:
-   wft=transpose(wf(k,:,:))
+   !wft=transpose(wf(k,:,:))
    do i=0,norb-1
    do j=i,norb-1
-       rho(k,i,j)=sum( occ(k,0:mx)*wft(0:mx,i)*conjg(wft(0:mx,j)) )
+       rho(k,i,j)=sum( occ(k,0:mx)*wf(k,0:mx,i)*conjg(wf(k,0:mx,j)) )
        if(i/=j) then
           rho(k,j,i)=conjg(rho(k,i,j))
        end if
@@ -141,10 +141,10 @@ integer, intent(in) :: norb
 real(8), intent(in) :: wf(0:norb-1,0:norb-1)
 real(8), intent(in) :: occ(0:norb-1),e(0:norb-1)
 real(8), intent(out) :: rhoe(0:norb-1,0:norb-1)
-real(8) :: wft(0:norb-1,0:norb-1)
+!real(8) :: wft(0:norb-1,0:norb-1)
 integer :: i,j,mx
 rhoe=0d0
-wft=transpose(wf)
+!wft=transpose(wf)
 
 do i=norb-1,0,-1
     if( occ(i)>1E-15 ) then
@@ -155,7 +155,7 @@ end do
 
 do i=0,norb-1
 do j=i,norb-1
-    rhoe(i,j)=sum( e(0:mx)*occ(0:mx)*wft(0:mx,i)*wft(0:mx,j) )
+    rhoe(i,j)=sum( e(0:mx)*occ(0:mx)*wf(0:mx,i)*wf(0:mx,j) )
     rhoe(j,i)=rhoe(i,j)
 end do
 end do
@@ -171,7 +171,7 @@ real(8),    intent(in)  :: occ(0:nk-1,0:norb-1)
 real(8),    intent(in)  :: e(0:nk-1,0:norb-1)
 complex(8), intent(out) :: rho(0:nk-1,0:norb-1,0:norb-1)
 integer :: i,j,k,mx
-complex(8) :: wft(0:norb-1,0:norb-1)
+!complex(8) :: wft(0:norb-1,0:norb-1)
 
 rho=0d0
 first: do i=norb-1,0,-1
@@ -185,10 +185,10 @@ end do first
 
 do k=0,nk-1
    ! because the state index must be faster, it must come first
-   wft=transpose(wf(k,:,:))
+   !wft=transpose(wf(k,:,:))
    do i=0,norb-1
    do j=i,norb-1
-       rho(k,i,j)=sum( e(k,0:mx)*occ(k,0:mx)*wft(0:mx,i)*conjg(wft(0:mx,j)) )
+       rho(k,i,j)=sum( e(k,0:mx)*occ(k,0:mx)*wf(k,0:mx,i)*conjg(wf(k,0:mx,j)) )
        rho(k,j,i)=conjg(rho(k,i,j))
    end do
    end do

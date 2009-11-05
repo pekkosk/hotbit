@@ -192,7 +192,7 @@ def angular(r,wf):
 
     # def write_vtk(self,i,fname=None): ----------------------------------------
         # """ Write .vtk file of wave function with *index* i. """ -------------
-        # wf=self.st.wf[:,i].copy() --------------------------------------------
+        # wf=self.st.wf[i,:].copy() --------------------------------------------
         # orbs=self.el.orbitals() ----------------------------------------------
         # wfg=nu.zeros(self.N) -------------------------------------------------
         # grid=[] --------------------------------------------------------------
@@ -457,7 +457,7 @@ class JelliumAnalysis:
 
     def get_state(self, k):
         """ Return the k:th wave function inside the expansion grid. """
-        wf_coeffs = self.calc.st.wf[:,k]
+        wf_coeffs = self.calc.st.wf[k,:]
         state_grid = nu.zeros(self.dim, dtype=nu.float)
         t1 = time.time()
         for wf_coef, orb in zip(wf_coeffs, self.calc.el.orbitals()):

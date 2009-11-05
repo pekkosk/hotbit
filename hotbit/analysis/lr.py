@@ -66,7 +66,7 @@ class LinearResponse:
         Perform some initialization calculations.
         """
         self.timer.start('init')
-        self.Swf = nu.dot(self.S,self.wf)
+        self.Swf = nu.dot(self.S,self.wf.transpose()) #try to avoind the transpose
         self.timer.stop('init')
             
         
@@ -79,7 +79,8 @@ class LinearResponse:
         """ Return Mulliken transfer charges between states k and l. """
         q=[]
         for i,o1,no in self.el.get_property_lists(['i','o1','no']):
-            qi=sum( [self.wf[a,k]*self.Swf[a,l]+self.wf[a,l]*self.Swf[a,k] for a in range(o1,o1+no)] )
+            #qi=sum( [self.wf[a,k]*self.Swf[a,l]+self.wf[a,l]*self.Swf[a,k] for a in range(o1,o1+no)] )
+            qi=sum( [self.wf[k,a]*self.Swf[a,l]+self.wf[l,a]*self.Swf[a,k] for a in range(o1,o1+no)] )
             q.append(qi/2)
         return nu.array(q)
         
