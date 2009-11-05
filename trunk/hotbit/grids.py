@@ -91,6 +91,8 @@ class Grids:
         # normalize basis function; correct wf WITHIN CORE region 
         # to get normalization to one. 
         nall = sum(basis**2)*self.dV
+        if nall<0.1:
+            raise AssertionError('Some element probably does not have radial functions.')
         ncore = sum(basis[core]**2)*self.dV
         basis[core] = basis[core] * sqrt((1-nall+ncore)/(ncore))  
         basis.shape = tuple(self.N)

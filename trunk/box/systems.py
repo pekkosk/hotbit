@@ -103,17 +103,22 @@ def armchair_ribbon(n1,n2,R):
     """
     a1=vec([3*R,0,0])
     a2=vec([0,2*R*nu.cos(pi/6),0])
+    atoms=Atoms()
     r=[]
     for i1 in range(n1):
         for i2 in range(n2):
             corner=i1*a1+i2*a2
-            r.append(corner)
-            r.append(corner+vec([R,0,0]))
-            r.append(corner+vec([1.5*R,R*nu.cos(pi/6),0]))
-            r.append(corner+vec([2.5*R,R*nu.cos(pi/6),0]))
-    cell=[n1*3*R,n2*2*R*nu.cos(pi/6),0]            
-    elements=['C']*len(r)
-    return vec(r),cell,elements
+            atoms += Atom('C',corner)
+            atoms += Atom('C',corner+vec([R,0,0]))
+            atoms += Atom('C',corner+vec([1.5*R,R*nu.cos(pi/6),0]))
+            atoms += Atom('C',corner+vec([2.5*R,R*nu.cos(pi/6),0]))
+            #r.append(corner)
+            #r.append(corner+vec([R,0,0]))
+            #r.append(corner+vec([1.5*R,R*nu.cos(pi/6),0]))
+            #r.append(corner+vec([2.5*R,R*nu.cos(pi/6),0]))
+    atoms.set_cell( (n1*3*R,n2*2*R*nu.cos(pi/6),0) )
+    atoms.center(vacuum=2,axis=2)
+    return atoms
 
 
 def zigzag_ribbon(n1,n2,R):

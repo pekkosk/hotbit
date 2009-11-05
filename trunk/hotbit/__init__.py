@@ -10,3 +10,8 @@ from output import Output
 from states import States
 from box.wedgeatoms import *
 from hotbit.atoms import Atoms
+from os import environ, path
+ 
+
+fixpar = path.join(environ.get('HOTBIT_PARAMETERS'),'fixed_parameters')
+testpar = path.join(environ.get('HOTBIT_PARAMETERS'),'inofficial')
