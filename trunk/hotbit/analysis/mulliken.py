@@ -16,7 +16,7 @@ class MullikenAnalysis:
 
     def __init__(self, calc):
         self.calc = calc
-        self.rho = calc.st.rho0
+        self.rho = calc.st.rho
         self.H0 = calc.st.H0*Hartree
         self.S = calc.st.S
 
