@@ -17,7 +17,7 @@ class Element:
         then from the default HOTBIT_PARAMETERS/[symbol].elm
         """
         i=element.find('elm')
-
+        
         if i>=0:
             # element is full file name; get symbol
             filename=element
@@ -36,11 +36,14 @@ class Element:
         self.data=copy(data[symbol])
         
         # if .elm file exists, read more data
-        default='%s/%s' %(os.environ.get('HOTBIT_PARAMETERS'),filename)
+        hbp = os.environ.get('HOTBIT_PARAMETERS')
+        default='%s/%s' %(hbp,filename)
         if os.path.isfile(filename):
             file=filename
-        else:
+        elif os.path.isfile(default):
             file=default
+        else:
+            raise AssertionError('Element data for %s not found neither in %s nor in %s' %(element,'.',hbp))
             
         self.data['file']=file
         f=open(file,'r')

@@ -65,7 +65,8 @@ class Calculator(Output):
                             interactions than the ones specified.
                             E.g. {'CH':'C_H.par','others':'default'}
 
-        mixer             Density mixer. Can be a name of the mixer (mixer='Anderson') or a dictionary of parameters (mixer={'name':'Anderson','mixing_constant':0.3, 'memory':5}).
+        mixer             Density mixer. Can be a name of the mixer (mixer='Anderson') or 
+                          a dictionary of parameters (mixer={'name':'Anderson','mixing_constant':0.3, 'memory':5}).
         charge            total electric charge for system (-1 means an additional electron)
         width             width of Fermi occupation (in eV)
         SCC               Self-Consistent Charge calculation
@@ -458,10 +459,10 @@ class Calculator(Output):
         return self.gd.get_density()
     
     
-    def get_grid_wf(self,i,k=0,spacing=0.2):
+    def get_grid_wf(self,i,k=0,spacing=0.2,pad=False):
         """ Return state i with given k-point on grid. """
-        self.gd.make_grid(spacing=spacing)
-        return self.gd.get_grid_wf(i)
+        self.gd.make_grid(spacing=spacing,pad=pad)
+        return self.gd.get_wf(i)
     
 
     # some not implemented ASE-assumed methods
@@ -478,9 +479,10 @@ class Calculator(Output):
             self._initialize(atoms)
 
 
-    def get_occupation_numbers(self,kpt=0,spin=0):
-        raise NotImplementedError
-
+    def get_occupation_numbers(self,kpt=0):
+        """ Return occupation numbers for given k-point index. """
+        return self.st.f[kpt].copy()
+    
 
     def get_number_of_bands(self):
         """ Return the total number of orbitals. """
