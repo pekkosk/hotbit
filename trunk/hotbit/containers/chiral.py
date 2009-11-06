@@ -29,6 +29,19 @@ class Chiral:
         else:
             x='Chiral: angle=%.4f (2*pi/%.2f), height=%.4f Ang' %(self.angle,2*nu.pi/self.angle,self.height)
         return x
+    
+    
+    def get(self,key):
+        """
+        Return current angle or height
+        """
+        if key!=('angle' or 'height'):
+            raise AssertionError('Invalid keyword %s' %key)
+        if key=='angle':
+            return self.angle
+        elif key=='height':
+            return self.height             
+    
 
         
     def set(self,angle=None,height=None,scale_atoms=False,container=None):

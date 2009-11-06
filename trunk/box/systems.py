@@ -3,69 +3,17 @@
     
     #P. Koskinen 31.1 2008
 #"""
-from ase import Atoms,Atom
+from ase import Atoms as ase_Atoms
+from ase import Atom
+from hotbit import Atoms
 import numpy as nu
 from numpy import pi
+from math import sqrt, pi, atan, cos, sin
+from box.mix import gcd
 vec=nu.array
-sqrt=nu.sqrt
 dot=nu.dot
-cos=nu.cos
-sin=nu.sin
 
-#def xyz_output(elements,coords,cell,file='out.xyz'):
-    #f=open(file,'w')
-    #dr=ranges(coords)
-    #print>>f, len(elements)
-    ##print>>f, 'UnitCell: ',mix.a2s(cell[0]),mix.a2s(cell[1]),mix.a2s(cell[2]),'dr:',dr[0],dr[1],dr[2]
-    ##print>>f, 'UnitCell: ',cell[0][0],cell[1][1],cell[2][2],'90 90 90'
-    #print>>f, 'UnitCell: ',cell[0],cell[1],cell[2],'90 90 90'
-    #for e,r in zip(elements,coords):
-        #print>>f, e,r[0],r[1],r[2]
-    #f.close()
-    
-#def ranges(coords):
-    #""" Return the x,y and z ranges of the coordinates. dx,dy,dz."""
-    #mn=coords.min(axis=0)
-    #mx=coords.max(axis=0)
-    #return mx-mn
-    
-#def not_implemented():
-    #raise NotImplementedError('todo...')
-    
-#def make_fcc(nx,ny,nz,element,a=None,R=None):
-    #"""
-    #"""
-    #if a==R==None or (a!=None and R!=None):
-        #raise ValueError('either a or R has to be specified; not both')
-    #if a==None:
-        #a=nu.sqrt(2.0)*R
-    #else:
-        #R=a/nu.sqrt(2.0)
-    #ax=vec([a,0,0])
-    #ay=vec([0,a,0])
-    #az=vec([0,0,a])
-    #r=[]
-    #for ix in range(nx):
-        #for iy in range(ny):
-            #for iz in range(nz):       
-                #corner=ix*ax+iy*ay+iz*az
-                #r.append(corner)
-                #r.append(corner+0.5*(ax+ay))
-                #r.append(corner+0.5*(ax+az))
-                #r.append(corner+0.5*(ay+az))
-    #cell=[nx*ax,ny*ay,nz*az]
-    #elements=[element]*len(r)
-    #return vec(r),cell,elements
-                
-    
-#def make_fcc_tube():
-    #not_implemented()
 
-#def make_bcc():
-    #not_implemented()
-    
-#def make_sc():
-    #not_implemented()
     
 def graphene(n1,n2,R,height=5.0):
     """
@@ -95,6 +43,7 @@ def graphene(n1,n2,R,height=5.0):
     atoms.center(vacuum=height/2,axis=2)
     atoms.set_pbc((True,True,False))
     return atoms
+
                          
 def armchair_ribbon(n1,n2,R):
     """
@@ -140,21 +89,99 @@ def zigzag_ribbon(n1,n2,R):
     return Atoms(elements,r,cell=cell)
 
 
-
-def gcd(a, b):
-    if b == 0:
-        return a
-    if a == 0:
-        return b
+def nanotube_data(n,m,R=1.42):
+    """
+    Return a dictionary if miscellaneous nanotube data 
+    """
+    a=sqrt(3.0)*R
+    data={}
+    data['a'] = a
+    data['diameter'] = a/pi*sqrt(n**2+m**2+n*m)
+    data['radius'] = data['diameter']/2
+    data['C'] = data['diameter']*pi
+    d = gcd(n,m)
+    if nu.mod(n-m,3*d)==0:
+        dR = 3*d
+    else:
+        dR = d
+    data['T'] = 3*R*sqrt(n**2+m**2+n*m)/dR
+    data['metallic'] = (nu.mod(n-m,3)==0)
+    data['semiconducting'] = not data['metallic']
+    data['angle'] = atan( sqrt(3)*m/(m+2*n) )
+    data['hexagons_per_cell'] = int(round(2*(m**2+n**2+m*n)/dR,0))
+    if n==m:
+        data['type'] = 'armchair'
+    elif n==0 or m==0:
+        data['type'] = 'zigzag'
+    else:
+        data['type'] = 'chiral'
+    return data
     
-    h = min(a, b)
-    while float(a)/float(h)-int(a/h) != 0 or float(b)/float(h)-int(b/h) != 0:
-        h -= 1
+    
+def nanotube(n,m,R=1.42,chiral=True,element='C'):
+    """
+    Construct nanotube.
+    
+    @param n: chiral index n
+    @param m: chiral index m
+    @param R: nearest neighbor distance
+    @param chiral: return hotbit.Atoms with container 'Chiral',
+              using the minimum number of atoms in unit cell
+    @param element: element symbol
+        
+    atoms.data will contain the dictionary for nanotube data.
+    
+    Reference: V. N. Popov, New J. Phys. 6, 17 (2004)
+    """
+    data = nanotube_data(n,m,R)
+    T, radius, angle = data['T'], data['radius'], data['angle']
+    if m>n:
+        n, m = m, n
+    L1, L2 = n, m
+    dp = gcd(n,m)
+    if nu.mod(L1-L2,3*dp)!=0:
+        d = dp
+    else:
+        d = 3*dp
+        
+    N1 = (L1+2*L2)/d          # eq. (7)
+    N2 = -(2*L1+L2)/d         # eq. (8)
+    Nc = N1*L2-N2*L1          # eq. (13)
+    phi1 = 2*pi*N2/Nc         # eq. (9)
+    phi2 = -2*pi*N1/Nc        # eq. (10)
+    t1 = T*L2/Nc              # eq. (11)
+    t2 = -T*L1/Nc             # eq. (12)
 
-    return h
+    
+    atoms = Atoms()
+    lst = [(l,l) for l in range(m)] + [(l,m-1) for l in range(m,n)]
+    for (l1,l2) in lst:
+            phi = l1*phi1 + l2*phi2
+            t   = l1*t1 + l2*t2
+            # first atom is at origin, shifted by the symmetry operation in eq. (1)
+            atoms += Atom('C',(radius*cos(phi),radius*sin(phi),t))
+            # another basis atom is one-third on of operation S1*S2
+            dphi = (phi1 + phi2)/3
+            dt = (t1+t2)/3
+            atoms += Atom('C',(radius*cos(phi+dphi),radius*sin(phi+dphi),t+dt))      
+            
+    atoms = Atoms(atoms,container='Chiral')
+    angle, height = abs(phi2), abs(t2)
+    atoms.set_container(angle=angle,height=height)
+    if chiral:
+        data['height']=height
+        data['twist']=angle
+    else:
+        N = int( round(T/height) )
+        cp = atoms.extended_copy((1,1,N))
+        atoms = Atoms( cp,cell=(10,10,N*height),pbc=(False,False,True) )
+        data['height']=N*height
+        data['twist']=0.0
+    atoms.data = data
+    return atoms
+    
 
-
-def nanotube(el, a0, n, m, ncopy=1, verbose=False):
+def nanotube_old(el, a0, n, m, ncopy=1, verbose=False):
     '''
     Create a nanotube.
     
