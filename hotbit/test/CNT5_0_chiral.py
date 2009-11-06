@@ -7,7 +7,7 @@ from box.md import check_energy_conservation
 nkpts=10
 
 # energy of normal infinite (5,0) 
-straight = nanotube('C',1.42,5,0)
+straight = nanotube(5,0,1.42,chiral=False)
 straight.set_pbc((False,False,True))
 calc = Hotbit(SCC=False,txt='chiral.cal',kpts=(1,1,nkpts))
 straight.set_calculator(calc)
