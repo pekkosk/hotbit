@@ -10,4 +10,5 @@ def phi(r,t):
 
 calc.env.add_phi(phi)
 #print calc.get_dq(atoms)
-assert calc.get_dq(atoms)[1]>0.99
+calc.solve_ground_state(atoms)
+assert calc.get_dq()[1]>0.99

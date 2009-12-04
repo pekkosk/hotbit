@@ -41,12 +41,13 @@ class Solver:
         wf=nu.zeros((st.nk,self.norb,self.norb),complex)
         for i in range(self.maxiter):
             # diagonalize for all k-points at once
+            H=nu.zeros_like(H0)
             for ik in range(st.nk):
                 if self.SCC:
-                    H=H0[ik,:,:] + es.construct_h1(dq)*S[ik,:,:]
+                    H[ik]=H0[ik,:,:] + es.construct_h1(dq)*S[ik,:,:]
                 else:
-                    H=H0[ik,:,:]
-                e[ik,:], wf[ik,:,:] = self.diagonalize(H,S[ik,:,:],st.nk)
+                    H[ik]=H0[ik,:,:]
+                e[ik,:], wf[ik,:,:] = self.diagonalize(H[ik],S[ik],st.nk)
                 self.H, self.S=H,S
             st.update(e,wf)
             if not self.SCC:

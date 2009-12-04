@@ -61,12 +61,10 @@ def armchair_ribbon(n1,n2,R):
             atoms += Atom('C',corner+vec([R,0,0]))
             atoms += Atom('C',corner+vec([1.5*R,R*nu.cos(pi/6),0]))
             atoms += Atom('C',corner+vec([2.5*R,R*nu.cos(pi/6),0]))
-            #r.append(corner)
-            #r.append(corner+vec([R,0,0]))
-            #r.append(corner+vec([1.5*R,R*nu.cos(pi/6),0]))
-            #r.append(corner+vec([2.5*R,R*nu.cos(pi/6),0]))
     atoms.set_cell( (n1*3*R,n2*2*R*nu.cos(pi/6),0) )
     atoms.center(vacuum=2,axis=2)
+    atoms.center(vacuum=2,axis=1)
+    atoms.set_pbc((True,False,False))
     return atoms
 
 
@@ -86,7 +84,11 @@ def zigzag_ribbon(n1,n2,R):
             r.append(corner+vec([R*nu.cos(pi/6),2.5*R,0]))
     cell=[n1*2*R*nu.cos(pi/6),n2*3*R,0]   
     elements=['C']*len(r)         
-    return Atoms(elements,r,cell=cell)
+    atoms = Atoms(elements,r,cell=cell)
+    atoms.center(vacuum=1.5*R,axis=2)
+    atoms.center(vacuum=1.5*R,axis=1)
+    atoms.set_pbc((True,False,False)) 
+    return atoms
 
 
 def nanotube_data(n,m,R=1.42):

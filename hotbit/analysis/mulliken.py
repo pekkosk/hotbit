@@ -16,13 +16,15 @@ class MullikenAnalysis:
 
     def __init__(self, calc):
         self.calc = calc
-        self.rho = calc.st.rho
+        if any(calc.el.atoms.get_pbc()):
+            raise AssertionError('Mulliken analysis works for now only for non-periodic systems')
+        self.rho = calc.st.rho[0,:,:]
         self.H0 = calc.st.H0*Hartree
-        self.S = calc.st.S
+        self.S = calc.st.S[0,:,:]
 
         self.rho_tilde = 0.5*(self.rho + self.rho.conjugate().transpose())
         self.rho_tilde_S = nu.dot(self.rho_tilde, self.S)
-        self.eigs = self.calc.st.get_eigenvalues().copy()*Hartree
+        self.eigs = self.calc.st.get_eigenvalues().copy()[0,:]*Hartree
         if calc.st.get_lumo() == None:
             fermi_energy = self.eigs[calc.st.get_homo()]
         else:
@@ -39,7 +41,7 @@ class MullikenAnalysis:
     def get_rho_k(self, k):
         """ Return the k-contribution of the density matrix without
         multiplication with the occupation number f_k. """
-        return nu.outer(self.calc.st.wf[:,k],self.calc.st.wf[:,k].conjugate())
+        return nu.outer(self.calc.st.wf[0,k,:],self.calc.st.wf[0,k,:].conjugate())
 
 
     def trace_I(self, I, matrix):
@@ -51,33 +53,64 @@ class MullikenAnalysis:
         return ret
 
 
-    def mulliken(self):
+    def atoms_mulliken(self):
         """ Return excess Mulliken populations. """
-        q=[]
-        for i in range(len(self.calc.el)):
-            q.append( nu.sum(self.trace_I(i, self.rho_tilde_S)) )
-        return nu.array(q)-self.calc.el.get_valences()
+        return self.calc.st.mulliken()
+        #q=[]
+        #for i in range(len(self.calc.el)):
+        #    q.append( nu.sum(self.trace_I(i, self.rho_tilde_S)) )
+        #return nu.array(q)-self.calc.el.get_valences()
 
 
-    def mulliken_I(self, I):
+    def atom_mulliken(self, I):
         """ Return the Mulliken population on atom I. """
         return self.trace_I(I, self.rho_tilde_S)
 
 
-    def mulliken_mu(self, mu):
+    def basis_mulliken(self, mu):
         """ Return the population of basis state mu. """
         return self.rho_tilde_S[mu,mu]
 
 
-    def mulliken_I_k(self, I, k):
-        """ Return the Mulliken population of atom I from eigenstate k. """
-        rho_k = self.get_rho_k(k)
-        rho_tilde_k = 0.5*(rho_k + rho_k.conjugate().transpose())
-        q_Ik = self.trace_I(I, nu.dot(rho_tilde_k,self.S))
-        return q_Ik
+    def atom_state_mulliken(self, I, a):
+        """ Return the Mulliken population of atom I from eigenstate a. """
+        #rho_k = self.get_rho_k(k)
+        #rho_tilde_k = 0.5*(rho_k + rho_k.conjugate().transpose())
+        #q_Ik = self.trace_I(I, nu.dot(rho_tilde_k,self.S))
+        all = self.atom_state_all_orbital_mulliken(I,a)
+        return all.sum()
+    
+    
+    def atom_state_all_orbital_mulliken(self,I,a):
+        """
+        Return Mulliken populations for all atom's orbitals for state a
+        """
+        orbi = self.calc.el.orbitals(I, indices=True)
+        aux = nu.dot( self.calc.st.wf[0,a],self.S )
+        return ( self.calc.st.wf[0,a]*aux )[orbi].real
 
 
-    def mulliken_I_l(self, I, l):
+    def atom_state_all_angmom_mulliken(self,I,a):
+        """ Return the Mulliken population of atom I from eigenstate a, for all l. """
+        all = self.atom_state_all_orbital_mulliken(I,a)
+        pop=nu.zeros((3,))
+        pop[0] = all[0]
+        if len(all)>1: pop[1] = all[1:4].sum()
+        if len(all)>4: pop[2] = all[4:].sum()
+        return pop        
+
+
+    def atom_state_angmom_mulliken2(self,I,a,l):
+        """ Return the Mulliken population of atom I from eigenstate a, related to l. """
+        all = self.atom_state_all_orbital_mulliken(I,a)
+        pop=0.0
+        if 's' in l: pop += all[0]
+        if 'p' in l and len(all)>1: pop += all[1:4].sum()
+        if 'd' in l and len(all)>4: pop += all[4:].sum()
+        return pop
+
+
+    def atom_angmom_mulliken(self, I, l):
         """ Return the Mulliken population of atom I basis states with
         angular momentum l. """
         orb_indices = self.calc.el.orbitals(I, indices=True)
@@ -93,7 +126,7 @@ class MullikenAnalysis:
         return q
 
 
-    def mulliken_I_k_l(self, I, k, l):
+    def atom_state_angmom_mulliken(self, I, k, l):
         """ Return the Mulliken population of atom I from eigenstate k
             from basis functions with angular momentum l. """
         rho_k = self.get_rho_k(k)
@@ -162,7 +195,7 @@ class MullikenBondAnalysis(MullikenAnalysis):
         E_cov_mn = nu.zeros_like(e_g)
         mat_nm = self.H0[n,m] - self.bar_epsilon[n,m]*self.S[n,m]
         for k, e_k in enumerate(self.eigs):
-            rho_k_mn = self.calc.st.wf[m,k]*self.calc.st.wf[n,k].conjugate()
+            rho_k_mn = self.calc.st.wf[0,k,m]*self.calc.st.wf[0,k,n].conjugate()
             if occupations:
                 rho_k_mn *= f[k]
             E_cov_k = rho_k_mn*mat_nm
@@ -223,7 +256,7 @@ class MullikenBondAnalysis(MullikenAnalysis):
     def A_I(self, I):
         """ Return the absolute energy of atom I. """
         gamma_II = self.calc.st.es.gamma(I,I)*Hartree
-        dq_I = self.mulliken_I(I) - self.calc.el.get_valences()[I]
+        dq_I = self.atom_mulliken(I) - self.calc.el.get_valences()[I]
         return 0.5*gamma_II*dq_I**2 + self.E_prom_I(I)
 
 
@@ -232,7 +265,7 @@ class MullikenBondAnalysis(MullikenAnalysis):
         orb_indices = self.calc.el.orbitals(I, indices=True)
         ret = 0.0
         for m in orb_indices:
-            q_mu = self.mulliken_mu(m)
+            q_mu = self.basis_mulliken(m)
             q_mu_free = self.calc.el.get_free_population(m)
             ret += (q_mu-q_mu_free)*self.H0[m,m]
         return ret
@@ -249,8 +282,8 @@ class MullikenBondAnalysis(MullikenAnalysis):
         V_rep_IJ = self.calc.rep.vrep[sI+sJ](dist_IJ)*Hartree
 
         gamma_IJ = self.calc.st.es.gamma(I, J)*Hartree
-        dq_I = self.mulliken_I(I) - self.calc.el.get_valences()[I]
-        dq_J = self.mulliken_I(J) - self.calc.el.get_valences()[J]
+        dq_I = self.atom_mulliken(I) - self.calc.el.get_valences()[I]
+        dq_J = self.atom_mulliken(J) - self.calc.el.get_valences()[J]
 
         ret = V_rep_IJ + gamma_IJ*dq_I*dq_J
         for m in self.calc.el.orbitals(I, indices=True):
@@ -335,7 +368,7 @@ class DensityOfStates(MullikenAnalysis):
         f = self.calc.st.f
         for I in indices:
             for k, e_k in enumerate(self.eigs):
-                q_Ik = self.mulliken_I_k(I,k)
+                q_Ik = self.atom_state_mulliken(I,k)
                 ldos_k = [self.delta_sigma(e, e_k, sigma) for e in e_g]
                 if occupations:
                     ldos += nu.array(ldos_k) * q_Ik * f[k]
@@ -383,7 +416,7 @@ class DensityOfStates(MullikenAnalysis):
                 if occupations:
                     pdos_k *= f[k]
                 for I in indices:
-                    q_Ikl = self.mulliken_I_k_l(I,k,li)
+                    q_Ikl = self.atom_state_angmom_mulliken(I,k,li)
                     pdos += pdos_k * q_Ikl
         return e_g, pdos
 

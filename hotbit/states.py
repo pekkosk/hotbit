@@ -143,7 +143,7 @@ class States:
         reasonable. """
         dQ = self.mulliken()
         if self.calc.verbose_SCC:
-            print "Mulliken populations: min=%0.3f, max=%0.3f" % (nu.min(dQ),nu.max(dQ))
+            print>> self.calc.get_output(), "Mulliken populations: min=%0.3f, max=%0.3f" % (nu.min(dQ),nu.max(dQ))
         Z = self.calc.el.get_atomic_numbers()
         for dq, z in zip(dQ, Z):
             if dq < -z or dq > z:
@@ -245,7 +245,7 @@ class States:
         for ik in xrange(self.nk):
             diagonal = ( self.rho[ik]*self.H0[ik].transpose() ).sum(axis=1)
             ebs += self.wk[ik] * diagonal.sum() 
-        assert ebs.imag<1E-13
+        #assert ebs.imag<1E-13
         self.calc.stop_timing('e_bs')
         return ebs.real 
 

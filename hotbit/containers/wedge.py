@@ -2,6 +2,7 @@ import numpy as nu
 from box.mix import phival
 from math import sin,cos 
 from weakref import proxy
+import warnings
 
 class Wedge:
     
@@ -82,7 +83,7 @@ class Wedge:
             if nu.abs(self.M-2*nu.pi/self.angle)>1E-12 and physical: 
                 raise AssertionError('angle not physical: angle != 2*pi/M')
             if not physical and self.M<20:
-                raise AssertionError('Too large, non-physical angle.')
+               warnings.warn('Quite large, non-physical angle 2*pi/%.4f.' %(2*nu.pi/self.angle) )
             
             if scale_atoms:
                 if abs(old_angle)<1E-10:
@@ -128,16 +129,22 @@ class Wedge:
         if self.height==None or self.angle==None or self.physical==None:
             raise RuntimeError("Wedge's angle or height is not set yet.")
         i = self.M/2
+        zi = 0
+        if self.pbcz:
+            zi = nu.Inf
         if nu.mod(self.M,2)==1:
-            ranges = nu.array([[-i,i],[0,0],[0,0]],int)
+            ranges = nu.array([[-i,i],[0,0],[-zi,zi]])
         else:
-            ranges = nu.array([[-i+1,i],[0,0],[0,0]],int)
+            ranges = nu.array([[-i+1,i],[0,0],[-zi,zi]])
         return ranges
     
     def transform(self,r,n):
         """ Rotate r by n2*angle. """
         R = self.rotation(n)
-        return nu.dot(R,r)
+        trans = nu.zeros((3))
+        if self.pbcz:
+            trans = n[2]*nu.array([0,0,self.height])
+        return nu.dot(R,r) + nu.array(trans)
     
     def rotation(self,n):
         """ Active rotation matrix of given angle wrt. z-axis."""
