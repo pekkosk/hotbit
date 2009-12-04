@@ -231,37 +231,6 @@ def a2s(a,fmt='%.14g',end=''):
         st=st+str(fmt%a[i]+'\t'  )
     return st+end
     
-def execute(cmd,echo=True):
-    from os import system
-    from sys import exit
-    if echo: 
-        s=cmd
-        if len(s)>80:
-            s=s.split()
-            s1=' '.join(s[:-1])
-            print 'Executing:',s1,'...'
-            print '       ...',s[-1],'...'
-        else: print 'Executing:',s,'...'
-    system(cmd)
-    #system(d    
-    #f=popen(cmd)
-    #fail=f.readline()
-    #if fail.strip()=='' or fail.strip()=='0':
-        #pass
-    #else:
-        #if echo: print 'Executing "',cmd,'" failed. Exit now.'
-        #exit(1)
-
-def error_exit(s):
-    """ Simpy exit routine. """
-    from sys import exit
-    print '\n \n Error:'
-    #s=s.splitlines()
-    #for l in s: 
-        #print '    ',l.strip()
-    #print '\n\n'
-    raise RuntimeError(s)
-    #exit(1)
 
 def norm(a):
     """
@@ -282,7 +251,7 @@ def lorenzian(x,mean,width):
     """ Return normalized Lorenzian with given mean and broadening. """
     return (width/nu.pi)/((x-mean)**2+width**2)
 
-def broaden(x,y=None,width=0.05,function='gaussian',extend=False,N=200,a=None,b=None):
+def broaden(x,y=None,width=0.05,function='gaussian',extend=False,N=200,a=None,b=None,xgrid=None):
     """ 
     Broaden a peaked distribution (DOS,optical spectra,...).
     
@@ -296,6 +265,7 @@ def broaden(x,y=None,width=0.05,function='gaussian',extend=False,N=200,a=None,b=
     N: number of points in output
     a: if defined, is used as the lower limit for output
     b: if defined, is used as the upper limit for output
+    xgrid: directly given x-grid
     
     return: xgrid, broadened distribution
     """
@@ -314,7 +284,10 @@ def broaden(x,y=None,width=0.05,function='gaussian',extend=False,N=200,a=None,b=
     else:
         mx=b
         
-    xgrid = nu.linspace(mn,mx,N)
+    if xgrid!=None:
+        pass
+    else:
+        xgrid = nu.linspace(mn,mx,N)
     ybroad= nu.zeros_like(xgrid)
     for xi,yi in zip(x,y):
         h = yi*nu.exp( -(xgrid-xi)**2/(2*width**2) ) / (nu.sqrt(2*nu.pi)*width)
@@ -341,6 +314,19 @@ def true_false(s):
     else:
         error_exit('String "'+s2+'" could not be interpreted as boolean')
         
+def execute(cmd,echo=True):
+    from os import system
+    from sys import exit
+    if echo:
+        s=cmd
+        if len(s)>80:
+            s=s.split()
+            s1=' '.join(s[:-1])
+            print 'Executing:',s1,'...'
+            print '       ...',s[-1],'...'
+        else: print 'Executing:',s,'...'
+        system(cmd)
+    
     
 def find_value(inp,key,fmt='default',default=None,position='start'):
     '''

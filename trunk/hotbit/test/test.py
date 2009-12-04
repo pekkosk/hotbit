@@ -10,7 +10,6 @@ skip = ['save_load.py','copy_calculator.py']
 start = time()
 
 pth=os.environ.get('HOTBIT_DIR')
- 
 
 for test in tests:
     if test in skip:

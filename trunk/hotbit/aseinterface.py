@@ -417,8 +417,7 @@ class Calculator(Output):
         return self.get('charge')
 
 
-    def get_dq(self,atoms):
-        self.solve_ground_state(atoms)
+    def get_dq(self):
         return self.st.get_dq()
 
 

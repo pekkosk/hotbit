@@ -35,7 +35,7 @@ class Chiral:
         """
         Return current angle or height
         """
-        if key!=('angle' or 'height'):
+        if key not in ['angle','height']:
             raise AssertionError('Invalid keyword %s' %key)
         if key=='angle':
             return self.angle

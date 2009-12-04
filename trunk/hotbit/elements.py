@@ -434,7 +434,7 @@ class Elements:
         -----------
         Default: return list of orbital-dictionaries for all atoms.
         i: return dict of orbitals for given atom  (dict incluldes 'atom','symbol','orbital',...)
-        basis: return the date for basis orbital i.
+        basis: return the data for basis orbital i.
         atom: return atom index for the basis orbital index i.
         indices: return orbital indices for atom i.
         number: return number of orbitals for atom i.

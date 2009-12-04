@@ -139,8 +139,14 @@ class Atoms(ase_Atoms):
     def extended_copy(self,n):
         """ Get copies of atoms for all listed symmetry operations n.
         
-        @param: n  can be a list of 3-tuples for transformations, or 3-tuple
-                   for telling how many copies in each direction is made.  
+        @param: n  i) list of 3-tuples for transformations explicitly
+                      e.g. [(0,0,0),(1,0,0),(0,1,0)]
+                   ii) 3-tuple for the number of transformations 
+                       (for infinite extensions -> start from zero;
+                        for finite extensions -> symmetry ops around zero)
+                       e.g. (10,10,1)
+                   iii) 3-tuple of 2-tuples that give the ranges for symmetry ops 
+                       e.g. ((-3,3),(-3,3),1)
         
         Return normal ase.Atoms -instance.
         """ 
@@ -148,27 +154,25 @@ class Atoms(ase_Atoms):
         if isinstance(n,list):
             n_list = copy(n)
         elif isinstance(n,tuple):
-            a = []
+            ops = []
             for i in range(3):
-                if r[i,0]==-nu.inf:
-                    a.append(0)
-                else:
-                    M = r[i,1] + 1
-                    # try to start copies from primitive cell 0 first
-                    if n[i]>M:
-                        M = r[i,1] - r[i,0] + 1
-                        a.append(r[i,0])
-                    else:
-                        a.append(0)
-                    #M = r[i,1] - r[i,0] + 1
-                    if n[i]>M:
-                        raise AssertionError('Too many extended copies for direction %i.' %i)
+                if isinstance(n[i],tuple):
+                    ops.append( nu.arange(n[i][0],n[i][1]+1) )
+                elif isinstance(n[i],int):
+                    rng = nu.arange(0,n[i])
+                    if r[i,0]!=-nu.Inf:
+                        # if nr. of ops is finite, center copies wrt. 0
+                        N = r[i,1] - r[i,0] + 1
+                        if len(rng)>N:
+                            raise AssertionError('Too many extended copies (%i) for direction %i. Only %i is allowed.' %(len(rng),i,N) )
+                        rng = rng - len(rng)/2
+                    ops.append( rng )
                             
             n_list=[]
-            for n1 in range(n[0]):
-                for n2 in range(n[1]):
-                    for n3 in range(n[2]):
-                        n_list.append( (a[0]+n1,a[1]+n2,a[2]+n3) )
+            for n1 in ops[0]:
+                for n2 in ops[1]:
+                    for n3 in ops[2]:
+                        n_list.append( (n1,n2,n3) )
         
         atoms2=None
         for n in n_list:

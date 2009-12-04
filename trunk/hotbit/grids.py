@@ -15,27 +15,21 @@ class Grids:
         self.gbasis = None
         self.el=proxy(self.calc.el)
         self.Rcut = 5.0/Bohr  # cutoff for atomic radial parts
-        self.Rcore = 0.25/Bohr # the core-region
-
-        
-    def cut_core(self,d):
-        """ Cut the core wiggles with this screening function. 
-        
-        Wiggles have to be cut at least within the length scale of the grid spacing.
-        """
-        scale = self.spacing*5 
-        return erf(d/scale)
-        
+        self.Rcore = 0.3/Bohr # the core-region
+        self.maxspacing = self.Rcore/sqrt(3*0.5**2)
+      
         
     def make_grid(self,spacing=0.2/Bohr,pad=False):
         """
         Make grid.
         
-        @param spacing: grid spacing in Bohrs
+        @param spacing: grid spacing in Angstroms.
         """
         self.calc.start_timing('make grid')
         if nu.any(self.calc.el.atoms.get_pbc()):
             raise AssertionError('Grid stuff not implemented for periodic systems yet.')
+        if spacing>self.maxspacing:
+            raise AssertionError('Grid spacing must be smaller than %.3f Angstroms' %(self.maxspacing*Bohr))
         if self.spacing==spacing:
             return
         else:
@@ -54,6 +48,7 @@ class Grids:
         self.dV = nu.prod(self.dr)
         self.ng = nu.prod(self.N)
         self.grid = []
+        
         for i,x in enumerate(self.gd1[0]):
             for j,y in enumerate(self.gd1[1]):
                 for k,z in enumerate(self.gd1[2]):
@@ -72,20 +67,20 @@ class Grids:
         self.calc.start_timing('to grid')
         if self.gbasis!=None:
             return self.gbasis[b]
-        
+        #aprint 'basis',b
         basis = nu.zeros(self.ng)
         atom = self.el.orbitals(b,atom=True)
         orb = self.el.orbitals(b,basis=True)
         nvector = self.el.nvector
         type, Rnl = orb['orbital'], orb['Rnl']
         core = []
-        for ig,r in enumerate(self.grid):    
+        for ig,r in enumerate(self.grid):  
             dr = nvector(r,r0=atom)
             d = sqrt(dr[0]**2+dr[1]**2+dr[2]**2)
             if d>self.Rcut: 
                 continue
             else:
-                basis[ig] = Rnl(d)*angular(dr,type)*self.cut_core(d)
+                basis[ig] = Rnl(d)*angular(dr,type)
                 if d<self.Rcore: core.append(ig)
         # normalize basis function; correct wf WITHIN CORE region 
         # to get normalization to one. 
