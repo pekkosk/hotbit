@@ -5,7 +5,7 @@ import os, pickle
 from box import mix
 import time
 from ase import *
-from box.fold import *
+from box.broaden import *
 from box.mix import phival
 acos=math.acos
 cos=math.cos
@@ -267,7 +267,7 @@ class JelliumAnalysis:
             self.maxl = maxl
             self.l_array = range(min(7, maxl+1))
             self.norb = calc.st.norb
-            self.fermi_level = calc.get_fermi_level()
+            self.fermi_level = calc.st.occu.get_mu()
             self.e = calc.st.get_eigenvalues()
             self.occ = calc.st.get_occupations()
             self.file = file
