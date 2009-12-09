@@ -197,5 +197,33 @@ end subroutine fortran_rhoec
 
 
 
+! check that any atom in cell (n1,n2,n3) interacts with atoms
+! in cell (0,0,0)
+! TODO invent a better name for this subroutine
+subroutine fortran_doublefor(rn,r,cut,natoms,bool)
+implicit none
+integer, intent(in) :: natoms
+real(8), intent(in) :: rn(0:2,0:natoms-1)
+real(8), intent(in) :: r(0:2,0:natoms-1)
+real(8), intent(in) :: cut(0:natoms-1,0:natoms-1)
+integer, intent(out) :: bool
+integer :: i,j
+real(8) :: drx,dry,drz, dist, cu
 
+bool = 0
+do i=0, natoms-1
+  if (bool == 1) exit
+  do j=0, natoms-1
+    drx = rn(0,i)-r(0,j)
+    dry = rn(1,i)-r(1,j)
+    drz = rn(2,i)-r(2,j)
+    dist = drx**2+dry**2+drz**2
+    cu = cut(j,i)
+    if (dist .LE. cu) then
+      bool=1
+      exit
+    endif
+  end do
+end do
+end subroutine fortran_doublefor
 
