@@ -169,15 +169,21 @@ class Elements:
                     n = (n1,n2,n3)
                     if n==(0,0,0): continue
                     # check that any atom interacts with this unit cell
-                    add = False    
                     R = [self.nvector(r=i,ntuple=n) for i in xrange(self.N)]
-                    for i in xrange(self.N):
-                        if add: break
-                        for j in xrange(self.N):
-                            dR = self.Rn[0][i]-R[j]
-                            if dR[0]**2+dR[1]**2+dR[2]**2 <= cut2[i,j]: 
-                                add = True
-                                break
+                    # The following loop is computed in fortran for speed-up
+                    #add = False
+                    #for i in xrange(self.N):
+                    #    if add: break
+                    #    for j in xrange(self.N):
+                    #        dR = self.Rn[0][i]-R[j]
+                    #        if dR[0]**2+dR[1]**2+dR[2]**2 <= cut2[i,j]: 
+                    #            add = True
+                    #            break
+                    from fortran.misc import fortran_doublefor
+                    rn = nu.array(self.Rn[0]).transpose()
+                    r = nu.array(R).transpose()
+                    cut = cut2.transpose()
+                    add = fortran_doublefor(rn, r, cut, self.N)
                     if add:
                         self.ntuples.append(n)
                         self.Rn.append(R)
