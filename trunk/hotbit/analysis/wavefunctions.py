@@ -584,14 +584,14 @@ def make_plot(file, width=0.1, xlimits=None, ylimits=None, out=None):
     print "radius:", data["R_0"] * Bohr, "Ang"
     print "grid box size (shell thickness):", data["a"] * Bohr, "Ang"
     print "analysis performed on angular momenta:", data["letters"].replace("",",")[1:-1]
-    print "Fermi level (subtracted):", data["fermi_level"], "eV"
+    print "Fermi level (subtracted):", data["fermi_level"] * Hartree, "eV"
 
     pylab.figure()
     colors = ['#FFFF00','#FF0000','#2758D3','#5FD300',
               '#058C00','#E1AB18','#50E1D0']
 
     weights = data["c_nl"].transpose()
-    e = (data["e"][0] - data["fermi_level"])*Hartree
+    e = (data["e"][0] - data["fermi_level"]) * Hartree
     if xlimits == None:
         e_min, e_max = min(e), max(e)
         empty = 0.1*(e_max - e_min)
