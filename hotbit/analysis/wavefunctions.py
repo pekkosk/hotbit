@@ -248,8 +248,9 @@ class JelliumAnalysis:
                      'analyzed_states',
                      'needed_orbitals',
                      'norb_needed',
-                     'file']
-        self.letters = "spdfghi"
+                     'file',
+                     'letters']
+        self.letters = "spdfghi"[0:maxl+1]
         self.loaded = False
         if os.path.isfile(file):
             self.load(file)
@@ -267,7 +268,7 @@ class JelliumAnalysis:
             self.l_array = range(min(7, maxl+1))
             self.norb = calc.st.norb
             self.fermi_level = calc.get_fermi_level()
-            self.e = calc.st.get_eigenvalues() * Hartree
+            self.e = calc.st.get_eigenvalues()
             self.occ = calc.st.get_occupations()
             self.file = file
             self.c_nl = nu.zeros((self.norb, len(self.l_array)))
@@ -457,9 +458,10 @@ class JelliumAnalysis:
 
     def get_state(self, k):
         """ Return the k:th wave function inside the expansion grid. """
-        wf_coeffs = self.calc.st.wf[k,:]
+        wf_coeffs = self.calc.st.wf[0,k,:]
+        assert nu.sum(wf_coeffs.imag < 1e-3)
+        wf_coeffs = wf_coeffs.real
         state_grid = nu.zeros(self.dim, dtype=nu.float)
-        t1 = time.time()
         for wf_coef, orb in zip(wf_coeffs, self.calc.el.orbitals()):
             basis_function = self.get_basis_function(orb['index'])
             if basis_function != None:
@@ -482,12 +484,12 @@ class JelliumAnalysis:
                 print >> self.log, "  %i seconds." % (time.time() -  t1)
                 self.analyzed_states[n] = True
                 self.write()
-                time.sleep(5)
         self.finished = True
         for n in range(self.norb):
             if float(nu.sum(self.c_nl[n,:])) > 0.01:
                 self.c_nl[n,:] = self.c_nl[n,:]/float(nu.sum(self.c_nl[n,:]))
         self.log.flush()
+        self.write_readable('ja.dat')
 
 
     def analyse_state(self, state_grid, l):
@@ -539,47 +541,11 @@ class JelliumAnalysis:
             print >> f, "%6s" % self.letters[l],
         print >> f, ""
         for n in range(self.norb):
-            print >> f, "%5i %12.4f %7.4f %7.4f" % (n, e[n], w[n], occ[n]),
+            print >> f, "%5i %12.4f %7.4f %7.4f" % (n, self.e[0,n]*Hartree, self.weights[n], self.occ[0,n]),
             for l in self.l_array:
                 print >> f, "%6.3f" % self.c_nl[n,l],
             print >> f, ""
         f.close()
-
-
-    def make_plot(self, width=0.1, xlimits=None, ylimits=None, out=None):
-        """ Make a cumulative plot from the angular momentum analysis
-            of the electron states.
-            
-            width: the FWHM of the gaussians used to broaden the energies
-            xlimits: the limits of the x-axis [xmin, xmax]
-            ylimits: the limits of the y-axis [ymin, ymax]
-            out: the output file
-        """
-        import pylab
-        pylab.figure()
-        colors = ['#FFFF00','#FF0000','#2758D3','#5FD300',
-                  '#058C00','#E1AB18','#50E1D0']
-
-        weights = self.c_nl.transpose()
-        e = self.e - self.fermi_level
-        if xlimits == None:
-            e_min, e_max = min(e), max(e)
-            empty = 0.1*(e_max - e_min)
-        else:
-            e_min, e_max = xlimits
-            empty = 0.0
-        x_grid = nu.linspace(e_min-empty, e_max+empty, 2000)
-        make_cumulative_plot(x_grid, e, width, weights,
-                             labels=self.letters, colors=colors)
-        pylab.xlabel("Energy (eV)")
-        pylab.ylabel("Arbitrary units")
-        pylab.title("Angular momentum analysis")
-        pylab.legend()
-        pylab.ylim(ylimits)
-        if out == None:
-            pylab.show()
-        else:
-            pylab.savefig(out)
 
 
     def run(self):
@@ -589,4 +555,59 @@ class JelliumAnalysis:
             self.basis_functions_to_grid()
             self.analyse_states()
             self.write()
+
+
+def make_plot(file, width=0.1, xlimits=None, ylimits=None, out=None):
+    """ Make a cumulative plot from the angular momentum analysis
+        of the electron states.
+        
+        file: data file produced by the Jellium analysis object
+        width: the FWHM of the gaussians used to broaden the energies
+        xlimits: the limits of the x-axis [xmin, xmax]
+        ylimits: the limits of the y-axis [ymin, ymax]
+        out: the output file (None=screen)
+
+    """
+    import pylab
+    f = open(file)
+    data = {}
+    while True:
+        try:
+            name, dat = pickle.load(f)
+            data[name] = dat
+        except EOFError:
+            break
+    print ""
+    print ""
+    print "*** Spherical harmonics analysis ***"
+    print "center:", data["origin"] * Bohr, "Ang"
+    print "radius:", data["R_0"] * Bohr, "Ang"
+    print "grid box size (shell thickness):", data["a"] * Bohr, "Ang"
+    print "analysis performed on angular momenta:", data["letters"].replace("",",")[1:-1]
+    print "Fermi level (subtracted):", data["fermi_level"], "eV"
+
+    pylab.figure()
+    colors = ['#FFFF00','#FF0000','#2758D3','#5FD300',
+              '#058C00','#E1AB18','#50E1D0']
+
+    weights = data["c_nl"].transpose()
+    e = (data["e"][0] - data["fermi_level"])*Hartree
+    if xlimits == None:
+        e_min, e_max = min(e), max(e)
+        empty = 0.1*(e_max - e_min)
+    else:
+        e_min, e_max = xlimits
+        empty = 0.0
+    x_grid = nu.linspace(e_min-empty, e_max+empty, 2000)
+    make_cumulative_plot(x_grid, e, width, weights,
+                         labels=data["letters"], colors=colors)
+    pylab.xlabel("Energy (eV)")
+    pylab.ylabel("Arbitrary units")
+    pylab.title("Angular momentum analysis")
+    pylab.legend()
+    pylab.ylim(ylimits)
+    if out == None:
+        pylab.show()
+    else:
+        pylab.savefig(out)
 
