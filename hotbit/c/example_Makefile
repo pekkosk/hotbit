@@ -1,0 +1,3 @@
+all:
+	gcc -llapack -I/home/vipemaki/lib64/python2.5/site-packages/numpy/core/include/numpy -I/usr/include/python2.5 -shared -fPIC -o ceig.so ceig.c
+	gcc -llapack -I/home/vipemaki/lib64/python2.5/site-packages/numpy/core/include/numpy -I/usr/include/python2.5 -shared -fPIC -o density_matrix.so density_matrix.c
