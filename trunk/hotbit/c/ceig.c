@@ -51,8 +51,23 @@ double *ceigr_(int N, double *A, double *B) {
     double *w, *work, k;
 
     w = (double*)malloc(N * sizeof (double));
+    if (w == NULL) {
+        printf("Error in eigensolver while allocating \"w\"\n");
+        exit;
+    }
     work = (double*)malloc(lwork * sizeof (double));
+    if (work == NULL) {
+        printf("Error in eigensolver while allocating \"work\"\n");
+        free(w);
+        exit;
+    }
     iwork = (int*)malloc(liwork * sizeof (int));
+    if (iwork == NULL) {
+        printf("Error in eigensolver while allocating \"iwork\"\n");
+        free(w);
+        free(work);
+        exit;
+    }
 
     // A and B are real and Hermitian, so no need to transpose.
     dsygvd_(&itype, &jobz, &uplo, &N, A, &N, B, &N, w, work, &lwork, iwork, &liwork, &info);
@@ -150,9 +165,31 @@ double *ceigc_(int N, double complex *A, double complex *B) {
     lrwork = 1 + 5*N + 2*N*N;
 
     w = (double*)malloc(N * sizeof (double));
+    if (w == NULL) {
+        printf("Error in complex eigensolver while allocating \"w\"\n");
+        exit;
+    }
     rwork = (double*)malloc(lrwork * sizeof (double));
+    if (rwork == NULL) {
+        printf("Error in complex eigensolver while allocating \"rwork\"\n");
+        free(w);
+        exit;
+    }
     work = (double complex*)malloc(lwork * sizeof (double complex));
+    if (work == NULL) {
+        printf("Error in complex eigensolver while allocating \"work\"\n");
+        free(w);
+        free(rwork);
+        exit;
+    }
     iwork = (int*)malloc(liwork * sizeof (int));
+    if (iwork == NULL) {
+        printf("Error in complex eigensolver while allocating \"iwork\"\n");
+        free(w);
+        free(rwork);
+        free(work);
+        exit;
+    }
 
     // We need to transpose the A and B matrices because zhegvd expects
     // fortran-ordered arrays. However, A and B are Hermitian, so

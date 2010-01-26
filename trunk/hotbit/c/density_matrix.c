@@ -12,7 +12,10 @@ double complex *c_rhoc_(double complex *wf, double *occ, int norb, int nk) {
     double complex *rho;
 
     rho = (double complex*)calloc(nk*norb*norb, sizeof(double complex));
-
+    if (rho == NULL) {
+        printf("Error in calculating complex density matrix while allocating \"rho\"\n");
+        exit;
+    }
     mx=-1;
     for (i=norb-1; i>=0; i--) {
         if (mx != -1) {
@@ -69,6 +72,10 @@ double complex *c_rhoec_(double complex *wf, double *occ, double *e, int norb, i
     double complex *rho;
 
     rho = (double complex*)calloc(nk*norb*norb, sizeof(double complex));
+    if (rho == NULL) {
+        printf("Error in calculating energy-weighted complex density matrix while allocating \"rho\"\n");
+        exit;
+    }
 
     mx=-1;
     for (i=norb-1; i>=0; i--) {
