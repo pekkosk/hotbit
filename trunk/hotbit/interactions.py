@@ -5,6 +5,7 @@ from repulsion import RepulsivePotential
 from box import mix
 from box.interpolation import Function
 from hotbit.fortran.slako import fast_slako_transformations
+#from hotbit.fortran.misc import matrix_blocks
 import numpy as nu
 from hotbit import auxil
 from box.mix import kronecker
@@ -225,6 +226,7 @@ class Interactions:
         c2a, s2a = 2*ca**2-1, 2*sa*ca
         
         D = nu.diag((1.0,ca,ca,1.0,c2a,ca,ca,c2a,1.0))
+                    
         #D[1,2] = -sa
         #D[2,1] = sa
         #D[5,6] = sa
@@ -239,6 +241,7 @@ class Interactions:
         D[4,7] = -s2a
         D[7,4] = s2a
         
+        #print R
         D[1:4,1:4] = R[:,:].transpose()
         return D.transpose()
 
@@ -253,12 +256,7 @@ class Interactions:
         start('matrix construction')
         orbs=el.orbitals()
         norb=len(orbs)   
-        #try:
-        #    self.H0.fill(0)
-        #    self.S.fill(0)
-        #    self.dH0.fill(0)
-        #    self.dS.fill(0)
-        #except:
+
         H0  = nu.zeros((states.nk,norb,norb),complex)
         S   = nu.zeros((states.nk,norb,norb),complex)
         dH0 = nu.zeros((states.nk,norb,norb,3),complex)
@@ -294,9 +292,15 @@ class Interactions:
                 ij_interact = False
                 r1, r2= htable.get_range()
                                     
+                #for nnt in xrange(self.calc.el.ijnn[i,j]):
+                #    n = self.calc.el.ijn[i,j,nnt]
+                #    if i==j and n==0:
+                #        continue 
+                #    rij = Rijn[n,i,j]
+                #    dij = dijn[n,i,j]
                 for n, (rij,dij) in enumerate(zip(Rijn[:,i,j],dijn[:,i,j])):
                     if i==j and n==0: 
-                        continue
+                        continue    
                     nt = el.ntuples[n]
                     h.fill(0)
                     s.fill(0)
@@ -321,6 +325,23 @@ class Interactions:
                     # make the Slater-Koster transformations
                     obsi, obsj=orbindex[i], orbindex[j]
                     ht, st, dht, dst = fast_slako_transformations(rijh,dij,noi,noj,h,s,dh,ds)
+                    
+                    #Rot = self.calc.el.Rot[n]*1.0
+                    #DT = DTn[n]
+                    #phase = phases[n] 
+                    #print 'noi',noi
+                    #print 'noj',noj
+                    #print 'nk',states.nk
+                    #print 'ht.shape',ht.shape,type(ht)
+                    #print 'norb',norb
+                    #print 'R',Rot,type(Rot),Rot.shape
+                    #nk=states.nk
+                    #H0, S, dH0, dS = matrix_blocks(ht,st,dht,dst,DT,R,phase,o1i,o1j,noi,noj,nk,norb)
+                    #H0 = matrix_blocks(ht,st,dht,dst,DT,Rot,phase,noi,noj,norb,nnn)
+                    #H0 = matrix_blocks(norb,noi,noj,nk,ht,st,dht,dst,DT,Rot,phase)
+                    #H0 = matrix_blocks(norb,noi,noj,nk,ht,DT,Rot,phase)
+                    #H0 = matrix_blocks(norb,nk,noi,noj,ht)
+                    #H0 =  matrix_blocks(norb,o1i,o1j,noi,noj,nk,ht,DT,Rot,phase,H0)
                     
                     # Here we do the MEL transformation; H'_ij = sum_k H_ik * D_kj^T
                     DT = DTn[n]

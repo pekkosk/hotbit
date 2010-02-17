@@ -9,6 +9,7 @@ from ase.units import Hartree,Bohr
 from os import environ
 from weakref import proxy
 from copy import copy, deepcopy
+from fortran.misc import fortran_doublefor
 
 
 
@@ -74,6 +75,7 @@ class Elements:
     def greetings(self):
         """ Return documentation for elements from .elm files. """
         txt='%i atoms, %i states, %.1f electrons (%.1f filled states)\n' %(self.N,self.norb,self.electrons,self.electrons/2)
+        txt+=self.range_message+'\n'
         for s in self.present:
             el=self.elements[s]
             comment=el.get_comment()
@@ -97,6 +99,7 @@ class Elements:
         r = self.atoms.get_symmetry_operation_ranges()
         Mlarge = 5 # TODO: chek Mlarge to be large enough
         self.ranges = []
+        s = 'Initial n ranges:'
         for i in range(3):
             assert r[i,0]<=r[i,1]
             if not self.atoms.get_pbc()[i]: assert r[i,0]==r[i,1]==0
@@ -106,7 +109,12 @@ class Elements:
             elif r[i,0]<-Mlarge:
                 assert r[i,1]>=Mlarge
                 r[i,:] = [-Mlarge,Mlarge]
-            self.ranges.append( range(int(round(r[i,0])),int(round(r[i,1]))+1) )
+
+            a,b = int(round(r[i,0])), int(round(r[i,1]))
+            s += '[%i,%i] ' %(a,b)
+            self.ranges.append( range(a,b+1) )
+        self.range_message = s
+
 
 
     def calculation_required(self,atoms,quantities):
@@ -156,20 +164,34 @@ class Elements:
         self.calc.start_timing('geometry')    
         self._update_atoms(atoms) 
         # select the symmetry operations n where atoms still interact chemically
+        nmax = len(self.ranges[0])*len(self.ranges[1])*len(self.ranges[2])
+        ijn = nu.zeros( (self.N,self.N,nmax),int )
+        ijnn = nu.zeros( (self.N,self.N),int )
+        
+        # add the n=(0,0,0) first (separately)
         self.Rn = [[self.nvector(r=i,ntuple=(0,0,0)) for i in xrange(self.N)]]
         self.Rot = [ self.rotation((0,0,0)) ]
-                
-        cut2 = self.calc.ia.hscut**2
         self.ntuples = [(0,0,0)]
+                
+        for i in xrange(self.N):
+            for j in xrange(self.N):
+                dij = nu.linalg.norm( self.Rn[0][i]-self.Rn[0][j] )
+                if dij < self.calc.ia.hscut[i,j]:
+                    ijn[i,j,ijnn[i,j]] = 0
+                    ijnn[i,j] += 1 
+        
+        
         # calculate the distances from unit cell 0 to ALL other possible; select chemically interacting
         self.calc.start_timing('operations')
+        cut2 = self.calc.ia.hscut**2
+        n = 1
         for n1 in self.ranges[0]:
             for n2 in self.ranges[1]:
                 for n3 in self.ranges[2]:
-                    n = (n1,n2,n3)
-                    if n==(0,0,0): continue
+                    nt = (n1,n2,n3)
+                    if nt==(0,0,0): continue
                     # check that any atom interacts with this unit cell
-                    R = [self.nvector(r=i,ntuple=n) for i in xrange(self.N)]
+                    R = [self.nvector(r=i,ntuple=nt) for i in xrange(self.N)]
                     # The following loop is computed in fortran for speed-up
                     #add = False
                     #for i in xrange(self.N):
@@ -179,16 +201,29 @@ class Elements:
                     #        if dR[0]**2+dR[1]**2+dR[2]**2 <= cut2[i,j]: 
                     #            add = True
                     #            break
-                    from fortran.misc import fortran_doublefor
                     rn = nu.array(self.Rn[0]).transpose()
                     r = nu.array(R).transpose()
                     cut = cut2.transpose()
-                    add = fortran_doublefor(rn, r, cut, self.N)
-                    if add:
-                        self.ntuples.append(n)
+                    addn = fortran_doublefor(rn, r, cut, self.N)
+                    
+                    # into C extension!!
+                    #addn = False
+                    #for i in xrange(self.N):
+                    #    for j in xrange(self.N):
+                    #        dij = nu.linalg.norm( self.Rn[0][i]-R[j] )
+                    #        if dij < self.calc.ia.hscut[i,j]:
+                    #            ijn[i,j,ijnn[i,j]] = n
+                    #            ijnn[i,j] += 1 
+                    #            addn = True
+                                                            
+                    if addn:
+                        n += 1
+                        self.ntuples.append(nt)
                         self.Rn.append(R)
-                        self.Rot.append( self.rotation(n) )
+                        self.Rot.append( self.rotation(nt) )
             
+        self.ijn = ijn
+        self.ijnn = ijnn
         self.Rn = nu.array(self.Rn)
         self.Rot = nu.array(self.Rot)
         self.calc.stop_timing('operations')

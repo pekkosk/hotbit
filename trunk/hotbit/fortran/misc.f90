@@ -227,3 +227,82 @@ do i=0, natoms-1
 end do
 end subroutine fortran_doublefor
 
+
+
+
+subroutine geometry(rn,r,cut,natoms,bool)
+implicit none
+integer, intent(in) :: natoms
+real(8), intent(in) :: rn(0:2,0:natoms-1)
+real(8), intent(in) :: r(0:2,0:natoms-1)
+real(8), intent(in) :: cut(0:natoms-1,0:natoms-1)
+integer, intent(out) :: bool
+integer :: i,j
+real(8) :: drx,dry,drz, dist, cu
+
+bool = 0
+do i=0, natoms-1
+  if (bool == 1) exit
+  do j=0, natoms-1
+    drx = rn(0,i)-r(0,j)
+    dry = rn(1,i)-r(1,j)
+    drz = rn(2,i)-r(2,j)
+    dist = drx**2+dry**2+drz**2
+    cu = cut(j,i)
+    if (dist .LE. cu) then
+      bool=1
+      exit
+    endif
+  end do
+end do
+end subroutine geometry
+
+
+
+! 
+! ! subroutine matrix_blocks(ht,st,dht,dst,DT,R,phase,o1i,o1j,noi,noj,nk,norb,H0) !,S,dH0,dS)
+! ! subroutine matrix_blocks(o1i,o1j,noi,noj,nk,norb,ht,st,dht,dst,DT,R,phase,H0) !,S,dH0,dS)
+! subroutine matrix_blocks(norb,o1i,o1j,noi,noj,nk,ht,DT,R,phase,H0) !,S,dH0,dS)
+! !subroutine matrix_blocks(norb,noi,noj,nk,ht,DT,R,phase,H0) !,S,dH0,dS)
+! ! subroutine matrix_blocks(norb,nk,noi,noj,ht) !,S,dH0,dS)
+! implicit none
+! integer, intent(in) :: norb
+! integer, intent(in) :: o1i
+! integer, intent(in) :: o1j
+! integer, intent(in) :: noi
+! integer, intent(in) :: noj
+! integer, intent(in) :: nk
+! real(8), intent(in) :: ht(:,:)
+! ! real, intent(in) :: st(0:noi-1,0:noj-1)
+! ! real, intent(in) :: dht(0:noi-1,0:noj-1,0:2)
+! ! real, intent(in) :: dst(0:noi-1,0:noj-1,0:2)
+! real(8), intent(in) :: DT(0:8,0:8)
+! real(8), intent(in) :: R(0:2,0:2)
+! 
+! complex(8), intent(in) :: phase(0:nk-1)
+! complex(8), intent(out) :: H0(0:nk-1,0:norb-1,0:norb-1)
+! ! complex(8), intent(out) :: S(0:nk-1,0:norb-1,0:norb-1)
+! ! complex(8), intent(out) :: dH0(0:nk-1,0:norb-1,0:norb-1,0:2)
+! ! complex(8), intent(out) :: dS(0:nk-1,0:norb-1,0:norb-1,0:2)
+! complex(8) :: hblock(0:nk-1,0:noi-1,0:noj-1)
+! ! complex(8) :: hblock(0:nk-1,0:noi-1,0:noj-1)
+! integer :: i,j,k,p
+! integer :: a,b,c,d
+! 
+! 
+! do j=0,noj-1
+! do i=0,noi-1
+! do k=0,nk-1
+!     hblock(k,i,j) = phase(k)*sum( ht(i,0:noj-1)*DT(0:noj-1,j) )
+! end do
+! end do
+! end do
+! a = o1i
+! b = o1i+noi
+! c = o1j
+! d = o1j+noj
+! H0(:,a:b,c:d) = H0(:,a:b,c:d) + hblock
+! H0(:,c:d,a:b) = conjugate( transpose(hblock) )
+! 
+! end subroutine matrix_blocks
+! 
