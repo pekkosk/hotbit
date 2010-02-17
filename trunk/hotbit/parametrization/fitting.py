@@ -126,9 +126,9 @@ class RepulsiveFitting:
         pl.text(self.r_cut, ymin, 'r_cut')
         pl.xlim(xmin=xmin, xmax=xmax)
         pl.ylim(ymin=ymin, ymax=ymax)
-        pl.suptitle('Fitting for %s and %s' % (self.sym1, self.sym2))
+        #pl.subtitle('Fitting for %s and %s' % (self.sym1, self.sym2))
         pl.rc('font', size=10)
-        pl.legend(loc=4, borderaxespad=1)
+        #pl.legend(loc=4, borderaxespad=1)
         pl.savefig('%s_%s.eps' % (self.sym1, self.sym2))
         if screen:
             pl.show()
