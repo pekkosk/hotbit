@@ -25,7 +25,7 @@ class Saddle:
         self.n1 = nu.array([0,1,0])
         self.n2 = nu.array([1,0,0])
         self.R = None
-        self.M = 100
+        self.M = 50
         
     def __repr__(self):
         x='Saddle: angle1=%.4f, angle2=%.4f, R=%.4f' %(self.angle1,self.angle2,self.R)                                                                                        

@@ -13,6 +13,35 @@ import numpy as nu
 import time
 from math import atan,pi,cos,sin,sqrt
 
+
+def fit(f,p,xlist,ylist):
+    '''
+    Fit function f(x) with parameters p to given data.
+    '''
+    from scipy.optimize import fmin
+    def chi2(p,x,y):
+        err = y-f(x,p)
+        return sum(err**2)
+    res = fmin(chi2,p,args=(xlist,ylist))
+    return res 
+
+
+def fit1(p,xlist,ylist):
+    '''
+    Fit y=a+b*x to given data.
+    '''
+    def f(x,p): return p[0]+p[1]*x
+    return fit(f,p,xlist,ylist)
+
+
+def fit2(p,xlist,ylist):
+    '''
+    Fit y=a+0.5*b*(x-c)**2 to given data.
+    '''
+    def f(x,p): return p[0]+0.5*p[1]*(x-p[2])**2
+    return fit(f,p,xlist,ylist) 
+        
+
 def divisors(x):
     '''
     Return all divisors of x.

@@ -4,6 +4,11 @@
 # Experimental data * mass, R_cov (2008 data), R_vdw, EA from www.webelements.com
 #                   * IE from gElemental 1.2.0
 #
+# UNITS:
+#     * mass in amu
+#     * all radii in Angstrom
+#     * all energies in eV
+#
 from numpy import nan
 
 data={}
@@ -20,13 +25,14 @@ data['F'] ={'Z':9, 'symbol':'F'}
 data['Ne']={'Z':10,'symbol':'Ne'}
 data['Na']={'Z':11,'symbol':'Na','name':'sodium',   'mass':22.9898,  'R_cov':1.66,'R_vdw':2.27,'IE':5.136, 'EA':0.547}           
 data['Mg']={'Z':12,'symbol':'Mg','name':'magnesium','mass':24.3050,  'R_cov':1.41,'R_vdw':1.73,'IE':7.642, 'EA':0.000}                        
-data['S'] ={'Z':16, 'symbol':'S', 'name':'sulfur', 'mass':32.065, 'R_cov':1.02, 'R_vdw':1.80, 'IE':999.6, 'EA':200} #FIXME these are kJ/mol, what are the others?
+data['S'] ={'Z':16, 'symbol':'S', 'name':'sulfur',  'mass':32.065,   'R_cov':1.02,'R_vdw':1.80,'IE':999.6, 'EA':200} #FIXME these are kJ/mol, what are the others?
 data['Cl']={'Z':17,'symbol':'Cl','name':'chlorine', 'mass':35.4530,  'R_cov':1.02,'R_vdw':1.75,'IE':12.962,'EA':3.615}            
 data['Ar']={'Z':18,'symbol':'Ar'}
 data['K'] ={'Z':19,'symbol':'K', 'name':'potassium','mass':39.0983,  'R_cov':2.03,'R_vdw':2.75,'IE':4.338, 'EA':0.501}             
 data['Ti']={'Z':22,'symbol':'Ti','name':'titanium', 'mass':47.8760,  'R_cov':1.60,'R_vdw':2.15,'IE':6.825, 'EA':0.078}            
 data['Kr']={'Z':36,'symbol':'Kr'}
 data['Xe']={'Z':54,'symbol':'Xe'}
+data['Pt']={'Z':78,'symbol':'Pt','name':'platinum', 'mass':195.084,  'R_cov':1.36,'R_vdw':1.75,'IE':9.013, 'EA':2.127}
 data['Au']={'Z':79,'symbol':'Au','name':'gold',     'mass':196.9666, 'R_cov':1.36,'R_vdw':1.66,'IE':9.221, 'EA':2.308}                    
                         
 # update with valence orbital data                        
@@ -50,7 +56,9 @@ valence_orbitals['K']=['4s','4p']
 valence_orbitals['Ti']=['3d','4s','4p']
 valence_orbitals['Kr']=[]
 valence_orbitals['Xe']=[]
+valence_orbitals['Pt']=['6s','6p','5d']
 valence_orbitals['Au']=['6s','6p','5d']
+
 for key in valence_orbitals:
     data[key]['valence_orbitals']=valence_orbitals[key]
 
@@ -81,6 +89,7 @@ aux=[ ['H', '',{'1s':1}],\
       # fifth row
       ['Xe','Kr',{'4d':10,'5s':2,'5p':6}],\
       # sixth row
+      ['Pt','Xe',{'4f':14,'5d':9,'6s':1,'6p':0}],\
       ['Au','Xe',{'4f':14,'5d':10,'6s':1,'6p':0}] ]
           
 configurations={}          
