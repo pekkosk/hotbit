@@ -394,6 +394,7 @@ class RepulsiveFitting:
         calc = self.calc
         if color == None:
             color = self._get_color()
+        print ""
         print "  Appending energy curve data from %s..." % trajectory
         traj = PickleTrajectory(trajectory)
         R, E_dft, N = self._process_trajectory(traj, self.sym1, self.sym2, cutoff, toldist)
@@ -456,7 +457,8 @@ class RepulsiveFitting:
         sigma = 1.0/weight
         points = []
         structures, traj_indices = self.import_structures(filename, traj_indices)
-        print "\n  Appending homogeneous structure from %s..." % filename
+        print ""
+        print "Appending homogeneous structure from %s..." % filename
         for ind, (fr, structure) in enumerate(zip(traj_indices, structures)):
             print "  frame %i" % fr
             epsilon, distances, mask=self._get_matrices(structure, cutoff, toldist)
@@ -473,7 +475,7 @@ class RepulsiveFitting:
             except:
                 forces_DFT = nu.zeros((N,3))
                 print "    No forces in trajectory %s at frame %i" % (filename, fr)
-            calc_new = self._solve_ground_state(structure, charge=charge, calc=calc)
+            calc_new = self._solve_ground_state(structure, charge=charge)
             if calc_new == None:
                 print >> self.err, "    No data from %s frame %i" % (label, fr)
             else:
@@ -521,7 +523,7 @@ class RepulsiveFitting:
             if color == None:
                 color = self._get_color()
             for data in points:
-                self.append_point(1/data[2], data[0], data[1], color, label, comment=None)
+                self.append_point(1/data[2], data[0], data[1], comment, label, color)
                 label = '_nolegend_'
             self.add_comment(comment)
 
@@ -683,7 +685,7 @@ class RepulsiveFitting:
 
 
     def append_homogeneous_bulk(self, weight, trajectory, coordination, comment=None, cutoff=3.0, toldist=1e-5, label='bulk', color=None):
-        raise Exception("Not well tested, comment this line to use this method")
+        #raise Exception("Not well tested, comment this line to use this method")
         """ Get repulsion fitting from homogeneous bulk calculation.
             The coordination number is the no. of nearest-neighbours
             per atom in the bulk (e.g 4 in diamond lattice).
@@ -700,13 +702,13 @@ class RepulsiveFitting:
         label:         plotting label
         color:         plotting color
         """
+        print ""
+        print "Appending homogeneous bulk from %s..." % trajectory
         sigma=1.0/weight
-        if charge != 0:
-            raise Exception("Charge in periodic systems is not implemented.")
         if type(trajectory) == str:
             traj = PickleTrajectory(trajectory)
         for image in traj:
-            R, E_dft, N = self.process_trajectory(traj, self.sym1, self.sym2, cutoff, toldist)
+            R, E_dft, N = self._process_trajectory(traj, self.sym1, self.sym2, cutoff, toldist)
         N_a = len(traj[0])
         N = N_a * coordination / 2.
 
@@ -714,7 +716,7 @@ class RepulsiveFitting:
         usable_frames = []
         for i in range(len(traj)):
             atoms=copy(traj[i])
-            calc_new = self.solve_ground_state(atoms, 0.0, calc)
+            calc_new = self._solve_ground_state(atoms, 0.0, self.calc)
             if calc_new == None:
                 print "    *** Error: No data from frame %i ***" % i
                 print >> self.err, "No data from %s frame %i" % (dft_traj, i)
@@ -739,13 +741,12 @@ class RepulsiveFitting:
         from box.interpolation import SplineFunction
         vrep = SplineFunction(R, (E_dft - E_bs)/N)
         if color == None:
-            color = self.get_color()
+            color = self._get_color()
 
         for i, r in enumerate(R):
             if i > 0:
                 label='_nolegend_'
-            self.append_point([r, vrep(r,der=1), 1./(sigma_coefficient*sigma), color, label], comment=None)
-        self.add_fitting_comment(comment)
+            self.append_point(1./(sigma_coefficient*sigma), r, vrep(r, der=1), comment, label, color)
 
 
     def write_fitting_data(self, filename):
