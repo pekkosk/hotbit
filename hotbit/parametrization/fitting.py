@@ -685,7 +685,7 @@ class RepulsiveFitting:
 
 
     def append_homogeneous_bulk(self, weight, trajectory, coordination, comment=None, cutoff=3.0, toldist=1e-5, label='bulk', color=None):
-        #raise Exception("Not well tested, comment this line to use this method")
+        raise Exception("Not well tested, comment this line to use this method")
         """ Get repulsion fitting from homogeneous bulk calculation.
             The coordination number is the no. of nearest-neighbours
             per atom in the bulk (e.g 4 in diamond lattice).
