@@ -6,9 +6,9 @@ from pickle import load
 import pylab as pl
 from box.data import data
 
-e1=KSAllElectron('C',confinement={'mode':'frauenheim','r0':5.04})
+e1=KSAllElectron('C',confinement={'mode':'quadratic','r0':5.04})
 e1.run()
-e2=KSAllElectron('H',confinement={'mode':'frauenheim','r0':5.04})
+e2=KSAllElectron('H',confinement={'mode':'quadratic','r0':5.04})
 e2.run()
 
 

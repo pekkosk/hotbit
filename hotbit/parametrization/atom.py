@@ -22,7 +22,7 @@ class KSAllElectron:
                       confinement=None,
                       xc='PW92',
                       convergence={'density':1E-7,'energies':1E-7},
-                      ScR=False,
+                      scalarrel=False,
                       nodegpts=500,
                       mix=0.2,
                       itmax=200,
@@ -37,7 +37,7 @@ class KSAllElectron:
         Examples:
         ---------
         atom=KSAllElectron('C')
-        atom=KSAllElectron('C',confinement={'mode':'frauenheim','r0':1.234})
+        atom=KSAllElectron('C',confinement={'mode':'quadratic','r0':1.234})
         atom.run()
 
         Parameters:
@@ -51,14 +51,14 @@ class KSAllElectron:
         convergence:    convergence criterion dictionary
                         * density: max change for integrated |n_old-n_new|
                         * energies: max change in single-particle energy (Hartree)
-        ScR:            Use scalar relativistic corrections
+        scalarrel:      Use scalar relativistic corrections
         nodegpts:       total number of grid points is nodegpts times the max number
                         of antinodes for all orbitals
         mix:            effective potential mixing constant
         itmax:          maximum number of iterations for self-consistency.
         timing:         output of timing summary
         verbose:        increase verbosity during iterations
-        txt:            output file name
+        txt:            output file name for log data
         write:          filename: save rgrid, effective potential and
                         density to a file for further calculations.
         restart:        filename: make an initial guess for effective
@@ -69,7 +69,7 @@ class KSAllElectron:
         self.confinement=confinement
         self.xc=xc
         self.convergence=convergence
-        self.ScR = ScR
+        self.scalarrel = scalarrel
         self.set_output(txt)
         self.itmax=itmax
         self.verbose=verbose
@@ -119,7 +119,7 @@ class KSAllElectron:
 
         maxnodes=max( [n-l-1 for n,l,nl in self.list_states()] )
         self.rmin, self.rmax, self.N=( 1E-2/self.Z, 100.0, (maxnodes+1)*self.nodegpts )
-        if self.ScR:
+        if self.scalarrel:
             print >> self.txt, 'Using scalar relativistic corrections.'
         print>>self.txt, 'max %i nodes, %i grid points' %(maxnodes,self.N)
         self.xgrid=nu.linspace(0,nu.log(self.rmax/self.rmin),self.N)
@@ -308,7 +308,7 @@ class KSAllElectron:
 
         for it in range(self.itmax):
             self.veff=self.mix*self.calculate_veff()+(1-self.mix)*self.veff
-            if self.ScR:
+            if self.scalarrel:
                 veff = SplineFunction(self.rgrid, self.veff)
                 self.dveff = array([veff(r, der=1) for r in self.rgrid])
             d_enl_max, itmax=self.solve_eigenstates(it)
@@ -456,7 +456,7 @@ class KSAllElectron:
     def construct_coefficients(self, l, eps):
         c = 137.036
         c2 = nu.ones(self.N)
-        if self.ScR == False:
+        if self.scalarrel == False:
             c0 = -2*( 0.5*l*(l+1)+self.rgrid**2*(self.veff-eps) )
             c1 = -nu.ones(self.N)
         else:
@@ -467,29 +467,62 @@ class KSAllElectron:
         return c0, c1, c2
 
 
-    def plot_Rnl(self,screen=False,r=False):
+    def plot_Rnl(self,filename=None):
         """ Plot radial wave functions with matplotlib.
-        r: plot as a function of r or grid points
+        
+        filename:  output file name + extension (extension used in matplotlib)
         """
-        i=1
-        rmax=data[self.symbol]['R_cov']/0.529177*2
-        ri=self.N #sum(self.rgrid<rmax)
+        
+        rmax = data[self.symbol]['R_cov']/0.529177*4
+        ri = nu.where( self.rgrid>rmax )[0][0]
         states=len(self.list_states())
-        p=nu.ceil(nu.sqrt(states)) #p**2>=states subplots
+        p = nu.ceil(nu.sqrt(states)) #p**2>=states subplots
+        
+        fig=pl.figure()        
+        i=1
+        # as a function of grid points
         for n,l,nl in self.list_states():
-            pl.subplot(p,p,i)
-            if r:
-                pl.plot(self.rgrid[:ri],self.Rnlg[nl][:ri])
-                pl.xlabel('r (Bohr)')
-            else:
-                pl.plot(self.Rnlg[nl])
+            ax=pl.subplot(2*p,p,i)
+            pl.plot(self.Rnlg[nl])
+            if ax.is_last_row():
                 pl.xlabel('r (grid point)')
-            pl.ylabel('Rnl (%s)' %nl)
+            
+            # annotate
+            c = 'k'
+            if nl in self.valence: 
+                c='r'
+            pl.text(0.7,0.6,r'$R_{%s}(r)$' %nl,transform=ax.transAxes,size=20,color=c)
+            if ax.is_first_col():
+                pl.ylabel('R(r)')
             i+=1
-        if screen:
-            pl.show()
-        else:
-            pl.savefig('%s_KSatom.png' %self.symbol)
+            
+        # as a function of radius
+        i = p**2+1
+        for n,l,nl in self.list_states():
+            ax=pl.subplot(2*p,p,i)
+            pl.plot(self.rgrid[:ri],self.Rnlg[nl][:ri])
+            if ax.is_last_row():
+                pl.xlabel('r (Bohr)')
+
+            c = 'k'
+            if nl in self.valence: 
+                c='r'
+            pl.text(0.7,0.6,r'$R_{%s}(r)$' %nl,transform=ax.transAxes,size=20,color=c)
+            if ax.is_first_col():
+                pl.ylabel('R(r)')
+            i+=1
+        
+
+        file = '%s_KSAllElectron.pdf' %self.symbol
+        #pl.rc('figure.subplot',wspace=0.0,hspace=0.0)
+        fig.subplots_adjust(hspace=0.2,wspace=0.1)
+        s=''
+        if self.confinement!=None:
+            s='(confined)'
+        pl.figtext(0.3,0.95,'Radial wave functions for %s %s' %(self.symbol,s))
+        if filename is not None:
+            file = filename
+        pl.savefig(file)
 
 
     def get_wf_range(self,nl,fractional_limit=1E-7):
@@ -557,7 +590,7 @@ class KSAllElectron:
 
 
     def get_comment(self):
-        """ One-line comment, e.g. 'H, charge=0, frauenheim, r0=4' """
+        """ One-line comment, e.g. 'H, charge=0, quadratic, r0=4' """
         comment='%s xc=%s charge=%.1f conf:%s' %(self.symbol,self.xc,float(self.charge),self.confinement_potential.get_comment())
         return comment
 
@@ -569,15 +602,15 @@ class KSAllElectron:
         return [(nl,self.enl[nl]) for nl in self.valence]
 
 
-    def write_functions(self,file,only_valence=True,step=1):
-        """ Append functions (unl,v_effective,...) into file (only valence functions by default).
+    def write_unl(self,filename,only_valence=True,step=50):
+        """ Append functions unl=Rnl*r, V_effective, V_confinement into file.
+            Only valence functions by default.
 
         Parameters:
         -----------
-        file: output file name (e.g. XX.elm)
-        only_valence: output of only valence orbitals
-        step: step size for output grid
-
+        filename:         output file name (e.g. XX.elm)
+        only_valence:     output of only valence orbitals
+        step:             step size for output grid
         """
         if not self.solved:
             raise AssertionError('run calculations first.')
@@ -585,7 +618,7 @@ class KSAllElectron:
             orbitals=self.valence
         else:
             orbitals=[nl for n,l,nl in self.list_states()]
-        o=open(file,'a')
+        o=open(filename,'a')
         for nl in orbitals:
             print>>o, '\n\nu_%s=' %nl
             for r,u in zip(self.rgrid[::step],self.unlg[nl][::step]):
@@ -728,10 +761,10 @@ class ConfinementPotential:
         if mode=='none':
             self.f=self.none #lambda r:0.0
             self.comment='none'
-        elif mode=='frauenheim':
+        elif mode=='quadratic':
             self.r0=kwargs['r0']
-            self.f=self.frauenheim #lambda r:(r/self.r0)**2
-            self.comment='frauenheim r0=%.3f' %self.r0
+            self.f=self.quadratic #lambda r:(r/self.r0)**2
+            self.comment='quadratic r0=%.3f' %self.r0
         else:
             raise NotImplementedError('implement new confinements')
 
@@ -741,7 +774,7 @@ class ConfinementPotential:
     def none(self,r):
         return 0.0
 
-    def frauenheim(self,r):
+    def quadratic(self,r):
         return (r/self.r0)**2
 
     def __call__(self,r):

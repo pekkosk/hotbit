@@ -54,9 +54,11 @@ class SlaterKosterTable:
     def __del__(self):
         self.timer.summary()          
         
+        
     def get_table(self):
         """ Return tables. """
         return self.Rgrid, self.tables        
+                
                 
     def smooth_tails(self):
         """ Smooth the behaviour of tables near cutoff. """
@@ -64,11 +66,12 @@ class SlaterKosterTable:
             for i in range(20):
                 self.tables[p][:,i]=tail_smoothening(self.Rgrid,self.tables[p][:,i])                
         
-    def write(self,name=None):
+        
+    def write(self,filename=None):
         """ Use symbol1_symbol2.par as default. """
         self.smooth_tails()
-        if name==None: fn='%s_%s.par' %(self.ela.get_symbol(),self.elb.get_symbol())
-        else: fn=name
+        if filename==None: fn='%s_%s.par' %(self.ela.get_symbol(),self.elb.get_symbol())
+        else: fn=filename
         f=open(fn,'w')
         print>>f, 'slako_comment='
         print>>f, self.get_comment(), '\n\n'
@@ -86,10 +89,17 @@ class SlaterKosterTable:
             print>>f, '\n\n'                                                                                   
         f.close()
     
-    def plot(self,screen=False):
-        """ Plot the Slater-Koster table. """
-        pl.rc('figure.subplot',wspace=0.0001)
-        pl.rc('figure.subplot',hspace=0.0001)
+    
+    def plot(self,filename=None):
+        """ Plot the Slater-Koster table with matplotlib. 
+        
+        parameters:
+        ===========
+        filename:     for graphics file
+        
+        """
+        fig=pl.figure()
+        fig.subplots_adjust(hspace=0.0001,wspace=0.0001)
         mx=max(1,self.tables[0].max())
         if self.nel==2:
             mx=max(mx,self.tables[1].max())
@@ -98,33 +108,53 @@ class SlaterKosterTable:
             ax=pl.subplot(5,2,i+1)
             for p,(e1,e2) in enumerate(self.pairs):
                 s1, s2=e1.get_symbol(), e2.get_symbol()
-                if p==1: s='--'
-                else: s='-'
-                pl.plot(self.Rgrid,self.tables[p][:,i],c='r',ls=s,label='%s%s: H' %(s1,s2))
-                pl.plot(self.Rgrid,self.tables[p][:,i+10],c='b',ls=s,label='%s%s: S' %(s1,s2))
-                pl.plot([0],c='k',ls='--')
-                pl.title(name,position=(0.9,0.8)) 
-                if ax.is_last_row():
-                    pl.xlabel('r (Bohr)')                                        
-                else:
-                    pl.xticks([],[])
-                if not ax.is_first_col():                   
+                if p==0: 
+                    s='-'
+                    lw = 1
+                    alpha = 1.0
+                else: 
+                    s='--'
+                    lw = 4
+                    alpha = 0.2
+                if all(abs(self.tables[p][:,i])<1E-10):
+                    ax.text(0.03,0.02+p*0.15,'No %s integrals for <%s|%s>' %(name,s1,s2),transform=ax.transAxes,size=10)
                     pl.yticks([],[])
-                pl.ylim(-mx,mx)
-                pl.xlim(0)
-                pl.legend(loc='upper left')
-        if screen:                
-            pl.show()
-        else:
-            pl.savefig('%s_%s_par.png' %(self.ela.get_symbol(),self.elb.get_symbol()))            
+                    pl.xticks([],[])
+                else:
+                    pl.plot(self.Rgrid,self.tables[p][:,i],c='r',ls=s,lw=lw,alpha=alpha)
+                    pl.plot(self.Rgrid,self.tables[p][:,i+10],c='b',ls=s,lw=lw,alpha=alpha)
+                    pl.axhline(0,c='k',ls='--')
+                    pl.title(name,position=(0.9,0.8)) 
+                    if ax.is_last_row():
+                        pl.xlabel('r (Bohr)')                                        
+                    else:
+                        pl.xticks([],[])
+                    if not ax.is_first_col():                   
+                        pl.yticks([],[])
+                    pl.ylim(-mx,mx)
+                    pl.xlim(0)
+        
+        pl.figtext(0.3,0.95,'H',color='r',size=20)
+        pl.figtext(0.34,0.95,'S',color='b',size=20)
+        pl.figtext(0.38,0.95,' Slater-Koster tables',size=20)
+        e1, e2 =  self.ela.get_symbol(),self.elb.get_symbol()
+        pl.figtext(0.3,0.92,'(thin solid: <%s|%s>, wide dashed: <%s|%s>)' %(e1,e2,e2,e1),size=10)
+        
+        file = '%s_%s_slako.pdf' %(e1,e2)
+        if filename!=None:
+            file = filename
+        pl.savefig(file)            
+    
     
     def get_comment(self):
         """ Get comments concerning parametrization. """        
         return self.comment
         
+        
     def set_comment(self,comment):
         """ Add optional one-liner comment for documenting the parametrization. """
         self.comment+='\n'+comment
+        
         
     def get_range(self,fractional_limit):
         """ Define ranges for the atoms: largest r such that Rnl(r)<limit. """

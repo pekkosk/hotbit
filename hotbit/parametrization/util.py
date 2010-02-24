@@ -140,7 +140,7 @@ def tail_smoothening(x,y):
     Return:
     smoothed y-function on same grid.
     """
-    if all(abs(y)<1E-10):
+    if nu.all(abs(y)<1E-10):
         return y
     N=len(x)
     xmax=x[-1]

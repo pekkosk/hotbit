@@ -1,6 +1,6 @@
 slako_comment=
-Na xc=PW92 charge=0.0 conf:frauenheim r0=5.365
-C xc=PW92 charge=0.0 conf:frauenheim r0=2.701
+Na xc=PW92 charge=0.0 conf:quadratic r0=5.365
+C xc=PW92 charge=0.0 conf:quadratic r0=2.701
 Fri Aug  1 11:00:12 2008 
 
 

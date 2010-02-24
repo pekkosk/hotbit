@@ -9,10 +9,9 @@ from ase import read, PickleTrajectory
 import pylab as pl
 from copy import copy
 
-
 class RepulsiveFitting:
 
-    def __init__(self,rep,r_cut=None,r_dimer=None,order=8,calc=None,maxiter=None, errfile=None):
+    def __init__(self,symbol1,symbol2,r_dimer=None,calc=None,maxiter=None,errfile=None): 
         """
         Fit the short-range repulsive potential.
         
@@ -25,27 +24,26 @@ class RepulsiveFitting:
         calc:
         """
         #raise NotImplementedError('Not yet consistently implemented; however, you may comment this exception to play around.')
-        self.elm1=Element(rep[0])
-        self.elm2=Element(rep[1])
-        self.sym1=self.elm1.get_symbol()
-        self.sym2=self.elm2.get_symbol()
+        self.elm1=Element(symbol1)
+        self.elm2=Element(symbol2)
+        self.sym1=symbol1
+        self.sym2=symbol2
         self.r_dimer=r_dimer
-        self.r_cut=r_cut                    # the cutoff radius
-        self.r_small=r_dimer*0.5            # use ZBL repulsion for r<r_small
-        self.order=order                    # order of Vrep polynomial 
+        
         self.deriv=[]
         self.comments=''
         self.scale=1.025                    # scaling factor for scalable systems
         self.structures = []
         self.calc=calc
         self.v=None
+        self.r_cut=None                    # the cutoff radius, set in fitting
         self.maxiter=maxiter
 
         self.colors = ['blue','cyan','red','pink','yellow','orange','#8DEE1E','magenta','green','white','black']
         self.color_index = 0
 
         self.err = None
-        self.set_err_out(errfile)
+        self._set_err_out(errfile)
         print '\n\n\n\nCreating a repulsion curve between elements %s and %s' % (self.sym1, self.sym2)
         print '  r_dimer      =',r_dimer
         print '  1.5 x r_dimer=',1.5*r_dimer
@@ -53,13 +51,10 @@ class RepulsiveFitting:
 
     def __call__(self,r,der=0):
         """ Return V_rep(r) or V_rep'(r) """
-        if self.v is None:
-            return self.parametric_potential(r,self.param,der=der)
-        else:
-            return self.v(r,der=der)
+        return self.v(r,der=der)
 
 
-    def set_err_out(self, err):
+    def _set_err_out(self, err):
         import sys
         if self.err not in [None, sys.stdout]:
             if hasattr(self.err, 'close'):
@@ -76,35 +71,25 @@ class RepulsiveFitting:
             self.err = sys.stdout
 
 
-#    def write_to_par(self,txt=None,points=100,append=True):
-#        """ Append Vrep into par-file, including comments. 
-#        
-#        POISTETAAN. Liittyy fortran-versioon.
-#        """
-#        if txt is None:
-#            txt='%s_%s.par' %(self.elm1,self.elm2)
-#        mode=('w','a')[append]
-#        o=open(txt,mode)
-#        print>>o, 'fitting='
-#        print>>o, self.comments
-#        print>>o, '\n\nrepulsion='
-#        for r in nu.linspace(0.1,self.r_cut,points):
-#            print>>o, r/Bohr, self(r)/Hartree
-#        o.close()
-
-
-    def plot(self, screen=True):
-        """ Plot vrep and derivative together with fit info. """
+    def plot(self, filename=None):
+        """ Plot vrep and derivative together with fit info. 
+        
+        parameters:
+        ===========
+        filename:     graphics file name
+        """
         r=nu.linspace(0,self.r_cut)
         v=[self(x,der=0) for x in r]
         vp=[self(x,der=1) for x in r]
         rmin=0.9*min([d[0] for d in self.deriv])
 
-        # Vrep
+        fig=pl.figure()
         pl.subplots_adjust(wspace=0.25)
+        
+        # Vrep
         pl.subplot(1,2,1)
-        pl.ylabel('$V_{rep}(r) (eV)$')
-        pl.xlabel('$r (\AA)$')
+        pl.ylabel(r'$V_{rep}(r)$  (eV)')
+        pl.xlabel(r'$r$  ($\AA$)')
         pl.axvline(x=self.r_cut,c='r',ls=':')
         pl.plot(r,v)
         pl.ylim(ymin=0,ymax=self(0))
@@ -112,9 +97,9 @@ class RepulsiveFitting:
 
         # Vrep'
         pl.subplot(1,2,2)
-        pl.ylabel('$dV_{rep}(r)/dr (eV/\AA)$')
-        pl.xlabel('$r (\AA)$')
-        pl.plot(r,vp,label='$dV_{rep}(r)/dr$')
+        pl.ylabel(r'$dV_{rep}(r)/dr$ (eV/$\AA$)')
+        pl.xlabel(r'$r$ ($\AA$)')
+        pl.plot(r,vp,label=r'$dV_{rep}(r)/dr$')
         for s in self.deriv:
             pl.scatter( [s[0]],[s[1]],s=100*s[2],c=s[3],label=s[4])
         pl.axvline(x=self.r_cut,c='r',ls=':')
@@ -123,21 +108,23 @@ class RepulsiveFitting:
         xmax = 1.2*self.r_cut
         ymin = self(xmin, der=1)
         ymax = 0
-        pl.text(self.r_dimer, ymin, 'r_dimer')
-        pl.text(self.r_cut, ymin, 'r_cut')
+        pl.text(self.r_dimer, ymax, r'$r_{dimer}$')
+        pl.text(self.r_cut, ymax, r'$r_{cut}$')
         pl.xlim(xmin=xmin, xmax=xmax)
         pl.ylim(ymin=ymin, ymax=ymax)
         #pl.subtitle('Fitting for %s and %s' % (self.sym1, self.sym2))
         pl.rc('font', size=10)
-        #pl.legend(loc=4, borderaxespad=1)
-        pl.savefig('%s_%s.eps' % (self.sym1, self.sym2))
-        if screen:
-            pl.show()
+        pl.legend(loc=4)
+        file = '%s_%s_repulsion.pdf' % (self.sym1, self.sym2)
+        if filename!=None:
+            file=filename
+        pl.savefig(file)
         pl.clf()
 
 
-    def add_fitting_comment(self,s):
+    def add_comment(self,s=None):
         """ Append some comment for par-file. """
+        if s==None: return
         if s in [None, '']:
             return
         add='|'
@@ -146,48 +133,13 @@ class RepulsiveFitting:
         self.comments+=add+s
 
 
-    def ZBL_derivative(Z1,Z2,r):
-        """ 
-        Return the derivative of the Ziegler,Biersack,Littmar potential
-        for elements Z1 and Z2 at distance r.
-        """
-        def phi(x,der=0):
-            if der==0:
-                return 0.1818*exp(-3.2*x) + 0.5099*exp(-0.9423*x) + 0.2802*exp(-0.4029*x) \
-                    +0.02817*exp(-0.2016*x)
-            elif der==1:
-                return -0.58176*exp(-3.2*x) - 0.48047877*exp(-0.9423*x) - \
-                    0.11289258*exp(-0.4029*x) - 0.005679072*exp(-0.2016*x)
-        au=0.8854*0.5292/( Z1**0.23+Z2**0.23 )
-        return -Z1*Z2/r**2*phi(r/au) + Z1*Z2/r*phi(r/au,der=1)/au
-
-
-    def parametric_potential(self,r,d,der=0):
-        """ 
-        Return Vrep(r) with given parameter representation. 
-        
-        Vrep(r) =sum_i[0,order] d_i (r_c-r)**i
-        Vrep'(r)=sum_i[1,order] d_i (r_c-r)**(i-1)*i*(-1)
-        """
-        re=0.0
-        d2=copy(d)
-        d2[0:2]=0.0 # first two terms have to be zero
-        if r>self.r_cut or r<0:
-            return 0.0
-        else:
-            if der==0:
-                return sum( [d2[i]*(self.r_cut-r)**i for i in range(self.order)] )
-            elif der==1:
-                return sum( [d2[i]*(self.r_cut-r)**(i-1)*i*(-1) for i in range(1,self.order)] )
-
-
-    def scale_positions(self,x,cell=False):
+    def _scale_positions(self,x,cell=False):
         """ Scale the whole system by x; also the unit cell. """
         self.set_cell(self.get_cell()*x,fix=False)
         self.reduce_atoms_into_cell()
 
 
-    def solve_ground_state(self, atoms, charge=0, calc=None):
+    def _solve_ground_state(self, atoms, charge=0, calc=None):
         """
         Solves the ground state of given atoms and returns the
         solved calculator.
@@ -201,69 +153,25 @@ class RepulsiveFitting:
             c.set('txt', calc.txt)
         c.set("charge",charge)
         atoms.set_calculator(c)
-        try:
-            atoms.get_potential_energy()
-            c.set('txt',"-")
-        except Exception:
-            c.set('txt', "-")
-            del(c)
-            c = None
+        atoms.get_potential_energy()
+        c.set('txt',"-")
         return c
 
 
-#    def get_energy(self,atoms,charge,forces=False):
-#        """
-#        Calculate energy (or forces) for given structure with given charge
-#        and given parameters (elements & tables as well).
-#        
-#        MUUTETAAN.(poistetaan?)
-#        """
-#        from copy import deepcopy, copy
-#        if type(atoms)==type(''):
-#            atms=read(file)
-#        else:
-#            atms=atoms
-#        calc=copy(self.calc)
-#        calc.set(charge=charge)
-#        atms.set_calculator(calc)
-#        if forces:
-#            res=atms.get_forces()
-#        else:
-#            res=atms.get_potential_energy()
-#        #calc.finalize()
-#        return res
-
-
-
-    def fitting_function(self,d):
-        """ Minimize this function in the fitting. """
-        chi2=0.0
-        for point in self.deriv:
-            r=point[0]
-            vp=point[1]
-            w=point[2]
-            chi2+=(vp-self.parametric_potential(r,d,der=1))**2*w
-        return chi2
-
-
-    def fit(self, r_cut):
-        """ Fit V_rep(r) into points {r,V_rep'(r)}. """
-        from scipy.optimize import fmin
-        self.r_cut = r_cut
-        self.param=nu.zeros(self.order,float)
-        self.param[2]=10                    # initial guess...
-        print "Fitting with r_cut=%0.6f..." % r_cut
-        self.param = fmin(self.fitting_function,self.param,maxiter=self.maxiter, maxfun=self.maxiter)
-
-
-    def fit_smoothing_spline(self, r_cut, s=None, filename=None):
+    def fit(self, r_cut, s=None): #, filename=None):
         """
         Fit smoothing spline into points {r, V_rep'(r)}.
         The weights are treated as inverse of the stardard deviation.
         """
         from scipy.interpolate import splrep, splev
+        
+        # fitting parameters; order of spline is cubic at maximum
+        k = min(len(self.deriv)-1,3)
         self.r_cut = r_cut
-        k = 3
+        self.s = s
+        self.k = k
+        
+        
         x = nu.array([self.deriv[i][0] for i in range(len(self.deriv))])
         y = nu.array([self.deriv[i][1] for i in range(len(self.deriv))])
         w = nu.array([self.deriv[i][2] for i in range(len(self.deriv))])
@@ -272,7 +180,7 @@ class RepulsiveFitting:
         x = x[indices]
         y = y[indices]
         w = w[indices]
-        x, y, w = self.average_too_similar_values(x,y,w)
+        x, y, w = self._unite_closeby_points(x,y,w)
         # use only points that are closer than r_cut
         indices = nu.where(x < r_cut)
         x = list(x[indices])
@@ -293,7 +201,7 @@ class RepulsiveFitting:
         def dv_rep(r):
             return splev(r, tck)
 
-        v_rep = self.integrate_vrep(dv_rep, r_cut)
+        v_rep = self._integrate_vrep(dv_rep, r_cut)
 
         def potential(r, der=0):
             if der == 0:
@@ -303,11 +211,9 @@ class RepulsiveFitting:
             else:
                 raise NotImplementedError("Only 0th and 1st derivatives")
         self.v = potential
-        if filename != None:
-            self.smoothing_spline_fit_to_file(filename, r_cut, s, k)
+        
 
-
-    def average_too_similar_values(self, x, y, w):
+    def _unite_closeby_points(self, x, y, w):
         """
         If there are many y-values with almost the same x-values,
         it is impossible to make spline fit to these points.
@@ -335,12 +241,17 @@ class RepulsiveFitting:
         return nu.array(new_x), nu.array(new_y), nu.array(new_w)
 
 
-    def smoothing_spline_fit_to_file(self, filename, r_cut, s, k):
+    def write_par(self, filename=None):
         """
-        Write the full par-file to filename.
+        Write the full par-file to file.
+        
+        parameters:
+        ===========
+        filename:     output file
         """
         from time import asctime
         import shutil
+        r_cut, s, k = self.r_cut, self.s, self.k
         par_files = self.calc.tables
         par_file = None
         e12 = self.sym1 + self.sym2
@@ -352,25 +263,22 @@ class RepulsiveFitting:
         if par_file != None:
             shutil.copy(par_file, filename)
             f = open(filename, 'a')
-            print >> f, "repulsion_fitting_comment="
-            print >> f, "Repulsive potential generated by fitting function 'fit_smoothing_spline'"
-            print >> f, "The systems used to produce this fit:"
-            for data in self.structures:
-                print >> f, "%20s %3s" % (data['filename'], data['charge'])
-            print >> f, "parameters r_cut = %0.4f, s = %0.4f, k = %3i" % (r_cut, s, k)
-            print >> f, "\n"
+            # add comments
             print >> f, "repulsion_comment="
+            print >> f, "%s\nparameters r_cut = %0.4f Ang, s = %0.4f, k = %3i" % (asctime(),r_cut, s, k)
+            if len(self.structures)>1:
+                print >> f, "The systems used to produce this fit:"
+                for data in self.structures:
+                    print >> f, "%20s %3s" % (data['filename'], data['charge'])
             if len(self.comments) > 0:
-                print >> f, self.comments
-            print >> f, asctime() + "\n\n"
-            print >> f, 'fitting='
+                print >> f, self.comments            
             print >> f, '\n\nrepulsion='
             for r in nu.linspace(0.1, r_cut, 100):
                 print >> f, r/Bohr, self(r)/Hartree
             f.close()
 
 
-    def integrate_vrep(self, dv_rep, r_cut, N=100):
+    def _integrate_vrep(self, dv_rep, r_cut, N=100):
         """
         Integrate V'_rep(r) from r_cut to zero to get the V_rep(r)
         """
@@ -387,49 +295,42 @@ class RepulsiveFitting:
         return SplineFunction(r_g[::-1], v_rep[::-1])
 
 
-    def repulsion_forces(self,atoms,vrep):
-        """ 
-        Return the repulsive forces for atoms using given
-        vrep(r) function for present element pairs.
-        
-        POISTETAAN: kayta calc:n 
-        calc.rep.get_repulsive_forces()
-        """
-        raise NotImplementedError('No idea if this works, check!')
-
-        n=len(atoms)
-        forces=nu.empty((n,3))
-        els=atoms.get_chemical_symbols()
-
-        for i in range(n):
-            for j in range(i,n):
-                if (els[i],els[j]) is (self.elm1,self.elm2) or \
-                   (els[j],els[i]) is (self.elm1,self.elm2):
-                    rij=atoms.vector(i,j)
-                    r=nu.linalg.norm(rij)
-                    force=vrep(r,der=1)*rij/r
-                    forces[i,:]=force
-                    forces[j,:]=-force
-        return forces
-
     #
     #       Fitting methods
     #             
-    def append_point(self,data,comment=None):
-        """ Add point to vrep'-fitting: data=[r,v',w,color,info] """
-        self.deriv.append(data)
-        self.add_fitting_comment(comment)
+    def append_point(self,weight,r,dvrep,comment=None,label='point',color='g'):
+        """ Add point to vrep'-fitting.
+        
+        parameters:
+        ===========
+        weight:    relative weight (inverse of deviation)
+        r:         radius, in Angstroms
+        vder:      value of the derivative at r
+        color:     pylab color for plotting
+        info:      label in plotting
+        """
+        self.deriv.append([r,dvrep,weight,color,label])
+        self.add_comment(comment)
 
 
-    def append_dimer(self,weight):
-        """ Use dimer bond length in fitting. """
+    def append_dimer(self,weight,r_dimer=None,comment=None,label='dimer',color='r'):
+        """ Use dimer bond length in fitting. 
+        
+        parameters:
+        ===========
+        weight:    relative weight (inverse of deviation)
+        r_dimer:   dimer bond length in Angstroms. By default the initialization value.        
+        """
+        d=r_dimer
+        if d==None: d=self.r_dimer
         dimer=Atoms(symbols=[self.sym1,self.sym2],\
-                    positions=[(0,0,0),(self.r_dimer,0,0)],\
+                    positions=[(0,0,0),(d,0,0)],\
                     pbc=False,cell=[100,100,100])
-        self.append_scalable_system(dimer,0.0,weight,name='dimer bond length',comment='dimer at %.4f %s' %(self.r_dimer,chr(197)))
+        print dimer
+        self.append_scalable_system(weight,dimer,0.0,comment=comment,label=label,color=color)
 
 
-    def append_scalable_system(self,system,charge,weight,color='#71FB00',name=None,comment=None):
+    def append_scalable_system(self,weight,system,charge,comment=None,label=None,color='m'):
         """ Use scalable equilibrium (DFT) system in repulsion fitting. """
         #raise NotImplementedError('Not implemented correctly')
         if type(system)==type(''):
@@ -440,8 +341,8 @@ class RepulsiveFitting:
                 name=system+'_scalable'
         else:
             atoms=system
-            if name == None:
-                name=atoms.get_name()+'_scalable'
+            if label == None:
+                label=atoms.get_name()+'_scalable'
         #forces = self.calc.get_forces(atoms)
         #for vec_f in forces:
         #    if nu.linalg.norm(vec_f) > 0.05:
@@ -449,18 +350,17 @@ class RepulsiveFitting:
         x=self.scale
         r=atoms.mean_bond_length()
         bonds=atoms.number_of_bonds()
-        e1=self.solve_ground_state(atoms,charge).get_potential_energy(atoms)
+        e1=self._solve_ground_state(atoms,charge).get_potential_energy(atoms)
         atoms.scale_positions(x)
-        e2=self.solve_ground_state(atoms,charge).get_potential_energy(atoms)
+        e2=self._solve_ground_state(atoms,charge).get_potential_energy(atoms)
 
         dEdr=(e2-e1)/(x*r-r)
-        self.append_point([r,-dEdr/bonds,weight,color,name])
-        if comment is None:
-            comment='scalable %s' %name
-        self.add_fitting_comment(comment)
+        self.append_point(weight,r,-dEdr/bonds,comment,label,color)
+        if comment!=None:
+            self.add_comment(comment)
 
 
-    def append_energy_curve(self, dft_traj, charge=0, calc=None, sigma=1, color=None, label='energy curve', separating_distance=3, h=1e-5, comment=None):
+    def append_energy_curve(self, weight, trajectory, charge=0, comment=None, cutoff=3, toldist=1e-5, label='energy curve', color='y'):
         """
         Calculates the V'rep(r) from a given DFT ase-trajectory for elements
         A and B:
@@ -473,38 +373,38 @@ class RepulsiveFitting:
               N is the number of different A-B pairs that are taken
               into account.
 
-        acceptable keyword arguments:
-        color:               Color that is used in the fitting plot.
-        label:               Name that is used in the fitting plot.
-        sigma:               The "uncertainty" of the system (default=1)
-        separating_distance: If distance between two elements is larger
-                             than this, it is assumed that their
-                             interaction can be neglected.
-        h:                   The deviation that is allowed in the bond
-                             length between the element pairs that should
-                             have exactly the same bond length.
+        parameters:
+        ===========        
+        weight:              Fitting weight (inverse of deviation)
+        trajectory:          ase trajectory for energy curve
+        charge:              total charge of the system
         comment:             A comment to be added to the .par file
+        cutoff:              Cutoff for element interaction, in WHAT UNITS?
+        toldist:             Acceptable tolerance in distance
+                             (such that R and R+toldist still have the 'same' bond length)        
+        label:               Name that is used in the fitting plot.
+        color:               Color that is used in the fitting plot.
         """
         import scipy
         from ase.io.trajectory import PickleTrajectory
         from ase import Atoms
         from box.interpolation import SplineFunction
 
-        if calc == None:
-            calc = self.calc
+        sigma = 1/weight
+        calc = self.calc
         if color == None:
-            color = self.get_color()
-        print "  Appending energy curve data from %s..." % dft_traj
-        traj = PickleTrajectory(dft_traj)
-        R, E_dft, N = self.process_trajectory(traj, self.sym1, self.sym2, separating_distance, h)
+            color = self._get_color()
+        print "  Appending energy curve data from %s..." % trajectory
+        traj = PickleTrajectory(trajectory)
+        R, E_dft, N = self._process_trajectory(traj, self.sym1, self.sym2, cutoff, toldist)
         E_bs = nu.zeros(len(E_dft))
         usable_frames = []
         for i in range(len(traj)):
             atoms=copy(traj[i])
-            calc_new = self.solve_ground_state(atoms, charge, calc)
+            calc_new = self._solve_ground_state(atoms, charge, calc)
             if calc_new == None:
                 print "    *** Error: No data from frame %i ***" % i
-                print >> self.err, "No data from %s frame %i" % (dft_traj, i)
+                print >> self.err, "No data from %s frame %i" % (trajectory, i)
             else:
                 E_bs[i] = calc_new.get_potential_energy(atoms)
                 usable_frames.append(i)
@@ -528,11 +428,104 @@ class RepulsiveFitting:
         for i, r in enumerate(R):
             if i > 0:
                 label='_nolegend_'
-            self.append_point([r, vrep(r,der=1), 1./(sigma_coefficient*sigma), color, label], comment=None)
-        self.add_fitting_comment(comment)
+            self.append_point(1./(sigma_coefficient*sigma),r, vrep(r,der=1), comment, label, color)
 
 
-    def process_trajectory(self, traj, elA, elB, separating_distance, h):
+    def append_homogeneous_structure(self, weight, filename, charge=0, comment=None, cutoff=3, toldist=0.005, traj_indices=None,label='homogeneous structure',color=None):
+        """
+        For a given structure, calculate points {r, V'_rep(r)} so that
+        the residual forces are minimized (F_i = \sum_j(dV(|r_ij|)/dR)).
+        If only coordinates are given, the structure must be an equilibrium
+        structure. If also forces from DFT calculation are given
+        (ase.traj), any homogeneous structure may be applied, assuming
+        the minimization converges.
+        
+        parameters:
+        ===========
+        weight:        relative weight
+        filename:      input structure
+        charge:        structure's electric charge
+        comment:       fitting comment
+        cutoff:        interaction cutoff
+        toldist:       acceptable tolerance in bond lengths (still considered equal)
+        traj_indices:  A list of indices of the frames that is read from
+                       the trajectory.
+        label:         plotting label
+        color:         plotting color
+        """
+        sigma = 1/weight
+        points = []
+        structures, traj_indices = self.import_structures(filename, traj_indices)
+        print "\n  Appending homogeneous structure from %s..." % filename
+        for ind, (fr, structure) in enumerate(zip(traj_indices, structures)):
+            print "  frame %i" % fr
+            epsilon, distances, mask=self._get_matrices(structure, cutoff, toldist)
+            if len(distances) == 0:
+                raise RuntimeError("There are no bonds under given cut radius in frame %i." & fr)
+            r_hat = self._construct_rhat_matrix(structure)
+
+            # if the given structure contains forces, use them, otherwise
+            # assume that the structure is optimized
+            N = len(structure)
+            try:
+                forces_DFT = structure.get_forces()
+                print "    Found forces from trajectory %s at frame %i" % (filename, fr)
+            except:
+                forces_DFT = nu.zeros((N,3))
+                print "    No forces in trajectory %s at frame %i" % (filename, fr)
+            calc_new = self._solve_ground_state(structure, charge=charge, calc=calc)
+            if calc_new == None:
+                print >> self.err, "    No data from %s frame %i" % (label, fr)
+            else:
+                forces = calc_new.get_forces(structure)
+                forces_res = forces_DFT - forces
+
+                # use one less point in an array that is given for
+                # the minimizer to reduce the number of degrees of freedom
+                v_rep_points = nu.zeros(len(distances)-1)
+
+                # the function that is minimized, returns the sum of
+                # the norm of forces acting on each atoms
+                def residual_forces(v_rep_points):
+                    res = 0.
+                    for i in range(N):
+                        indices = nu.array(mask[i,:]*epsilon[i,:])
+                        indices -= 1
+                        ppoints  = v_rep_points[indices]
+                        f = forces_res[i].copy()
+                        f -= nu.dot((mask[i,:]*ppoints),r_hat[i,:])
+                        res += nu.dot(f,f)
+                    return res
+
+                print "    Found %i different bond lengths." % len(v_rep_points)
+                v_rep_points, last_res_forces, minimized = self._find_forces(residual_forces, v_rep_points)
+                print "    The sum of the squared norms of the net forces: %0.4f (eV/ang)**2" % (last_res_forces)
+                # finally add the missing component
+                v_rep_points = list(v_rep_points)
+                v_rep_points.insert(0,0)
+                if minimized:
+                    for i in range(0,N-1):
+                        for j in range(i+1,N):
+                            if mask[i,j] > 0:
+                                # could add a degeneracy factor since there
+                                # may be different number of different bonds
+                                points.append([distances[epsilon[i,j]], v_rep_points[epsilon[i,j]], last_res_forces])
+                else:
+                    print "    The minimization of forces did not converge!"
+        if len(points) > 0:
+            points = nu.array(points)
+            sigmas = points[:,2] + nu.min(points[:,2])*0.001 # add small value to prevent 1/sigma to go infinity
+            inv_sigmas = 1./sigmas
+            norm_factor = nu.sqrt(1./sigma**2 / nu.dot(inv_sigmas, inv_sigmas))
+            points[:,2] /= norm_factor
+            if color == None:
+                color = self._get_color()
+            for data in points:
+                self.append_point(1/data[2], data[0], data[1], color, label, comment=None)
+                label = '_nolegend_'
+            self.add_comment(comment)
+
+    def _process_trajectory(self, traj, elA, elB, separating_distance, h):
         """
         Check each frame in trajectory, make sure that the trajectory
         is suitable for repulsion fitting for the elements A and B.
@@ -543,10 +536,10 @@ class RepulsiveFitting:
         E_dft = nu.zeros(len(traj))
         R = nu.zeros(len(traj))
         N = nu.zeros(len(traj))
-        self.assert_fixed_bond_lengths_except(traj, elA, elB, separating_distance, h)
+        self._assert_fixed_bond_lengths_except(traj, elA, elB, separating_distance, h)
         for i, image in enumerate(traj):
             atoms = copy(Atoms(image))
-            r, n = self.get_distance_of_elements(elA, elB, atoms, separating_distance, h)
+            r, n = self._get_distance_of_elements(elA, elB, atoms, separating_distance, h)
             E_dft[i] = image.get_total_energy()
             R[i] = r
             N[i] = n
@@ -554,7 +547,7 @@ class RepulsiveFitting:
         return R, E_dft, N[0]
 
 
-    def assert_fixed_bond_lengths_except(self, t, elA, elB, separating_distance, h):
+    def _assert_fixed_bond_lengths_except(self, t, elA, elB, separating_distance, h):
         """
         Makes sure that all the element pairs expect pairs A-B are the same 
         or larger than the defined limit in all configurations.
@@ -591,7 +584,7 @@ class RepulsiveFitting:
                             raise AssertionError("Long bond goes below the separating limit: atoms %i and %i." % (i, j))
 
 
-    def get_distance_of_elements(self, elA, elB, positions, separating_distance, h):
+    def _get_distance_of_elements(self, elA, elB, positions, separating_distance, h):
         """
         Calculates the distances of element pairs A-B that are closer to
         each other than the defined limit and makes sure that the distances
@@ -615,99 +608,7 @@ class RepulsiveFitting:
         return nu.average(R[:N]), N
 
 
-    def append_homogeneous_structure(self, filename, charge=0, color=None, sigma=1.0, label='homogeneous structure', comment=None, cut_radius=3, h=0.005, calc=None, traj_indices=None):
-        """
-        For a given structure, calculate points {r, V'_rep(r)} so that
-        the residual forces are minimized (F_i = \sum_j(dV(|r_ij|)/dR)).
-        If only coordinates are given, the structure must be an equilibrium
-        structure. If also forces from DFT calculation are given
-        (ase.traj), any homogeneous structure may be applied, assuming
-        the minimization converges.
-
-        sigma:        The "uncertainty" of the system (default=1)
-        maxiter:      how many fmin-runs is performed to find minimum point
-        cut_radius:   the largest distance of elements that is taken
-                      into account.
-        h:            the variation in the bond lengths that are still
-                      considered to be equal.
-        traj_indices: A list of indices of the frames that is read from
-                      the trajectory.
-        """
-        points = []
-        if calc == None:
-            calc = self.calc
-        structures, traj_indices = self.import_structures(filename, traj_indices)
-        print "\n  Appending homogeneous structure from %s..." % filename
-        for ind, (fr, structure) in enumerate(zip(traj_indices, structures)):
-            print "  frame %i" % fr
-            epsilon, distances, mask=self.get_matrices(structure, cut_radius, h)
-            if len(distances) == 0:
-                raise RuntimeError("There are no bonds under given cut radius in frame %i." & fr)
-            r_hat = self.construct_rhat_matrix(structure)
-
-            # if the given structure contains forces, use them, otherwise
-            # assume that the structure is optimized
-            N = len(structure)
-            try:
-                forces_DFT = structure.get_forces()
-                print "    Found forces from trajectory %s at frame %i" % (filename, fr)
-            except:
-                forces_DFT = nu.zeros((N,3))
-                print "    No forces in trajectory %s at frame %i" % (filename, fr)
-            calc_new = self.solve_ground_state(structure, charge=charge, calc=calc)
-            if calc_new == None:
-                print >> self.err, "    No data from %s frame %i" % (label, fr)
-            else:
-                forces = calc_new.get_forces(structure)
-                forces_res = forces_DFT - forces
-
-                # use one less point in an array that is given for
-                # the minimizer to reduce the number of degrees of freedom
-                v_rep_points = nu.zeros(len(distances)-1)
-
-                # the function that is minimized, returns the sum of
-                # the norm of forces acting on each atoms
-                def residual_forces(v_rep_points):
-                    res = 0.
-                    for i in range(N):
-                        indices = nu.array(mask[i,:]*epsilon[i,:])
-                        indices -= 1
-                        ppoints  = v_rep_points[indices]
-                        f = forces_res[i].copy()
-                        f -= nu.dot((mask[i,:]*ppoints),r_hat[i,:])
-                        res += nu.dot(f,f)
-                    return res
-
-                print "    Found %i different bond lengths." % len(v_rep_points)
-                v_rep_points, last_res_forces, minimized = self.find_forces(residual_forces, v_rep_points)
-                print "    The sum of the squared norms of the net forces: %0.4f (eV/ang)**2" % (last_res_forces)
-                # finally add the missing component
-                v_rep_points = list(v_rep_points)
-                v_rep_points.insert(0,0)
-                if minimized:
-                    for i in range(0,N-1):
-                        for j in range(i+1,N):
-                            if mask[i,j] > 0:
-                                # could add a degeneracy factor since there
-                                # may be different number of different bonds
-                                points.append([distances[epsilon[i,j]], v_rep_points[epsilon[i,j]], last_res_forces])
-                else:
-                    print "    The minimization of forces did not converge!"
-        if len(points) > 0:
-            points = nu.array(points)
-            sigmas = points[:,2] + nu.min(points[:,2])*0.001 # add small value to prevent 1/sigma to go infinity
-            inv_sigmas = 1./sigmas
-            norm_factor = nu.sqrt(1./sigma**2 / nu.dot(inv_sigmas, inv_sigmas))
-            points[:,2] /= norm_factor
-            if color == None:
-                color = self.get_color()
-            for data in points:
-                self.append_point([data[0], data[1], 1/data[2], color, label], comment=None)
-                label = '_nolegend_'
-            self.add_fitting_comment(comment)
-
-
-    def construct_rhat_matrix(self, structure):
+    def _construct_rhat_matrix(self, structure):
         N = len(structure)
         r_hat = nu.zeros((N,N,3))
         for i in range(N):
@@ -719,7 +620,7 @@ class RepulsiveFitting:
         return r_hat
 
 
-    def get_matrices(self, structure, cut_radius, h):
+    def _get_matrices(self, structure, cut_radius, h):
         """
         Construct epsilon matrix that maps the indices (i,j) to a
         single list of distances. If there are many bonds with
@@ -763,7 +664,7 @@ class RepulsiveFitting:
         return epsilon, averaged_distances, mask
 
 
-    def find_forces(self, function, v_rep_points):
+    def _find_forces(self, function, v_rep_points):
         """
         Try to minimize the residual forces by finding matrix
         elements epsilon_ij = V'_rep(|r_ij|).
@@ -836,71 +737,6 @@ class RepulsiveFitting:
         self.add_fitting_comment(comment)
 
 
-#    def append_energy_curve(traj,edft,charge,bonds,weight):
-#        """ 
-#        Fit V_rep'(r) into energy curve E(r) in given trajectory.
-#        
-#        Bonds are the atom index pairs (starting from zero) defining
-#        the bonds that change (and should all be equal). Whatever the
-#        system is, the ONLY missing energy contribution should thus
-#        be the repulsive energy between given bonds! Beware of 
-#        the dependency on other repulsive potentials (fitting should
-#        depend only on the electronic part).
-#        
-#        UUSIKSI.
-#        """
-#        raise NotImplementedError('should (might) work; check!!')
-#    
-#        trajectory=Atoms(traj)
-#        name=trajectory[0].get_name()
-#        n=len(trajectory)
-#        ebs=[]
-#        nb=len(bonds)
-#        rl=[]
-#        # construct edft(r) function
-#        for i,atoms in enumerate(trajectory):
-#            ebs.append( self.get_energy(atoms,charge) )
-#            lengths=[atoms.distance(b[0],b[1]) for b in bonds]
-#            if max(lengths)-min(lengths)<1E-6:
-#                print 'bond lengths:',lengths
-#                raise ValueError('bond lengths vary too much.')
-#            rl.append(nu.average(nu.array(lengths)))
-#            
-#        # now edft(r)=ebs(r)+nb*vrep(r); make vrep(r) and get vrep'(r)
-#        vrep=[(edft[i]-ebs[i])/nb for i in range(n)]
-#        v=SplineFunction(rl,vrep)
-#        for r in rl:
-#            self.add_point([r,v(r,der=1),weight/n,name],\
-#                 comment='energy curve %s' %name)
-#        raise NotImplementedError('should (might) work; check!!')
-
-
-#    def append_equilibrium_structure(atoms,relaxed=None):
-#        """
-#        Fit V_rep'(r) into given equilibrium (DFT) structure.
-#        
-#        atoms is a file name or Atoms object. The only requirement
-#        is that the ONLY missing force component missing
-#        from the TB calculation for the atoms in 'relaxed' list
-#        is the repulsion to be fitted. If relaxed is None, all
-#        the residual force is minimized for all atoms.
-#        
-#        TARKISTETTAVA.
-#        """
-#        from copy import copy
-#        raise NotImplementedError('still to be checked')
-#        if relaxed is None:
-#            relaxed=range(len(atoms))
-#        forces0=self.get_forces(atoms,forces=True)
-#        param=copy(self.param)
-#        #vrep=Spli...
-#        self.repulsion_forces(atoms,vrep)
-#        #residuals=get_residuals(atoms,forces0)
-#        #minimize residuals -> vrep'          
-#        #r
-#        #vrep(r,der=1)
-
-
     def write_fitting_data(self, filename):
         import pickle
         f = open(filename,'w')
@@ -938,7 +774,7 @@ class RepulsiveFitting:
         return structures, traj_indices
 
 
-    def get_color(self):
+    def _get_color(self):
         color = self.colors[self.color_index]
         self.color_index += 1
         if self.color_index == len(self.colors):
@@ -946,7 +782,7 @@ class RepulsiveFitting:
         return color
 
 
-    def get_trajs_for_fitting(self):
+    def _get_trajs_for_fitting(self):
         return self.structures
 
 
@@ -965,7 +801,7 @@ class ParametrizationTest:
         self.pars = pars
         self.trajectories = []
         self.calculators = []
-        for data in rf.get_trajs_for_fitting():
+        for data in rf._get_trajs_for_fitting():
             filename = data['filename']
             del data['filename']
             c = Hotbit()

@@ -9,7 +9,7 @@ param=os.environ.get('HOTBIT_PARAMETERS')
 
 #Au-Au
 
-#e1=KSAllElectron('Au',confinement={'mode':'frauenheim','r0':5.04})
+#e1=KSAllElectron('Au',confinement={'mode':'quadratic','r0':5.04})
 #e1.run()
 #e2=e1
 #sk=SlaterKosterTable(e1,e2)
@@ -28,12 +28,12 @@ lst=[('C','C',1.85*1.46,1.85*1.46),\
      
      
 for s1,s2,r01,r02 in lst:     
-    e1=KSAllElectron(s1,nodegpts=500,confinement={'mode':'frauenheim','r0':r01})
+    e1=KSAllElectron(s1,nodegpts=500,confinement={'mode':'quadratic','r0':r01})
     e1.run()
     if s1==s2:  
         e2=e1
     else:   
-        e2=KSAllElectron(s2,confinement={'mode':'frauenheim','r0':r02})
+        e2=KSAllElectron(s2,confinement={'mode':'quadratic','r0':r02})
         e2.run()    
         
     sk=SlaterKosterTable(e1,e2)
