@@ -7,6 +7,7 @@ from box import Atoms
 from box.interpolation import Function
 from ase import read, PickleTrajectory
 import pylab as pl
+from copy import copy
 
 
 class RepulsiveFitting:
@@ -168,7 +169,6 @@ class RepulsiveFitting:
         Vrep(r) =sum_i[0,order] d_i (r_c-r)**i
         Vrep'(r)=sum_i[1,order] d_i (r_c-r)**(i-1)*i*(-1)
         """
-        from copy import copy
         re=0.0
         d2=copy(d)
         d2[0:2]=0.0 # first two terms have to be zero
@@ -193,7 +193,6 @@ class RepulsiveFitting:
         solved calculator.
                 
         """
-        from copy import copy
         if calc == None:
             c = copy(self.calc)
             c.set('txt', self.calc.txt)
@@ -489,7 +488,6 @@ class RepulsiveFitting:
         import scipy
         from ase.io.trajectory import PickleTrajectory
         from ase import Atoms
-        from copy import copy
         from box.interpolation import SplineFunction
 
         if calc == None:
@@ -541,7 +539,6 @@ class RepulsiveFitting:
         Finally returns the bond lengths of elements A and B and
         the DFT energy in each image.
         """
-        from copy import copy
 
         E_dft = nu.zeros(len(traj))
         R = nu.zeros(len(traj))
@@ -784,6 +781,61 @@ class RepulsiveFitting:
         return v_rep_points, last_res_forces, False
 
 
+    def append_homogeneous_bulk(self, traj, coordination_number, charge, calc=None, separating_distance=3.0, h=1e-5, label='bulk', sigma=1.0, color=None, comment=None):
+        raise Exception("Not well tested, comment this line to use this method")
+        """ Get repulsion fitting from homogeneous bulk calculation.
+            The coordination number is the no. of nearest-neighbours
+            per atom in the bulk (e.g 4 in diamond lattice).
+        """
+        if charge != 0:
+            raise Exception("Charge in periodic systems is not implemented.")
+        if calc == None:
+            calc = self.calc
+        if type(traj) == str:
+            traj = PickleTrajectory(traj)
+        for image in traj:
+            R, E_dft, N = self.process_trajectory(traj, self.sym1, self.sym2, separating_distance, h)
+        N_a = len(traj[0])
+        N = N_a * coordination_number / 2.
+
+        E_bs = nu.zeros(len(E_dft))
+        usable_frames = []
+        for i in range(len(traj)):
+            atoms=copy(traj[i])
+            calc_new = self.solve_ground_state(atoms, charge, calc)
+            if calc_new == None:
+                print "    *** Error: No data from frame %i ***" % i
+                print >> self.err, "No data from %s frame %i" % (dft_traj, i)
+            else:
+                E_bs[i] = calc_new.get_potential_energy(atoms)
+                usable_frames.append(i)
+                calc_new.timer.summary()
+                calc_new.set_text("-")
+                del(calc_new)
+                print "    Collected data from frame %i" % i
+        traj.close()
+        # use only frames where DFTB-calculation converged
+        R = R[usable_frames]
+        E_dft = E_dft[usable_frames]
+        E_bs = E_bs[usable_frames]
+        sigma_coefficient = nu.sqrt(len(R))
+        # sort the radii and corresponding energies to ascending order
+        indices = R.argsort()
+        R = R[indices]
+        E_dft = E_dft[indices]
+        E_bs = E_bs[indices]
+        from box.interpolation import SplineFunction
+        vrep = SplineFunction(R, (E_dft - E_bs)/N)
+        if color == None:
+            color = self.get_color()
+
+        for i, r in enumerate(R):
+            if i > 0:
+                label='_nolegend_'
+            self.append_point([r, vrep(r,der=1), 1./(sigma_coefficient*sigma), color, label], comment=None)
+        self.add_fitting_comment(comment)
+
+
 #    def append_energy_curve(traj,edft,charge,bonds,weight):
 #        """ 
 #        Fit V_rep'(r) into energy curve E(r) in given trajectory.
@@ -993,7 +1045,6 @@ class ParametrizationTest:
         Calculate the energies for the frames in the trajectory
         and plot them.
         """
-        from copy import copy
         frames = []
         energies = []
         trajectory = PickleTrajectory(self.trajectories[i_traj])
