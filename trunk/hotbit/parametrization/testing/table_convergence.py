@@ -6,12 +6,12 @@ s1,s2,r01,r02=('Mg','O',1.85*1.41/0.529177,1.85*1.38)
         
      
      
-e1=KSAllElectron(s1,nodegpts=500,confinement={'mode':'frauenheim','r0':r01})
+e1=KSAllElectron(s1,nodegpts=500,confinement={'mode':'quadratic','r0':r01})
 e1.run()
 if s1==s2:  
     e2=e1
 else:   
-    e2=KSAllElectron(s2,nodegpts=500,confinement={'mode':'frauenheim','r0':r02})
+    e2=KSAllElectron(s2,nodegpts=500,confinement={'mode':'quadratic','r0':r02})
     e2.run()    
     
 # searching optimum ntheta/nr for fixed number of grid points    
