@@ -390,7 +390,7 @@ class RepulsiveFitting:
         from ase import Atoms
         from box.interpolation import SplineFunction
 
-        sigma = 1/weight
+        sigma = 1.0/weight
         calc = self.calc
         if color == None:
             color = self._get_color()
@@ -453,7 +453,7 @@ class RepulsiveFitting:
         label:         plotting label
         color:         plotting color
         """
-        sigma = 1/weight
+        sigma = 1.0/weight
         points = []
         structures, traj_indices = self.import_structures(filename, traj_indices)
         print "\n  Appending homogeneous structure from %s..." % filename
@@ -682,28 +682,39 @@ class RepulsiveFitting:
         return v_rep_points, last_res_forces, False
 
 
-    def append_homogeneous_bulk(self, traj, coordination_number, charge, calc=None, separating_distance=3.0, h=1e-5, label='bulk', sigma=1.0, color=None, comment=None):
+    def append_homogeneous_bulk(self, weight, trajectory, coordination, comment=None, cutoff=3.0, toldist=1e-5, label='bulk', color=None):
         raise Exception("Not well tested, comment this line to use this method")
         """ Get repulsion fitting from homogeneous bulk calculation.
             The coordination number is the no. of nearest-neighbours
             per atom in the bulk (e.g 4 in diamond lattice).
+            
+            
+        parameters:
+        ===========
+        weight:        fitting weight
+        trajectory:
+        coordination: 
+        comment:       comment fitting
+        cutoff:        interaction cutoff
+        toldist:       tolerance for distances (still considered the same)
+        label:         plotting label
+        color:         plotting color
         """
+        sigma=1.0/weight
         if charge != 0:
             raise Exception("Charge in periodic systems is not implemented.")
-        if calc == None:
-            calc = self.calc
-        if type(traj) == str:
-            traj = PickleTrajectory(traj)
+        if type(trajectory) == str:
+            traj = PickleTrajectory(trajectory)
         for image in traj:
-            R, E_dft, N = self.process_trajectory(traj, self.sym1, self.sym2, separating_distance, h)
+            R, E_dft, N = self.process_trajectory(traj, self.sym1, self.sym2, cutoff, toldist)
         N_a = len(traj[0])
-        N = N_a * coordination_number / 2.
+        N = N_a * coordination / 2.
 
         E_bs = nu.zeros(len(E_dft))
         usable_frames = []
         for i in range(len(traj)):
             atoms=copy(traj[i])
-            calc_new = self.solve_ground_state(atoms, charge, calc)
+            calc_new = self.solve_ground_state(atoms, 0.0, calc)
             if calc_new == None:
                 print "    *** Error: No data from frame %i ***" % i
                 print >> self.err, "No data from %s frame %i" % (dft_traj, i)
