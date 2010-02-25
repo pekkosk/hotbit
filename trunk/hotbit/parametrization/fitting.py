@@ -330,6 +330,35 @@ class RepulsiveFitting:
         self.append_scalable_system(weight,dimer,0.0,comment=comment,label=label,color=color)
 
 
+
+    def append_bulk(self,weight,bulk,coordination,R,comment=None,label='bulk',color='r'):
+        """
+        Use equilibrium bulk in fitting.
+        
+        Coordination and equilibrium nearest-neighbor bonds taken from trajectory.
+        
+        parameters:
+        ===========
+        weight:        relative fitting weight
+        bulk:          ase.Atoms instance for the bulk
+        coordination:  coordination number
+        R:             nearest-neighbor distance        
+        comment:       fitting comment
+        label:         plotting label
+        color:         plotting color
+        """
+        
+        atoms = bulk.copy()
+        calc = self._solve_ground_state(atoms,0.0)
+        e1 = calc.get_potential_energy()
+        atoms.set_cell(atoms.get_cell()*self.scale,scale_atoms=True)
+        e2 = atoms.set_calculator(copy(self.calc)).get_potential_energy()
+        
+        dEdr = (e2-e1)/(self.scale*R-R)
+        self.append_point(weight,R,-dEdr/crd,comment,label,color)
+        print 'Bulk: coordination %i, R=%.4f' %(R,crd)
+        
+        
     def append_scalable_system(self,weight,system,charge,comment=None,label=None,color='m'):
         """ Use scalable equilibrium (DFT) system in repulsion fitting. """
         #raise NotImplementedError('Not implemented correctly')
@@ -526,6 +555,70 @@ class RepulsiveFitting:
                 self.append_point(1/data[2], data[0], data[1], comment, label, color)
                 label = '_nolegend_'
             self.add_comment(comment)
+            
+            
+    def append_bulk_curve(self, weight, trajectory, coordination, comment=None, cutoff=3.0, toldist=1e-5, label='bulk', color=None):
+        """ Get repulsion fitting from homogeneous bulk calculation.
+            
+        parameters:
+        ===========
+        weight:        fitting weight
+        trajectory:
+        coordination:  coordination number in bulk 
+        comment:       comment fitting
+        cutoff:        interaction cutoff
+        toldist:       tolerance for distances (still considered the same)
+        label:         plotting label
+        color:         plotting color
+        """
+        raise Exception("Not well tested, comment this line to use this method")
+        sigma=1.0/weight
+        if charge != 0:
+            raise Exception("Charge in periodic systems is not implemented.")
+        if type(trajectory) == str:
+            traj = PickleTrajectory(trajectory)
+        for image in traj:
+            R, E_dft, N = self.process_trajectory(traj, self.sym1, self.sym2, cutoff, toldist)
+        N_a = len(traj[0])
+        N = N_a * coordination / 2.
+
+        E_bs = nu.zeros(len(E_dft))
+        usable_frames = []
+        for i in range(len(traj)):
+            atoms=copy(traj[i])
+            calc_new = self.solve_ground_state(atoms, 0.0, calc)
+            if calc_new == None:
+                print "    *** Error: No data from frame %i ***" % i
+                print >> self.err, "No data from %s frame %i" % (dft_traj, i)
+            else:
+                E_bs[i] = calc_new.get_potential_energy(atoms)
+                usable_frames.append(i)
+                calc_new.timer.summary()
+                calc_new.set_text("-")
+                del(calc_new)
+                print "    Collected data from frame %i" % i
+        traj.close()
+        
+        # use only frames where DFTB-calculation converged
+        R = R[usable_frames]
+        E_dft = E_dft[usable_frames]
+        E_bs = E_bs[usable_frames]
+        sigma_coefficient = nu.sqrt(len(R))
+        # sort the radii and corresponding energies to ascending order
+        indices = R.argsort()
+        R = R[indices]
+        E_dft = E_dft[indices]
+        E_bs = E_bs[indices]
+        from box.interpolation import SplineFunction
+        vrep = SplineFunction(R, (E_dft - E_bs)/N)
+        if color == None:
+            color = self.get_color()
+
+        for i, r in enumerate(R):
+            if i > 0:
+                label='_nolegend_'
+            self.append_point([r, vrep(r,der=1), 1./(sigma_coefficient*sigma), color, label], comment=comment)
+
 
     def _process_trajectory(self, traj, elA, elB, separating_distance, h):
         """
@@ -684,6 +777,9 @@ class RepulsiveFitting:
         return v_rep_points, last_res_forces, False
 
 
+<<<<<<< .mine
+    
+=======
     def append_homogeneous_bulk(self, weight, trajectory, coordination, comment=None, cutoff=3.0, toldist=1e-5, label='bulk', color=None):
         raise Exception("Not well tested, comment this line to use this method")
         """ Get repulsion fitting from homogeneous bulk calculation.
@@ -748,6 +844,7 @@ class RepulsiveFitting:
                 label='_nolegend_'
             self.append_point(1./(sigma_coefficient*sigma), r, vrep(r, der=1), comment, label, color)
 
+>>>>>>> .r235
 
     def write_fitting_data(self, filename):
         import pickle
@@ -796,7 +893,8 @@ class RepulsiveFitting:
 
     def _get_trajs_for_fitting(self):
         return self.structures
-
+    
+    
 
 class ParametrizationTest:
     """
