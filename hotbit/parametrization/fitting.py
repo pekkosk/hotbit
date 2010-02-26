@@ -166,7 +166,7 @@ class RepulsiveFitting:
         from scipy.interpolate import splrep, splev
         
         # fitting parameters; order of spline is cubic at maximum
-        k = min(len(self.deriv)-1,3)
+        k = min(len(self.deriv)-1+1,3)
         self.r_cut = r_cut
         self.s = s
         self.k = k
@@ -313,25 +313,29 @@ class RepulsiveFitting:
         self.add_comment(comment)
 
 
-    def append_dimer(self,weight,r_dimer=None,comment=None,label='dimer',color='r'):
-        """ Use dimer bond length in fitting. 
+    def append_dimer(self,weight,r_dimer=None,calc,comment=None,label='dimer',color='r'):
+        """ 
+        Use dimer bond length in fitting. 
         
         parameters:
         ===========
         weight:    relative weight (inverse of deviation)
-        r_dimer:   dimer bond length in Angstroms. By default the initialization value.        
+        r_dimer:   dimer bond length in Angstroms. By default the initialization value.
+        calc:      Hotbit calculator (Gamma-point calculator)
+        comment:   fitting comment
+        label:     plotting label
+        color:     plotting color        
         """
         d=r_dimer
         if d==None: d=self.r_dimer
         dimer=Atoms(symbols=[self.sym1,self.sym2],\
                     positions=[(0,0,0),(d,0,0)],\
                     pbc=False,cell=[100,100,100])
-        print dimer
-        self.append_scalable_system(weight,dimer,0.0,comment=comment,label=label,color=color)
+        self.append_scalable_system(weight,dimer,0.0,calc,comment=comment,label=label,color=color)
 
 
 
-    def append_bulk(self,weight,bulk,coordination,R,comment=None,label='bulk',color='r'):
+    def append_bulk(self,weight,bulk,crd,R,calc,comment=None,label='bulk',color='r'):
         """
         Use equilibrium bulk in fitting.
         
@@ -341,26 +345,40 @@ class RepulsiveFitting:
         ===========
         weight:        relative fitting weight
         bulk:          ase.Atoms instance for the bulk
-        coordination:  coordination number
-        R:             nearest-neighbor distance        
+        crd:           coordination number
+        R:             nearest-neighbor distance
+        calc:          Hotbit calculator (with proper set of k-points)        
         comment:       fitting comment
         label:         plotting label
         color:         plotting color
         """
-        
-        atoms = bulk.copy()
-        calc = self._solve_ground_state(atoms,0.0)
-        e1 = calc.get_potential_energy()
+        if type(bulk)==type(''):
+            from ase import read
+            atoms = read(bulk)
+        else:
+            atoms = bulk.copy()
+        self._solve_ground_state(atoms,0.0,calc=calc)
+        e1 = atoms.get_potential_energy()
         atoms.set_cell(atoms.get_cell()*self.scale,scale_atoms=True)
-        e2 = atoms.set_calculator(copy(self.calc)).get_potential_energy()
+        self._solve_ground_state(atoms,0.0,calc=calc)
+        e2 = atoms.get_potential_energy()
         
         dEdr = (e2-e1)/(self.scale*R-R)
         self.append_point(weight,R,-dEdr/crd,comment,label,color)
         print 'Bulk: coordination %i, R=%.4f' %(R,crd)
         
         
-    def append_scalable_system(self,weight,system,charge,comment=None,label=None,color='m'):
-        """ Use scalable equilibrium (DFT) system in repulsion fitting. """
+    def append_scalable_system(self,weight,system,charge,calc,comment=None,label=None,color='m'):
+        """ 
+        Use scalable equilibrium system in repulsion fitting. 
+        
+        parameters:
+        ===========
+        weight:        fitting weight 
+        system:        filename or ase.Atoms
+        charge:        
+        
+        """
         #raise NotImplementedError('Not implemented correctly')
         if type(system)==type(''):
             from ase import read
@@ -557,7 +575,7 @@ class RepulsiveFitting:
             self.add_comment(comment)
             
             
-    def append_bulk_curve(self, weight, trajectory, coordination, comment=None, cutoff=3.0, toldist=1e-5, label='bulk', color=None):
+    def append_bulk_curve(self, weight, trajectory, coordination, calc, comment=None, cutoff=3.0, toldist=1e-5, label='bulk', color=None):
         """ Get repulsion fitting from homogeneous bulk calculation.
             
         parameters:
@@ -777,9 +795,7 @@ class RepulsiveFitting:
         return v_rep_points, last_res_forces, False
 
 
-<<<<<<< .mine
     
-=======
     def append_homogeneous_bulk(self, weight, trajectory, coordination, comment=None, cutoff=3.0, toldist=1e-5, label='bulk', color=None):
         raise Exception("Not well tested, comment this line to use this method")
         """ Get repulsion fitting from homogeneous bulk calculation.
@@ -844,7 +860,6 @@ class RepulsiveFitting:
                 label='_nolegend_'
             self.append_point(1./(sigma_coefficient*sigma), r, vrep(r, der=1), comment, label, color)
 
->>>>>>> .r235
 
     def write_fitting_data(self, filename):
         import pickle

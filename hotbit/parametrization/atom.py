@@ -473,8 +473,8 @@ class KSAllElectron:
         filename:  output file name + extension (extension used in matplotlib)
         """
         
-        rmax = data[self.symbol]['R_cov']/0.529177*4
-        ri = nu.where( self.rgrid>rmax )[0][0]
+        rmax = data[self.symbol]['R_cov']/0.529177*3
+        ri = nu.where( self.rgrid<rmax )[0][-1]
         states=len(self.list_states())
         p = nu.ceil(nu.sqrt(states)) #p**2>=states subplots
         
@@ -484,16 +484,16 @@ class KSAllElectron:
         for n,l,nl in self.list_states():
             ax=pl.subplot(2*p,p,i)
             pl.plot(self.Rnlg[nl])
-            if ax.is_last_row():
-                pl.xlabel('r (grid point)')
+            pl.yticks([],[])
+            pl.xticks(size=5)
             
             # annotate
             c = 'k'
             if nl in self.valence: 
                 c='r'
-            pl.text(0.7,0.6,r'$R_{%s}(r)$' %nl,transform=ax.transAxes,size=20,color=c)
+            pl.text(0.5,0.4,r'$R_{%s}(r)$' %nl,transform=ax.transAxes,size=15,color=c)
             if ax.is_first_col():
-                pl.ylabel('R(r)')
+                pl.ylabel(r'$R_{nl}(r)$',size=8)
             i+=1
             
         # as a function of radius
@@ -501,15 +501,17 @@ class KSAllElectron:
         for n,l,nl in self.list_states():
             ax=pl.subplot(2*p,p,i)
             pl.plot(self.rgrid[:ri],self.Rnlg[nl][:ri])
+            pl.yticks([],[])
+            pl.xticks(size=5)
             if ax.is_last_row():
-                pl.xlabel('r (Bohr)')
+                pl.xlabel('r (Bohr)',size=8)
 
             c = 'k'
             if nl in self.valence: 
                 c='r'
-            pl.text(0.7,0.6,r'$R_{%s}(r)$' %nl,transform=ax.transAxes,size=20,color=c)
+            pl.text(0.5,0.4,r'$R_{%s}(r)$' %nl,transform=ax.transAxes,size=15,color=c)
             if ax.is_first_col():
-                pl.ylabel('R(r)')
+                pl.ylabel(r'$R_{nl}(r)$',size=8)
             i+=1
         
 
@@ -519,7 +521,7 @@ class KSAllElectron:
         s=''
         if self.confinement!=None:
             s='(confined)'
-        pl.figtext(0.3,0.95,'Radial wave functions for %s %s' %(self.symbol,s))
+        pl.figtext(0.4,0.95,r'$R_{nl}(r)$ for %s-%s %s' %(self.symbol,self.symbol,s))
         if filename is not None:
             file = filename
         pl.savefig(file)
