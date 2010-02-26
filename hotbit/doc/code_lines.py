@@ -59,5 +59,5 @@ ax.xaxis.set_minor_locator(mondays)
 labels = ax.get_xticklabels()
 pl.setp(labels,'rotation',45)
 
-#pl.savefig('code_lines.png')
-pl.show()
+pl.savefig('code_lines.png')
+
