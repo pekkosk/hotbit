@@ -8,75 +8,73 @@ from box.interpolation import Function
 from ase import read, PickleTrajectory
 import pylab as pl
 from copy import copy
+from sys import stdout
+
+
+
+
 
 class RepulsiveFitting:
 
-    def __init__(self,symbol1,symbol2,r_dimer=None,calc=None,maxiter=None,errfile=None): 
+    def __init__(self,symbol1,symbol2,r_cut,s=None,k=3,txt=None,tol=1E-5): 
         """
-        Fit the short-range repulsive potential.
+        Class for fitting the short-range repulsive potential.
         
         Parameters:
-        -----------
-        rep:
-        r_cut:
-        r_dimer:
-        order:
-        calc:
+        ===========
+        symbol1:        chemical symbol for the first element
+        symbol2:        chemical symbol for the second element
+        txt:            output filename or None for stdout
+        r_cut:          the repulsion cutoff 
+        s:              smoothing parameter. If None, use s = N - nu.sqrt(2*N)
+                        where N is the number of data points.
+        k:              order of spline, cubic by default.
+                        Uses smaller order if not enough points to fit V_rep'(R)                      
+        tol:            tolerance for distances still considered the same
         """
-        #raise NotImplementedError('Not yet consistently implemented; however, you may comment this exception to play around.')
         self.elm1=Element(symbol1)
         self.elm2=Element(symbol2)
         self.sym1=symbol1
         self.sym2=symbol2
-        self.r_dimer=r_dimer
+        self.r_cut = r_cut
+        self.s = s
+        self.k = k
+        self.tol = tol
         
+        self.r_dimer = None
         self.deriv=[]
         self.comments=''
         self.scale=1.025                    # scaling factor for scalable systems
         self.structures = []
-        self.calc=calc
         self.v=None
-        self.r_cut=None                    # the cutoff radius, set in fitting
-        self.maxiter=maxiter
 
-        self.colors = ['blue','cyan','red','pink','yellow','orange','#8DEE1E','magenta','green','white','black']
-        self.color_index = 0
+        if txt==None:
+            self.txt=stdout
+        else:
+            self.txt=open(txt,'a')
+        print>>self.txt, 'Fitting repulsion curve between %s and %s' % (self.sym1, self.sym2)           
 
-        self.err = None
-        self._set_err_out(errfile)
-        print '\n\n\n\nCreating a repulsion curve between elements %s and %s' % (self.sym1, self.sym2)
-        print '  r_dimer      =',r_dimer
-        print '  1.5 x r_dimer=',1.5*r_dimer
 
 
     def __call__(self,r,der=0):
-        """ Return V_rep(r) or V_rep'(r) """
-        return self.v(r,der=der)
-
-
-    def _set_err_out(self, err):
-        import sys
-        if self.err not in [None, sys.stdout]:
-            if hasattr(self.err, 'close'):
-                try:
-                    self.err.close()
-                except:
-                    pass
-                self.err = None
-        if type(err) == str:
-            self.err = open(err, 'w')
-        elif hasattr(err, 'write'):
-            self.err = out
-        else:
-            self.err = sys.stdout
-
-
-    def plot(self, filename=None):
-        """ Plot vrep and derivative together with fit info. 
+        """ 
+        Return repulsion or its derivative.
         
         parameters:
         ===========
-        filename:     graphics file name
+        r:            radius
+        der:          der=0 for V_rep(r), der=1 for V_rep'(r)
+        """
+        return self.v(r,der=der)
+
+
+    def plot(self, filename=None):
+        """ 
+        Plot vrep and derivative together with fit info. 
+        
+        parameters:
+        ===========
+        filename:     graphics output file name
         """
         r=nu.linspace(0,self.r_cut)
         v=[self(x,der=0) for x in r]
@@ -92,8 +90,8 @@ class RepulsiveFitting:
         pl.xlabel(r'$r$  ($\AA$)')
         pl.axvline(x=self.r_cut,c='r',ls=':')
         pl.plot(r,v)
-        pl.ylim(ymin=0,ymax=self(0))
-        pl.xlim(xmin=0, xmax=self.r_cut)
+        pl.ylim(ymin=0,ymax=self(self.r_cut/2))
+        pl.xlim(xmin=self.r_cut/2, xmax=self.r_cut)
 
         # Vrep'
         pl.subplot(1,2,2)
@@ -103,11 +101,13 @@ class RepulsiveFitting:
         for s in self.deriv:
             pl.scatter( [s[0]],[s[1]],s=100*s[2],c=s[3],label=s[4])
         pl.axvline(x=self.r_cut,c='r',ls=':')
-        pl.axvline(x=self.r_dimer,c='r',ls=':')
+        if self.r_dimer!=None:
+            pl.axvline(x=self.r_dimer,c='r',ls=':')
         xmin = 0.8*self.r_dimer
         xmax = 1.2*self.r_cut
-        ymin = self(xmin, der=1)
-        ymax = 0
+        ymin = min([ point[1] for point in self.deriv ])
+        ymax = nu.abs(ymin)*0.2
+        pl.axhline(0,ls='--',c='k')
         pl.text(self.r_dimer, ymax, r'$r_{dimer}$')
         pl.text(self.r_cut, ymax, r'$r_{cut}$')
         pl.xlim(xmin=xmin, xmax=xmax)
@@ -123,8 +123,17 @@ class RepulsiveFitting:
 
 
     def add_comment(self,s=None):
-        """ Append some comment for par-file. """
-        if s==None: return
+        """ 
+        Append some comment for par-file.
+        
+        These comments will end up in Hotbit's output logfile each time
+        fitted repulsion is used in calculations. For this reason,
+        use as short and concise comments as possible. 
+        
+        parameters:
+        ===========
+        s:            comment as a string
+        """
         if s in [None, '']:
             return
         add='|'
@@ -133,44 +142,18 @@ class RepulsiveFitting:
         self.comments+=add+s
 
 
-    def _scale_positions(self,x,cell=False):
-        """ Scale the whole system by x; also the unit cell. """
-        self.set_cell(self.get_cell()*x,fix=False)
-        self.reduce_atoms_into_cell()
-
-
-    def _solve_ground_state(self, atoms, charge=0, calc=None):
+    def fit(self): 
         """
-        Solves the ground state of given atoms and returns the
-        solved calculator.
-                
-        """
-        if calc == None:
-            c = copy(self.calc)
-            c.set('txt', self.calc.txt)
-        else:
-            c = copy(calc)
-            c.set('txt', calc.txt)
-        c.set("charge",charge)
-        atoms.set_calculator(c)
-        atoms.get_potential_energy()
-        c.set('txt',"-")
-        return c
-
-
-    def fit(self, r_cut, s=None): #, filename=None):
-        """
-        Fit smoothing spline into points {r, V_rep'(r)}.
-        The weights are treated as inverse of the stardard deviation.
+        Fit spline into {r, V_rep'(r)} -data.
+        
+        Use cubic spline by default
+        
+        parameters:
+        ===========
+ 
         """
         from scipy.interpolate import splrep, splev
-        
-        # fitting parameters; order of spline is cubic at maximum
-        k = min(len(self.deriv)-1+1,3)
-        self.r_cut = r_cut
-        self.s = s
-        self.k = k
-        
+        self.k = min(len(self.deriv)-1+1,self.k)
         
         x = nu.array([self.deriv[i][0] for i in range(len(self.deriv))])
         y = nu.array([self.deriv[i][1] for i in range(len(self.deriv))])
@@ -180,28 +163,28 @@ class RepulsiveFitting:
         x = x[indices]
         y = y[indices]
         w = w[indices]
-        x, y, w = self._unite_closeby_points(x,y,w)
+        x, y, w = self._group_closeby_points(x,y,w)
         # use only points that are closer than r_cut
-        indices = nu.where(x < r_cut)
+        indices = nu.where(x < self.r_cut)
         x = list(x[indices])
         y = list(y[indices])
         w = list(w[indices])
         # force the spline curve to go to zero at x=r_cut
-        x.append(r_cut)
+        x.append(self.r_cut)
         y.append(0)
         w.append(1e3*max(w))
-        if s == None:
+        if self.s == None:
             # from documentation of splrep in scipy.interpolate.fitpack
-            s = len(x) - nu.sqrt(2*len(x))
-        print ""
-        print "  Fitting smoothing spline with parameters"
-        print "  k=%i, s=%0.4f, r_cut=%0.4f\n" %(k, s, r_cut)
-        tck = splrep(x, y, w, s=s, k=k)
+            self.s = len(x) - nu.sqrt(2*len(x))
+            
+        print>>self.txt, "\n  Fitting smoothing spline with parameters"
+        print>>self.txt, "  k=%i, s=%0.4f, r_cut=%0.4f\n" %(self.k, self.s, self.r_cut)
+        tck = splrep(x, y, w, s=self.s, k=self.k)
 
         def dv_rep(r):
             return splev(r, tck)
 
-        v_rep = self._integrate_vrep(dv_rep, r_cut)
+        v_rep = self._integrate_vrep(dv_rep, self.r_cut)
 
         def potential(r, der=0):
             if der == 0:
@@ -213,7 +196,7 @@ class RepulsiveFitting:
         self.v = potential
         
 
-    def _unite_closeby_points(self, x, y, w):
+    def _group_closeby_points(self, x, y, w):
         """
         If there are many y-values with almost the same x-values,
         it is impossible to make spline fit to these points.
@@ -241,41 +224,36 @@ class RepulsiveFitting:
         return nu.array(new_x), nu.array(new_y), nu.array(new_w)
 
 
-    def write_par(self, filename=None):
+    def write_par(self, inputpar, filename=None):
         """
         Write the full par-file to file.
         
         parameters:
         ===========
+        inputpar:     the par-file where the repulsion is appended
         filename:     output file
         """
         from time import asctime
         import shutil
-        r_cut, s, k = self.r_cut, self.s, self.k
-        par_files = self.calc.tables
-        par_file = None
-        e12 = self.sym1 + self.sym2
-        e21 = self.sym2 + self.sym1
-        if e12 in par_files:
-            par_file = par_files[e12]
-        if e21 in par_files:
-            par_file = par_files[e21]
-        if par_file != None:
-            shutil.copy(par_file, filename)
-            f = open(filename, 'a')
-            # add comments
-            print >> f, "repulsion_comment="
-            print >> f, "%s\nparameters r_cut = %0.4f Ang, s = %0.4f, k = %3i" % (asctime(),r_cut, s, k)
-            if len(self.structures)>1:
-                print >> f, "The systems used to produce this fit:"
-                for data in self.structures:
-                    print >> f, "%20s %3s" % (data['filename'], data['charge'])
-            if len(self.comments) > 0:
-                print >> f, self.comments            
-            print >> f, '\n\nrepulsion='
-            for r in nu.linspace(0.1, r_cut, 100):
-                print >> f, r/Bohr, self(r)/Hartree
-            f.close()
+
+        if filename==None:
+            filename = 'repulsion_'+inputpar
+            
+        shutil.copy(inputpar, filename)
+        f = open(filename, 'a')
+        # add comments
+        print >> f, "repulsion_comment="
+        print >> f, "%s\nparameters r_cut = %0.4f Ang, s = %0.4f, k = %3i" % (asctime(),self.r_cut, self.s, self.k)
+        if len(self.structures)>1:
+            print >> f, "The systems used to produce this fit:"
+            for data in self.structures:
+                print >> f, "%20s %3s" % (data['filename'], data['charge'])
+        if len(self.comments) > 0:
+            print >> f, self.comments            
+        print >> f, '\n\nrepulsion='
+        for r in nu.linspace(0.1, self.r_cut, 100):
+            print >> f, r/Bohr, self(r)/Hartree
+        f.close()
 
 
     def _integrate_vrep(self, dv_rep, r_cut, N=100):
@@ -291,436 +269,254 @@ class RepulsiveFitting:
             v_rep[i] = v_rep[i-1]
             val, err = quadrature(dv_rep, r_g[i-1], r_g[i], tol=1.0e-12, maxiter=50)
             v_rep[i] += val
-        # SplineFunction wants the x-values in ascendind order
+        # SplineFunction wants the x-values in ascending order
         return SplineFunction(r_g[::-1], v_rep[::-1])
 
+
+    def _set_calc(self,atoms,calc):
+        """
+        Set calculator for given atoms.
+        """
+        if type(atoms)==type(''):
+            a = read(atoms)
+        else:
+            a = atoms.copy()
+        c = copy(calc)
+        c.set('txt','-')
+        a.set_calculator(c)
+        return a,c
 
     #
     #       Fitting methods
     #             
-    def append_point(self,weight,r,dvrep,comment=None,label='point',color='g'):
+    def append_point(self,weight,R,dvrep,comment=None,label='point',color='g'):
         """ Add point to vrep'-fitting.
         
         parameters:
         ===========
         weight:    relative weight (inverse of deviation)
-        r:         radius, in Angstroms
-        vder:      value of the derivative at r
+        R:         radius, in Angstroms
+        vder:      value of the derivative at R
         color:     pylab color for plotting
         info:      label in plotting
         """
-        self.deriv.append([r,dvrep,weight,color,label])
+        self.deriv.append([R,dvrep,weight,color,label])
         self.add_comment(comment)
 
 
-    def append_dimer(self,weight,r_dimer=None,calc,comment=None,label='dimer',color='r'):
-        """ 
-        Use dimer bond length in fitting. 
-        
-        parameters:
-        ===========
-        weight:    relative weight (inverse of deviation)
-        r_dimer:   dimer bond length in Angstroms. By default the initialization value.
-        calc:      Hotbit calculator (Gamma-point calculator)
-        comment:   fitting comment
-        label:     plotting label
-        color:     plotting color        
-        """
-        d=r_dimer
-        if d==None: d=self.r_dimer
-        dimer=Atoms(symbols=[self.sym1,self.sym2],\
-                    positions=[(0,0,0),(d,0,0)],\
-                    pbc=False,cell=[100,100,100])
-        self.append_scalable_system(weight,dimer,0.0,calc,comment=comment,label=label,color=color)
-
-
-
-    def append_bulk(self,weight,bulk,crd,R,calc,comment=None,label='bulk',color='r'):
-        """
-        Use equilibrium bulk in fitting.
-        
-        Coordination and equilibrium nearest-neighbor bonds taken from trajectory.
-        
-        parameters:
-        ===========
-        weight:        relative fitting weight
-        bulk:          ase.Atoms instance for the bulk
-        crd:           coordination number
-        R:             nearest-neighbor distance
-        calc:          Hotbit calculator (with proper set of k-points)        
-        comment:       fitting comment
-        label:         plotting label
-        color:         plotting color
-        """
-        if type(bulk)==type(''):
-            from ase import read
-            atoms = read(bulk)
-        else:
-            atoms = bulk.copy()
-        self._solve_ground_state(atoms,0.0,calc=calc)
-        e1 = atoms.get_potential_energy()
-        atoms.set_cell(atoms.get_cell()*self.scale,scale_atoms=True)
-        self._solve_ground_state(atoms,0.0,calc=calc)
-        e2 = atoms.get_potential_energy()
-        
-        dEdr = (e2-e1)/(self.scale*R-R)
-        self.append_point(weight,R,-dEdr/crd,comment,label,color)
-        print 'Bulk: coordination %i, R=%.4f' %(R,crd)
-        
-        
-    def append_scalable_system(self,weight,system,charge,calc,comment=None,label=None,color='m'):
+    def append_scalable_system(self,weight,calc,atoms,comment=None,label=None,color='m'):
         """ 
         Use scalable equilibrium system in repulsion fitting. 
         
         parameters:
         ===========
         weight:        fitting weight 
-        system:        filename or ase.Atoms
-        charge:        
+        calc:          Hotbit calculator (remember charge and k-points)
+        atoms:         filename or ase.Atoms
+        comment:       fitting comment for par file
+        label:         plotting label
+        color:         plotting color
+        """
+        atoms, calc = self._set_calc(atoms,calc)
+        if label is None:
+            label=atoms.get_name()+'_scalable'
         
+        e1 = atoms.get_potential_energy()
+        R, N = self._get_repulsion_distances(calc)
+        atoms.set_cell( atoms.get_cell()*self.scale, scale_atoms=True )
+        e2 = atoms.get_potential_energy()
+
+        dEdr=(e2-e1)/(self.scale*R-R)
+        self.append_point(weight,R,-dEdr/N,comment,label,color)
+        print>>self.txt, '\nAdding a scalable system %s with %i bonds at R=%.4f.' %(atoms.get_name(),N,R)
+
+
+    def _get_repulsion_distances(self,calc):
         """
-        #raise NotImplementedError('Not implemented correctly')
-        if type(system)==type(''):
-            from ase import read
-            atoms=Atoms(read(system))
-            atoms.center(vacuum=10)
-            if name == None:
-                name=system+'_scalable'
-        else:
-            atoms=system
-            if label == None:
-                label=atoms.get_name()+'_scalable'
-        #forces = self.calc.get_forces(atoms)
-        #for vec_f in forces:
-        #    if nu.linalg.norm(vec_f) > 0.05:
-        #        raise Exception("System is not in an equilibrium!")
-        x=self.scale
-        r=atoms.mean_bond_length()
-        bonds=atoms.number_of_bonds()
-        e1=self._solve_ground_state(atoms,charge).get_potential_energy(atoms)
-        atoms.scale_positions(x)
-        e2=self._solve_ground_state(atoms,charge).get_potential_energy(atoms)
-
-        dEdr=(e2-e1)/(x*r-r)
-        self.append_point(weight,r,-dEdr/bonds,comment,label,color)
-        if comment!=None:
-            self.add_comment(comment)
-
-
-    def append_energy_curve(self, weight, trajectory, charge=0, comment=None, cutoff=3, toldist=1e-5, label='energy curve', color='y'):
+        Return distances below r_cut for given system in calculator.
+        
+        return:
+        =======
+        R:     the mean repulsion distance
+        N:     number of bonds
         """
-        Calculates the V'rep(r) from a given DFT ase-trajectory for elements
-        A and B:
+        distances = calc.rep.get_repulsion_distances(self.sym1,self.sym2,self.r_cut)
+        R = distances.mean()
+        if distances.max()-distances.min() > self.tol:
+            atoms = calc.get_atoms()
+            raise AssertionError('Bond lengths in %s are not the same' %atoms.get_name() )
+        N = len(distances)
+        return R,N        
 
-                    E'_DFT(R) - E'_BS(R)
-        V'rep(R) =  ------------------ ,
-                            N
 
-        where R is the distance between the elements in the system and
-              N is the number of different A-B pairs that are taken
-              into account.
+    def append_dimer(self,weight,calc,R,comment=None,label='dimer',color='r'):
+        """ 
+        Use dimer bond length in fitting. 
+        
+        parameters:
+        ===========
+        weight:    relative weight (inverse of deviation)
+        calc:      Hotbit calculator used in calculation (remember Gamma-point and charge)
+        R:         dimer bond length in Angstroms. 
+        comment:   fitting comment for par-file
+        label:     plotting label
+        color:     plotting color        
+        """
+        self.r_dimer = R
+        atoms = Atoms([self.sym1,self.sym2],[(0,0,0),(R,0,0)],pbc=False)
+        atoms.center(vacuum=5)
+        self.append_scalable_system(weight,calc,atoms,comment=comment,label=label,color=color)
+
+
+    def append_energy_curve(self,weight,calc,traj,comment=None,label='energy curve', color='y'):
+        """
+        Calculates the V'rep(r) from a given ase-trajectory.
+        
+        The trajectory can be anything, as long as the ONLY missing energy
+        from DFTB calculation is N*V_rep(R). Hence
+
+                     E_DFT'(R) - E_wr'(R)
+        V_rep'(R) =  ------------------ ,
+                             N
+
+        where R is the nn. distance,N is the number of A-B pairs taken into account,
+        and E_wr(R) = E_bs(R) + E_coul(R) is the DFTB energy without repulsion.
 
         parameters:
         ===========        
         weight:              Fitting weight (inverse of deviation)
-        trajectory:          ase trajectory for energy curve
-        charge:              total charge of the system
-        comment:             A comment to be added to the .par file
-        cutoff:              Cutoff for element interaction, in WHAT UNITS?
-        toldist:             Acceptable tolerance in distance
-                             (such that R and R+toldist still have the 'same' bond length)        
+        calc:                Hotbit calculator (remember charge and k-points)
+        traj:                ASE trajectory for energy curve
+        comment:             fitting comment for par-file        
         label:               Name that is used in the fitting plot.
         color:               Color that is used in the fitting plot.
         """
-        import scipy
-        from ase.io.trajectory import PickleTrajectory
-        from ase import Atoms
         from box.interpolation import SplineFunction
 
-        sigma = 1.0/weight
-        calc = self.calc
-        if color == None:
-            color = self._get_color()
-        print ""
-        print "  Appending energy curve data from %s..." % trajectory
-        traj = PickleTrajectory(trajectory)
-        R, E_dft, N = self._process_trajectory(traj, self.sym1, self.sym2, cutoff, toldist)
-        E_bs = nu.zeros(len(E_dft))
-        usable_frames = []
-        for i in range(len(traj)):
-            atoms=copy(traj[i])
-            calc_new = self._solve_ground_state(atoms, charge, calc)
-            if calc_new == None:
-                print "    *** Error: No data from frame %i ***" % i
-                print >> self.err, "No data from %s frame %i" % (trajectory, i)
-            else:
-                E_bs[i] = calc_new.get_potential_energy(atoms)
-                usable_frames.append(i)
-                calc_new.timer.summary()
-                calc_new.set_text("-")
-                del(calc_new)
-                print "    Collected data from frame %i" % i
-        traj.close()
-        # use only frames where DFTB-calculation converged
-        R = R[usable_frames]
-        E_dft = E_dft[usable_frames]
-        E_bs = E_bs[usable_frames]
-        sigma_coefficient = nu.sqrt(len(R))
-        # sort the radii and corresponding energies to ascending order
+        print>>self.txt, "\nAppending energy curve data from %s..." %traj
+        traj = PickleTrajectory(traj)
+        Edft, Ewr, N, R = [], [], [], []
+        for a in traj:
+            atoms, c = self._set_calc(a,calc)
+            e = atoms.get_potential_energy()
+            r, n = self._get_repulsion_distances(c)
+            if n>0:
+                Edft.append( a.get_potential_energy() )
+                Ewr.append( e )
+                R.append(r)
+                N.append(n)
+        Edft = nu.array(Edft)
+        Ewr = nu.array(Ewr)
+        N = nu.array(N)
+        R = nu.array(R)
+            
+        # sort radii because of spline
         indices = R.argsort()
-        R = R[indices]
-        E_dft = E_dft[indices]
-        E_bs = E_bs[indices]
-        vrep = SplineFunction(R, (E_dft - E_bs)/N)
+        R    = R[indices]
+        Edft = Edft[indices]
+        Ewr  = Ewr[indices]
+        vrep = SplineFunction(R, (Edft-Ewr)/N)
 
         for i, r in enumerate(R):
-            if i > 0:
+            if i > 0: 
                 label='_nolegend_'
-            self.append_point(1./(sigma_coefficient*sigma),r, vrep(r,der=1), comment, label, color)
+                com = None
+            else:
+                com = comment
+            self.append_point(weight/nu.sqrt(len(R)),r, vrep(r,der=1), com, label, color)
+        print>>self.txt, "Appended %i points around R=%.4f...%.4f" %(len(N),R.min(),R.max())
 
 
-    def append_homogeneous_structure(self, weight, filename, charge=0, comment=None, cutoff=3, toldist=0.005, traj_indices=None,label='homogeneous structure',color=None):
+    def append_homogeneous_cluster(self,weight,calc,atoms,tol=0.005,comment=None,label='homogeneous structure',color=None):
         """
-        For a given structure, calculate points {r, V'_rep(r)} so that
-        the residual forces are minimized (F_i = \sum_j(dV(|r_ij|)/dR)).
-        If only coordinates are given, the structure must be an equilibrium
-        structure. If also forces from DFT calculation are given
-        (ase.traj), any homogeneous structure may be applied, assuming
-        the minimization converges.
+        Use homonuclear cluster in fitting, even having different bond lengths.
+        
+        Construct repulsive forces so that residual forces are minimized 
+        (F_i = \sum_j(dV(|r_ij|)/dR)). System can be stable (no forces
+        or forces==0), but it can also be any structure with given forces.
+        Only finite, non-periodic systems.
         
         parameters:
         ===========
         weight:        relative weight
-        filename:      input structure
-        charge:        structure's electric charge
-        comment:       fitting comment
-        cutoff:        interaction cutoff
-        toldist:       acceptable tolerance in bond lengths (still considered equal)
-        traj_indices:  A list of indices of the frames that is read from
-                       the trajectory.
+        calc:          Hotbit calculator (remember charge and k-points)
+        atoms:         filename or ASE.Atoms instance
+        tol:           acceptable tolerance in bond lengths (still considered equal)
+        comment:       fitting comment for par-file
         label:         plotting label
         color:         plotting color
         """
-        sigma = 1.0/weight
-        points = []
-        structures, traj_indices = self.import_structures(filename, traj_indices)
-        print ""
-        print "Appending homogeneous structure from %s..." % filename
-        for ind, (fr, structure) in enumerate(zip(traj_indices, structures)):
-            print "  frame %i" % fr
-            epsilon, distances, mask=self._get_matrices(structure, cutoff, toldist)
-            if len(distances) == 0:
-                raise RuntimeError("There are no bonds under given cut radius in frame %i." & fr)
-            r_hat = self._construct_rhat_matrix(structure)
+        atoms = self._set_calc(atoms,calc)
+        N = len(atoms)
+        if any(atoms.get_pbc()):
+            raise AssertionError('Cluster should not be periodic')
+        
+        print>>self.txt, "\nAppending homogeneous cluster %s..." % atoms.get_name()
+               
+        epsilon, distances, mask = self._get_matrices(atoms, tol)
+        if len(distances) == 0:
+            raise RuntimeError("There are no bonds under given cut radius in frame %i." & fr)
+        r_hat = self._construct_rhat_matrix(atoms)
 
-            # if the given structure contains forces, use them, otherwise
-            # assume that the structure is optimized
-            N = len(structure)
-            try:
-                forces_DFT = structure.get_forces()
-                print "    Found forces from trajectory %s at frame %i" % (filename, fr)
-            except:
-                forces_DFT = nu.zeros((N,3))
-                print "    No forces in trajectory %s at frame %i" % (filename, fr)
-            calc_new = self._solve_ground_state(structure, charge=charge)
-            if calc_new == None:
-                print >> self.err, "    No data from %s frame %i" % (label, fr)
-            else:
-                forces = calc_new.get_forces(structure)
-                forces_res = forces_DFT - forces
+        # if the given structure contains forces, use them, otherwise
+        # assume that the structure is optimized
+        try:
+            dft_forces = atoms.get_forces()
+            print>>self.txt, "    Use forces"
+        except:
+            dft_forces = nu.zeros((N,3))
+            print>>self.txt, "    No forces (equilibrium cluster)" 
+        
+        atoms.get_potential_energy()
+        residual = dft_forces - atoms.get_forces()
 
-                # use one less point in an array that is given for
-                # the minimizer to reduce the number of degrees of freedom
-                v_rep_points = nu.zeros(len(distances)-1)
+        # use one less point in an array that is given for
+        # the minimizer to reduce the number of degrees of freedom
+        v_rep_points = nu.zeros(len(distances)-1)
 
-                # the function that is minimized, returns the sum of
-                # the norm of forces acting on each atoms
-                def residual_forces(v_rep_points):
-                    res = 0.
-                    for i in range(N):
-                        indices = nu.array(mask[i,:]*epsilon[i,:])
-                        indices -= 1
-                        ppoints  = v_rep_points[indices]
-                        f = forces_res[i].copy()
-                        f -= nu.dot((mask[i,:]*ppoints),r_hat[i,:])
-                        res += nu.dot(f,f)
-                    return res
+        def residual_forces(v_rep_points):
+            # the function that is minimized, returns the sum of
+            # the norm of forces acting on each atoms
+            res = 0.
+            for i in range(N):
+                indices = nu.array(mask[i,:]*epsilon[i,:])
+                indices -= 1
+                ppoints  = v_rep_points[indices]
+                f = residual[i].copy()
+                f -= nu.dot((mask[i,:]*ppoints),r_hat[i,:])
+                res += nu.dot(f,f)
+            return res
 
-                print "    Found %i different bond lengths." % len(v_rep_points)
-                v_rep_points, last_res_forces, minimized = self._find_forces(residual_forces, v_rep_points)
-                print "    The sum of the squared norms of the net forces: %0.4f (eV/ang)**2" % (last_res_forces)
-                # finally add the missing component
-                v_rep_points = list(v_rep_points)
-                v_rep_points.insert(0,0)
-                if minimized:
-                    for i in range(0,N-1):
-                        for j in range(i+1,N):
-                            if mask[i,j] > 0:
-                                # could add a degeneracy factor since there
-                                # may be different number of different bonds
-                                points.append([distances[epsilon[i,j]], v_rep_points[epsilon[i,j]], last_res_forces])
-                else:
-                    print "    The minimization of forces did not converge!"
+        print>>self.txt, "    Found %i different bond lengths." % len(v_rep_points)
+        v_rep_points, last_res_forces, minimized = self._find_forces(residual_forces, v_rep_points)
+        print>>self.txt, "    The sum of the squared norms of the net forces: %0.4f (eV/ang)**2" % (last_res_forces)
+        # finally add the missing component
+        v_rep_points = list(v_rep_points)
+        v_rep_points.insert(0,0)
+        if minimized:
+            points = []
+            for i in range(0,N-1):
+                for j in range(i+1,N):
+                    if mask[i,j] > 0:
+                        # could add a degeneracy factor since there
+                        # may be different number of different bonds
+                        points.append([distances[epsilon[i,j]], v_rep_points[epsilon[i,j]], last_res_forces])
+        else:
+            print>>self.txt, "    The minimization of forces did not converge!"
+                
         if len(points) > 0:
             points = nu.array(points)
             sigmas = points[:,2] + nu.min(points[:,2])*0.001 # add small value to prevent 1/sigma to go infinity
             inv_sigmas = 1./sigmas
-            norm_factor = nu.sqrt(1./sigma**2 / nu.dot(inv_sigmas, inv_sigmas))
+            norm_factor = nu.sqrt(weight**2 / nu.dot(inv_sigmas, inv_sigmas))
             points[:,2] /= norm_factor
-            if color == None:
-                color = self._get_color()
             for data in points:
                 self.append_point(1/data[2], data[0], data[1], comment, label, color)
                 label = '_nolegend_'
             self.add_comment(comment)
-            
-            
-    def append_bulk_curve(self, weight, trajectory, coordination, calc, comment=None, cutoff=3.0, toldist=1e-5, label='bulk', color=None):
-        """ Get repulsion fitting from homogeneous bulk calculation.
-            
-        parameters:
-        ===========
-        weight:        fitting weight
-        trajectory:
-        coordination:  coordination number in bulk 
-        comment:       comment fitting
-        cutoff:        interaction cutoff
-        toldist:       tolerance for distances (still considered the same)
-        label:         plotting label
-        color:         plotting color
-        """
-        raise Exception("Not well tested, comment this line to use this method")
-        sigma=1.0/weight
-        if charge != 0:
-            raise Exception("Charge in periodic systems is not implemented.")
-        if type(trajectory) == str:
-            traj = PickleTrajectory(trajectory)
-        for image in traj:
-            R, E_dft, N = self.process_trajectory(traj, self.sym1, self.sym2, cutoff, toldist)
-        N_a = len(traj[0])
-        N = N_a * coordination / 2.
-
-        E_bs = nu.zeros(len(E_dft))
-        usable_frames = []
-        for i in range(len(traj)):
-            atoms=copy(traj[i])
-            calc_new = self.solve_ground_state(atoms, 0.0, calc)
-            if calc_new == None:
-                print "    *** Error: No data from frame %i ***" % i
-                print >> self.err, "No data from %s frame %i" % (dft_traj, i)
-            else:
-                E_bs[i] = calc_new.get_potential_energy(atoms)
-                usable_frames.append(i)
-                calc_new.timer.summary()
-                calc_new.set_text("-")
-                del(calc_new)
-                print "    Collected data from frame %i" % i
-        traj.close()
-        
-        # use only frames where DFTB-calculation converged
-        R = R[usable_frames]
-        E_dft = E_dft[usable_frames]
-        E_bs = E_bs[usable_frames]
-        sigma_coefficient = nu.sqrt(len(R))
-        # sort the radii and corresponding energies to ascending order
-        indices = R.argsort()
-        R = R[indices]
-        E_dft = E_dft[indices]
-        E_bs = E_bs[indices]
-        from box.interpolation import SplineFunction
-        vrep = SplineFunction(R, (E_dft - E_bs)/N)
-        if color == None:
-            color = self.get_color()
-
-        for i, r in enumerate(R):
-            if i > 0:
-                label='_nolegend_'
-            self.append_point([r, vrep(r,der=1), 1./(sigma_coefficient*sigma), color, label], comment=comment)
-
-
-    def _process_trajectory(self, traj, elA, elB, separating_distance, h):
-        """
-        Check each frame in trajectory, make sure that the trajectory
-        is suitable for repulsion fitting for the elements A and B.
-        Finally returns the bond lengths of elements A and B and
-        the DFT energy in each image.
-        """
-
-        E_dft = nu.zeros(len(traj))
-        R = nu.zeros(len(traj))
-        N = nu.zeros(len(traj))
-        self._assert_fixed_bond_lengths_except(traj, elA, elB, separating_distance, h)
-        for i, image in enumerate(traj):
-            atoms = copy(Atoms(image))
-            r, n = self._get_distance_of_elements(elA, elB, atoms, separating_distance, h)
-            E_dft[i] = image.get_total_energy()
-            R[i] = r
-            N[i] = n
-        assert nu.all(N==N[0])
-        return R, E_dft, N[0]
-
-
-    def _assert_fixed_bond_lengths_except(self, t, elA, elB, separating_distance, h):
-        """
-        Makes sure that all the element pairs expect pairs A-B are the same 
-        or larger than the defined limit in all configurations.
-        """
-        fixed_pairs = []
-        fixed_lengths = []
-        long_pairs = []
-        atoms = t[0]
-        for i in range(len(atoms)-1):
-            for j in range(i+1,len(atoms)):
-                a = atoms[i]
-                b = atoms[j]
-                dL = nu.linalg.norm(a.position-b.position)
-                if not (( a.symbol == elA and b.symbol == elB ) or \
-                       ( a.symbol == elB and b.symbol == elA )):
-                    if dL > separating_distance:
-                        long_pairs.append([i,j])
-                    else:
-                        fixed_pairs.append([i,j])
-                        fixed_lengths.append(dL)
-        for k in range(1, len(t)):
-            atoms = t[k]
-            for i in range(len(atoms)-1):
-                for j in range(i+1,len(atoms)):
-                    a = atoms[i]
-                    b = atoms[j]
-                    dL = nu.linalg.norm(a.position-b.position)
-                    if [i,j] in fixed_pairs:
-                        index = fixed_pairs.index([i,j])
-                        if nu.abs(dL - fixed_lengths[index]) > h:
-                            raise AssertionError("Fixed bond length vary too much in the trajectory: atoms %i and %i." % (i, j))
-                    if [i,j] in long_pairs:
-                        if dL < separating_distance:
-                            raise AssertionError("Long bond goes below the separating limit: atoms %i and %i." % (i, j))
-
-
-    def _get_distance_of_elements(self, elA, elB, positions, separating_distance, h):
-        """
-        Calculates the distances of element pairs A-B that are closer to
-        each other than the defined limit and makes sure that the distances
-        are equal.
-        """
-        R = []
-        for i in range(len(positions)-1):
-            for j in range(i+1, len(positions)):
-                a = positions[i]
-                b = positions[j]
-                if ( a.symbol == elA and b.symbol == elB ) or \
-                   ( a.symbol == elB and b.symbol == elA ):
-                    R.append(nu.linalg.norm(a.position - b.position))
-        R.sort()
-        R = nu.array(R)
-        R_min = R[0]
-        N = nu.sum(nu.where(nu.abs(R - R_min) < h, 1, 0))
-        for r in R[N:]:
-            if r < separating_distance:
-                raise AssertionError("Element pairs are too close to each other.")
-        return nu.average(R[:N]), N
-
-
+                    
+                        
+                
     def _construct_rhat_matrix(self, structure):
         N = len(structure)
         r_hat = nu.zeros((N,N,3))
@@ -733,7 +529,7 @@ class RepulsiveFitting:
         return r_hat
 
 
-    def _get_matrices(self, structure, cut_radius, h):
+    def _get_matrices(self, atoms, tol):
         """
         Construct epsilon matrix that maps the indices (i,j) to a
         single list of distances. If there are many bonds with
@@ -741,13 +537,18 @@ class RepulsiveFitting:
         one of them in order to reduce the degree of freedom
         in the minimization. If the bond is longer that given
         cut radius, that bond is ignored.
+        
+        parameters:
+        ===========
+        atoms:        ASE.Atoms instance
+        tol:          tolerance for bond lengths
         """
-        N = len(structure)
+        N = len(atoms)
         distances = []
         index_list = []
         for i in range(N):
             for j in range(N):
-                vec = structure.positions[j] - structure.positions[i]
+                vec = atoms.positions[j] - atoms.positions[i]
                 distances.append(nu.linalg.norm(vec))
                 index_list.append([i,j])
         distances = nu.array(distances)
@@ -795,72 +596,6 @@ class RepulsiveFitting:
         return v_rep_points, last_res_forces, False
 
 
-    
-    def append_homogeneous_bulk(self, weight, trajectory, coordination, comment=None, cutoff=3.0, toldist=1e-5, label='bulk', color=None):
-        raise Exception("Not well tested, comment this line to use this method")
-        """ Get repulsion fitting from homogeneous bulk calculation.
-            The coordination number is the no. of nearest-neighbours
-            per atom in the bulk (e.g 4 in diamond lattice).
-            
-            
-        parameters:
-        ===========
-        weight:        fitting weight
-        trajectory:
-        coordination: 
-        comment:       comment fitting
-        cutoff:        interaction cutoff
-        toldist:       tolerance for distances (still considered the same)
-        label:         plotting label
-        color:         plotting color
-        """
-        print ""
-        print "Appending homogeneous bulk from %s..." % trajectory
-        sigma=1.0/weight
-        if type(trajectory) == str:
-            traj = PickleTrajectory(trajectory)
-        for image in traj:
-            R, E_dft, N = self._process_trajectory(traj, self.sym1, self.sym2, cutoff, toldist)
-        N_a = len(traj[0])
-        N = N_a * coordination / 2.
-
-        E_bs = nu.zeros(len(E_dft))
-        usable_frames = []
-        for i in range(len(traj)):
-            atoms=copy(traj[i])
-            calc_new = self._solve_ground_state(atoms, 0.0, self.calc)
-            if calc_new == None:
-                print "    *** Error: No data from frame %i ***" % i
-                print >> self.err, "No data from %s frame %i" % (dft_traj, i)
-            else:
-                E_bs[i] = calc_new.get_potential_energy(atoms)
-                usable_frames.append(i)
-                calc_new.timer.summary()
-                calc_new.set_text("-")
-                del(calc_new)
-                print "    Collected data from frame %i" % i
-        traj.close()
-        # use only frames where DFTB-calculation converged
-        R = R[usable_frames]
-        E_dft = E_dft[usable_frames]
-        E_bs = E_bs[usable_frames]
-        sigma_coefficient = nu.sqrt(len(R))
-        # sort the radii and corresponding energies to ascending order
-        indices = R.argsort()
-        R = R[indices]
-        E_dft = E_dft[indices]
-        E_bs = E_bs[indices]
-        from box.interpolation import SplineFunction
-        vrep = SplineFunction(R, (E_dft - E_bs)/N)
-        if color == None:
-            color = self._get_color()
-
-        for i, r in enumerate(R):
-            if i > 0:
-                label='_nolegend_'
-            self.append_point(1./(sigma_coefficient*sigma), r, vrep(r, der=1), comment, label, color)
-
-
     def write_fitting_data(self, filename):
         import pickle
         f = open(filename,'w')
@@ -877,33 +612,6 @@ class RepulsiveFitting:
         self.structures = pickle.load(f)
         self.comments = pickle.load(f)
         f.close()
-
-
-    def import_structures(self, filename, traj_indices=None):
-        structures = []
-        if ".traj" in filename:
-            traj = PickleTrajectory(filename)
-            if traj_indices == None:
-                traj_indices = range(len(traj))
-            for i in traj_indices:
-                image = traj[i]
-                structures.append(image)
-        elif ".xyz" in filename:
-            structure = read(filename)
-            structure.center(vacuum=6)
-            structures.append(structure)
-            traj_indices = [0]
-        else:
-            raise Exception("Unknown file format: %s" % structure)
-        return structures, traj_indices
-
-
-    def _get_color(self):
-        color = self.colors[self.color_index]
-        self.color_index += 1
-        if self.color_index == len(self.colors):
-            self.color_index = 0
-        return color
 
 
     def _get_trajs_for_fitting(self):
@@ -1018,7 +726,7 @@ class ParametrizationTest:
                 atoms.set_calculator(c)
                 e_tb = atoms.get_potential_energy()
             except Exception, ex:
-                print ex
+                print>>self.txt, ex
             if e_tb != None:
                 energies.append(e_tb)
                 frames.append(i)
