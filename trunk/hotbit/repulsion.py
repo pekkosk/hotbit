@@ -51,6 +51,42 @@ class Repulsion:
                 txt+='    *'+line.lstrip()+'\n'
             shown.append(file)
         return txt
+    
+    
+    def get_repulsion_distances(self,ela,elb,r_cut):
+        """ 
+        Return distances below r_cut for given elements.
+
+        Intended use for repulsion fitting. Go through all
+        periodic images, if any (of course).
+
+        parameters:
+        ===========
+        ela:        chemical symbol a
+        elb:        chemical symbol b
+        r_cut:      repulsion cutoff (Angstrom)
+
+        return:
+        =======
+        d:          numpy array of distances (in Angstroms) below r_cut
+        """
+        lst = self.calc.el.get_property_lists(['i','s'])
+        Rijn = self.calc.el.rijn
+        r_cut /= Bohr
+        
+        dlist=[]
+        for i,si in lst:
+            for j,sj in lst[i:]:
+                if not (si==ela and sj==elb or sj==ela and si==elb) :
+                    continue
+                for n,rijn in enumerate(Rijn[:,i,j]):
+                    if i==j and n==0: continue
+                    d = nu.sqrt( rijn[0]**2+rijn[1]**2+rijn[2]**2 )
+                    if d<=r_cut:
+                        dlist.append(d)
+        return nu.array(dlist)*Bohr
+                    
+    
 
     def get_repulsive_energy(self):
         """ Calculate the repulsive energy. """
