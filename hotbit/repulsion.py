@@ -77,7 +77,7 @@ class Repulsion:
         dlist=[]
         for i,si in lst:
             for j,sj in lst[i:]:
-                if not (si==ela and sj==elb or sj==ela and si==elb) :
+                if not ((si==ela and sj==elb) or (sj==ela and si==elb)) :
                     continue
                 for n,rijn in enumerate(Rijn[:,i,j]):
                     if i==j and n==0: continue

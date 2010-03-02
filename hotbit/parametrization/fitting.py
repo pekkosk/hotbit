@@ -20,6 +20,10 @@ class RepulsiveFitting:
         """
         Class for fitting the short-range repulsive potential.
         
+        
+        Fitting uses eV and Angstrom also internally, only the
+        output file (.par) is in Hartrees and Bohrs  
+        
         Parameters:
         ===========
         symbol1:        chemical symbol for the first element
@@ -31,6 +35,27 @@ class RepulsiveFitting:
         k:              order of spline, cubic by default.
                         Uses smaller order if not enough points to fit V_rep'(R)                      
         tol:            tolerance for distances still considered the same
+        
+        
+        Usage:
+        ======        
+        1. Initialize class
+           * rep = RepulsiveFitting('Au','Au',r_cut=3.3,s=100)
+    
+        2. Collect data from structures. The data collected is points r_i and V_rep'(r_i),
+           that is, repulsive distance and the force. Use the methods 'append_*'.
+           * rep.append_dimer(weight=0.5,calc=calc0,R=2.49,comment='Au2')
+           * rep.append_energy_curve(weight=1.0,calc=calc0,traj='dimer_curve.traj',label='DFT dimer',comment='dimer curve')
+    
+        3. Given the set of points [r_i,V_rep'(r_i)], fit a spline with given order.
+           * fit()
+           Fitting will produce a spline-interpolated V_rep'(r), which is then integrated
+           to given spline-interpolated V_rep(r).
+    
+        4. Output repulsion into a file and plot the repulsion
+           * rep.write_par('Au_Au_no_repulsion.par',filename='Au_Au_repulsion.par')
+           * rep.plot('AuAu_repulsion.pdf')
+    
         """
         self.elm1=Element(symbol1)
         self.elm2=Element(symbol2)
@@ -342,6 +367,8 @@ class RepulsiveFitting:
         """
         distances = calc.rep.get_repulsion_distances(self.sym1,self.sym2,self.r_cut)
         R = distances.mean()
+        if len(distances)==0:
+            return 0.0,distances
         if distances.max()-distances.min() > self.tol:
             atoms = calc.get_atoms()
             raise AssertionError('Bond lengths in %s are not the same' %atoms.get_name() )
@@ -357,7 +384,7 @@ class RepulsiveFitting:
         ===========
         weight:    relative weight (inverse of deviation)
         calc:      Hotbit calculator used in calculation (remember Gamma-point and charge)
-        R:         dimer bond length in Angstroms. 
+        R:         dimer bond length (Angstroms)
         comment:   fitting comment for par-file
         label:     plotting label
         color:     plotting color        
@@ -381,6 +408,7 @@ class RepulsiveFitting:
 
         where R is the nn. distance,N is the number of A-B pairs taken into account,
         and E_wr(R) = E_bs(R) + E_coul(R) is the DFTB energy without repulsion.
+        At least 3 points in energy curve needed, preferably more.
 
         parameters:
         ===========        
@@ -396,6 +424,8 @@ class RepulsiveFitting:
         print>>self.txt, "\nAppending energy curve data from %s..." %traj
         traj = PickleTrajectory(traj)
         Edft, Ewr, N, R = [], [], [], []
+        if len(traj)<3:
+            raise AssertionError('At least 3 points in energy curve required.')
         for a in traj:
             atoms, c = self._set_calc(a,calc)
             e = atoms.get_potential_energy()
@@ -415,7 +445,7 @@ class RepulsiveFitting:
         R    = R[indices]
         Edft = Edft[indices]
         Ewr  = Ewr[indices]
-        vrep = SplineFunction(R, (Edft-Ewr)/N)
+        vrep = SplineFunction(R, (Edft-Ewr)/N, k=3, s=0)
 
         for i, r in enumerate(R):
             if i > 0: 
@@ -427,173 +457,86 @@ class RepulsiveFitting:
         print>>self.txt, "Appended %i points around R=%.4f...%.4f" %(len(N),R.min(),R.max())
 
 
-    def append_homogeneous_cluster(self,weight,calc,atoms,tol=0.005,comment=None,label='homogeneous structure',color=None):
+    def append_homogeneous_cluster(self,weight,calc,atoms,comment=None,label='cluster',color='b'):
         """
         Use homonuclear cluster in fitting, even having different bond lengths.
         
-        Construct repulsive forces so that residual forces are minimized 
-        (F_i = \sum_j(dV(|r_ij|)/dR)). System can be stable (no forces
-        or forces==0), but it can also be any structure with given forces.
-        Only finite, non-periodic systems.
+        Construct repulsive forces so that residual forces |F_DFT - (F_WR+F_rep)|,
+        where F_DFT are DFT forces (zero if cluster in equilibrium), F_WR are
+        DFTB forces without repulsion, and F_rep are the repulsive forces. That is,
+        minimize the function
+        
+           sum_i |F_DFT_i - F_WR_i - F_rep_i|^2
+           
+        with respect a and b, where V_rep'(R) = a + b*(r-r_cut). Then, add fitting points
+        from rmin to rmax, where these values span all pair distances below r_cut
+        within the cluster.
+         
+        Only finite, non-periodic systems can be used.
         
         parameters:
         ===========
         weight:        relative weight
-        calc:          Hotbit calculator (remember charge and k-points)
+        calc:          Hotbit calculator (remember charge and no k-points)
         atoms:         filename or ASE.Atoms instance
-        tol:           acceptable tolerance in bond lengths (still considered equal)
         comment:       fitting comment for par-file
         label:         plotting label
         color:         plotting color
         """
-        atoms = self._set_calc(atoms,calc)
-        N = len(atoms)
-        if any(atoms.get_pbc()):
-            raise AssertionError('Cluster should not be periodic')
-        
-        print>>self.txt, "\nAppending homogeneous cluster %s..." % atoms.get_name()
-               
-        epsilon, distances, mask = self._get_matrices(atoms, tol)
-        if len(distances) == 0:
-            raise RuntimeError("There are no bonds under given cut radius in frame %i." & fr)
-        r_hat = self._construct_rhat_matrix(atoms)
+        if type(atoms)==type(''):
+            atoms = read(atoms)
 
-        # if the given structure contains forces, use them, otherwise
-        # assume that the structure is optimized
+        N = len(atoms)
         try:
-            dft_forces = atoms.get_forces()
+            f_DFT = atoms.get_forces()
             print>>self.txt, "    Use forces"
         except:
-            dft_forces = nu.zeros((N,3))
-            print>>self.txt, "    No forces (equilibrium cluster)" 
+            f_DFT = nu.zeros((N,3))
+            print>>self.txt, "    No forces (equilibrium cluster)"
+            
+        atoms, calc = self._set_calc(atoms,calc)
+        print>>self.txt, "\nAppending homogeneous cluster %s..." % atoms.get_name()
         
-        atoms.get_potential_energy()
-        residual = dft_forces - atoms.get_forces()
-
-        # use one less point in an array that is given for
-        # the minimizer to reduce the number of degrees of freedom
-        v_rep_points = nu.zeros(len(distances)-1)
-
-        def residual_forces(v_rep_points):
-            # the function that is minimized, returns the sum of
-            # the norm of forces acting on each atoms
-            res = 0.
+        f_WR = atoms.get_forces()
+        distances = calc.rep.get_repulsion_distances(self.sym1,self.sym2,self.r_cut)
+        rmin, rmax = distances.min(), distances.max()
+        
+        def dvrep(r,p):
+            """ Auxiliary first-order polynomial for repulsion derivative """
+            return p[0]+p[1]*(r-self.r_cut)
+            
+        
+        def to_minimize(p,atoms,fdft,fwr):
+            """ Function sum_I |F_DFT_I - F_TB_I|^2 to minimize. """
+            N = len(atoms)
+            pos = atoms.get_positions()
+            resid = nu.zeros((N,3))
+            frep  = nu.zeros((N,3))
             for i in range(N):
-                indices = nu.array(mask[i,:]*epsilon[i,:])
-                indices -= 1
-                ppoints  = v_rep_points[indices]
-                f = residual[i].copy()
-                f -= nu.dot((mask[i,:]*ppoints),r_hat[i,:])
-                res += nu.dot(f,f)
-            return res
-
-        print>>self.txt, "    Found %i different bond lengths." % len(v_rep_points)
-        v_rep_points, last_res_forces, minimized = self._find_forces(residual_forces, v_rep_points)
-        print>>self.txt, "    The sum of the squared norms of the net forces: %0.4f (eV/ang)**2" % (last_res_forces)
-        # finally add the missing component
-        v_rep_points = list(v_rep_points)
-        v_rep_points.insert(0,0)
-        if minimized:
-            points = []
-            for i in range(0,N-1):
-                for j in range(i+1,N):
-                    if mask[i,j] > 0:
-                        # could add a degeneracy factor since there
-                        # may be different number of different bonds
-                        points.append([distances[epsilon[i,j]], v_rep_points[epsilon[i,j]], last_res_forces])
-        else:
-            print>>self.txt, "    The minimization of forces did not converge!"
-                
-        if len(points) > 0:
-            points = nu.array(points)
-            sigmas = points[:,2] + nu.min(points[:,2])*0.001 # add small value to prevent 1/sigma to go infinity
-            inv_sigmas = 1./sigmas
-            norm_factor = nu.sqrt(weight**2 / nu.dot(inv_sigmas, inv_sigmas))
-            points[:,2] /= norm_factor
-            for data in points:
-                self.append_point(1/data[2], data[0], data[1], comment, label, color)
-                label = '_nolegend_'
-            self.add_comment(comment)
-                    
-                        
-                
-    def _construct_rhat_matrix(self, structure):
-        N = len(structure)
-        r_hat = nu.zeros((N,N,3))
-        for i in range(N):
-            for j in range(N):
-                if not i == j:
-                    vec = structure.positions[j] -structure.positions[i]
-                    norm = nu.linalg.norm(vec)
-                    r_hat[i,j] = vec/norm
-        return r_hat
-
-
-    def _get_matrices(self, atoms, tol):
-        """
-        Construct epsilon matrix that maps the indices (i,j) to a
-        single list of distances. If there are many bonds with
-        almost same lengths, treat these bonds as there was only
-        one of them in order to reduce the degree of freedom
-        in the minimization. If the bond is longer that given
-        cut radius, that bond is ignored.
+                for j in range(N):
+                    if i==j: continue
+                    vec = pos[j]-pos[i]
+                    d = nu.linalg.norm(vec)
+                    if d>self.r_cut: 
+                        continue
+                    else:
+                        frep[i] += dvrep(d,p)*vec/d
+            resid = fdft - ( fwr + frep )
+            return sum([ nu.linalg.norm(resid[i]) for i in range(N) ])                    
         
-        parameters:
-        ===========
-        atoms:        ASE.Atoms instance
-        tol:          tolerance for bond lengths
-        """
-        N = len(atoms)
-        distances = []
-        index_list = []
-        for i in range(N):
-            for j in range(N):
-                vec = atoms.positions[j] - atoms.positions[i]
-                distances.append(nu.linalg.norm(vec))
-                index_list.append([i,j])
-        distances = nu.array(distances)
-        index_list = nu.array(index_list)
-
-        indices = distances.argsort()
-        distances = distances[indices]
-        index_list = index_list[indices]
-        groups = nu.zeros(len(distances), dtype=int)
-        group = 0
-        for i, d in enumerate(distances):
-            if i != 0:
-                groups[i] = groups[i-1]
-                if distances[i]-distances[i-1] > h:
-                    groups[i] += 1
-                    group = groups[i]
-        averaged_distances = nu.array([nu.sum(distances[nu.where(groups == i)])/len(nu.where(groups == i)[0]) for i in range(group+1)])
-        epsilon = nu.zeros((N,N), dtype=int)
-        for (i,j), g in zip(index_list, groups):
-            epsilon[i,j] = g
-        mask = nu.zeros(nu.shape(epsilon), dtype=int)
-        for i in range(N):
-            for j in range(N):
-                if i != j and averaged_distances[epsilon[i,j]] < cut_radius:
-                    mask[i,j] = 1
-        averaged_distances = averaged_distances[nu.where(averaged_distances < cut_radius)]
-        return epsilon, averaged_distances, mask
-
-
-    def _find_forces(self, function, v_rep_points):
-        """
-        Try to minimize the residual forces by finding matrix
-        elements epsilon_ij = V'_rep(|r_ij|).
-        """
         from scipy.optimize import fmin
-        last_res_forces = 0
-        N = len(v_rep_points)
-        while True:
-            ret = fmin(function, v_rep_points, full_output=1, disp=0)
-            v_rep_points = ret[0]
-            forces = ret[1]
-            if ret[4] == 0 and nu.abs(forces-last_res_forces) < 0.001:
-                return v_rep_points, forces, True
-            last_res_forces = ret[1]
-        return v_rep_points, last_res_forces, False
+        p = fmin( to_minimize,[-1.0,5.0],args=(atoms,f_DFT,f_WR),xtol=1E-5,ftol=1E-5 )
+        print>>self.txt, '   Cluster: V_rep(R)=%.6f + %.6f (r-%.2f)' %(p[0],p[1],self.r_cut)
+      
+        np = 6
+        rlist = nu.linspace(rmin,rmax,np)
+        for i,r in enumerate(rlist):
+            if i==0:
+                com = comment
+            else:
+                label = '_nolegend_'
+                com = None
+            self.append_point(weight/nu.sqrt(np), r, dvrep(r,p), com, label, color)
 
 
     def write_fitting_data(self, filename):
