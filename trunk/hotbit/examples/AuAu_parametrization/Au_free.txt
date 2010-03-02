@@ -1,0 +1,330 @@
+*******************************************
+Kohn-Sham all-electron calculation for Au 
+*******************************************
+Using scalar relativistic corrections.
+max 5 nodes, 3000 grid points
+Au xc=PW92 charge=0.0 conf:none
+
+Start iteration...
+iter   0, dn=1.6e+02>1.0e-07, max 16 sp-iter
+iter  10, dn=2.2e+00>1.0e-07, max 10 sp-iter
+iter  20, dn=1.3e-01>1.0e-07, max 9 sp-iter
+iter  30, dn=8.5e-03>1.0e-07, max 8 sp-iter
+iter  40, dn=7.1e-04>1.0e-07, max 7 sp-iter
+iter  50, dn=6.5e-05>1.0e-07, max 6 sp-iter
+iter  60, dn=6.3e-06>1.0e-07, max 5 sp-iter
+iter  70, dn=6.4e-07>1.0e-07, max 4 sp-iter
+iter  80, dn=6.7e-08>1.0e-07, max 3 sp-iter
+
+
+Energetics:
+-------------
+
+single-particle energies
+------------------------
+1s, energy -2960.633071282626133
+2s, energy -522.586182907979946
+3s, energy -123.340809338390727
+4s, energy -26.740193172059733
+5s, energy -3.987848750367843
+6s, energy -0.222837407212924
+2p, energy -452.691495955349978
+3p, energy -103.017243163496005
+4p, energy -20.059401747103600
+5p, energy -2.207921711479553
+6p, energy -0.032527284732107
+3d, energy -81.062052222696551
+4d, energy -11.977663961404424
+5d, energy -0.261806240866811
+4f, energy -2.999407811522234
+
+valence orbital energies
+--------------------------
+6s, energy -0.222837407212924
+6p, energy -0.032527284732107
+5d, energy -0.261806240866811
+
+
+total energies:
+---------------
+sum of eigenvalues:     -11717.662357385626819
+Hartree energy:         7384.708094928453647
+vxc correction:         -466.866335716132824
+exchange + corr energy: -351.673581986340139
+----------------------------
+total energy:           -18987.177698584288009
+
+
+converged in 83 iterations
+  79.0022 electrons, should be   79.0000
+*******************************************
+Kohn-Sham all-electron calculation for Au 
+*******************************************
+Using scalar relativistic corrections.
+max 5 nodes, 3000 grid points
+Au xc=PW92 charge=0.0 conf:none
+
+Start iteration...
+iter   0, dn=1.6e+02>1.0e-07, max 16 sp-iter
+iter  10, dn=2.2e+00>1.0e-07, max 10 sp-iter
+iter  20, dn=1.3e-01>1.0e-07, max 9 sp-iter
+iter  30, dn=8.5e-03>1.0e-07, max 8 sp-iter
+iter  40, dn=7.1e-04>1.0e-07, max 7 sp-iter
+iter  50, dn=6.5e-05>1.0e-07, max 6 sp-iter
+iter  60, dn=6.3e-06>1.0e-07, max 5 sp-iter
+iter  70, dn=6.4e-07>1.0e-07, max 4 sp-iter
+iter  80, dn=6.7e-08>1.0e-07, max 3 sp-iter
+
+
+Energetics:
+-------------
+
+single-particle energies
+------------------------
+1s, energy -2960.633071282626133
+2s, energy -522.586182907979946
+3s, energy -123.340809338390727
+4s, energy -26.740193172059733
+5s, energy -3.987848750367843
+6s, energy -0.222837407212924
+2p, energy -452.691495955349978
+3p, energy -103.017243163496005
+4p, energy -20.059401747103600
+5p, energy -2.207921711479553
+6p, energy -0.032527284732107
+3d, energy -81.062052222696551
+4d, energy -11.977663961404424
+5d, energy -0.261806240866811
+4f, energy -2.999407811522234
+
+valence orbital energies
+--------------------------
+6s, energy -0.222837407212924
+6p, energy -0.032527284732107
+5d, energy -0.261806240866811
+
+
+total energies:
+---------------
+sum of eigenvalues:     -11717.662357385626819
+Hartree energy:         7384.708094928453647
+vxc correction:         -466.866335716132824
+exchange + corr energy: -351.673581986340139
+----------------------------
+total energy:           -18987.177698584288009
+
+
+converged in 83 iterations
+  79.0022 electrons, should be   79.0000
+*******************************************
+Kohn-Sham all-electron calculation for Au 
+*******************************************
+Using scalar relativistic corrections.
+max 5 nodes, 3000 grid points
+Au xc=PW92 charge=0.0 conf:none
+
+Start iteration...
+iter   0, dn=1.6e+02>1.0e-01, max 16 sp-iter
+iter  10, dn=2.2e+00>1.0e-01, max 10 sp-iter
+iter  20, dn=1.3e-01>1.0e-01, max 9 sp-iter
+
+
+Energetics:
+-------------
+
+single-particle energies
+------------------------
+1s, energy -2961.617367766503776
+2s, energy -523.002761953569120
+3s, energy -123.526008434355106
+4s, energy -26.894255323802085
+5s, energy -4.140250541928507
+6s, energy -0.377175899634881
+2p, energy -453.142107862118507
+3p, energy -103.205421581974178
+4p, energy -20.214934385587139
+5p, energy -2.365527074767101
+6p, energy -0.151507429528700
+3d, energy -81.243963814734812
+4d, energy -12.129324773692383
+5d, energy -0.427897064936730
+4f, energy -3.140633091056444
+
+valence orbital energies
+--------------------------
+6s, energy -0.377175899634881
+6p, energy -0.151507429528700
+5d, energy -0.427897064936730
+
+
+total energies:
+---------------
+sum of eigenvalues:     -11734.287129175061636
+Hartree energy:         7387.052574507075406
+vxc correction:         -466.960232477341606
+exchange + corr energy: -351.738936004964899
+----------------------------
+total energy:           -19006.118407209760335
+
+
+converged in 21 iterations
+  79.0022 electrons, should be   79.0000
+*******************************************
+Kohn-Sham all-electron calculation for Au 
+*******************************************
+Using scalar relativistic corrections.
+max 5 nodes, 3000 grid points
+Au xc=PW92 charge=0.0 conf:none
+
+Start iteration...
+iter   0, dn=1.6e+02>1.0e-01, max 16 sp-iter
+iter  10, dn=2.2e+00>1.0e-01, max 10 sp-iter
+iter  20, dn=1.3e-01>1.0e-01, max 9 sp-iter
+
+
+Energetics:
+-------------
+
+single-particle energies
+------------------------
+1s, energy -2961.617367766503776
+2s, energy -523.002761953569120
+3s, energy -123.526008434355106
+4s, energy -26.894255323802085
+5s, energy -4.140250541928507
+6s, energy -0.377175899634881
+2p, energy -453.142107862118507
+3p, energy -103.205421581974178
+4p, energy -20.214934385587139
+5p, energy -2.365527074767101
+6p, energy -0.151507429528700
+3d, energy -81.243963814734812
+4d, energy -12.129324773692383
+5d, energy -0.427897064936730
+4f, energy -3.140633091056444
+
+valence orbital energies
+--------------------------
+6s, energy -0.377175899634881
+6p, energy -0.151507429528700
+5d, energy -0.427897064936730
+
+
+total energies:
+---------------
+sum of eigenvalues:     -11734.287129175061636
+Hartree energy:         7387.052574507075406
+vxc correction:         -466.960232477341606
+exchange + corr energy: -351.738936004964899
+----------------------------
+total energy:           -19006.118407209760335
+
+
+converged in 21 iterations
+  79.0022 electrons, should be   79.0000
+*******************************************
+Kohn-Sham all-electron calculation for Au 
+*******************************************
+Using scalar relativistic corrections.
+max 5 nodes, 3000 grid points
+Au xc=PW92 charge=0.0 conf:none
+
+Start iteration...
+iter   0, dn=1.6e+02>1.0e-01, max 16 sp-iter
+iter  10, dn=2.2e+00>1.0e-01, max 10 sp-iter
+iter  20, dn=1.3e-01>1.0e-01, max 9 sp-iter
+
+
+Energetics:
+-------------
+
+single-particle energies
+------------------------
+1s, energy -2961.617367766503776
+2s, energy -523.002761953569120
+3s, energy -123.526008434355106
+4s, energy -26.894255323802085
+5s, energy -4.140250541928507
+6s, energy -0.377175899634881
+2p, energy -453.142107862118507
+3p, energy -103.205421581974178
+4p, energy -20.214934385587139
+5p, energy -2.365527074767101
+6p, energy -0.151507429528700
+3d, energy -81.243963814734812
+4d, energy -12.129324773692383
+5d, energy -0.427897064936730
+4f, energy -3.140633091056444
+
+valence orbital energies
+--------------------------
+6s, energy -0.377175899634881
+6p, energy -0.151507429528700
+5d, energy -0.427897064936730
+
+
+total energies:
+---------------
+sum of eigenvalues:     -11734.287129175061636
+Hartree energy:         7387.052574507075406
+vxc correction:         -466.960232477341606
+exchange + corr energy: -351.738936004964899
+----------------------------
+total energy:           -19006.118407209760335
+
+
+converged in 21 iterations
+  79.0022 electrons, should be   79.0000
+*******************************************
+Kohn-Sham all-electron calculation for Au 
+*******************************************
+Using scalar relativistic corrections.
+max 5 nodes, 3000 grid points
+Au xc=PW92 charge=0.0 conf:none
+
+Start iteration...
+iter   0, dn=1.6e+02>1.0e-01, max 16 sp-iter
+iter  10, dn=2.2e+00>1.0e-01, max 10 sp-iter
+iter  20, dn=1.3e-01>1.0e-01, max 9 sp-iter
+
+
+Energetics:
+-------------
+
+single-particle energies
+------------------------
+1s, energy -2961.617367766503776
+2s, energy -523.002761953569120
+3s, energy -123.526008434355106
+4s, energy -26.894255323802085
+5s, energy -4.140250541928507
+6s, energy -0.377175899634881
+2p, energy -453.142107862118507
+3p, energy -103.205421581974178
+4p, energy -20.214934385587139
+5p, energy -2.365527074767101
+6p, energy -0.151507429528700
+3d, energy -81.243963814734812
+4d, energy -12.129324773692383
+5d, energy -0.427897064936730
+4f, energy -3.140633091056444
+
+valence orbital energies
+--------------------------
+6s, energy -0.377175899634881
+6p, energy -0.151507429528700
+5d, energy -0.427897064936730
+
+
+total energies:
+---------------
+sum of eigenvalues:     -11734.287129175061636
+Hartree energy:         7387.052574507075406
+vxc correction:         -466.960232477341606
+exchange + corr energy: -351.738936004964899
+----------------------------
+total energy:           -19006.118407209760335
+
+
+converged in 21 iterations
+  79.0022 electrons, should be   79.0000

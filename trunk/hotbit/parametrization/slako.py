@@ -96,7 +96,6 @@ class SlaterKosterTable:
         parameters:
         ===========
         filename:     for graphics file
-        
         """
         fig=pl.figure()
         fig.subplots_adjust(hspace=0.0001,wspace=0.0001)
@@ -118,8 +117,11 @@ class SlaterKosterTable:
                     alpha = 0.2
                 if all(abs(self.tables[p][:,i])<1E-10):
                     ax.text(0.03,0.02+p*0.15,'No %s integrals for <%s|%s>' %(name,s1,s2),transform=ax.transAxes,size=10)
-                    pl.yticks([],[])
-                    pl.xticks([],[])
+                    if not ax.is_last_row():
+                        pl.xticks([],[])
+                    if not ax.is_first_col():
+                        pl.yticks([],[])
+                    
                 else:
                     pl.plot(self.Rgrid,self.tables[p][:,i],c='r',ls=s,lw=lw,alpha=alpha)
                     pl.plot(self.Rgrid,self.tables[p][:,i+10],c='b',ls=s,lw=lw,alpha=alpha)
