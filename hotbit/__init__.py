@@ -3,21 +3,42 @@
 
 from aseinterface import Calculator
 from aseinterface import Hotbit
+from atoms import Atoms
+from electrostatics import Electrostatics
 from element import Element
 from elements import Elements
-from repulsion import RepulsivePotential
-from wfpropagation import WFPropagation
 from environment import Environment
 from environment import LinearlyPolarizedLaser
+from grids import Grids
+from interactions import Interactions
+from occupations import Occupations
 from output import Output
+from repulsion import RepulsivePotential
+from repulsion import Repulsion
+from solver import Solver
 from states import States
-from box.wedgeatoms import *
-from hotbit.atoms import Atoms
-from os import environ, path
+from wfpropagation import WFPropagation
 
-from hotbit.parametrization.slako import SlaterKosterTable
-from hotbit.parametrization.atom import KSAllElectron
-from hotbit.parametrization.fitting import RepulsiveFitting
+from hotbit.analysis import LinearResponse
+from hotbit.analysis import MullikenAnalysis
+from hotbit.analysis import MullikenBondAnalysis
+from hotbit.analysis import DensityOfStates 
+
+from hotbit.containers import Bravais
+from hotbit.containers import Chiral
+from hotbit.containers import Wedge
+from hotbit.containers import Sphere
+from hotbit.containers import Saddle
+from hotbit.containers import Gaussian
+from hotbit.containers import Slab
+
+from hotbit.parametrization import SlaterKosterTable
+from hotbit.parametrization import KSAllElectron
+from hotbit.parametrization import RepulsiveFitting
+from hotbit.parametrization import ParametrizationTest
+
+from box.wedgeatoms import *
+from os import environ, path
 
 fixpar = path.join(environ.get('HOTBIT_PARAMETERS'),'fixed_parameters')
 testpar = path.join(environ.get('HOTBIT_PARAMETERS'),'inofficial')

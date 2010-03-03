@@ -78,7 +78,8 @@ class RepulsiveFitting:
         else:
             self.txt=open(txt,'a')
         print>>self.txt, 'Fitting repulsion curve between %s and %s' % (self.sym1, self.sym2)           
-
+        self.colors = ['red','green','blue','cyan','yellow','orange','magenta','pink','black']
+        self.colori = 0
 
 
     def __call__(self,r,der=0):
@@ -128,9 +129,12 @@ class RepulsiveFitting:
         pl.axvline(x=self.r_cut,c='r',ls=':')
         if self.r_dimer!=None:
             pl.axvline(x=self.r_dimer,c='r',ls=':')
-        xmin = 0.8*self.r_dimer
+        xmin = 0.7*self.r_dimer
         xmax = 1.2*self.r_cut
-        ymin = min([ point[1] for point in self.deriv ])
+        ymin = 0
+        for point in self.deriv:
+            if xmin<=point[0]<=xmax: ymin = min(ymin,point[1])
+        #ymin = min([ point[1] for point in self.deriv ])
         ymax = nu.abs(ymin)*0.2
         pl.axhline(0,ls='--',c='k')
         pl.text(self.r_dimer, ymax, r'$r_{dimer}$')
@@ -311,6 +315,17 @@ class RepulsiveFitting:
         a.set_calculator(c)
         return a,c
 
+
+    def _get_color(self,color):
+        """ Get next color in line if color==None """
+        if color==None:
+            index = self.colori
+            self.colori +=1 
+            if self.colori == len(self.colors): self.colors=0
+            return self.colors[index]
+        else:
+            return color
+
     #
     #       Fitting methods
     #             
@@ -329,7 +344,7 @@ class RepulsiveFitting:
         self.add_comment(comment)
 
 
-    def append_scalable_system(self,weight,calc,atoms,comment=None,label=None,color='m'):
+    def append_scalable_system(self,weight,calc,atoms,comment=None,label=None,color=None):
         """ 
         Use scalable equilibrium system in repulsion fitting. 
         
@@ -352,31 +367,12 @@ class RepulsiveFitting:
         e2 = atoms.get_potential_energy()
 
         dEdr=(e2-e1)/(self.scale*R-R)
+        color = self._get_color(color)
         self.append_point(weight,R,-dEdr/N,comment,label,color)
         print>>self.txt, '\nAdding a scalable system %s with %i bonds at R=%.4f.' %(atoms.get_name(),N,R)
 
 
-    def _get_repulsion_distances(self,calc):
-        """
-        Return distances below r_cut for given system in calculator.
-        
-        return:
-        =======
-        R:     the mean repulsion distance
-        N:     number of bonds
-        """
-        distances = calc.rep.get_repulsion_distances(self.sym1,self.sym2,self.r_cut)
-        R = distances.mean()
-        if len(distances)==0:
-            return 0.0,distances
-        if distances.max()-distances.min() > self.tol:
-            atoms = calc.get_atoms()
-            raise AssertionError('Bond lengths in %s are not the same' %atoms.get_name() )
-        N = len(distances)
-        return R,N        
-
-
-    def append_dimer(self,weight,calc,R,comment=None,label='dimer',color='r'):
+    def append_dimer(self,weight,calc,R,comment=None,label='dimer',color=None):
         """ 
         Use dimer bond length in fitting. 
         
@@ -392,10 +388,11 @@ class RepulsiveFitting:
         self.r_dimer = R
         atoms = Atoms([self.sym1,self.sym2],[(0,0,0),(R,0,0)],pbc=False)
         atoms.center(vacuum=5)
+        color = self._get_color(color)
         self.append_scalable_system(weight,calc,atoms,comment=comment,label=label,color=color)
 
 
-    def append_energy_curve(self,weight,calc,traj,comment=None,label='energy curve', color='y'):
+    def append_energy_curve(self,weight,calc,traj,comment=None,label='energy curve',color=None):
         """
         Calculates the V'rep(r) from a given ase-trajectory.
         
@@ -430,7 +427,7 @@ class RepulsiveFitting:
             atoms, c = self._set_calc(a,calc)
             e = atoms.get_potential_energy()
             r, n = self._get_repulsion_distances(c)
-            if n>0:
+            if n>0 and r<self.r_cut:
                 Edft.append( a.get_potential_energy() )
                 Ewr.append( e )
                 R.append(r)
@@ -447,6 +444,7 @@ class RepulsiveFitting:
         Ewr  = Ewr[indices]
         vrep = SplineFunction(R, (Edft-Ewr)/N, k=3, s=0)
 
+        color = self._get_color(color)
         for i, r in enumerate(R):
             if i > 0: 
                 label='_nolegend_'
@@ -457,7 +455,7 @@ class RepulsiveFitting:
         print>>self.txt, "Appended %i points around R=%.4f...%.4f" %(len(N),R.min(),R.max())
 
 
-    def append_homogeneous_cluster(self,weight,calc,atoms,comment=None,label='cluster',color='b'):
+    def append_homogeneous_cluster(self,weight,calc,atoms,comment=None,label='cluster',color=None):
         """
         Use homonuclear cluster in fitting, even having different bond lengths.
         
@@ -528,6 +526,7 @@ class RepulsiveFitting:
         p = fmin( to_minimize,[-1.0,5.0],args=(atoms,f_DFT,f_WR),xtol=1E-5,ftol=1E-5 )
         print>>self.txt, '   Cluster: V_rep(R)=%.6f + %.6f (r-%.2f)' %(p[0],p[1],self.r_cut)
       
+        color = self._get_color(color)
         np = 6
         rlist = nu.linspace(rmin,rmax,np)
         for i,r in enumerate(rlist):
@@ -538,6 +537,27 @@ class RepulsiveFitting:
                 com = None
             self.append_point(weight/nu.sqrt(np), r, dvrep(r,p), com, label, color)
 
+
+    def _get_repulsion_distances(self,calc):
+        """
+        Return distances below r_cut for given system in calculator.
+        
+        return:
+        =======
+        R:     the mean repulsion distance
+        N:     number of bonds
+        """
+        distances = calc.rep.get_repulsion_distances(self.sym1,self.sym2,self.r_cut)
+        R = distances.mean()
+        if len(distances)==0:
+            return 0.0,distances
+        rmin, rmax = distances.max(), distances.min() 
+        if  rmax - rmin > self.tol:
+            atoms = calc.get_atoms()
+            raise AssertionError('Bond lengths in %s are not the same, they vary between %.6f ... %.6f' %(atoms.get_name(),rmin,rmax) )
+        N = len(distances)
+        return R,N  
+    
 
     def write_fitting_data(self, filename):
         import pickle

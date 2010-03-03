@@ -58,8 +58,7 @@ class Occupations:
         except:
             # probably a bad guess
             dmu = self.width 
-            mu = brentq(self.root_function,ef[0]-dmu,ef[-1]+dmu)
-            
+            mu = brentq(self.root_function,ef[0]-dmu,ef[-1]+dmu)    
         f = self.fermi(mu)
         self.mu, self.f = mu, f
         return f

@@ -1,0 +1,39 @@
+*******************************************
+Kohn-Sham all-electron calculation for  H 
+*******************************************
+max 0 nodes, 500 grid points
+H xc=PW92 charge=0.0 conf:none
+
+Start iteration...
+iter   0, dn=2.0e+00>1.0e-07, max 7 sp-iter
+iter  10, dn=3.0e-03>1.0e-07, max 3 sp-iter
+iter  20, dn=2.1e-04>1.0e-07, max 3 sp-iter
+iter  30, dn=1.9e-05>1.0e-07, max 2 sp-iter
+iter  40, dn=2.2e-06>1.0e-07, max 2 sp-iter
+iter  50, dn=2.7e-07>1.0e-07, max 2 sp-iter
+
+
+Energetics:
+-------------
+
+single-particle energies
+------------------------
+1s, energy -0.233437879661465
+
+valence orbital energies
+--------------------------
+1s, energy -0.233437879661465
+
+
+total energies:
+---------------
+sum of eigenvalues:     -0.233437879661465
+Hartree energy:         0.282780782323626
+vxc correction:         -0.303094668882768
+exchange + corr energy: -0.232523334347745
+----------------------------
+total energy:           -0.445647327450068
+
+
+converged in 59 iterations
+   1.0005 electrons, should be    1.0000

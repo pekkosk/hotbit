@@ -33,9 +33,10 @@ if phase==3:
     # fit repulsion
     tab={'AuAu':'Au_Au_no_repulsion.par'}
     elm={'Au':'Au.elm'}
-    calc0 = Hotbit(SCC=True,txt='-',elements=elm,tables=tab)
-    calc1 = Hotbit(SCC=False,txt='-',elements=elm,tables=tab,kpts=(6,6,6))
-    calc2 = Hotbit(SCC=True,txt='-',elements=elm,tables=tab,charge=-1.0)
+    mixer={'name':'Anderson','mixing_constant':0.1,'convergence':1E-9}
+    calc0 = Hotbit(txt='-',elements=elm,mixer=mixer,tables=tab,SCC=True)
+    calc1 = Hotbit(txt='-',elements=elm,mixer=mixer,tables=tab,SCC=False,kpts=(6,6,6))
+    calc2 = Hotbit(txt='-',elements=elm,mixer=mixer,tables=tab,SCC=True,charge=-1.0)
     
     rep = RepulsiveFitting('Au','Au',r_cut=3.3,s=100)
     
