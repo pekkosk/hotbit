@@ -1,0 +1,80 @@
+*******************************************
+Kohn-Sham all-electron calculation for  H 
+*******************************************
+max 0 nodes, 500 grid points
+H xc=PW92 charge=0.0 conf:quadratic r0=1.084
+
+Start iteration...
+iter   0, dn=1.9e+00>1.0e-07, max 9 sp-iter
+iter  10, dn=7.1e-04>1.0e-07, max 3 sp-iter
+iter  20, dn=7.0e-05>1.0e-07, max 3 sp-iter
+iter  30, dn=6.9e-06>1.0e-07, max 3 sp-iter
+iter  40, dn=6.7e-07>1.0e-07, max 2 sp-iter
+iter  50, dn=6.6e-08>1.0e-07, max 2 sp-iter
+iter  60, dn=6.5e-09>1.0e-07, max 2 sp-iter
+
+
+Energetics:
+-------------
+
+single-particle energies
+------------------------
+1s, energy 1.032457450411614
+
+valence orbital energies
+--------------------------
+1s, energy 1.032457450411614
+
+
+total energies:
+---------------
+sum of eigenvalues:     1.032457450411614
+Hartree energy:         0.555759254813927
+vxc correction:         -0.562631469444443
+exchange + corr energy: -0.429963962696552
+----------------------------
+total energy:           0.609365702345578
+
+
+converged in 61 iterations
+   1.0005 electrons, should be    1.0000
+*******************************************
+Kohn-Sham all-electron calculation for  H 
+*******************************************
+max 0 nodes, 500 grid points
+H xc=PW92 charge=0.0 conf:quadratic r0=1.084
+
+Start iteration...
+iter   0, dn=1.9e+00>1.0e-07, max 9 sp-iter
+iter  10, dn=7.1e-04>1.0e-07, max 3 sp-iter
+iter  20, dn=7.0e-05>1.0e-07, max 3 sp-iter
+iter  30, dn=6.9e-06>1.0e-07, max 3 sp-iter
+iter  40, dn=6.7e-07>1.0e-07, max 2 sp-iter
+iter  50, dn=6.6e-08>1.0e-07, max 2 sp-iter
+iter  60, dn=6.5e-09>1.0e-07, max 2 sp-iter
+
+
+Energetics:
+-------------
+
+single-particle energies
+------------------------
+1s, energy 1.032457450411614
+
+valence orbital energies
+--------------------------
+1s, energy 1.032457450411614
+
+
+total energies:
+---------------
+sum of eigenvalues:     1.032457450411614
+Hartree energy:         0.555759254813927
+vxc correction:         -0.562631469444443
+exchange + corr energy: -0.429963962696552
+----------------------------
+total energy:           0.609365702345578
+
+
+converged in 61 iterations
+   1.0005 electrons, should be    1.0000

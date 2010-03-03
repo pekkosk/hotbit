@@ -1,0 +1,86 @@
+*******************************************
+Kohn-Sham all-electron calculation for  C 
+*******************************************
+max 1 nodes, 1000 grid points
+C xc=PW92 charge=0.0 conf:quadratic r0=2.657
+
+Start iteration...
+iter   0, dn=3.8e+00>1.0e-07, max 8 sp-iter
+iter  10, dn=5.3e-02>1.0e-07, max 4 sp-iter
+iter  20, dn=2.4e-03>1.0e-07, max 3 sp-iter
+iter  30, dn=1.2e-04>1.0e-07, max 3 sp-iter
+iter  40, dn=8.7e-06>1.0e-07, max 2 sp-iter
+iter  50, dn=8.5e-07>1.0e-07, max 2 sp-iter
+iter  60, dn=9.1e-08>1.0e-07, max 2 sp-iter
+
+
+Energetics:
+-------------
+
+single-particle energies
+------------------------
+1s, energy -9.381321727361120
+2s, energy 0.083668350415974
+2p, energy 0.408344686485853
+
+valence orbital energies
+--------------------------
+2s, energy 0.083668350415974
+2p, energy 0.408344686485853
+
+
+total energies:
+---------------
+sum of eigenvalues:     -17.778617380918586
+Hartree energy:         19.782077925641158
+vxc correction:         -6.696788543894918
+exchange + corr energy: -5.085757813946068
+----------------------------
+total energy:           -35.949664576610893
+
+
+converged in 68 iterations
+   6.0010 electrons, should be    6.0000
+*******************************************
+Kohn-Sham all-electron calculation for  C 
+*******************************************
+max 1 nodes, 1000 grid points
+C xc=PW92 charge=0.0 conf:quadratic r0=2.657
+
+Start iteration...
+iter   0, dn=3.8e+00>1.0e-07, max 8 sp-iter
+iter  10, dn=5.3e-02>1.0e-07, max 4 sp-iter
+iter  20, dn=2.4e-03>1.0e-07, max 3 sp-iter
+iter  30, dn=1.2e-04>1.0e-07, max 3 sp-iter
+iter  40, dn=8.7e-06>1.0e-07, max 2 sp-iter
+iter  50, dn=8.5e-07>1.0e-07, max 2 sp-iter
+iter  60, dn=9.1e-08>1.0e-07, max 2 sp-iter
+
+
+Energetics:
+-------------
+
+single-particle energies
+------------------------
+1s, energy -9.381321727361120
+2s, energy 0.083668350415974
+2p, energy 0.408344686485853
+
+valence orbital energies
+--------------------------
+2s, energy 0.083668350415974
+2p, energy 0.408344686485853
+
+
+total energies:
+---------------
+sum of eigenvalues:     -17.778617380918586
+Hartree energy:         19.782077925641158
+vxc correction:         -6.696788543894918
+exchange + corr energy: -5.085757813946068
+----------------------------
+total energy:           -35.949664576610893
+
+
+converged in 68 iterations
+   6.0010 electrons, should be    6.0000
