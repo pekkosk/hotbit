@@ -16,13 +16,17 @@ from sys import stdout
 
 class RepulsiveFitting:
 
-    def __init__(self,symbol1,symbol2,r_cut,s=None,k=3,txt=None,tol=1E-5): 
+    def __init__(self,symbol1,symbol2,r_cut,s=None,k=3,txt=None,tol=0.005): 
         """
         Class for fitting the short-range repulsive potential.
         
         
         Fitting uses eV and Angstrom also internally, only the
-        output file (.par) is in Hartrees and Bohrs  
+        output file (.par) is in Hartrees and Bohrs. The weights 
+        used in the methods append_* are the inverse of standard 
+        deviations (weight=1/sigma). For more details of the 
+        approach used here, look at Pekka Koskinen and Ville Makinen, 
+        Computational Materials Science 47, 237 (2009), page 244. 
         
         Parameters:
         ===========
@@ -32,7 +36,7 @@ class RepulsiveFitting:
         r_cut:          the repulsion cutoff 
         s:              smoothing parameter. If None, use s = N - nu.sqrt(2*N)
                         where N is the number of data points.
-        k:              order of spline, cubic by default.
+        k:              order of spline for V_rep'(R), cubic by default.
                         Uses smaller order if not enough points to fit V_rep'(R)                      
         tol:            tolerance for distances still considered the same
         
@@ -42,10 +46,12 @@ class RepulsiveFitting:
         1. Initialize class
            * rep = RepulsiveFitting('Au','Au',r_cut=3.3,s=100)
     
-        2. Collect data from structures. The data collected is points r_i and V_rep'(r_i),
-           that is, repulsive distance and the force. Use the methods 'append_*'.
+        2. Collect data from structures. The data collected is points r_i 
+           and V_rep'(r_i), that is, repulsive distance and the force. 
+           Use the append_* methods.
            * rep.append_dimer(weight=0.5,calc=calc0,R=2.49,comment='Au2')
-           * rep.append_energy_curve(weight=1.0,calc=calc0,traj='dimer_curve.traj',label='DFT dimer',comment='dimer curve')
+           * rep.append_energy_curve(weight=1.0,calc=calc0,
+                 traj='dimer_curve.traj',label='DFT dimer',comment='dimer curve')
     
         3. Given the set of points [r_i,V_rep'(r_i)], fit a spline with given order.
            * fit()
@@ -86,11 +92,16 @@ class RepulsiveFitting:
         """ 
         Return repulsion or its derivative.
         
+        This is the already fitted and integrated V_rep(R).
+        
         parameters:
         ===========
-        r:            radius
-        der:          der=0 for V_rep(r), der=1 for V_rep'(r)
+        r:            radius (Angstroms)
+        der:          der=0 for V_rep(r)
+                      der=1 for V_rep'(r)
         """
+        if self.v==None:
+            raise AssertionError('Repulsion is not yet fitted')
         return self.v(r,der=der)
 
 
@@ -105,7 +116,8 @@ class RepulsiveFitting:
         r=nu.linspace(0,self.r_cut)
         v=[self(x,der=0) for x in r]
         vp=[self(x,der=1) for x in r]
-        rmin=0.9*min([d[0] for d in self.deriv])
+        rmin=0.95*min([d[0] for d in self.deriv])
+        rmax = 1.1*self.r_cut
 
         fig=pl.figure()
         pl.subplots_adjust(wspace=0.25)
@@ -114,10 +126,12 @@ class RepulsiveFitting:
         pl.subplot(1,2,1)
         pl.ylabel(r'$V_{rep}(r)$  (eV)')
         pl.xlabel(r'$r$  ($\AA$)')
+        if self.r_dimer!=None:
+            pl.axvline(x=self.r_dimer,c='r',ls=':')
         pl.axvline(x=self.r_cut,c='r',ls=':')
         pl.plot(r,v)
-        pl.ylim(ymin=0,ymax=self(self.r_cut/2))
-        pl.xlim(xmin=self.r_cut/2, xmax=self.r_cut)
+        pl.ylim(ymin=0,ymax=self(rmin))
+        pl.xlim(xmin=rmin, xmax=self.r_cut)
 
         # Vrep'
         pl.subplot(1,2,2)
@@ -129,20 +143,20 @@ class RepulsiveFitting:
         pl.axvline(x=self.r_cut,c='r',ls=':')
         if self.r_dimer!=None:
             pl.axvline(x=self.r_dimer,c='r',ls=':')
-        xmin = 0.7*self.r_dimer
-        xmax = 1.2*self.r_cut
+        
         ymin = 0
         for point in self.deriv:
-            if xmin<=point[0]<=xmax: ymin = min(ymin,point[1])
-        #ymin = min([ point[1] for point in self.deriv ])
-        ymax = nu.abs(ymin)*0.2
+            if rmin<=point[0]<=rmax: ymin = min(ymin,point[1])
+        ymax = nu.abs(ymin)*0.1
         pl.axhline(0,ls='--',c='k')
-        pl.text(self.r_dimer, ymax, r'$r_{dimer}$')
+        if self.r_dimer!=None:
+            pl.text(self.r_dimer, ymax, r'$r_{dimer}$')
         pl.text(self.r_cut, ymax, r'$r_{cut}$')
-        pl.xlim(xmin=xmin, xmax=xmax)
+        pl.xlim(xmin=rmin, xmax=rmax)
         pl.ylim(ymin=ymin, ymax=ymax)
         #pl.subtitle('Fitting for %s and %s' % (self.sym1, self.sym2))
         pl.rc('font', size=10)
+        pl.rc('legend',fontsize=8)
         pl.legend(loc=4)
         file = '%s_%s_repulsion.pdf' % (self.sym1, self.sym2)
         if filename!=None:
@@ -173,31 +187,21 @@ class RepulsiveFitting:
 
     def fit(self): 
         """
-        Fit spline into {r, V_rep'(r)} -data.
-        
-        Use cubic spline by default
-        
-        parameters:
-        ===========
- 
+        Fit spline into {r, V_rep'(r)} -data points.
         """
         from scipy.interpolate import splrep, splev
-        self.k = min(len(self.deriv)-1+1,self.k)
+        self.k = min(len(self.deriv),self.k)
         
         x = nu.array([self.deriv[i][0] for i in range(len(self.deriv))])
         y = nu.array([self.deriv[i][1] for i in range(len(self.deriv))])
         w = nu.array([self.deriv[i][2] for i in range(len(self.deriv))])
         # sort values so that x is in ascending order
         indices = x.argsort()
-        x = x[indices]
-        y = y[indices]
-        w = w[indices]
+        x, y, w = x[indices], y[indices], w[indices]
         x, y, w = self._group_closeby_points(x,y,w)
         # use only points that are closer than r_cut
         indices = nu.where(x < self.r_cut)
-        x = list(x[indices])
-        y = list(y[indices])
-        w = list(w[indices])
+        x, y, w = list(x[indices]), list(y[indices]), list(w[indices])
         # force the spline curve to go to zero at x=r_cut
         x.append(self.r_cut)
         y.append(0)
@@ -206,7 +210,7 @@ class RepulsiveFitting:
             # from documentation of splrep in scipy.interpolate.fitpack
             self.s = len(x) - nu.sqrt(2*len(x))
             
-        print>>self.txt, "\n  Fitting smoothing spline with parameters"
+        print>>self.txt, "\nFitting spline for V_rep'(R) with parameters"
         print>>self.txt, "  k=%i, s=%0.4f, r_cut=%0.4f\n" %(self.k, self.s, self.r_cut)
         tck = splrep(x, y, w, s=self.s, k=self.k)
 
@@ -311,7 +315,6 @@ class RepulsiveFitting:
         else:
             a = atoms.copy()
         c = copy(calc)
-        c.set('txt','-')
         a.set_calculator(c)
         return a,c
 
@@ -329,46 +332,61 @@ class RepulsiveFitting:
     #
     #       Fitting methods
     #             
-    def append_point(self,weight,R,dvrep,comment=None,label='point',color='g'):
-        """ Add point to vrep'-fitting.
+    def append_point(self,weight,R,dvrep,comment=None,label=None,color='g'):
+        """ 
+        Add point to vrep'-fitting.
         
         parameters:
         ===========
-        weight:    relative weight (inverse of deviation)
-        R:         radius, in Angstroms
-        vder:      value of the derivative at R
-        color:     pylab color for plotting
-        info:      label in plotting
+        weight:    fitting weight 
+        R:         radius (Angstroms)
+        vdrep:     V_rep'(R) (eV/Angstroms)
+        comment:   fitting comment for par file (replaced by label if None)
+        label:     plotting label (replaced by comment if None)
         """
+        if comment==None: comment=label
+        if label==None: label=comment
         self.deriv.append([R,dvrep,weight,color,label])
         self.add_comment(comment)
 
 
     def append_scalable_system(self,weight,calc,atoms,comment=None,label=None,color=None):
         """ 
-        Use scalable equilibrium system in repulsion fitting. 
+        Use scalable equilibrium system in repulsion fitting.
+        
+        Scalable means that atoms is an equilibrium system, which
+        has only given bond lengths R, and whose dimensions can be 
+        scaled E_DFT(R), and, because of equilibrium, E_DFT'(R)=0.
+        Hence
+        
+            E_DFT'(R) = E_wr'(R) + N*V_rep'(R) = 0 
+            
+            ==> V_rep'(R) = -E_wr'(R)/N
+            
+        where E_wr = E_bs + E_coul is the DFTB energy without
+        repulsion.
         
         parameters:
         ===========
         weight:        fitting weight 
         calc:          Hotbit calculator (remember charge and k-points)
-        atoms:         filename or ase.Atoms
-        comment:       fitting comment for par file
-        label:         plotting label
+        atoms:         filename or ase.Atoms instance
+        comment:       fitting comment for par file (replaced by label if None)
+        label:         plotting label (replaced by comment if None)
         color:         plotting color
         """
         atoms, calc = self._set_calc(atoms,calc)
-        if label is None:
-            label=atoms.get_name()+'_scalable'
+        if comment==None: comment=label
+        if label==None: label=comment
         
         e1 = atoms.get_potential_energy()
         R, N = self._get_repulsion_distances(calc)
         atoms.set_cell( atoms.get_cell()*self.scale, scale_atoms=True )
         e2 = atoms.get_potential_energy()
 
-        dEdr=(e2-e1)/(self.scale*R-R)
+        dEwr=(e2-e1)/(self.scale*R-R)
         color = self._get_color(color)
-        self.append_point(weight,R,-dEdr/N,comment,label,color)
+        self.append_point(weight,R,-dEwr/N,comment,label,color)
         print>>self.txt, '\nAdding a scalable system %s with %i bonds at R=%.4f.' %(atoms.get_name(),N,R)
 
 
@@ -378,13 +396,15 @@ class RepulsiveFitting:
         
         parameters:
         ===========
-        weight:    relative weight (inverse of deviation)
-        calc:      Hotbit calculator used in calculation (remember Gamma-point and charge)
+        weight:    fitting weight 
+        calc:      Hotbit calculator used in calculation 
+                   (remember Gamma-point and charge)
         R:         dimer bond length (Angstroms)
-        comment:   fitting comment for par-file
-        label:     plotting label
+        comment:   fitting comment for par-file (replaced by label if None)
+        label:     plotting label (replaced by comment if None)
         color:     plotting color        
         """
+        if comment==None: comment=label
         self.r_dimer = R
         atoms = Atoms([self.sym1,self.sym2],[(0,0,0),(R,0,0)],pbc=False)
         atoms.center(vacuum=5)
@@ -392,16 +412,18 @@ class RepulsiveFitting:
         self.append_scalable_system(weight,calc,atoms,comment=comment,label=label,color=color)
 
 
-    def append_energy_curve(self,weight,calc,traj,comment=None,label='energy curve',color=None):
+    def append_energy_curve(self,weight,calc,traj,comment=None,label=None,color=None):
         """
         Calculates the V'rep(r) from a given ase-trajectory.
         
         The trajectory can be anything, as long as the ONLY missing energy
-        from DFTB calculation is N*V_rep(R). Hence
+        from DFTB calculation is N*V_rep(R). Hence 
+        
+            E_DFT(R) = E_wr(R) + N*V_rep(R) 
 
-                     E_DFT'(R) - E_wr'(R)
-        V_rep'(R) =  ------------------ ,
-                             N
+                         E_DFT'(R) - E_wr'(R)
+            V_rep'(R) =  ------------------ ,
+                                N
 
         where R is the nn. distance,N is the number of A-B pairs taken into account,
         and E_wr(R) = E_bs(R) + E_coul(R) is the DFTB energy without repulsion.
@@ -409,26 +431,27 @@ class RepulsiveFitting:
 
         parameters:
         ===========        
-        weight:              Fitting weight (inverse of deviation)
+        weight:              fitting weight 
         calc:                Hotbit calculator (remember charge and k-points)
-        traj:                ASE trajectory for energy curve
-        comment:             fitting comment for par-file        
-        label:               Name that is used in the fitting plot.
-        color:               Color that is used in the fitting plot.
+        traj:                filename for ASE trajectory  
+        comment:             fitting comment for par-file (replaced by comment if None)       
+        label:               plotting label (replaced by comment if None)
+        color:               plotting color
         """
-        from box.interpolation import SplineFunction
+        if comment==None: comment=label
+        if label==None: label=comment
 
         print>>self.txt, "\nAppending energy curve data from %s..." %traj
         traj = PickleTrajectory(traj)
         Edft, Ewr, N, R = [], [], [], []
         if len(traj)<3:
             raise AssertionError('At least 3 points in energy curve required.')
-        for a in traj:
-            atoms, c = self._set_calc(a,calc)
-            e = atoms.get_potential_energy()
+        for atoms in traj:
+            a, c = self._set_calc(atoms,calc)
+            e = a.get_potential_energy()
             r, n = self._get_repulsion_distances(c)
             if n>0 and r<self.r_cut:
-                Edft.append( a.get_potential_energy() )
+                Edft.append( atoms.get_potential_energy() )
                 Ewr.append( e )
                 R.append(r)
                 N.append(n)
@@ -438,31 +461,32 @@ class RepulsiveFitting:
         R = nu.array(R)
             
         # sort radii because of spline
-        indices = R.argsort()
-        R    = R[indices]
-        Edft = Edft[indices]
-        Ewr  = Ewr[indices]
+        ind = R.argsort()
+        R    = R[ind]
+        Edft = Edft[ind]
+        Ewr  = Ewr[ind]
+        from box.interpolation import SplineFunction
         vrep = SplineFunction(R, (Edft-Ewr)/N, k=3, s=0)
 
         color = self._get_color(color)
         for i, r in enumerate(R):
-            if i > 0: 
+            if i==0:
+                com = comment 
+            else:
                 label='_nolegend_'
                 com = None
-            else:
-                com = comment
             self.append_point(weight/nu.sqrt(len(R)),r, vrep(r,der=1), com, label, color)
         print>>self.txt, "Appended %i points around R=%.4f...%.4f" %(len(N),R.min(),R.max())
 
 
-    def append_homogeneous_cluster(self,weight,calc,atoms,comment=None,label='cluster',color=None):
+    def append_homogeneous_cluster(self,weight,calc,atoms,comment=None,label=None,color=None):
         """
-        Use homonuclear cluster in fitting, even having different bond lengths.
+        Use homonuclear cluster in fitting, even with different bond lengths.
         
-        Construct repulsive forces so that residual forces |F_DFT - (F_WR+F_rep)|,
-        where F_DFT are DFT forces (zero if cluster in equilibrium), F_WR are
-        DFTB forces without repulsion, and F_rep are the repulsive forces. That is,
-        minimize the function
+        Construct repulsive forces so that residual forces F_DFT-(F_wr+F_rep),
+        where F_DFT are DFT forces (zero if cluster in equilibrium), F_wr are
+        DFTB forces without repulsion, and F_rep are the repulsive forces. 
+        That is, we minimize the function
         
            sum_i |F_DFT_i - F_WR_i - F_rep_i|^2
            
@@ -474,13 +498,15 @@ class RepulsiveFitting:
         
         parameters:
         ===========
-        weight:        relative weight
+        weight:        fitting weight
         calc:          Hotbit calculator (remember charge and no k-points)
         atoms:         filename or ASE.Atoms instance
-        comment:       fitting comment for par-file
-        label:         plotting label
+        comment:       fitting comment for par-file (replaced by label if None)
+        label:         plotting label (replaced by comment if None)
         color:         plotting color
         """
+        if comment==None: comment=label
+        if label==None: label=comment
         if type(atoms)==type(''):
             atoms = read(atoms)
 
@@ -495,7 +521,7 @@ class RepulsiveFitting:
         atoms, calc = self._set_calc(atoms,calc)
         print>>self.txt, "\nAppending homogeneous cluster %s..." % atoms.get_name()
         
-        f_WR = atoms.get_forces()
+        f_wr = atoms.get_forces()
         distances = calc.rep.get_repulsion_distances(self.sym1,self.sym2,self.r_cut)
         rmin, rmax = distances.min(), distances.max()
         
@@ -513,17 +539,17 @@ class RepulsiveFitting:
             for i in range(N):
                 for j in range(N):
                     if i==j: continue
-                    vec = pos[j]-pos[i]
-                    d = nu.linalg.norm(vec)
+                    rij = pos[j]-pos[i]
+                    dij = nu.linalg.norm(rij)
                     if d>self.r_cut: 
                         continue
                     else:
-                        frep[i] += dvrep(d,p)*vec/d
+                        frep[i] += dvrep(d,p)*rij/dij
             resid = fdft - ( fwr + frep )
-            return sum([ nu.linalg.norm(resid[i]) for i in range(N) ])                    
+            return sum([ nu.linalg.norm(resid[i])**2 for i in range(N) ])                    
         
         from scipy.optimize import fmin
-        p = fmin( to_minimize,[-1.0,5.0],args=(atoms,f_DFT,f_WR),xtol=1E-5,ftol=1E-5 )
+        p = fmin( to_minimize,[-1.0,5.0],args=(atoms,f_DFT,f_wr),xtol=1E-5,ftol=1E-5 )
         print>>self.txt, '   Cluster: V_rep(R)=%.6f + %.6f (r-%.2f)' %(p[0],p[1],self.r_cut)
       
         color = self._get_color(color)
@@ -548,9 +574,9 @@ class RepulsiveFitting:
         N:     number of bonds
         """
         distances = calc.rep.get_repulsion_distances(self.sym1,self.sym2,self.r_cut)
-        R = distances.mean()
         if len(distances)==0:
             return 0.0,distances
+        R = distances.mean()
         rmin, rmax = distances.max(), distances.min() 
         if  rmax - rmin > self.tol:
             atoms = calc.get_atoms()

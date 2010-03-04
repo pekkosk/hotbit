@@ -101,8 +101,8 @@ class Calculator(Output):
 
         self.init=False
         self.notes=[]
-        self.set_text(self.txt)
-        self.timer=Timer('Hotbit',txt=self.get_output())
+        #self.set_text(self.txt)
+        #self.timer=Timer('Hotbit',txt=self.get_output())
 
         if filename is not None:
             self.load(filename)
@@ -113,6 +113,7 @@ class Calculator(Output):
         Returns an uninitialized calculator.
         """
         import sys
+        from os.path import sameopenfile
         if self.init == True:
             raise NotImplementedError('Calculator has been initialized and it cannot be copied. Please create a new calculator.')
 
@@ -126,10 +127,12 @@ class Calculator(Output):
                           'elements',
                           'gamma_cut',
                           'parameters',
+                          'txt',
                           'verbose_SCC']
 
         ret = Hotbit()
-        ret.__dict__['txt'] = sys.stdout
+        # TODO: if output file already opened (unless /null or stdout)
+        # open a file with another name
         for key in params_to_copy:
             ret.__dict__[key] = self.__dict__[key]
         return ret
@@ -147,8 +150,9 @@ class Calculator(Output):
             print>>self.txt, 'Notes and warnings:'
             for note in self.notes:
                 print>>self.txt, note
-        self.timer.summary()
-        Output.__del__(self)
+        if self.init:
+            self.timer.summary()
+            Output.__del__(self)
 
 
     def write(self, filename='restart.hb'):
@@ -308,8 +312,10 @@ class Calculator(Output):
 
     def _initialize(self,atoms):
         """ Initialization of hotbit. """
-        self.start_timing('initialization')
         self.init=True
+        self.set_text(self.txt)
+        self.timer=Timer('Hotbit',txt=self.get_output())
+        self.start_timing('initialization')
         self.el=Elements(self,atoms)
         self.ia=Interactions(self)
         self.st=States(self)

@@ -1,0 +1,139 @@
+#!/usr/bin/env python
+"""
+    Examples:
+    ---------
+    
+    hotbit -e        
+        list all examples
+    
+    hotbit -e Au     
+        list all hotbit examples starting with 'Au'. 
+        If there is only one, copy it to present directory
+                     
+    hotbit calc      (OR:) 
+    hotbit Hotbit
+        print documentation for Hotbit calculator class
+    
+    hotbit calc.rep  (OR:)
+    hotbit Repulsion 
+        print documentation for class Repulsion. 'calc.rep' 
+        is an alias for 'Repulsion' because rep is an instance 
+        for Repulsion class within calc.
+        
+        Other aliases are, at least:
+            calc.rep        Repulsion (all repulsions)
+            calc.rep.rep    RepulsivePotential (single repulsion)
+            calc.st         States (main class for eigenstates etc)
+            calc.ia         Interactions (H and S matrices)
+            calc.el         Elements (closest interface with ASE atoms)
+            calc.el.el      Element (single elements)
+            calc.st.es      Electrostatics (charge transfer stuff)
+            calc.st.solver  Solver (solving Kohn-Sham equations)
+            calc.st.occ     Occupations 
+    
+"""
+
+def list_copy_examples(exdir,arg):
+    """
+    List examples
+    
+    parameters:
+    ===========
+    exdir:      directory where examples (files or directories) are
+    arg:        * if None, list all examples
+                * if many examples start with string arg, list these examples
+                * if only one examples start with string arg, copy it to present dir
+    """    
+    
+    examples = os.listdir(exdir)
+    
+    files = []
+    for file in examples:
+        if '.svn' in file: continue
+        if arg==None or (arg!=None and file.find(arg)==0):
+            files.append(file)
+
+    # if only one file or directory, copy it, otherwise list 
+    if len(files)==1:
+        full = os.path.join(exdir,files[0])
+        if os.path.isfile(full):
+            shutil.copyfile(full,files[0])
+        elif os.path.isdir(full):
+            shutil.copytree(full,files[0])
+        print 'Copied example %s to present directory' %files[0]
+    else:
+        for file in files:
+            print file
+     
+    
+
+
+
+import os
+import sys
+import shutil
+import pyclbr
+from optparse import OptionParser
+
+
+parser=OptionParser(add_help_option=False)
+parser.set_usage('hotbit [options] arg') 
+parser.add_option("-h", "--help", dest='help',action="store_true",default=False,help='print help')
+parser.add_option('-e','--examples',dest='examples',action='store_true',default=False,help='list and copy examples')
+parser.add_option('-l','--list',dest='list',action='store_true',default=False,help='list source code')
+
+options, args = parser.parse_args( sys.argv[1:] )
+
+assert not (options.list and options.examples)
+if options.help:
+    print '-------------------------'
+    print '   Hotbit shell guide    '
+    print '-------------------------'
+    parser.print_help()
+    print __doc__
+    raise SystemExit
+    
+if len(args)==0:
+    arg = None
+else:
+    arg = args[0]
+
+hbdir = os.environ.get('HOTBIT_DIR')
+exdir = os.path.join(hbdir,'hotbit','examples')
+
+   
+if options.examples: 
+    list_copy_examples(exdir,arg)
+else:
+    raise NotImplementedError('Documentation plotting is not implemented yet')
+    raise SystemExit
+    for dir,sub,files in os.walk(hbdir):
+        if '.svn' in dir: continue
+        for file in files:
+            if file[-3:]!='.py':
+                continue
+            full = os.path.join(dir,file)
+            lines = open(full).readlines()
+            for line in lines:
+                if line.find('class')!=0: continue
+                cl = line
+                    
+            print full
+            print pyclbr.readmodule(full)
+            #print dir,file
+    
+        
+    aliases = {'calc':'Hotbit',\
+               'calc.el':'Elements',\
+               'calc.el.element':'Element',\
+               'calc.st.es':'Electrostatics',\
+               'calc.env':'Environment',\
+               'calc.ia':'Interactions',\
+               'calc.st.occ':'Occupations',\
+               'calc.rep.':'Repulsion',\
+               'calc.rep.v':'RepulsivePotential',\
+               'calc.st.solver':'Solver',\
+               'calc.st':'States'}
+               
+        
+    
