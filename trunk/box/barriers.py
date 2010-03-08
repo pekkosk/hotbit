@@ -420,7 +420,7 @@ class BTI:
         
 if __name__=='__main__':
     fmax=1E-4
-    calc=Calculator(potential='neb_model_1')
+    calc=Hotbit(potential='neb_model_1')
     first=Atoms(symbols='H',positions=[(3.0,-1.3,0.0)]) #,(0,0,0)])
     first.set_calculator(calc)
     md.quench_atoms(first,fmax=fmax)

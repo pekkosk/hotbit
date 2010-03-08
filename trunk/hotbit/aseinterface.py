@@ -23,7 +23,7 @@ from time import time
 
 
 
-class Calculator(Output):
+class Hotbit(Output):
     """
     ASE-calculator frontend for HOTBIT calculations.
     """
@@ -502,6 +502,5 @@ class Calculator(Output):
         self.timer.stop(label)
 
 
-Hotbit=Calculator
 
 

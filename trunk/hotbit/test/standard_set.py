@@ -1,4 +1,4 @@
-from hotbit import Calculator 
+from hotbit import Hotbit 
 #from hotbit import Calculator0
 from ase import *
 from ase.data.molecules import molecule
@@ -21,7 +21,7 @@ for system,e in zip(systems,energies):
         print 'new system',system,atoms.get_potential_energy()
         sys.exit(0)        
         
-    calc=Calculator(verbose=True,SCC=True,txt='standard.cal',**default_param)
+    calc=Hotbit(verbose=True,SCC=True,txt='standard.cal',**default_param)
     atoms.set_calculator(calc)
     e1=atoms.get_potential_energy()
     if abs(e1-e)>eps:

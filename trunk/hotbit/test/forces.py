@@ -1,4 +1,4 @@
-from hotbit import Calculator
+from hotbit import Hotbit
 #from hotbit import Calculator0
 from ase import *
 from hotbit.test.misc import default_param
@@ -17,7 +17,7 @@ systems=['AuC','H2COH']
 for SCC in [False,True]:            
     for system in systems:   
         print '    ... forces for %s, SCC=' %system, SCC         
-        calc=Calculator(verbose=True,SCC=True,txt='forces.cal',**default_param)
+        calc=Hotbit(verbose=True,SCC=True,txt='forces.cal',**default_param)
         atoms=molecule(system)
         #view(atoms)
         atoms.center(vacuum=5)

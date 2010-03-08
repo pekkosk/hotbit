@@ -1,5 +1,5 @@
 from hotbit import Element
-from hotbit import Calculator
+from hotbit import Hotbit
 import numpy as nu
 from ase.units import Bohr,Hartree
 from box import mix
@@ -662,9 +662,9 @@ class ParametrizationTest:
             ss = "%s%s" % (el, el)
             if el1 == el2 and el1 == el:
                 tables = {ss:par, 'others':'default'}
-                calc = Calculator(SCC=True, tables=tables)
+                calc = Hotbit(SCC=True, tables=tables)
             else:
-                calc = Calculator(SCC=True)
+                calc = Hotbit(SCC=True)
             atoms = Atoms(ss, ((0,0,0),(200,0,0)))
             atoms.center(vacuum=100)
             atoms.set_calculator(calc)

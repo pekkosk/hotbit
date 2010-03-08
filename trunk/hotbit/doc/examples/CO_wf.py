@@ -3,7 +3,7 @@ from hotbit import *
 from hotbit import fixpar
 import os
 
-calc=Calculator(SCC=True,width=0.05,txt='test.cal',parameters=fixpar)
+calc=Hotbit(SCC=True,width=0.05,txt='test.cal',parameters=fixpar)
 atoms=Atoms('CO',positions=[(0,0,0),(1.13,0,0)],pbc=False)
 atoms.center(vacuum=3) 
 atoms.set_calculator(calc)
