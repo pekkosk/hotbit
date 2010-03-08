@@ -1,5 +1,5 @@
 from ase import *
-from hotbit import Calculator
+from hotbit import Hotbit
 from ase.lattice.cubic import FaceCenteredCubic
 from hotbit.test.misc import default_param
 import pylab as pl
@@ -17,7 +17,7 @@ for SCC in [True,False]:
             atoms = FaceCenteredCubic(directions=[[1,-1,0], [1,1,-2], [1,1,1]],\
                                     size=(nx,ny,1), symbol='Au', pbc=(0,0,0))
                                     
-            calc=Calculator(verbose=True,SCC=SCC,gamma_cut=3,txt='size2.cal',**default_param)                
+            calc=Hotbit(verbose=True,SCC=SCC,gamma_cut=3,txt='size2.cal',**default_param)                
             atoms.set_calculator(calc)
             try:
                 atoms.get_forces()

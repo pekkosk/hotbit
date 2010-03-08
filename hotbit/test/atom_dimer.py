@@ -2,13 +2,13 @@ from ase import *
 from numpy import random
 from box import Atoms
 from box import mix
-from hotbit import Calculator
+from hotbit import Hotbit
 #from hotbit import Calculator0
 from ase.units import Bohr, Hartree
 from hotbit.test.misc import default_param
 
 # C-non-SCC
-calc=Calculator(SCC=False,txt='test.cal',**default_param)
+calc=Hotbit(SCC=False,txt='test.cal',**default_param)
 C=Atoms('C',positions=[(0,0,0)],cell=(10,10,10),pbc=False)
 C.center(vacuum=100)
 C.set_calculator(calc)
@@ -17,7 +17,7 @@ if abs(e)>1E-6:
     raise RuntimeError('energy %f, should be %f'  %(e,0.0))
     
 # C, SCC
-calc=Calculator(SCC=True,txt='test.cal',**default_param)
+calc=Hotbit(SCC=True,txt='test.cal',**default_param)
 C=Atoms('C',positions=[(0,0,0)],cell=(10,10,10),pbc=False)
 C.center(vacuum=100)
 C.set_calculator(calc)
@@ -28,7 +28,7 @@ if abs(e)>1E-6:
 
 # rotate Au-dimer
 #calc0=Calculator0(SCC=True,txt='test.cal',**default_param)
-calc=Calculator(SCC=True,txt='test.cal',**default_param)
+calc=Hotbit(SCC=True,txt='test.cal',**default_param)
 Au2=Atoms('Au2',positions=[(0,0,0),(2.6,0,0)],cell=(10,10,10),pbc=False)
 Au2.center(vacuum=10)
 #Au2.set_calculator(calc0)

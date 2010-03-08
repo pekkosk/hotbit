@@ -1,5 +1,4 @@
-from hotbit import Calculator
-from hotbit import Calculator0
+from hotbit import Hotbit
 from ase import *
 from hotbit.test.misc import default_param
 from box.mix import Timer
@@ -28,7 +27,7 @@ default_param['width']=0.1
 #t()
 #calc0.finalize()
                       
-calc=Calculator(verbose=True,SCC=True,gamma_cut=3,verbose_SCC=True,txt='size.cal',**default_param)
+calc=Hotbit(verbose=True,SCC=True,gamma_cut=3,verbose_SCC=True,txt='size.cal',**default_param)
 atoms.set_calculator(calc)
 atoms.get_forces()
 
