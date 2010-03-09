@@ -3,7 +3,7 @@
 
 """
     ASE-calculator interface for HOTBIT.
-    (Hybrid Open-Source Tight-Binding Tool)
+    (Hybrid Open-source Tight-Binding Tool)
 
 """
 import numpy as nu
@@ -24,9 +24,6 @@ from time import time
 
 
 class Hotbit(Output):
-    """
-    
-    """
     def __init__(self,parameters=None,
                       elements=None,
                       tables=None,
