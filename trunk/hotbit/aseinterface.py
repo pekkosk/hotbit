@@ -25,7 +25,7 @@ from time import time
 
 class Hotbit(Output):
     """
-    ASE-calculator frontend for HOTBIT calculations.
+    
     """
     def __init__(self,parameters=None,
                       elements=None,
@@ -43,39 +43,56 @@ class Hotbit(Output):
                       mixer=None,
                       filename=None):
         """
-        Initialize calculator.
+        Hotbit -- density-functional tight-binding calculator
+                  for atomic simulation environment (ASE).
+        
+        
 
         Parameters:
         -----------
-        parameters:       The directory for parametrizations. If parameters==None, use
-                          HOTBIT_PARAMETERS environment variable. Parametrizations given
-                          by 'elements' and 'tables' keywords override parametrizations
-                          in this directory.
+        parameters:       The directory for parametrization files. 
+                          * If parameters==None, use HOTBIT_PARAMETERS environment variable. 
+                          * Parametrizations given by 'elements' and 'tables' keywords 
+                            override parametrizations in this directory.
 
-        elements:         Dictionary for elements used, e.g. {'H':'H_custom.elm','C':'/../C.elm'}
-                          Items can also be elements directly: {'H':H} (with H being type Element)
+        elements:         Files for element data (*.elm). 
+                          example: {'H':'H_custom.elm','C':'/../C.elm'}
+                          * Items can also be elements directly: {'H':H} (H is type Element)
                           * If elements==None, use element info from default directory.
                           * If elements['others']=='default', use default parameters for all other
                             elements than the ones specified. E.g. {'H':'H.elm','others':'default'}
                             (otherwise all elements present have to be specified excplicitly).
 
-        tables:           Dictionary for interactions, e.g. {'CH':'C_H.par','CC':'C_C.par'}
+        tables:           Files for Slater-Koster tables.
+                          example: {'CH':'C_H.par','CC':'C_C.par'}
                           * If elements==None, use default interactions.
                           * If elements['others']='default', use default parameters for all other
-                            interactions than the ones specified.
-                            E.g. {'CH':'C_H.par','others':'default'}
+                            interactions, e.g. {'CH':'C_H.par','others':'default'}
 
-        mixer             Density mixer. Can be a name of the mixer (mixer='Anderson') or 
-                          a dictionary of parameters (mixer={'name':'Anderson','mixing_constant':0.3, 'memory':5}).
-        charge            total electric charge for system (-1 means an additional electron)
-        width             width of Fermi occupation (in eV)
+        mixer             Density mixer. 
+                          example: {'name':'Anderson','mixing_constant':0.3, 'memory':5}.
+        charge            Total charge for system (-1 means an additional electron)
+        width             Width of Fermi occupation (eV)
         SCC               Self-Consistent Charge calculation
-        kpts              number of k-points wrt different symmetries
-        physical_k_points True, if only physically exact k-point allowed in periodic (circular) systems
-        maxiter           Maximum number of self-consistent iterations (for SCC)
-        gamma_cut         Range for Coulomb interaction
-        txt               Filename for log-file (stdout = None)
-        verbose_SCC       Increase verbosity for SCC iterations.
+                          * True for SCC-DFTB, False for DFTB
+        kpts              Number of k-points.
+                          * For translational symmetry points are along the directions
+                            given by the cell vectors.
+                          * For general symmetries, you need to look at the info
+                            from the container used
+        physical_k_points Use physical (realistic) k-points for generally periodic systems.
+                          * Ignored with normal translational symmetry
+                          * True for physically allowed k-points in periodic symmetries.
+        maxiter           Maximum number of self-consistent iterations 
+                          * only for SCC-DFTB
+        gamma_cut         Range for Coulomb interaction. 
+                          * At the moment Coulomb interaction is 1/r*(1-erf(r/gamma_cut))
+                            for faster convergence. This is quick & dirty way to
+                            calculate electostatics and will be implemented properly.
+        txt               Filename for log-file.
+                          * None: standard output
+                          * '-': throw output to trash (/null) 
+        verbose_SCC       Increase verbosity in SCC iterations.
         """
         from copy import copy
         import os

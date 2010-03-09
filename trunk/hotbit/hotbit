@@ -201,10 +201,13 @@ else:
                     raise SystemExit
                 else:
                     # print doc
+                    init = eval('%s.__init__' %cl)
+                    call = inspect.formatargspec(*inspect.getargspec(init))
+                    print '%s %s' %(cl,call)
                     doc = inspect.getdoc(c.__init__)
                     if doc==None:
                         print 'No documentation for %s' %cl
                     else:
-                        print doc
+                        print '\n',doc
                     raise SystemExit
         
