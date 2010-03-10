@@ -541,10 +541,10 @@ class RepulsiveFitting:
                     if i==j: continue
                     rij = pos[j]-pos[i]
                     dij = nu.linalg.norm(rij)
-                    if d>self.r_cut: 
+                    if dij>self.r_cut: 
                         continue
                     else:
-                        frep[i] += dvrep(d,p)*rij/dij
+                        frep[i] += dvrep(dij,p)*rij/dij
             resid = fdft - ( fwr + frep )
             return sum([ nu.linalg.norm(resid[i])**2 for i in range(N) ])                    
         
