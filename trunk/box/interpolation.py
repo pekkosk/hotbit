@@ -93,28 +93,28 @@ class MultipleSplineFunction:
         return self.x[0],self.x[-1]
     
         
-    def _find_bin_fast(self,x):
-        """ For given x, return i such that x_i<=x<x_i+1 
-        Make it fast, but rely on linear scale.
-        """
-        lo=int( (x-self.xmin)/(self.xmax-self.xmin)*(self.n-1) )
-        return lo,lo+1
+#    def _find_bin_fast(self,x):
+#        """ For given x, return i such that x_i<=x<x_i+1 
+#        Make it fast, but rely on linear scale.
+#        """
+#        lo=int( (x-self.xmin)/(self.xmax-self.xmin)*(self.n-1) )
+#        return lo,lo+1
     
     
-    def _find_bin(self,x):
-        """ For given x, return i and i+1 such that x_i<=x<x_i+1 """
-        lo=0
-        hi=len(self.x)
-        while True:
-            if hi-lo>1:
-                k=(hi+lo)/2
-                if x<self.x[k]:
-                    hi=k
-                else:
-                    lo=k
-            else:
-                return lo, hi
-        raise AssertionError('Error in binding bin for %f' %x)
+#    def _find_bin(self,x):
+#        """ For given x, return i and i+1 such that x_i<=x<x_i+1 """
+#        lo=0
+#        hi=len(self.x)
+#        while True:
+#            if hi-lo>1:
+#                k=(hi+lo)/2
+#                if x<self.x[k]:
+#                    hi=k
+#                else:
+#                    lo=k
+#            else:
+#                return lo, hi
+#        raise AssertionError('Error in binding bin for %f' %x)
                   
   
     def __call__(self,x,der=None):
@@ -134,8 +134,11 @@ class MultipleSplineFunction:
             else:
                 return nu.zeros((self.m,))
                
-        lo, hi = self._find_bin(x)
-        xlo, xhi=self.x[lo], self.x[hi]
+        #lo, hi = self._find_bin(x)
+        #xlo, xhi=self.x[lo], self.x[hi]
+        hi = nu.searchsorted(self.x, x)
+        lo = hi-1
+        xlo, xhi = self.x[lo], self.x[hi]
         assert xlo<=x<=xhi
         
         h=self.h
