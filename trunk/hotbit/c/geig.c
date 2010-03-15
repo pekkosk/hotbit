@@ -3,7 +3,7 @@
 #define NO_IMPORT_ARRAY
 #include <numpy/arrayobject.h>
 
-#import "geig.h"
+#include "geig.h"
 
 
 static int liwork = 0;
