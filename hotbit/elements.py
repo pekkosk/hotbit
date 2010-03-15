@@ -9,7 +9,7 @@ from ase.units import Hartree,Bohr
 from os import environ
 from weakref import proxy
 from copy import copy, deepcopy
-from fortran.misc import fortran_doublefor
+#from fortran.misc import fortran_doublefor
 
 
 
@@ -191,7 +191,7 @@ class Elements:
                     nt = (n1,n2,n3)
                     if nt==(0,0,0): continue
                     # check that any atom interacts with this unit cell
-                    R = [self.nvector(r=i,ntuple=nt) for i in xrange(self.N)]
+                    R = nu.array([self.nvector(r=i,ntuple=nt) for i in xrange(self.N)])
                     # The following loop is computed in fortran for speed-up
                     #add = False
                     #for i in xrange(self.N):
@@ -201,10 +201,21 @@ class Elements:
                     #        if dR[0]**2+dR[1]**2+dR[2]**2 <= cut2[i,j]: 
                     #            add = True
                     #            break
-                    rn = nu.array(self.Rn[0]).transpose()
-                    r = nu.array(R).transpose()
-                    cut = cut2.transpose()
-                    addn = fortran_doublefor(rn, r, cut, self.N)
+
+                    #rn = nu.array(self.Rn[0]).transpose()
+                    #r = nu.array(R).transpose()
+                    #cut = cut2.transpose()
+                    #addn = fortran_doublefor(rn, r, cut, self.N)
+
+                    rn  = nu.array(self.Rn[0])
+
+                    dRt = rn[:, 0].reshape(1,-1)-R[:, 0].reshape(-1,1)
+                    dR  = dRt*dRt
+                    dRt = rn[:, 1].reshape(1,-1)-R[:, 1].reshape(-1,1)
+                    dR += dRt*dRt
+                    dRt = rn[:, 2].reshape(1,-1)-R[:, 2].reshape(-1,1)
+                    dR += dRt*dRt
+                    addn = nu.any(dR <= cut2)
                     
                     # into C extension!!
                     #addn = False

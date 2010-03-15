@@ -4,13 +4,16 @@
 from repulsion import RepulsivePotential
 from box import mix
 from box.interpolation import Function
-from hotbit.fortran.slako import fast_slako_transformations
+#from hotbit.fortran.slako import fast_slako_transformations
 #from hotbit.fortran.misc import matrix_blocks
 import numpy as nu
 from hotbit import auxil
 from box.mix import kronecker
 from box.interpolation import MultipleSplineFunction
 from weakref import proxy
+
+from _hotbit import fast_slako_transformations
+
 dot=nu.dot
 array=nu.array
 norm=nu.linalg.norm
@@ -248,7 +251,7 @@ class Interactions:
 
     def construct_matrices(self):
         """ Hamiltonian and overlap matrices. """
-        timing = False 
+        timing = False
         el = self.calc.el
         states = self.calc.st
         start = self.calc.start_timing
@@ -261,7 +264,7 @@ class Interactions:
         S   = nu.zeros((states.nk,norb,norb),complex)
         dH0 = nu.zeros((states.nk,norb,norb,3),complex)
         dS  = nu.zeros((states.nk,norb,norb,3),complex)
-        
+
         orbitals=[[orb['orbital'] for orb in el.orbitals(i)] for i in range(len(el))]
         orbindex=[el.orbitals(i,indices=True) for i in range(len(el))]
         h, s, dh, ds = zeros((14,)), zeros((14,)), zeros((14,3)), zeros((14,3))
@@ -317,7 +320,7 @@ class Interactions:
                     if timing: start('splint+SlaKo+DH')
                     hij, dhij = htable(dij)
                     sij, dsij = stable(dij)
-                    
+
                     indices = htable.get_indices()
                     h[indices], s[indices] = hij, sij
                     dh[indices], ds[indices] = outer(dhij,rijh), outer(dsij,rijh)
@@ -405,6 +408,7 @@ class Interactions:
 def simple_table_notation(table):
     a,b,i=table[2:].split('-')
     return a[-2]+b[-2]+i[0]
+
 
 
 s3=nu.sqrt(3.0)

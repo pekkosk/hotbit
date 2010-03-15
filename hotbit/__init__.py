@@ -39,5 +39,15 @@ from hotbit.parametrization import ParametrizationTest
 from box.wedgeatoms import *
 from os import environ, path
 
+import atexit
+import _hotbit
+
 fixpar = path.join(environ.get('HOTBIT_PARAMETERS'),'fixed_parameters')
 testpar = path.join(environ.get('HOTBIT_PARAMETERS'),'inofficial')
+
+
+#
+# Free eigenvalue solver workspace on exit
+#
+
+atexit.register(_hotbit.free_geig_workspace)

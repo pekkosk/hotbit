@@ -1,7 +1,11 @@
 #include <Python.h>
-#include <arrayobject.h>
-#include <stdlib.h>
+#define PY_ARRAY_UNIQUE_SYMBOL HOTBIT_ARRAY_API
+#define NO_IMPORT_ARRAY
+#include <numpy/arrayobject.h>
+
 #include <complex.h>
+
+#include "density_matrix.h"
 
 #ifndef min
 	#define min( a, b ) ( ((a) < (b)) ? (a) : (b) )
@@ -44,7 +48,7 @@ double complex *c_rhoc_(double complex *wf, double *occ, int norb, int nk) {
     return rho;
 }
 
-static PyObject *c_rhoc(PyObject *self, PyObject *args) {
+PyObject *c_rhoc(PyObject *self, PyObject *args) {
     int norb, nk;
     npy_intp *wf_dim;
     double *occ;
@@ -103,7 +107,7 @@ double complex *c_rhoec_(double complex *wf, double *occ, double *e, int norb, i
     return rho;
 }
 
-static PyObject *c_rhoec(PyObject *self, PyObject *args) {
+PyObject *c_rhoec(PyObject *self, PyObject *args) {
     int norb, nk;
     npy_intp *wf_dim;
     double *occ, *e;
@@ -125,16 +129,5 @@ static PyObject *c_rhoec(PyObject *self, PyObject *args) {
 
     pao_rhoe = (PyArrayObject *)PyArray_SimpleNewFromData(3, wf_dim, NPY_CDOUBLE, rhoe);
     return Py_BuildValue("O", pao_rhoe);
-}
-
-PyMethodDef methods[] = {
-    {"c_rhoc", c_rhoc, METH_VARARGS, "Calculate the complex density matrix."},
-    {"c_rhoec", c_rhoec, METH_VARARGS, "Calculate the energy-weighted complex density matrix."},
-    {NULL, NULL, 0, NULL}
-};
-
-PyMODINIT_FUNC initdensity_matrix() {
-    (void) Py_InitModule("density_matrix", methods);
-    import_array();
 }
 

@@ -5,12 +5,56 @@ from solver import Solver
 from weakref import proxy
 from electrostatics import Electrostatics
 from occupations import Occupations
-from hotbit.fortran.misc import fortran_rhoc
-from hotbit.fortran.misc import fortran_rhoec
+#from hotbit.fortran.misc import fortran_rhoc
+#from hotbit.fortran.misc import fortran_rhoec
 import numpy as nu
 from box import mix
 pi=nu.pi
 
+
+#
+# Constructing the density matrix, and the energy
+# weighted density matrix from eigenvectors, eigenvalues
+# and occupations.
+#
+
+def compute_rho(wf, occ):
+    nk, n, m = wf.shape
+    nk2, k = occ.shape
+
+    assert n == m
+    assert n == k
+    assert nk == nk2
+
+    rho = nu.zeros(wf.shape, dtype=wf.dtype)
+    for k in range(nk):
+        rho[k,:,:] = nu.dot(
+            wf[k,:,:].transpose(),
+            occ[k,:].reshape(n,-1) * wf[k,:,:].conj()
+            )
+    return rho
+
+
+def compute_rhoe(wf, occ, e):
+    nk, n, m = wf.shape
+    nk2, k = occ.shape
+
+    assert n == m
+    assert n == k
+    assert nk == nk2
+
+    rhoe = nu.zeros(wf.shape, dtype=wf.dtype)
+    for k in range(nk):
+        rhoe[k,:,:] = nu.dot(
+            wf[k,:,:].transpose(),
+            e[k,:].reshape(n,-1)*occ[k,:].reshape(n,-1) * wf[k,:,:].conj()
+            )
+    return rhoe
+
+
+#
+# States class
+#
 
 class States:
 
@@ -159,7 +203,8 @@ class States:
         self.wf=wf
         self.f=self.occu.occupy(e)
         self.calc.start_timing('rho')
-        self.rho = fortran_rhoc(self.wf,self.f,self.norb,self.nk)
+        #self.rho = fortran_rhoc(self.wf,self.f,self.norb,self.nk)
+        self.rho = compute_rho(self.wf,self.f)
         self.calc.stop_timing('rho')
         if self.SCC:
             self.dq = self.mulliken()
@@ -182,7 +227,8 @@ class States:
             self.dH = self.dH0
 
         # density matrix weighted by eigenenergies
-        self.rhoe=fortran_rhoec(self.wf,self.f,self.e,self.norb,self.nk)
+        #self.rhoe=fortran_rhoec(self.wf,self.f,self.e,self.norb,self.nk)
+        self.rhoe = compute_rhoe(self.wf,self.f,self.e)
         self.calc.stop_timing('final update')
 
     def get_dq(self):

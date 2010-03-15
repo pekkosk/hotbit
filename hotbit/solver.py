@@ -3,10 +3,13 @@
 
 from scipy.linalg import eig
 import numpy as nu
-from hotbit.fortran.eigensolver import geig, geigc
+#from hotbit.fortran.eigensolver import geig, geigc
 from numpy.linalg import solve
 from box.buildmixer import BuildMixer
 from weakref import proxy
+
+# Wrapper for the LAPACK dsygvd, zhegvd solvers
+from _hotbit import geig
 
 class Solver:
     def __init__(self,calc):
@@ -79,15 +82,17 @@ class Solver:
         """ Solve the eigenstates. """
         
         if True:
-            # via Fortran wrapper
+            # via C wrapper
             if nk==1:
                 self.calc.start_timing('eigensolver (real)')
-                e, wf = geig(H,S,self.norb)
+                #e, wf = geig(H,S,self.norb)
+                e, wf = geig(H,S)
                 wf = wf*(1.0+0.0j)
                 self.calc.stop_timing('eigensolver (real)')
             else:
                 self.calc.start_timing('eigensolver (cplx)')
-                e, wf = geigc(H,S,self.norb)
+                #e, wf = geigc(H,S,self.norb)
+                e, wf = geig(H,S)
                 self.calc.stop_timing('eigensolver (cplx)')
             wf = wf.transpose()
         if False:

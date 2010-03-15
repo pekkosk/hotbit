@@ -23,7 +23,8 @@ end if
 
 vec=A
 B2=B
-call dsygvd(1,'V','L',n,vec,n,B2,n,ev,work,lwork,iwork,liwork,info)
+!call dsygvd(1,'V','L',n,vec,n,B2,n,ev,work,lwork,iwork,liwork,info)
+call dsygv(1,'V','L',n,vec,n,B2,n,ev,work,lwork,info)
 
 if(info/=0) then
     write(*,*) "***********************************************************"
@@ -101,7 +102,8 @@ vec=A
 B2=B
 !SUBROUTINE ZHEGVD( ITYPE, JOBZ, UPLO, N, A, LDA, B, LDB, W, WORK, LWORK, RWORK, LRWORK, IWORK, LIWORK, INFO )
 
-call ZHEGVD(1,'V','L',n,vec,n,B2,n,ev,work,lwork,rwork,lrwork,iwork,liwork,info)
+!call ZHEGVD(1,'V','L',n,vec,n,B2,n,ev,work,lwork,rwork,lrwork,iwork,liwork,info)
+call ZHEGV(1,'V','L',n,vec,n,B2,n,ev,work,lwork,rwork,info)
 
 ! normalized such that Z**H*B*Z = I (where eigenvectors Z=vec)
 
