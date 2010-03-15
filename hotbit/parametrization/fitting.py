@@ -204,8 +204,8 @@ class RepulsiveFitting:
         x, y, w = list(x[indices]), list(y[indices]), list(w[indices])
         # force the spline curve to go to zero at x=r_cut
         x.append(self.r_cut)
-        y.append(0)
-        w.append(1e3*max(w))
+        y.append(0.0)
+        w.append(1E3*max(w))
         if self.s == None:
             # from documentation of splrep in scipy.interpolate.fitpack
             self.s = len(x) - nu.sqrt(2*len(x))
@@ -459,6 +459,7 @@ class RepulsiveFitting:
         Ewr = nu.array(Ewr)
         N = nu.array(N)
         R = nu.array(R)
+        
             
         # sort radii because of spline
         ind = R.argsort()

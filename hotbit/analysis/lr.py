@@ -9,19 +9,24 @@ from box.timing import Timer
 
 class LinearResponse:
     """ 
-    Calculate linear response in the spirit of LR-TD-DFT.
     
-    For details, see Niehaus et.al. Phys. Rev. B 63, 085108 (2001)
     """
     def __init__(self,calc,energy_cut=10.0,timing=False,txt=None):
-        """ Construct the object.
-        
+        """
+        Calculate linear optical response (LR-TD-DFTB).
+        For details, see Niehaus et.al. Phys. Rev. B 63, 085108 (2001)
+                        
         parameters:
-        -----------
-        calc: calculator object
-        energy_cut: max energy (in eV) for particle-hole excitations
-        timing: output timing summary after calculation
-        out: output object (file name or object)
+        ===========
+        calc:         calculator object
+        energy_cut:   max energy (in eV) for particle-hole excitations
+                      Used to select all particle-hole excitations in the 
+                      construction of the matrix, that have excitation energy 
+                      less than this value. This implies, that if we are 
+                      interested in optical response up to some energy, 
+                      energy_cut should be slightly larger.
+        timing:       output timing summary after calculation
+        out:          output object (file name or object)
         """
         self.calc=calc
         self.st=calc.st
