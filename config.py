@@ -37,28 +37,43 @@ def get_system_config(include_dirs, libraries, library_dirs,
 
         extra_compile_args += ['-Wall', '-std=c99']
 
-        # Look for ACML libraries:
-        acml = glob('/opt/acml*/g*64/lib')
-        if len(acml) > 0:
-            library_dirs += [acml[-1]]
-            libraries += ['acml']
-            if acml[-1].find('gfortran') != -1: libraries.append('gfortran')
-            if acml[-1].find('gnu') != -1: libraries.append('g2c')
-            extra_link_args += ['-Wl,-rpath=' + acml[-1]]
-            msg += ['* Using ACML library']
+
+        if 'MKL_ROOT' in os.environ:
+            mklbasedir = [os.environ['MKL_ROOT']]
+            libs = ['libmkl_intel_lp64.a']
+            if mklbasedir != []:
+                os.path.walk(mklbasedir[0],find_file, libs)
+                libs.pop(0)
+                if libs != []:
+                    libs.sort()
+                    libraries += ['mkl_intel_lp64', 'mkl_intel_thread', 'mkl_lapack', 'mkl_core',
+                                  'iomp5', 'guide', 'mkl_def']#, 'mkl_def']
+                    library_dirs += libs
+                    msg +=  ['* Using MKL library: %s' % library_dirs[-1]]
+                    
         else:
-            atlas = False
-            for dir in ['/usr/lib', '/usr/local/lib']:
-                if glob(join(dir, 'libatlas.a')) != []:
-                    atlas = True
-                    break
-            if atlas:
-                libraries += ['lapack', 'atlas', 'blas']
-                library_dirs += [dir]
-                msg +=  ['* Using ATLAS library']
+            # Look for ACML libraries:
+            acml = glob('/opt/acml*/g*64/lib')
+            if len(acml) > 0:
+                library_dirs += [acml[-1]]
+                libraries += ['acml']
+                if acml[-1].find('gfortran') != -1: libraries.append('gfortran')
+                if acml[-1].find('gnu') != -1: libraries.append('g2c')
+                extra_link_args += ['-Wl,-rpath=' + acml[-1]]
+                msg += ['* Using ACML library']
             else:
-                libraries += ['blas', 'lapack']
-                msg +=  ['* Using standard lapack']
+                atlas = False
+                for dir in ['/usr/lib', '/usr/local/lib']:
+                    if glob(join(dir, 'libatlas.a')) != []:
+                        atlas = True
+                        break
+                if atlas:
+                    libraries += ['lapack', 'atlas', 'blas']
+                    library_dirs += [dir]
+                    msg +=  ['* Using ATLAS library']
+                else:
+                    libraries += ['blas', 'lapack']
+                    msg +=  ['* Using standard lapack']
 
     elif machine =='ia64':
 
