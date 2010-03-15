@@ -470,6 +470,9 @@ class Hotbit(Output):
         """
         Return the valence electron density
         
+        Note that putting wave functions on grid may be very slow; 
+        use sparse grids and small cells.
+        
         @param spacing: grid spacing. Uses the ASE cell.
         @param pad: if True, the grid spans the whole ASE cell
                     (otherwise one grid point short)
@@ -479,7 +482,12 @@ class Hotbit(Output):
     
     
     def get_grid_wf(self,i,k=0,spacing=0.2,pad=False):
-        """ Return state i with given k-point on grid. """
+        """ 
+        Return state i with given k-point on grid. 
+        
+        
+        
+        """
         self.gd.make_grid(spacing=spacing,pad=pad)
         return self.gd.get_wf(i)
     

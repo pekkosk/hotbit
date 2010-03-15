@@ -34,6 +34,7 @@ setup(
         "hotbit.containers",
         "hotbit.parametrization",
         "hotbit.test",
+        "hotbit.test.systems",
         ],
     ext_modules  = [
         Extension(

@@ -33,7 +33,7 @@
     
 """
 
-def list_copy_examples(exdir,arg):
+def list_copy_examples(exdir,arg,show):
     """
     List examples
     
@@ -43,6 +43,8 @@ def list_copy_examples(exdir,arg):
     arg:        * if None, list all examples
                 * if many examples start with string arg, list these examples
                 * if only one examples start with string arg, copy it to present dir
+    show:       If False, copy example, if True, only print the example
+                (In which case the example must be a single file.)
     """    
     
     examples = os.listdir(exdir)
@@ -56,11 +58,18 @@ def list_copy_examples(exdir,arg):
     # if only one file or directory, copy it, otherwise list 
     if len(files)==1:
         full = os.path.join(exdir,files[0])
-        if os.path.isfile(full):
-            shutil.copyfile(full,files[0])
-        elif os.path.isdir(full):
-            shutil.copytree(full,files[0])
-        print 'Copied example %s to present directory' %files[0]
+        if show:
+            if os.path.isdir(full):
+                raise AssertionError('Example %s must be a single file, not a folder.' %files[0])
+            for line in open(full).readlines():
+                print line,
+        elif not show:
+            
+            if os.path.isfile(full):
+                shutil.copyfile(full,files[0])
+            elif os.path.isdir(full):
+                shutil.copytree(full,files[0])
+            print 'Copied example %s to present directory' %files[0]
     else:
         for file in files:
             print file
@@ -80,6 +89,7 @@ parser=OptionParser(add_help_option=False)
 parser.set_usage('hotbit [options] arg') 
 parser.add_option("-h", "--help", dest='help',action="store_true",default=False,help='print help')
 parser.add_option('-e','--examples',dest='examples',action='store_true',default=False,help='list and copy examples')
+parser.add_option('-s','--show-examples',dest='show',action='store_true',default=False,help='list and show examples')
 parser.add_option('-l','--list',dest='list',action='store_true',default=False,help='list source code')
 
 options, args = parser.parse_args( sys.argv[1:] )
@@ -103,7 +113,7 @@ exdir = os.path.join(hbdir,'hotbit','examples')
 
    
 if options.examples: 
-    list_copy_examples(exdir,arg)
+    list_copy_examples(exdir,arg,options.show)
 else:
     import hotbit
     aliases = {'Hotbit':'calc',\
