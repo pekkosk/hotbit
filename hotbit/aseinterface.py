@@ -142,7 +142,8 @@ class Hotbit(Output):
                           'gamma_cut',
                           'parameters',
                           'txt',
-                          'verbose_SCC']
+                          'verbose_SCC',
+                          'kpts']
 
         ret = Hotbit()
         # TODO: if output file already opened (unless /null or stdout)
