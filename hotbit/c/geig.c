@@ -6,6 +6,13 @@
 #include "geig.h"
 
 
+/*
+ * The workspace array is allocated on demand. It will always be
+ * kept at the size of the largest eigenvalue problem encountered.
+ * py_free_geig_workspace needs to be called before the program
+ * exits or whenever necessary. Usually this is done via the atexit
+ * hook.
+ */
 static int liwork = 0;
 static int lrwork = 0;
 static int lcwork = 0;
@@ -19,12 +26,11 @@ static double complex *cwork = NULL;
  * and allocate the appropriate return buffer.
  */
 double *
-geigr(int N, double *A, double *B) {
+geigr(int N, double *A, double *B, double *w) {
     int itype = 1;
     int info;
     char jobz = 'V';
     char uplo = 'L';
-    double *w;
 
 
     /*
@@ -60,23 +66,15 @@ geigr(int N, double *A, double *B) {
 
 
     /*
-     * Allocate eigenvalue array
+     * Solve the eigenvalue problem
      */
-
-    w = (double*) malloc(N * sizeof (double));
-    if (!w) {
-        PyErr_SetString(PyExc_RuntimeError, "Error in eigensolver while allocating \"w\".");
-        return NULL;
-    }
 
     dsygvd_(&itype, &jobz, &uplo, &N, A, &N, B, &N, 
             w, rwork, &lrwork, iwork, &liwork,
             &info);
 
-    if (info) {
-        free(w);
+    if (info)
         return NULL;
-    }
 
     return w;
 }
@@ -88,12 +86,11 @@ geigr(int N, double *A, double *B) {
  * and allocate the appropriate return buffer.
  */
 double *
-geigc(int N, double complex *A, double complex *B) {
+geigc(int N, double complex *A, double complex *B, double *w) {
     int itype = 1;
     int info;
     char jobz = 'V';
     char uplo = 'L';
-    double *w;
 
 
     /*
@@ -142,23 +139,15 @@ geigc(int N, double complex *A, double complex *B) {
 
 
     /*
-     * Allocate eigenvalue array
+     * Solve the eigenvalue problem
      */
-
-    w = (double*) malloc(N * sizeof (double));
-    if (!w) {
-        PyErr_SetString(PyExc_RuntimeError, "Error in eigensolver while allocating \"w\".");
-        return NULL;
-    }
 
     zhegvd_(&itype, &jobz, &uplo, &N, A, &N, B, &N,
             w, cwork, &lcwork, rwork, &lrwork, iwork, &liwork, 
             &info);
 
-    if (info) {
-        free(w);
+    if (info)
         return NULL;
-    }
 
     return w;
 }
@@ -166,10 +155,8 @@ geigc(int N, double complex *A, double complex *B) {
 
 PyObject *
 py_geig(PyObject *self, PyObject *args) {
-    int N;
+    npy_intp N;
     npy_intp *A_dims, *B_dims;
-    npy_intp ev_dims[1];
-    double *ev;
     PyObject *po_A, *po_B;
     PyObject *po_eV;
 
@@ -207,24 +194,16 @@ py_geig(PyObject *self, PyObject *args) {
     if (!po_for_B)
         return NULL;
 
+    po_eV = PyArray_SimpleNew(1, A_dims, NPY_DOUBLE);
+
     /*
      * Solve the eigenvalue problem
      */
     if (typenum == NPY_DOUBLE) {
-        ev = geigr(N, PyArray_DATA(po_for_A),  PyArray_DATA(po_for_B));
+        geigr(N, PyArray_DATA(po_for_A),  PyArray_DATA(po_for_B), PyArray_DATA(po_eV));
     } else {
-        ev = geigc(N, PyArray_DATA(po_for_A),  PyArray_DATA(po_for_B));
+        geigc(N, PyArray_DATA(po_for_A),  PyArray_DATA(po_for_B), PyArray_DATA(po_eV));
     }
-    if (!ev)
-        return NULL;
-
-    /*
-     * Create a Python array containing the eigenvectors.
-     * Note that we must use PyArray_New, otherwise the data won't be freed
-     * when the array object goes out of scope.
-     */
-    ev_dims[0] = N;
-    po_eV = PyArray_New(&PyArray_Type, 1, ev_dims, NPY_DOUBLE, NULL, ev, NPY_OWNDATA, 0, NULL);
 
     /* Release the Fortran-ordered B matrix */
     Py_DECREF(po_for_B);
@@ -249,6 +228,10 @@ py_free_geig_workspace(PyObject *self, PyObject *args)
     liwork = 0;
     lrwork = 0;
     lcwork = 0;
+
+    iwork = NULL;
+    rwork = NULL;
+    cwork = NULL;
 
     Py_RETURN_NONE;
 }

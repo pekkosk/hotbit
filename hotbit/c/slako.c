@@ -604,7 +604,6 @@ py_fast_slako_transformations(PyObject *self, PyObject *args)
     PyObject *ht, *st, *dht, *dst;
 
     npy_intp dims[3];
-    double *ht_data, *st_data, *dht_data, *dst_data;
 
     if (!PyArg_ParseTuple(args, "O!diiO!O!O!O!", 
                           &PyArray_Type, &rhat,
@@ -655,10 +654,15 @@ py_fast_slako_transformations(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    ht_data = (double *) malloc(noi*noj*sizeof(double));
-    st_data = (double *) malloc(noi*noj*sizeof(double));
-    dht_data = (double *) malloc(3*noi*noj*sizeof(double));
-    dst_data = (double *) malloc(3*noi*noj*sizeof(double));
+    dims[0] = noi;
+    dims[1] = noj;
+    dims[2] = 3;
+
+    ht = PyArray_SimpleNew(2, dims, NPY_DOUBLE);
+    st = PyArray_SimpleNew(2, dims, NPY_DOUBLE);
+
+    dht = PyArray_SimpleNew(3, dims, NPY_DOUBLE);
+    dst = PyArray_SimpleNew(3, dims, NPY_DOUBLE);
 
     fast_slako_transformations(PyArray_DATA(rhat),
                                dist, noi, noj,
@@ -666,20 +670,10 @@ py_fast_slako_transformations(PyObject *self, PyObject *args)
                                PyArray_DATA(s),
                                PyArray_DATA(dh),
                                PyArray_DATA(ds),
-                               ht_data,
-                               st_data,
-                               dht_data,
-                               dst_data);
-
-    dims[0] = noi;
-    dims[1] = noj;
-    dims[2] = 3;
-
-    ht = PyArray_New(&PyArray_Type, 2, dims, NPY_DOUBLE, NULL, ht_data, NPY_OWNDATA, 0, NULL);
-    st = PyArray_New(&PyArray_Type, 2, dims, NPY_DOUBLE, NULL, st_data, NPY_OWNDATA, 0, NULL);
-
-    dht = PyArray_New(&PyArray_Type, 3, dims, NPY_DOUBLE, NULL, dht_data, NPY_OWNDATA, 0, NULL);
-    dst = PyArray_New(&PyArray_Type, 3, dims, NPY_DOUBLE, NULL, dst_data, NPY_OWNDATA, 0, NULL);
+                               PyArray_DATA(ht),
+                               PyArray_DATA(st),
+                               PyArray_DATA(dht),
+                               PyArray_DATA(dst));
 
     return Py_BuildValue("OOOO", ht, st, dht, dst);
 }
