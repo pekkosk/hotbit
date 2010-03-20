@@ -441,7 +441,7 @@ PyObject *py_multipole_to_local(PyObject *self, PyObject *args)
     PyObject *Llm = NULL;
     npy_intp dims[1];
 
-    if (!PyArg_ParseTuple(args, "O!iO!O!i|O!O!",
+    if (!PyArg_ParseTuple(args, "O!iO!O!|O!O!",
                           &PyArray_Type, &dr, &l_max,
                           &PyArray_Type, &Ml0,
                           &PyArray_Type, &Mlm,
