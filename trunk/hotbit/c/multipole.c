@@ -232,12 +232,10 @@ void local_to_local(double *dr,                /* shape [3] */
     double complex cur_L, cur_R;
 
 
+    /* Compute R for -dr */
     cartesian2spherical(dr, &x, &costh, &phi);
 
-    solid_harmonic_R(x, costh, phi, l_max_in, Rl0, Rlm);
-    for (l = 0; l <= lm2index(l_max_in, l_max_in); ++l) {
-        Rlm[l]  = conj(Rlm[l]);
-    }
+    solid_harmonic_R(x, -costh, M_PI+phi, l_max_in, Rl0, Rlm);
 
     k = 0;
     /* l_loop2 */
@@ -263,7 +261,7 @@ void local_to_local(double *dr,                /* shape [3] */
 
             for (mu = 1; mu <= lambda; ++mu) {
                 Ll0_out[l] = Ll0_out[l]
-                    + 2*creal(Llm[lm2index(l+lambda, mu)]*Rlm[lm2index(lambda, mu)]);
+                    + 2*creal(Llm[lm2index(l+lambda, mu)]*conj(Rlm[lm2index(lambda, mu)]));
             }
 
         }
@@ -291,13 +289,13 @@ void local_to_local(double *dr,                /* shape [3] */
                     }
 
                     if (mu < 0) {
-                        cur_R = pow(-1, -mu) * conj(Rlm[lm2index(lambda, -mu)]);
+                        cur_R = pow(-1, -mu) * Rlm[lm2index(lambda, -mu)];
                     }
                     else if (mu == 0) {
                         cur_R = Rl0[lambda];
                     }
                     else {
-                        cur_R = Rlm[lm2index(lambda, mu)];
+                        cur_R = conj(Rlm[lm2index(lambda, mu)]);
                     }
 
                     Llm_out[k] = Llm_out[k] 
