@@ -237,10 +237,16 @@ PyObject *py_solid_harmonic_R(PyObject *self, PyObject *args)
     double x, costh, phi;
 
     npy_intp dims[1];
-    PyObject *Rl0, *Rlm;
+    PyObject *Rl0 = NULL;
+    PyObject *Rlm = NULL;
 
 
-    if (!PyArg_ParseTuple(args, "O!i", &PyArray_Type, &dr, &l_max))
+    if (!PyArg_ParseTuple(args, "O!i|O!O!",
+                          &PyArray_Type, &dr,
+                          &l_max,
+                          &PyArray_Type, &Rl0,
+                          &PyArray_Type, &Rlm
+                          ))
         return NULL;
 
     if (!PyArray_ISFLOAT(dr)) {
@@ -250,11 +256,41 @@ PyObject *py_solid_harmonic_R(PyObject *self, PyObject *args)
 
     cartesian2spherical(PyArray_DATA(dr), &x, &costh, &phi);
 
-    dims[0] = l_max+1;
-    Rl0 = PyArray_ZEROS(1, dims, NPY_DOUBLE, NPY_FALSE);
+    if (Rl0) {
+        if (!PyArray_ISFLOAT(Rl0)) {
+            PyErr_SetString(PyExc_TypeError, "Rl0 needs to be float.");
+            return NULL;
+        }
 
-    dims[0] = lm2index(l_max, l_max)+1;
-    Rlm = PyArray_ZEROS(1, dims, NPY_CDOUBLE, NPY_FALSE);
+        if (PyArray_DIM(Rl0, 0) != l_max+1) {
+            PyErr_SetString(PyExc_ValueError, "Rl0 needs to have size l_max+1.");
+            return NULL;
+        }
+        
+        Py_INCREF(Rl0);
+    }
+    else {
+        dims[0] = l_max+1;
+        Rl0 = PyArray_ZEROS(1, dims, NPY_DOUBLE, NPY_FALSE);
+    }
+
+    if (Rlm) {
+        if (!PyArray_ISCOMPLEX(Rlm)) {
+            PyErr_SetString(PyExc_TypeError, "Rlm needs to be complex.");
+            return NULL;
+        }
+
+        if (PyArray_DIM(Rlm, 0) != lm2index(l_max, l_max)+1) {
+            PyErr_SetString(PyExc_ValueError, "Rlm needs to have size lm2index(l_max, l_max)+1.");
+            return NULL;
+        }
+
+        Py_INCREF(Rlm);
+    }
+    else {
+        dims[0] = lm2index(l_max, l_max)+1;
+        Rlm = PyArray_ZEROS(1, dims, NPY_CDOUBLE, NPY_FALSE);
+    }
 
     solid_harmonic_R(x, costh, phi, l_max, PyArray_DATA(Rl0), PyArray_DATA(Rlm));
 
@@ -270,10 +306,15 @@ PyObject *py_solid_harmonic_I(PyObject *self, PyObject *args)
     double x, costh, phi;
 
     npy_intp dims[1];
-    PyObject *Il0, *Ilm;
+    PyObject *Il0 = NULL;
+    PyObject *Ilm = NULL;
 
 
-    if (!PyArg_ParseTuple(args, "O!i", &PyArray_Type, &dr, &l_max))
+    if (!PyArg_ParseTuple(args, "O!i",
+                          &PyArray_Type, &dr,
+                          &l_max,
+                          &PyArray_Type, &Il0,
+                          &PyArray_Type, &Ilm))
         return NULL;
 
     if (!PyArray_ISFLOAT(dr)) {
@@ -283,11 +324,41 @@ PyObject *py_solid_harmonic_I(PyObject *self, PyObject *args)
 
     cartesian2spherical(PyArray_DATA(dr), &x, &costh, &phi);
 
-    dims[0] = l_max+1;
-    Il0 = PyArray_ZEROS(1, dims, NPY_DOUBLE, NPY_FALSE);
+    if (Il0) {
+        if (!PyArray_ISFLOAT(Il0)) {
+            PyErr_SetString(PyExc_TypeError, "Il0 needs to be float.");
+            return NULL;
+        }
 
-    dims[0] = lm2index(l_max, l_max)+1;
-    Ilm = PyArray_ZEROS(1, dims, NPY_CDOUBLE, NPY_FALSE);
+        if (PyArray_DIM(Il0, 0) != l_max+1) {
+            PyErr_SetString(PyExc_ValueError, "Il0 needs to have size l_max+1.");
+            return NULL;
+        }
+        
+        Py_INCREF(Il0);
+    }
+    else {
+        dims[0] = l_max+1;
+        Il0 = PyArray_ZEROS(1, dims, NPY_DOUBLE, NPY_FALSE);
+    }
+
+    if (Ilm) {
+        if (!PyArray_ISCOMPLEX(Ilm)) {
+            PyErr_SetString(PyExc_TypeError, "Ilm needs to be complex.");
+            return NULL;
+        }
+
+        if (PyArray_DIM(Ilm, 0) != lm2index(l_max, l_max)+1) {
+            PyErr_SetString(PyExc_ValueError, "Ilm needs to have size lm2index(l_max, l_max)+1.");
+            return NULL;
+        }
+
+        Py_INCREF(Ilm);
+    }
+    else {
+        dims[0] = lm2index(l_max, l_max)+1;
+        Ilm = PyArray_ZEROS(1, dims, NPY_CDOUBLE, NPY_FALSE);
+    }
 
     solid_harmonic_I(x, costh, phi, l_max, PyArray_DATA(Il0), PyArray_DATA(Ilm));
 

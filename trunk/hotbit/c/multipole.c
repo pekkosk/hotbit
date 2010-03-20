@@ -324,72 +324,87 @@ void local_to_local(double *dr,                /* shape [3] */
  */
 
 
+int check_size_and_type(int l_max, PyObject *l0, PyObject *lm)
+{
+    if (!PyArray_ISFLOAT(l0)) {
+        PyErr_SetString(PyExc_TypeError, "l0 needs to be float.");
+        return 0;
+    }
+
+    if (!PyArray_ISCOMPLEX(lm)) {
+        PyErr_SetString(PyExc_TypeError, "lm needs to be complex.");
+        return 0;
+    }
+
+    if (PyArray_DIM(l0, 0) != l_max+1) {
+        PyErr_SetString(PyExc_ValueError, "l0 needs to have size l_max+1.");
+        return 0;
+    }
+
+    if (PyArray_DIM(lm, 0) != lm2index(l_max, l_max)+1) {
+        PyErr_SetString(PyExc_ValueError, "lm needs to have size lm2index(l_max, l_max)+1.");
+        return 0;
+    }
+
+    return 1;
+}
+
+
+int check_size_and_type_or_allocate(int l_max, PyObject **l0, PyObject **lm)
+{
+    npy_intp dims[1];
+
+    if (*l0) {
+        if (!PyArray_ISFLOAT(*l0)) {
+            PyErr_SetString(PyExc_TypeError, "l0 needs to be float.");
+            return 0;
+        }
+
+        if (PyArray_DIM(*l0, 0) != l_max+1) {
+            PyErr_SetString(PyExc_ValueError, "l0 needs to have size l_max+1.");
+            return 0;
+        }
+
+        Py_INCREF(*l0);
+    }
+    else {
+        dims[0] = l_max+1;
+        *l0 = PyArray_ZEROS(1, dims, NPY_DOUBLE, NPY_FALSE);
+    }
+
+    if (*lm) {
+        if (!PyArray_ISCOMPLEX(*lm)) {
+            PyErr_SetString(PyExc_TypeError, "lm needs to be complex.");
+            return 0;
+        }
+
+        if (PyArray_DIM(*lm, 0) != lm2index(l_max, l_max)+1) {
+            PyErr_SetString(PyExc_ValueError, "lm needs to have size lm2index(l_max, l_max)+1.");
+            return 0;
+        }
+
+        Py_INCREF(*lm);
+    }
+    else {
+        dims[0] = lm2index(l_max, l_max)+1;
+        *lm = PyArray_ZEROS(1, dims, NPY_CDOUBLE, NPY_FALSE);
+    }
+
+    return 1;
+}
+
+
 PyObject *py_multipole_to_multipole(PyObject *self, PyObject *args)
 {
     PyObject *dr, *Ml0_of_child, *Mlm_of_child;
     int l_max;
-    PyObject *Ml0, *Mlm;
-    npy_intp dims[1];
+    PyObject *Ml0 = NULL;
+    PyObject *Mlm = NULL;
 
-    if (!PyArg_ParseTuple(args, "O!iO!O!",
+    if (!PyArg_ParseTuple(args, "O!iO!O!|O!O!",
                           &PyArray_Type, &dr, &l_max,
                           &PyArray_Type, &Ml0_of_child,
-                          &PyArray_Type, &Mlm_of_child))
-        return NULL;
-
-    if (!PyArray_ISFLOAT(dr)) {
-        PyErr_SetString(PyExc_TypeError, "Distance vector needs to be float.");
-        return NULL;
-    }
-
-    if (PyArray_DIM(dr, 0) != 3) {
-        PyErr_SetString(PyExc_TypeError, "Distance vector needs to be 3-dimensional.");
-        return NULL;
-    }
-
-    if (!PyArray_ISFLOAT(Ml0_of_child)) {
-        PyErr_SetString(PyExc_TypeError, "Ml0 needs to be float.");
-        return NULL;
-    }
-
-    if (!PyArray_ISCOMPLEX(Mlm_of_child)) {
-        PyErr_SetString(PyExc_TypeError, "Mlm needs to be complex.");
-        return NULL;
-    }
-
-    if (PyArray_DIM(Ml0_of_child, 0) != l_max+1) {
-        PyErr_SetString(PyExc_ValueError, "Ml0 needs to have size l_max+1.");
-        return NULL;
-    }
-
-    if (PyArray_DIM(Mlm_of_child, 0) != lm2index(l_max, l_max)+1) {
-        PyErr_SetString(PyExc_ValueError, "Mlm needs to have size lm2index(l_max, l_max)+1.");
-        return NULL;
-    }
-
-    dims[0] = l_max+1;
-    Ml0 = PyArray_ZEROS(1, dims, NPY_DOUBLE, NPY_FALSE);
-
-    dims[0] = lm2index(l_max, l_max)+1;
-    Mlm = PyArray_ZEROS(1, dims, NPY_CDOUBLE, NPY_FALSE);
-
-    multipole_to_multipole(PyArray_DATA(dr), l_max,
-                           PyArray_DATA(Ml0_of_child), PyArray_DATA(Mlm_of_child), 
-                           PyArray_DATA(Ml0), PyArray_DATA(Mlm));
-
-    return Py_BuildValue("OO", Ml0, Mlm);
-}
-
-
-PyObject *py_multipole_to_local(PyObject *self, PyObject *args)
-{
-    PyObject *dr, *Ml0, *Mlm;
-    int l_max;
-    PyObject *Ll0, *Llm;
-    npy_intp dims[1];
-
-    if (!PyArg_ParseTuple(args, "O!iO!O!i",
-                          &PyArray_Type, &dr, &l_max,
+                          &PyArray_Type, &Mlm_of_child,
                           &PyArray_Type, &Ml0,
                           &PyArray_Type, &Mlm))
         return NULL;
@@ -404,25 +419,51 @@ PyObject *py_multipole_to_local(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    if (!PyArray_ISFLOAT(Ml0)) {
-        PyErr_SetString(PyExc_TypeError, "Ml0 needs to be float.");
+    if (!check_size_and_type(l_max, Ml0_of_child, Mlm_of_child))
+        return NULL;
+
+    if (!check_size_and_type_or_allocate(l_max, &Ml0, &Mlm))
+        return NULL;
+
+    multipole_to_multipole(PyArray_DATA(dr), l_max,
+                           PyArray_DATA(Ml0_of_child), PyArray_DATA(Mlm_of_child), 
+                           PyArray_DATA(Ml0), PyArray_DATA(Mlm));
+
+    return Py_BuildValue("OO", Ml0, Mlm);
+}
+
+
+PyObject *py_multipole_to_local(PyObject *self, PyObject *args)
+{
+    PyObject *dr, *Ml0, *Mlm;
+    int l_max;
+    PyObject *Ll0 = NULL;
+    PyObject *Llm = NULL;
+    npy_intp dims[1];
+
+    if (!PyArg_ParseTuple(args, "O!iO!O!i|O!O!",
+                          &PyArray_Type, &dr, &l_max,
+                          &PyArray_Type, &Ml0,
+                          &PyArray_Type, &Mlm,
+                          &PyArray_Type, &Ll0,
+                          &PyArray_Type, &Llm))
+        return NULL;
+
+    if (!PyArray_ISFLOAT(dr)) {
+        PyErr_SetString(PyExc_TypeError, "Distance vector needs to be float.");
         return NULL;
     }
 
-    if (!PyArray_ISCOMPLEX(Mlm)) {
-        PyErr_SetString(PyExc_TypeError, "Mlm needs to be complex.");
+    if (PyArray_DIM(dr, 0) != 3) {
+        PyErr_SetString(PyExc_TypeError, "Distance vector needs to be 3-dimensional.");
         return NULL;
     }
 
-    if (PyArray_DIM(Ml0, 0) != l_max+1) {
-        PyErr_SetString(PyExc_ValueError, "Ml0 needs to have size l_max+1.");
+    if (!check_size_and_type(l_max, Ml0, Mlm))
         return NULL;
-    }
 
-    if (PyArray_DIM(Mlm, 0) != lm2index(l_max, l_max)+1) {
-        PyErr_SetString(PyExc_ValueError, "Mlm needs to have size lm2index(l_max, l_max)+1.");
+    if (!check_size_and_type_or_allocate(l_max, &Ll0, &Llm))
         return NULL;
-    }
 
     dims[0] = l_max+1;
     Ll0 = PyArray_ZEROS(1, dims, NPY_DOUBLE, NPY_FALSE);
@@ -442,14 +483,18 @@ PyObject *py_local_to_local(PyObject *self, PyObject *args)
 {
     PyObject *dr, *Ll0, *Llm;
     int l_max_in, l_max_out;
-    PyObject *Ll0_out, *Llm_out;
+    PyObject *Ll0_out = NULL;
+    PyObject *Llm_out = NULL;
     npy_intp dims[1];
 
-    if (!PyArg_ParseTuple(args, "O!iO!O!i",
-                          &PyArray_Type, &dr, &l_max_in,
+    if (!PyArg_ParseTuple(args, "O!iO!O!i|O!O!",
+                          &PyArray_Type, &dr,
+                          &l_max_in,
                           &PyArray_Type, &Ll0,
                           &PyArray_Type, &Llm,
-                          &l_max_out))
+                          &l_max_out,
+                          &PyArray_Type, &Ll0_out,
+                          &PyArray_Type, &Llm_out))
         return NULL;
 
     if (!PyArray_ISFLOAT(dr)) {
@@ -462,25 +507,11 @@ PyObject *py_local_to_local(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    if (!PyArray_ISFLOAT(Ll0)) {
-        PyErr_SetString(PyExc_TypeError, "Ll0 needs to be float.");
+    if (!check_size_and_type(l_max_in, Ll0, Llm))
         return NULL;
-    }
 
-    if (!PyArray_ISCOMPLEX(Llm)) {
-        PyErr_SetString(PyExc_TypeError, "Llm needs to be complex.");
+    if (!check_size_and_type_or_allocate(l_max_out, &Ll0_out, &Llm_out))
         return NULL;
-    }
-
-    if (PyArray_DIM(Ll0, 0) != l_max_in+1) {
-        PyErr_SetString(PyExc_ValueError, "Ll0 needs to have size l_max_in+1.");
-        return NULL;
-    }
-
-    if (PyArray_DIM(Llm, 0) != lm2index(l_max_in, l_max_in)+1) {
-        PyErr_SetString(PyExc_ValueError, "Llm needs to have size lm2index(l_max_in, l_max_in)+1.");
-        return NULL;
-    }
 
     dims[0] = l_max_out+1;
     Ll0_out = PyArray_ZEROS(1, dims, NPY_DOUBLE, NPY_FALSE);
@@ -489,8 +520,8 @@ PyObject *py_local_to_local(PyObject *self, PyObject *args)
     Llm_out = PyArray_ZEROS(1, dims, NPY_CDOUBLE, NPY_FALSE);
 
     local_to_local(PyArray_DATA(dr),
-                           l_max_in, PyArray_DATA(Ll0), PyArray_DATA(Llm),
-                           l_max_out, PyArray_DATA(Ll0_out), PyArray_DATA(Llm_out));
+                   l_max_in, PyArray_DATA(Ll0), PyArray_DATA(Llm),
+                   l_max_out, PyArray_DATA(Ll0_out), PyArray_DATA(Llm_out));
 
     return Py_BuildValue("OO", Ll0_out, Llm_out);
 }

@@ -60,7 +60,7 @@ def get_moments(a, l_max, r0=None):
     for r, q in zip(a.get_positions(), a.get_charges()):
         cR0_l, cR_L = solid_harmonic_R(r-r0, l_max)
         M0_l += q*cR0_l
-        M_L  += q*cR_L.conj()
+        M_L  += q*cR_L
 
-    return M0_l, M_L
+    return M0_l, M_L.conj()
 
