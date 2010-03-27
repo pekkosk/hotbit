@@ -1,6 +1,8 @@
 from ase import Hartree
 import numpy as nu
-
+from weakref import proxy
+from box.mix import gauss_fct
+from box import mix
 
 def get_angular_momenta(l):
     ret = []
@@ -11,146 +13,314 @@ def get_angular_momenta(l):
 
 
 class MullikenAnalysis:
-    """ A class that calculates different Mulliken charges. All the units
-    are in electronvolts and Angstroms. """
-
     def __init__(self, calc):
-        self.calc = calc
-        if any(calc.el.atoms.get_pbc()):
-            raise AssertionError('Mulliken analysis works for now only for non-periodic systems')
-        self.rho = calc.st.rho[0,:,:]
-        self.H0 = calc.st.H0*Hartree
-        self.S = calc.st.S[0,:,:]
+        """
+        Class for Mulliken charge analysis.
+        
+        q_I = sum_k w_k Trace_I Re[ rho(k)*S(k) ]
+            = sum_(i in I) Re [ sum_k w_k sum_j rho(k)_ij*S(k)_ji ] 
+            = sum_(i in I) Re [ sum_k w_k sum_j rho(k)_ij*S(k)^T_ij ]
+            = sum_(i in I) [ sum_k w_k diag(k)_i ],
+            = sum_(i in I) diag_i
+            
+            where diag(k)_i = Re [sum_j rho(k)_ij * S(k)^T_ij] 
+            and diag_i = sum_k w_k diag(k)_i
+            
+        Charge in pieces:
+        
+        q_(k,a,mu) = wk * f(k,a) * Re [sum_nu wf(k,a,mu)^*wf[k,a,nu]*S(k,mu,nu)]  
+                   = wk * f(k,a) * aux(k,a,mu)   
+               
+            where aux(k,a,mu) = Re [wf(k,a,mu)*sum_nu wf(k,a,nu)*S(k,mu,nu)]     
+        
+        All the units are, also inside the class, in eV and Angstroms. 
+        """
+        self.calc = proxy(calc)
+        st = self.calc.st
+        self.N = self.calc.el.N
+        self.nk = self.calc.st.nk
+        self.wk = self.calc.st.wk.copy()
+        norb = self.calc.st.norb
+        self.norb = norb
+        
+        self.diag = nu.zeros((norb))        
+        for k in xrange(self.nk):
+            diag_k = ( st.rho[k]*st.S[k].transpose() ).sum(axis=1).real
+            self.diag += self.wk[k]*diag_k
+            
+        self.aux = nu.zeros((self.nk,norb,norb))
+        wf = st.wf.copy()
+        wfc = st.wf.copy().conjugate()
+        for k in xrange(self.nk):
+            for a in range(norb):
+                self.aux[k,a] = ( wfc[k,a] * nu.dot(wf[k,a],st.S[k].transpose()) ).real 
 
-        self.rho_tilde = 0.5*(self.rho + self.rho.conjugate().transpose())
-        self.rho_tilde_S = nu.dot(self.rho_tilde, self.S)
-        self.eigs = self.calc.st.get_eigenvalues().copy()[0,:]*Hartree
-        if calc.st.get_lumo() == None:
-            fermi_energy = self.eigs[calc.st.get_homo()]
-        else:
-            fermi_energy = 0.5*(self.eigs[calc.st.get_homo()] + self.eigs[calc.st.get_lumo()])
-        self.eigs -= fermi_energy
+
+    def get_rhoa(self,a):
+        """ 
+        Return the density matrix for eigenstate a, for all k-points.
+        """
+        rho = nu.zeros_like(self.rhoSk)
+        for k,wk in enumerate(self.wk):
+            rho[k] = wk*nu.outer(self.calc.st.wf[k,a,:],self.calc.st.wf[k,a,:].conjugate()).real
+        return rho
 
 
-    def delta_sigma(self, x, x0, sigma):
-        """ Return the value of a gaussian function centered at x0
-        with variance sigma^2 at point x. """
-        return 1./nu.sqrt(2*nu.pi*sigma**2)*nu.exp(-(x-x0)**2/(2*sigma**2))
-
-
-    def get_rho_k(self, k):
-        """ Return the k-contribution of the density matrix without
-        multiplication with the occupation number f_k. """
-        return nu.outer(self.calc.st.wf[0,k,:],self.calc.st.wf[0,k,:].conjugate())
-
-
-    def trace_I(self, I, matrix):
+    def trace_I(self,I,matrix):
         """ Return partial trace over atom I's orbitals. """
-        ret = 0
-        I = self.calc.el.orbitals(I, indices=True)
+        ret = 0.0
+        I = self.calc.el.orbitals(I,indices=True)
         for i in I:
             ret += matrix[i,i]
         return ret
 
 
     def atoms_mulliken(self):
-        """ Return excess Mulliken populations. """
-        return self.calc.st.mulliken()
-        #q=[]
-        #for i in range(len(self.calc.el)):
-        #    q.append( nu.sum(self.trace_I(i, self.rho_tilde_S)) )
-        #return nu.array(q)-self.calc.el.get_valences()
+        """ Return Mulliken populations. """
+        q = []
+        for o1, no in self.calc.el.get_property_lists(['o1','no']):
+            q.append( self.diag[o1:o1+no].sum() )
+        return nu.array(q)-self.calc.el.get_valences()
 
 
     def atom_mulliken(self, I):
-        """ Return the Mulliken population on atom I. """
-        return self.trace_I(I, self.rho_tilde_S)
+        """ 
+        Return Mulliken population for atom I.
+        
+        parameters:
+        ===========
+        I:        atom index
+        """
+        orbs = self.calc.el.orbitals(I,indices=True)
+        return sum( self.diag[orbs] )
 
 
     def basis_mulliken(self, mu):
-        """ Return the population of basis state mu. """
-        return self.rho_tilde_S[mu,mu]
-
-
-    def atom_state_mulliken(self, I, a):
-        """ Return the Mulliken population of atom I from eigenstate a. """
-        #rho_k = self.get_rho_k(k)
-        #rho_tilde_k = 0.5*(rho_k + rho_k.conjugate().transpose())
-        #q_Ik = self.trace_I(I, nu.dot(rho_tilde_k,self.S))
-        all = self.atom_state_all_orbital_mulliken(I,a)
-        return all.sum()
+        """ 
+        Return Mulliken population of given basis state.
+        
+        parameters:
+        ===========
+        mu:     orbital index (see Elements' methods for indices)
+        """
+        return self.diag[mu] 
     
     
-    def atom_state_all_orbital_mulliken(self,I,a):
-        """
-        Return Mulliken populations for all atom's orbitals for state a
-        """
-        orbi = self.calc.el.orbitals(I, indices=True)
-        aux = nu.dot( self.calc.st.wf[0,a],self.S )
-        return ( self.calc.st.wf[0,a]*aux )[orbi].real
-
-
-    def atom_state_all_angmom_mulliken(self,I,a):
-        """ Return the Mulliken population of atom I from eigenstate a, for all l. """
-        all = self.atom_state_all_orbital_mulliken(I,a)
-        pop=nu.zeros((3,))
+    def atom_all_angmom_mulliken(self,I):
+        """ Return the Mulliken population of atom I from eigenstate a, for all angmom."""
+        
+        orbs = self.calc.el.orbitals(I,indices=True)
+        all = self.diag[orbs]
+        pop = nu.zeros((3,))
         pop[0] = all[0]
         if len(all)>1: pop[1] = all[1:4].sum()
         if len(all)>4: pop[2] = all[4:].sum()
-        return pop        
+        return pop 
 
 
-    def atom_state_angmom_mulliken2(self,I,a,l):
-        """ Return the Mulliken population of atom I from eigenstate a, related to l. """
-        all = self.atom_state_all_orbital_mulliken(I,a)
-        pop=0.0
-        if 's' in l: pop += all[0]
-        if 'p' in l and len(all)>1: pop += all[1:4].sum()
-        if 'd' in l and len(all)>4: pop += all[4:].sum()
-        return pop
+    def atom_wf_mulliken(self,I,k,a,wk=True):
+        """
+        Return Mulliken population for given atom and wavefunction.
+               
+        parameters:
+        ===========
+        I:      atom index
+        k:      k-vector index
+        a:      eigenstate index
+        wk:     embed k-point weight in population
+        """
+        w = 1.0
+        if wk: w = self.wk[k]
+        orbs = self.calc.el.orbitals(I,indices=True)
+        return w*self.aux[k,a,orbs].sum()
 
 
-    def atom_angmom_mulliken(self, I, l):
-        """ Return the Mulliken population of atom I basis states with
-        angular momentum l. """
-        orb_indices = self.calc.el.orbitals(I, indices=True)
-        orbs = self.calc.el.orbitals(I)
-        q = 0
-        for i, orb in zip(orb_indices, orbs):
-            if   's' in orb['orbital']: l_orb = 0
-            elif 'p' in orb['orbital']: l_orb = 1
-            elif 'd' in orb['orbital']: l_orb = 2
-            else: raise RuntimeError('Something wrong with orbital types')
-            if l_orb == l:
-                q += self.rho_tilde_S[i,i]
-        return q
+    def atom_wf_all_orbital_mulliken(self,I,k,a,wk=True):
+        """
+        Return orbitals' Mulliken populations for given atom and wavefunction.
+        
+        parameters:
+        ===========
+        I:      atom index (returned array size = number of orbitals on I)
+        k:      k-vector index 
+        a:      eigenstate index
+        wk:     embed k-point weight in population
+        """
+        w = 1.0
+        if wk: w = self.wk[k]
+        orbs = self.calc.el.orbitals(I,indices=True)
+        q = []
+        for mu in orbs:
+            q.append( w*self.aux[k,a,mu] )
+        return nu.array(q)
 
 
-    def atom_state_angmom_mulliken(self, I, k, l):
-        """ Return the Mulliken population of atom I from eigenstate k
-            from basis functions with angular momentum l. """
-        rho_k = self.get_rho_k(k)
-        rho_tilde_k = 0.5*(rho_k + rho_k.conjugate().transpose())
-        rho_tilde_k_S = nu.dot(rho_tilde_k, self.S)
-        q_Ikl = 0.0
-        orb_indices = self.calc.el.orbitals(I, indices=True)
-        orbs = self.calc.el.orbitals(I)
-        for i, orb in zip(orb_indices, orbs):
-            if   's' in orb['orbital']: l_orb = 0
-            elif 'p' in orb['orbital']: l_orb = 1
-            elif 'd' in orb['orbital']: l_orb = 2
-            else: raise RuntimeError('Something wrong with orbital types')
-            if l_orb == l:
-                q_Ikl += rho_tilde_k_S[i,i]
-        return q_Ikl
+    def atom_wf_all_angmom_mulliken(self,I,k,a,wk=True):
+        """ 
+        Return atom's Mulliken populations for all angmom for given wavefunction.
+        
+        parameters:
+        ===========
+        I:        atom index
+        k:        k-vector index
+        a:        eigenstate index
+        wk:       embed k-point weight into population
+        
+        return: array (length 3) containing s,p and d-populations      
+        """
+        all = self.atom_wf_all_orbital_mulliken(I,k,a,wk)
+        pop = nu.zeros((3,))
+        pop[0] = all[0]
+        if len(all)>1: pop[1] = all[1:4].sum()
+        if len(all)>4: pop[2] = all[4:].sum()
+        return pop   
 
 
-class MullikenBondAnalysis(MullikenAnalysis):
-    """ A class that calculates analyzes atom bonds using the Mulliken
-    charges. """
 
-
+class DensityOfStates(MullikenAnalysis):
     def __init__(self, calc):
+        """ 
+        A class that calculates different kinds of local and projected
+        density of states using the Mulliken charges. 
+        
+        Units also inside this class are in eV
+        """
+        MullikenAnalysis.__init__(self, calc)
+
+        self.e = self.calc.st.get_eigenvalues()*Hartree
+        self.e -= self.calc.get_fermi_level()
+        self.eflat = self.e.flatten()
+        self.emin, self.emax = self.eflat.min(), self.eflat.max()
+        
+
+
+    def density_of_states(self,broaden=False,width=0.05,window=None,npts=501):
+        """
+        Return the full density of states.
+        
+        Sum of states over k-points. Zero is the Fermi-level.
+        Spin-degeneracy is NOT counted.
+        
+        parameters:
+        ===========
+        broaden:     * If True, return broadened DOS in regular grid
+                       in given energy window. 
+                     * If False, return energies of all states, followed
+                       by their k-point weights. 
+        width:       Gaussian broadening (eV)
+        window:      energy window around Fermi-energy; 2-tuple (eV)
+        npts:        number of data points in output
+        """
+        mn, mx = self.emin, self.emax
+        if window is not None:
+            mn, mx = window
+            
+        x, y = [],[]
+        for a in range(self.calc.el.norb):
+            x = nu.concatenate( (x,self.e[:,a]) )
+            y = nu.concatenate( (y,self.calc.st.wk) )
+        x=nu.array(x) 
+        y=nu.array(y) 
+        if broaden:
+            e,dos = mix.broaden(x, y, width=width, N=npts, a=mn, b=mx)
+        else:
+            e,dos = x,y
+        return e,dos
+
+
+    def local_density_of_states(self,projected=False,width=0.05,window=None,npts=501):
+        """
+        Return state density for all atoms as a function of energy.
+        
+        parameters:
+        ===========
+        projected: return local density of states projected for 
+                   angular momenta 0,1 and 2 (s,p and d)
+                   ( sum of pldos over angular momenta = ldos ) 
+        width:     energy broadening (in eV)
+        window:    energy window around Fermi-energy; 2-tuple (eV)
+        npts:      number of grid points for energy
+        
+        return:    projected==False:
+                        energy grid, ldos[atom,grid]
+                   projected==True:
+                        energy grid, 
+                        ldos[atom, grid],
+                        pldos[atom, angmom, grid]
+        """
+        mn, mx = self.emin, self.emax
+        if window is not None:
+            mn, mx = window
+                   
+        # only states within window 
+        kl,al,el = [],[],[]        
+        for k in range(self.nk):
+            for a in range(self.norb):
+                if mn<=self.e[k,a]<=mx:
+                    kl.append(k)
+                    al.append(a)
+                    el.append(self.e[k,a]) 
+                
+        ldos = nu.zeros((self.N,npts))
+        if projected:
+            pldos = nu.zeros((self.N,3,npts))
+        for i in range(self.N):
+            q = [ self.atom_wf_mulliken(i,k,a,wk=True) for k,a in zip(kl,al) ]
+            egrid, ldos[i,:] = mix.broaden( el,q,width=width,N=npts,a=mn,b=mx )
+            if projected:
+                q = nu.array( [self.atom_wf_all_angmom_mulliken(i,k,a,wk=True) for k,a in zip(kl,al)] )
+                for l in range(3):
+                    egrid, pldos[i,l] = mix.broaden( el,q[:,l],width=width,N=npts,a=mn,b=mx )
+            
+        if projected:
+            assert nu.all( abs(ldos-pldos.sum(axis=1))<1E-6 )
+            return egrid, ldos, pldos
+        else:       
+            return egrid,ldos
+
+
+    def projected_local_density_of_states(self,width=0.05,window=None,npts=501):
+        """
+        Return state density for all atoms as a function of energy and angmom.
+        
+        parameters:
+        ===========
+        width:     energy broadening (in eV)
+        window:    energy window around Fermi-energy; 2-tuple (eV)
+        npts:      number of grid points for energy
+        
+        return:    energy grid, ldos[atom-index, angmom, energy grid-index]
+        """
+        mn, mx = self.emin, self.emax
+        if window is not None:
+            mn, mx = window
+                   
+        # only states within window 
+        kl,al,el = [],[],[]        
+        for k in range(self.nk):
+            for a in range(self.norb):
+                if mn<=self.e[k,a]<=mx:
+                    kl.append(k)
+                    al.append(a)
+                    el.append(self.e[k,a]) 
+                
+        pldos = nu.zeros((self.N,3,npts))
+        for i in range(self.N):
+            q = nu.array( [self.atom_wf_all_angmom_mulliken(i,k,a,wk=True) for k,a in zip(kl,al)] )
+            for l in range(3):
+                egrid, pldos[i,l] = mix.broaden( el,q[:,l],width=width,N=npts,a=mn,b=mx )
+        return egrid,pldos
+
+        
+
+
+class MullikenBondAnalysis(MullikenAnalysis):    
+    
+    def __init__(self, calc):
+        """ 
+        Class for bonding analysis using Mulliken charges. 
+        """
+        raise NotImplementedError('needs re-writing for k-points')
         MullikenAnalysis.__init__(self, calc)
         self.bar_epsilon = nu.zeros_like(self.H0)
         for i in range(len(self.H0)):
@@ -199,7 +369,7 @@ class MullikenBondAnalysis(MullikenAnalysis):
             if occupations:
                 rho_k_mn *= f[k]
             E_cov_k = rho_k_mn*mat_nm
-            add = self.delta_sigma(e_g, e_k, sigma)*E_cov_k
+            add = self.gauss_fct(e_g, e_k, sigma)*E_cov_k
             E_cov_mn += add
         return e_g, E_cov_mn
 
@@ -240,7 +410,7 @@ class MullikenBondAnalysis(MullikenAnalysis):
             if occupations:
                 rho_k *= f[k]
             mat = self.H0 - self.bar_epsilon*self.S
-            add = self.delta_sigma(e_g, e_k, sigma)
+            add = self.gauss_fct(e_g, e_k, sigma)
             w_k = 0.0
             for i, orb_i in enumerate(self.calc.el.orb):
                 for j, orb_j in enumerate(self.calc.el.orb):
@@ -301,124 +471,5 @@ class MullikenBondAnalysis(MullikenAnalysis):
             if J != I:
                 ret += 0.5*self.B_IJ(I,J)
         return ret
-
-
-class DensityOfStates(MullikenAnalysis):
-    """ A class that calculates different kinds of local and projected
-    density of states using the Mulliken charges. """
-
-    def __init__(self, calc):
-        MullikenAnalysis.__init__(self, calc)
-
-
-    def DOS(self, sigma, npts=500, e_min=None, e_max=None, occupations=False):
-        """ Return the energy array and corresponding DOS array.
-            
-            sigma: the broadening of the Gaussian distribution
-            npts:  the number of grid points
-            e_min: the minimum of the energy array
-            e_max: the maximum of the energy array
-            occupations: weight the states with the occupation number of
-                         the state.
-        """
-        if e_min == None:
-            e_min = min(self.eigs)
-        if e_max == None:
-            e_max = max(self.eigs)
-        e_range = e_max - e_min
-        e_min -= e_range*0.1
-        e_max += e_range*0.1
-        e_g = nu.linspace(e_min, e_max, npts)
-        dos = nu.zeros_like(e_g)
-        f = self.calc.st.f
-        for k, e_k in enumerate(self.eigs):
-            add = nu.array([self.delta_sigma(e, e_k, sigma) for e in e_g])
-            if occupations:
-                add *= f[k]
-            dos += add
-        return e_g, dos
-
-
-    def LDOS(self, sigma, indices=None, npts=500, e_min=None, e_max=None, occupations=False):
-        """ Return the energy array and corresponding local DOS array
-            calculated using Mulliken population analysis.
-            
-            sigma: the broadening of the Gaussian distribution
-            indices: the indices of atoms included to the LDOS
-            npts:  the number of grid points
-            e_min: the minimum of the energy array
-            e_max: the maximum of the energy array
-            occupations: weight the states with the occupation number of
-                         the state.
-        """
-        if e_min == None:
-            e_min = min(self.eigs)
-        if e_max == None:
-            e_max = max(self.eigs)
-        e_range = e_max - e_min
-        e_min -= e_range*0.1
-        e_max += e_range*0.1
-        e_g = nu.linspace(e_min, e_max, npts)
-        ldos = nu.zeros_like(e_g)
-        if indices == None:
-            indices = range(len(self.calc.el))
-        elif type(indices) == int:
-            indices = [indices]
-        N_el = self.calc.el.get_number_of_electrons()
-        f = self.calc.st.f
-        for I in indices:
-            for k, e_k in enumerate(self.eigs):
-                q_Ik = self.atom_state_mulliken(I,k)
-                ldos_k = [self.delta_sigma(e, e_k, sigma) for e in e_g]
-                if occupations:
-                    ldos += nu.array(ldos_k) * q_Ik * f[k]
-                else:
-                    ldos += nu.array(ldos_k) * q_Ik
-        return e_g, ldos
-
-
-    def PDOS(self, sigma, indices=None, l='spd', npts=500, e_min=None, e_max=None, occupations=False):
-        """ Return the energy array and corresponding projected DOS array
-            calculated using Mulliken population analysis. Indices refer
-            to the atoms and l to the angular momenta that are included.
-            
-            sigma: the broadening of the Gaussian distribution
-            indices: the indices of atoms included to the LDOS
-            npts:  the number of grid points
-            e_min: the minimum of the energy array
-            e_max: the maximum of the energy array
-            occupations: weight the states with the occupation number of
-                         the state.
-        """
-        if e_min == None:
-            e_min = min(self.eigs)
-        if e_max == None:
-            e_max = max(self.eigs)
-        e_range = e_max - e_min
-        e_min -= e_range*0.1
-        e_max += e_range*0.1
-        e_g = nu.linspace(e_min, e_max, npts)
-        pdos = nu.zeros_like(e_g)
-        if indices == None:
-            indices = range(len(self.calc.el))
-        elif type(indices) == int:
-            indices = [indices]
-        if l == 'spd':
-            l = [0,1,2]
-        elif type(l) == str:
-            l = get_angular_momenta(l)
-        else:
-            raise RuntimeError("l must be orbital types, for example l='sp'")
-        for li in l:
-            f = self.calc.st.f
-            for k, e_k in enumerate(self.eigs):
-                pdos_k = nu.array([self.delta_sigma(e, e_k, sigma) for e in e_g])
-                if occupations:
-                    pdos_k *= f[k]
-                for I in indices:
-                    q_Ikl = self.atom_state_angmom_mulliken(I,k,li)
-                    pdos += pdos_k * q_Ikl
-        return e_g, pdos
-
 
 
