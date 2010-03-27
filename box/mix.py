@@ -12,6 +12,7 @@
 import numpy as nu
 import time
 from math import atan,pi,cos,sin,sqrt
+from numpy import sqrt,pi,exp
 
 
 def fit(f,p,xlist,ylist):
@@ -273,7 +274,6 @@ def gauss_fct(x,mean=0.,sigma=1.):
     Returns 1/sqrt(2*pi*sigma**2)*exp(-(x-mean)**2/(2*sigma**2)
     mean=0 and sigma=1 on default
     """
-    from numpy import sqrt,pi,exp
     return 1./sqrt(2*pi*sigma**2)*exp(-(x-mean)**2/(2*sigma**2) )
 
 def lorenzian(x,mean,width):

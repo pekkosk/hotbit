@@ -49,5 +49,4 @@ testpar = path.join(environ.get('HOTBIT_PARAMETERS'),'inofficial')
 #
 # Free eigenvalue solver workspace on exit
 #
-
 atexit.register(_hotbit.free_geig_workspace)

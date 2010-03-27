@@ -16,6 +16,9 @@ from environment import Environment
 from repulsion import Repulsion
 from states import States
 from grids import Grids
+from hotbit.analysis import MullikenAnalysis
+from hotbit.analysis import MullikenBondAnalysis
+from hotbit.analysis import DensityOfStates
 from hotbit.output import Output
 import box.mix as mix
 from time import time
@@ -319,6 +322,9 @@ class Hotbit(Output):
             self.st.solve()
             self.el.set_solved('ground state')
             t1 = time()
+            self.flags['Mulliken'] = False
+            self.flags['DOS'] = False
+            self.flags['bonds'] = False
             if self.verbose:
                 print >> self.get_output(), "Solved in %0.2f seconds" % (t1-t0)
         else:
@@ -346,6 +352,10 @@ class Hotbit(Output):
         self.flush()
         self.el.set_atoms(atoms)
         self.greetings()
+        self.flags = {}
+        self.flags['Mulliken'] = False
+        self.flags['DOS'] = False
+        self.flags['bonds'] = False
         self.stop_timing('initialization')
         
         
@@ -374,7 +384,11 @@ class Hotbit(Output):
 
 
     def get_forces(self,atoms):
-        """ Return the forces of present system. """
+        """ 
+        Return forces (in eV/Angstrom)
+        
+        Ftot = F(band structure) + F(coulomb) + F(repulsion).
+        """
         if self.calculation_required(atoms,['forces']):
             self.solve_ground_state(atoms)
             self.start_timing('forces')
@@ -387,37 +401,6 @@ class Hotbit(Output):
         return self.f.copy()
     
     
-    def get_DOS(self,broaden=False,width=0.1,window=None,npts=501):
-        '''
-        Return the full density of states, including k-points.
-        Zero is the Fermi-level; spin-degeneracy is not counted.
-        
-        @param broaden: broaden states in the first place?
-        @param width:  Gaussian broadening, in eV
-        @param window: energy window 2-tuple, in eV
-        @param npts:   number of data points in output
-        '''
-        self.start_timing('DOS')
-        e = self.st.e.copy()*Hartree - self.get_fermi_level()
-        flat = e.flatten()
-        mn, mx = flat.min(), flat.max()
-        if window is not None:
-            mn, mx = window
-            
-        x, y = [],[]
-        for a in range(self.el.norb):
-            x = nu.concatenate( (x,e[:,a]) )
-            y = nu.concatenate( (y,self.st.wk) )
-        x=nu.array(x) 
-        y=nu.array(y) 
-        if broaden:
-            self.start_timing('broaden')
-            e,dos = mix.broaden(x, y, width=width, N=npts, a=mn, b=mx)
-            self.stop_timing('broaden')
-        else:
-            e,dos = x,y
-        self.stop_timing('DOS')
-        return e,dos
 
 
     def get_band_energies(self,kpts):
@@ -435,11 +418,8 @@ class Hotbit(Output):
 
 
     def get_charge(self):
+        """ Return system's total charge. """
         return self.get('charge')
-
-
-    def get_dq(self):
-        return self.st.get_dq()
 
 
     def get_eigenvalues(self,atoms):
@@ -485,9 +465,6 @@ class Hotbit(Output):
     def get_grid_wf(self,i,k=0,spacing=0.2,pad=False):
         """ 
         Return state i with given k-point on grid. 
-        
-        
-        
         """
         self.gd.make_grid(spacing=spacing,pad=pad)
         return self.gd.get_wf(i)
@@ -524,6 +501,176 @@ class Hotbit(Output):
     def stop_timing(self, label):
         self.timer.stop(label)
 
+    #
+    # Mulliken population analysis tools
+    #
+    def _init_mulliken(self):
+        """ Initialize Mulliken analysis. """ 
+        if self.flags['Mulliken']==False:
+            self.MA = MullikenAnalysis(self)
+            self.flags['Mulliken']=True
+        
+    def get_dq(self):
+        """ Return atoms' Mulliken populations. """
+        return self.st.get_dq()
+        
+    def get_atom_mulliken(self,I):
+        """
+        Return Mulliken population for atom I.
+        
+        parameters:
+        ===========
+        I:        atom index
+        """
+        self._init_mulliken()
+        return self.MA.atom_mulliken(I)
+        
+        
+    def get_basis_mulliken(self,mu):
+        """
+        Return Mulliken population of given basis state.
+        
+        parameters:
+        ===========
+        mu:     orbital index (see Elements' methods for indices)
+        """ 
+        self._init_mulliken()
+        return self.MA.basis_mulliken(mu)
+    
+    
+    def get_atom_wf_mulliken(self,I,k,a,wk=True):
+        """
+        Return Mulliken population for given atom and wavefunction.
+        
+        parameters:
+        ===========
+        I:      atom index
+        k:      k-vector index
+        a:      eigenstate index
+        wk:     embed k-point weight in population
+        """
+        self._init_mulliken()
+        return self.MA.atom_wf_mulliken(I,k,a,wk)
+        
+    
+    def get_atom_wf_all_orbital_mulliken(self,I,k,a):
+        """
+        Return orbitals' Mulliken populations for given atom and wavefunction.
+        
+        parameters:
+        ===========
+        I:      atom index (returned array size = number of orbitals on I)
+        k:      k-vector index 
+        a:      eigenstate index
+        """
+        self._init_mulliken()
+        return self.MA.atom_wf_all_orbital_mulliken(I,k,a)
+        
+    
+    def get_atom_wf_all_angmom_mulliken(self,I,k,a,wk=True):
+        """ 
+        Return atom's Mulliken populations for all angmom for given wavefunction.
+        
+        parameters:
+        ===========
+        I:        atom index
+        k:        k-vector index
+        a:        eigenstate index
+        wk:       embed k-point weight into population
+        
+        return: array (length 3) containing s,p and d-populations      
+        """
+        self._init_mulliken()
+        return self.MA.atom_wf_all_angmom_mulliken(I,k,a,wk)
+
+        
+    #
+    #  Densities of states methods
+    #
+    def _init_DOS(self):
+        """ Initialize Density of states analysis. """
+        if self.flags['DOS']==False:
+            self.DOS = DensityOfStates(self)
+            self.flags['DOS']=True
+            
+            
+    def get_local_density_of_states(self,projected=False,width=0.05,window=None,npts=501):
+        """
+        Return state density for all atoms as a function of energy.
+        
+        parameters:
+        ===========
+        projected: return local density of states projected for 
+                   angular momenta 0,1 and 2 (s,p and d) 
+        width:     energy broadening (in eV)
+        window:    energy window around Fermi-energy; 2-tuple (eV)
+        npts:      number of grid points for energy
+        
+        return:    projected==False:
+                        energy grid, ldos[atom,grid]
+                   projected==True:
+                        energy grid, 
+                        ldos[atom, grid],
+                        pldos[atom, angmom, grid]
+        """
+        self._init_DOS()
+        return self.DOS.local_density_of_states(projected,width,window,npts)
+    
+        
+    def get_density_of_states(self,broaden=False,width=0.05,window=None,npts=501):
+        """
+        Return the full density of states.
+        
+        Sum of states over k-points. Zero is the Fermi-level.
+        Spin-degeneracy is NOT counted.
+        
+        parameters:
+        ===========
+        broaden:     If True, return broadened DOS in regular grid
+                     in given energy window. 
+                     If False, return energies of all states, followed
+                     by their weights. 
+        width:       Gaussian broadening (eV)
+        window:      energy window around Fermi-energy; 2-tuple (eV)
+        npts:        number of data points in output
+        """
+        self._init_DOS()
+        return self.DOS.density_of_states(broaden,width,window,npts)
+    
 
 
+    # Bonding analysis
+    def _init_bonds(self):
+        """ Initialize Mulliken bonding analysis. """
+        if self.flags['bonds']==False:
+            self.bonds = MullikenBondAnalysis(self)
+            self.flags['bonds']=True
 
+    def get_mayer_bond_order(self):
+        raise NotImplementedError
+    
+    def get_ecov(self):
+        raise NotImplementedError
+    
+    def get_atom_pair_ecov(self):
+        """ ecov_I_J"""
+        raise NotImplementedError
+    
+    def get_orbital_pair_ecov(self):
+        raise NotImplementedError
+    
+    def get_angmom_ecov(self):
+        raise NotImplementedError
+    
+    def get_atom_energy(self):
+        raise NotImplementedError
+    
+    def get_bond_energy(self):
+        raise NotImplementedError
+    
+    def get_atom_promotion_energy(self):
+        raise NotImplementedError
+    
+    def get_atom_and_bonding_energy(self):
+        raise NotImplementedError
+        
