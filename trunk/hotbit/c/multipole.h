@@ -15,10 +15,14 @@ void local_to_local(double *dr,
                     double *Ll0, double complex *Llm,
                     int l_max_out, 
                     double *Ll0_out, double complex *Llm_out);
+void transform_multipole(double *R, int l_max,
+                      double *Rl0, double complex *Rlm,
+                      double *Sl0, double complex *Slm);
 
 
 PyObject *py_multipole_to_multipole(PyObject *self, PyObject *args);
 PyObject *py_multipole_to_local(PyObject *self, PyObject *args);
 PyObject *py_local_to_local(PyObject *self, PyObject *args);
+PyObject *py_transform_multipole(PyObject *self, PyObject *args);
 
 #endif

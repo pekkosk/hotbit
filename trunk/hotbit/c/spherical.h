@@ -5,6 +5,9 @@
 
 #include <complex.h>
 
+#define lm2index(l, m)  ((l)*(l-1)/2 + (m) - 1)
+
+
 void cartesian2spherical(double *r, double *x, double *costh, double *phi);
 void solid_harmonic_R(double x, double costh, double phi, int l_max, double *Rl0, double complex *Rlm);
 void solid_harmonic_I(double x, double costh, double phi, int l_max, double *Il0, double complex *Ilm);
