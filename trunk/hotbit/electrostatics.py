@@ -96,8 +96,7 @@ class Electrostatics:
         g=self.gamma
         G=nu.zeros((self.N,self.N))
         dG=nu.zeros((self.N,self.N,3))
-        rijn = self.calc.el.rijn
-        dijn = self.calc.el.dijn
+        rijn, dijn = self.calc.el.get_distances()
         
         lst=self.calc.el.get_property_lists(['i','s'])
         

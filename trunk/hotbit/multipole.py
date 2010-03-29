@@ -11,7 +11,7 @@ L      l and m for l != 0
 
 import numpy as np
 
-from _hotbit import solid_harmonic_R
+from _hotbit import solid_harmonic_R, multipole_to_multipole, multipole_to_local, local_to_local, transform_multipole
 
 
 def lm2index(l, m):
