@@ -279,8 +279,7 @@ class Interactions:
             Rot.append( self.calc.el.rotation(nt) )
 
         lst = el.get_property_lists(['i','s','no','o1'])
-        Rijn = self.calc.el.rijn
-        dijn = self.calc.el.dijn
+        Rijn, dijn = self.calc.el.get_distances()
         for i,si,noi,o1i in lst:
             a, b = o1i, o1i+noi
             # on-site energies only for n==0

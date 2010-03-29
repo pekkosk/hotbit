@@ -240,8 +240,9 @@ class Elements:
         self.calc.stop_timing('operations')
         
         self.calc.start_timing('displacements')
-        rijn = nu.zeros((len(self.ntuples),self.N,self.N,3))            
-        dijn = nu.zeros((len(self.ntuples),self.N,self.N)) 
+        rijn = nu.zeros((len(self.ntuples),self.N,self.N,3))
+        dijn = nu.zeros((len(self.ntuples),self.N,self.N))
+        # Fixme!!! Think about how to use numpy for speedup!
         for i in range(self.N):
             for j in range(self.N):
                 rijn[:,i,j,:] = self.Rn[:,j,:] - self.Rn[0,i,:]
@@ -276,6 +277,10 @@ class Elements:
 
     def get_transforms(self):
         return self.ntuples
+
+    def get_distances(self):
+        # FIXME!!! Update distances first?
+        return self.rijn, self.dijn
 
        
     def rotation_of_axes(self,n):
