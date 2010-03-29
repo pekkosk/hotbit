@@ -37,27 +37,20 @@ def zero_moments(l_max):
     return np.zeros([l_max+1], dtype=float), np.zeros([lm2index(l_max,l_max)+1], dtype=complex)
 
 
-def get_moments(a, l_max, r0=None):
+def get_moments(r, q, l_max, r0):
     """
     Compute the multipole moments of a set of atoms
 
     Parameters:
-    a:      ASE Atoms object
+    r:      Positions
+    q:      Charges
     l_max:  Maximum angular momentum number for the expansion
-    r0:     Expansion origin, if omitted the center of mass will be used
+    r0:     Expansion origin
     """
 
     # This could be easily moved to C if it turns out to be slow
-
-    if r0 is None:
-        # FIXME: Should we rather use the position
-        # where the number of non-zero multipole
-        # moments is minimal?
-        r0 = a.get_center_of_mass()
-
-    M0_l = np.zeros([l_max+1], dtype=float)
-    M_L  = np.zeros([lm2index(l_max,l_max)+1], dtype=complex)
-    for r, q in zip(a.get_positions(), a.get_charges()):
+    M0_l, M_L  = zero_moments(l_max)
+    for r, q in zip(r, q):
         cR0_l, cR_L = solid_harmonic_R(r-r0, l_max)
         M0_l += q*cR0_l
         M_L  += q*cR_L

@@ -61,7 +61,7 @@ class Bravais:
     
     def transform(self,r,n):
         """ Symmetry transformation n for position r. """
-        rn=r.copy()
+        rn   = nu.asarray(r).copy()
         cell = self.atoms.get_cell()
         for a in range(3):
             rn = rn + n[a]*cell[a,:]
