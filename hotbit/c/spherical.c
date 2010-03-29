@@ -7,7 +7,6 @@
 
 #include "spherical.h"
 
-#define lm2index(l, m)  ((l)*(l-1)/2 + (m) - 1)
 
 /*
  * Sperical symmetry module
@@ -35,7 +34,13 @@ void cartesian2spherical(double *r,         /* shape [3], distance vector */
 
 
 /*
- * Compute the solid harmonics up to l=l_max
+ * Compute the solid harmonics up to l=l_max.
+ * Note that the normalization is non-standard.
+ *
+ *     
+ *   m      1         l    i m phi    m
+ * R   = -------    r    e          P   (cos theta)
+ *   l    (l+m)!                      l
  */
 void solid_harmonic_R(double x, 
                       double costh, 
@@ -61,9 +66,9 @@ void solid_harmonic_R(double x,
 
     for (l = 2; l <= l_max; ++l) {
         h  = sinth/(2*l);
-        Plm[lm2index(l,    l)]  = -h*Plm[lm2index(l-1,  l-1)];
+        Plm[lm2index(l,   l)]  = -h*Plm[lm2index(l-1, l-1)];
 
-        Plm[lm2index(l,  l-1)]  =  costh*Plm[lm2index(l-1,  l-1)];
+        Plm[lm2index(l, l-1)]  =  costh*Plm[lm2index(l-1, l-1)];
 
         Pl0[l] = ( (2*l-1)*costh*Pl0[l-1] - Pl0[l-2] )/(l*l);
 
@@ -109,6 +114,11 @@ void solid_harmonic_R(double x,
 
 /*
  * Compute the solid harmonics up to l=l_max
+ * Note that the normalization is non-standard.
+ *
+ *   m              -l+1    i m phi    m
+ * I   = (l-m)!   r       e          P   (cos theta)
+ *   l                                 l
  */
 void solid_harmonic_I(double x,
                       double costh,

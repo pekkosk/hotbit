@@ -11,13 +11,15 @@
 
 #define min(a,b)        ((a)>(b)?(b):(a))
 #define max(a,b)        ((a)<(b)?(b):(a))
-#define lm2index(l, m)  ((l)*(l-1)/2 + (m) - 1)
+
 
 /*
- * Helper module for the fast-multipole solvers.
+ * Helper module for the fast-multipole solver.
  *
  * Multipole-to-multipole, multipole-to-local
  * and local-to-local transformations.
+ *
+ * Multipole transformations (important for rotations).
  */
 
 
@@ -318,6 +320,207 @@ void local_to_local(double *dr,                /* shape [3] */
 
 
 /*
+ * All matrices have zero padding of width 2 since
+ * in the sum i,j can actually become > l and < -l.
+ */
+#define idx(l,i,j)  ((2+l+j) + (2+l+i)*(2*(l+2)+1))
+#define arrsize(l)  (idx(l, l+2, l+2)+1)
+
+/*
+ * Multiply a multipole by a transformation matrix D for
+ * angular momentum l
+ */
+void matrix_dot_multipole(int l,
+                          double complex *D,
+                          double *Rl0,
+                          double complex *Rlm,
+                          double *Sl0,
+                          double complex *Slm
+                          )
+{
+    int m, n;
+    double complex c;
+
+#ifdef DEBUG
+    printf("=== l = %i ===\n", l);
+
+    for (m = -l; m <= l; ++m) {
+
+        for (n = -l; n <= l; ++n) {
+            printf("%7.3f+i%7.3f",
+                   creal(D[idx(l, m, n)]), cimag(D[idx(l, m, n)]));
+
+            c = pow(-1, m+n)*conj(D[idx(l, m, n)]);
+            
+            if (cabs(D[idx(l, -m, -n)] - c) > 1e-3) {
+                printf("*   ");
+            }
+            else {
+                printf("    ");
+            }
+        }
+
+        printf("\n");
+    }
+#endif
+
+    /* diagonal component */
+    Sl0[l] = creal( D[idx(l, 0, 0)] ) * Rl0[l];
+    for (m = 1; m <= l; ++m) {
+        Sl0[l] +=
+            creal( D[idx(l, 0,  m)]              *      Rlm[lm2index(l, m)]
+                 + D[idx(l, 0, -m)] * pow(-1, m) * conj(Rlm[lm2index(l, m)]) );
+    }
+
+    /* off-diagonal components */
+    for (n = 1; n <= l; ++n) {
+        /* n = 0 contribution */
+        Slm[lm2index(l, n)] = D[idx(l, n, 0)] * Rl0[l];
+
+        for (m = 1; m <= l; ++m) {
+            Slm[lm2index(l, n)] += 
+                ( D[idx(l, n,  m)]              *      Rlm[lm2index(l, m)]
+                + D[idx(l, n, -m)] * pow(-1, m) * conj(Rlm[lm2index(l, m)]) );
+        }
+    }
+}
+
+
+/*
+ * Transform a multipole given the cartesian transformation matrix T
+ *
+ * The algorithm is derived and described in
+ *    C.H. Choi, J. Ivanic, M.S. Gordon, K. Ruedenberg,
+ *    J. Chem. Phys. 111, 8825 (1999)
+ *
+ * FIXME! This implementation currently computes D(l,m,n)
+ * and D(l,-m,-n) which is unnessecary, since
+ * D(l,-m,-n) = (-1)*(m+n) D(l,m,n). Bookkeeping becomes tedious
+ * if one makes use of that symmetry though.
+ */
+void transform_multipole(double *T,                /* shape [3,3] */
+                         int l_max,
+                         double *Rl0,              /* shape [0:l_max] */
+                         double complex *Rlm,      /* shape [lm2index(l_max, l_max)] */
+                         double *Sl0,              /* shape [0:l_max] */
+                         double complex *Slm       /* shape [lm2index(l_max, l_max)] */
+                         )
+{
+    double complex D1[arrsize(1)];
+    double complex D[arrsize(l_max)];
+    double complex Dl[arrsize(l_max)];
+
+    int m, n, l;
+
+
+    /* FIXME!!! Tabulate integer sqrts */
+    /* FIXME!!! Also tabulate (-1)**m? */
+    /*
+#define a(l,m,n)  sqrt( (l+m)*(l-m)/( (l+n)*(l-n) ) )
+#define b(l,m,n)  sqrt( (l+m)*(l+m-1)/( 2*(l+n)*(l-n) ) )
+#define c(l,m,n)  sqrt( 2*(l+m)*(l-m)/( (l+n)*(l+n-1) ) )
+#define d(l,m,n)  sqrt( (l+m)*(l+m-1)/( (l+n)*(l+n-1) ) )
+    */
+
+#define a(l,m)  ( ( (double) ( (l)-(m)+1 ) * ( (l)-(m) ) ) / 2 )
+#define b(l,m)  ( ( (double) ( (l)+(m)   ) * ( (l)-(m) ) )     )
+#define c(l,m)  ( ( (double) ( (l)+(m)+1 ) * ( (l)+(m) ) ) / 2 )
+
+    /*
+#define aa(l,m,n)  ( ( (double) ( (l)+(n) ) * ( (l)+(n)-1 ) ) / ( 2*( ( (l)+(m) ) * ( (l)-(m) ) ) ) )
+#define bb(l,m,n)  ( ( (double) ( (l)+(n) ) * ( (l)+(n)   ) ) / (   ( ( (l)+(m) ) * ( (l)-(m) ) ) ) )
+#define cc(l,m,n)  ( ( (double) ( (l)+(n) ) * ( (l)+(n)+1 ) ) / ( 2*( ( (l)+(m) ) * ( (l)-(m) ) ) ) )
+    */
+
+    /* l = 0 does not transform under rotation */
+    Sl0[0]  = Rl0[0];
+
+#define idx2(i,j)  (j+3*i)
+#define _XX_ idx2(0,0)
+#define _YY_ idx2(1,1)
+#define _ZZ_ idx2(2,2)
+#define _XY_ idx2(0,1)
+#define _YZ_ idx2(1,2)
+#define _ZX_ idx2(2,0)
+#define _YX_ idx2(1,0)
+#define _ZY_ idx2(2,1)
+#define _XZ_ idx2(0,2)
+
+    bzero(D1, arrsize(1)*sizeof(double complex));
+    bzero(D, arrsize(l_max)*sizeof(double complex));
+    bzero(Dl, arrsize(l_max)*sizeof(double complex));
+
+    /*
+     * l = 1 starts the recurrence relation.
+     * The conjugation is required because the multipole moments
+     * are sums of R* rather than R.
+     */
+    D1[idx(1, -1, -1)]  = conj( T[_YY_] + T[_XX_]  + I*(T[_XY_] - T[_YX_]) )/2;
+    D1[idx(1, -1,  0)]  = conj( T[_XZ_]            - I*T[_YZ_]             )/2;
+    D1[idx(1, -1,  1)]  = conj( T[_YY_] - T[_XX_]  + I*(T[_XY_] + T[_YX_]) )/2;
+
+    D1[idx(1,  0, -1)]  = conj( T[_ZX_]            + I*T[_ZY_]             );
+    D1[idx(1,  0,  0)]  = conj( T[_ZZ_]                                    );
+    D1[idx(1,  0,  1)]  = conj( -T[_ZX_]           + I*T[_ZY_]             );
+
+    D1[idx(1,  1, -1)]  = conj( -T[_XX_] + T[_YY_] - I*(T[_XY_] + T[_YX_]) )/2;
+    D1[idx(1,  1,  0)]  = conj( -T[_XZ_]           - I*T[_YZ_]             )/2;
+    D1[idx(1,  1,  1)]  = conj( T[_XX_] + T[_YY_]  - I*(T[_XY_] - T[_YX_]) )/2;
+
+    memcpy(D, D1, arrsize(1)*sizeof(double complex));
+
+    matrix_dot_multipole(1, D, Rl0, Rlm, Sl0, Slm);
+
+    /* l = 2...l_max */
+    for (l = 2; l <= l_max; ++l) {
+        /* copy last matrix to Dl */
+        memcpy(Dl, D, arrsize(l-1)*sizeof(double complex));
+        bzero(D, arrsize(l)*sizeof(double complex));
+
+        /* transformation rules */
+        for (n = -l; n <= l; ++n) {
+
+            /* m = -l */
+            D[idx(l, -l, n)] =
+                (   a(l, n+1) * D1[idx(1, -1, -1)] * Dl[idx(l-1, -l+1, n+1)]
+                  + b(l, n  ) * D1[idx(1, -1,  0)] * Dl[idx(l-1, -l+1, n  )]
+                  + c(l, n-1) * D1[idx(1, -1,  1)] * Dl[idx(l-1, -l+1, n-1)] )
+                /a(l, -l+1);
+
+            /* -l+1 <= m <= l-1 */
+            for (m = -l+1; m <= l-1; ++m) {
+
+                D[idx(l, m, n)] =
+                    (   a(l, n+1) * D1[idx(1,  0, -1)] * Dl[idx(l-1, m, n+1)]
+                      + b(l, n  ) * D1[idx(1,  0,  0)] * Dl[idx(l-1, m, n  )]
+                      + c(l, n-1) * D1[idx(1,  0,  1)] * Dl[idx(l-1, m, n-1)] )
+                      /b(l, m);
+
+            }
+
+            /* m = l */
+            D[idx(l,  l, n)] =
+                (   a(l, n+1) * D1[idx(1,  1, -1)] * Dl[idx(l-1, l-1, n+1)]
+                  + b(l, n  ) * D1[idx(1,  1,  0)] * Dl[idx(l-1, l-1, n  )]
+                  + c(l, n-1) * D1[idx(1,  1,  1)] * Dl[idx(l-1, l-1, n-1)] )
+                /c(l, l-1);
+
+        }
+
+        matrix_dot_multipole(l, D, Rl0, Rlm, Sl0, Slm);
+    }
+
+#undef a
+#undef b
+#undef c
+
+}
+
+#undef idx
+
+
+
+/*
  * Python interface
  */
 
@@ -437,7 +640,6 @@ PyObject *py_multipole_to_local(PyObject *self, PyObject *args)
     int l_max;
     PyObject *Ll0 = NULL;
     PyObject *Llm = NULL;
-    npy_intp dims[1];
 
     if (!PyArg_ParseTuple(args, "O!iO!O!|O!O!",
                           &PyArray_Type, &dr, &l_max,
@@ -463,12 +665,6 @@ PyObject *py_multipole_to_local(PyObject *self, PyObject *args)
     if (!check_size_and_type_or_allocate(l_max, &Ll0, &Llm))
         return NULL;
 
-    dims[0] = l_max+1;
-    Ll0 = PyArray_ZEROS(1, dims, NPY_DOUBLE, NPY_FALSE);
-
-    dims[0] = lm2index(l_max, l_max)+1;
-    Llm = PyArray_ZEROS(1, dims, NPY_CDOUBLE, NPY_FALSE);
-
     multipole_to_local(PyArray_DATA(dr), l_max,
                            PyArray_DATA(Ml0), PyArray_DATA(Mlm),
                            PyArray_DATA(Ll0), PyArray_DATA(Llm));
@@ -483,7 +679,6 @@ PyObject *py_local_to_local(PyObject *self, PyObject *args)
     int l_max_in, l_max_out;
     PyObject *Ll0_out = NULL;
     PyObject *Llm_out = NULL;
-    npy_intp dims[1];
 
     if (!PyArg_ParseTuple(args, "O!iO!O!i|O!O!",
                           &PyArray_Type, &dr,
@@ -511,17 +706,61 @@ PyObject *py_local_to_local(PyObject *self, PyObject *args)
     if (!check_size_and_type_or_allocate(l_max_out, &Ll0_out, &Llm_out))
         return NULL;
 
-    dims[0] = l_max_out+1;
-    Ll0_out = PyArray_ZEROS(1, dims, NPY_DOUBLE, NPY_FALSE);
-
-    dims[0] = lm2index(l_max_out, l_max_out)+1;
-    Llm_out = PyArray_ZEROS(1, dims, NPY_CDOUBLE, NPY_FALSE);
-
     local_to_local(PyArray_DATA(dr),
                    l_max_in, PyArray_DATA(Ll0), PyArray_DATA(Llm),
                    l_max_out, PyArray_DATA(Ll0_out), PyArray_DATA(Llm_out));
 
     return Py_BuildValue("OO", Ll0_out, Llm_out);
 }
+
+
+PyObject *py_transform_multipole(PyObject *self, PyObject *args)
+{
+    PyObject *R, *Rl0, *Rlm;
+    int l_max;
+    PyObject *Sl0;
+    PyObject *Slm;
+    npy_intp dims[1];
+
+    if (!PyArg_ParseTuple(args, "O!iO!O!",
+                          &PyArray_Type, &R,
+                          &l_max,
+                          &PyArray_Type, &Rl0,
+                          &PyArray_Type, &Rlm))
+        return NULL;
+
+    if (!PyArray_ISFLOAT(R)) {
+        PyErr_SetString(PyExc_TypeError, "Rotation matrix needs to be float.");
+        return NULL;
+    }
+
+    if (!PyArray_NDIM(R) == 2) {
+        PyErr_SetString(PyExc_TypeError, "Rotation matrix needs to be 3x3.");
+        return NULL;
+    }
+
+    if (PyArray_DIM(R, 0) != 3 || PyArray_DIM(R, 1) != 3) {
+        PyErr_SetString(PyExc_TypeError, "Rotation matrix needs to be 3x3.");
+        return NULL;
+    }
+
+    if (!check_size_and_type(l_max, Rl0, Rlm))
+        return NULL;
+
+    dims[0] = l_max+1;
+    //    Sl0 = PyArray_SimpleNew(1, dims, NPY_DOUBLE);
+    Sl0 = PyArray_ZEROS(1, dims, NPY_DOUBLE, NPY_FALSE);
+
+    dims[0] = lm2index(l_max, l_max)+1;
+    //    Slm = PyArray_SimpleNew(1, dims, NPY_CDOUBLE);
+    Slm = PyArray_ZEROS(1, dims, NPY_CDOUBLE, NPY_FALSE);
+
+    transform_multipole(PyArray_DATA(R), l_max,
+                     PyArray_DATA(Rl0), PyArray_DATA(Rlm),
+                     PyArray_DATA(Sl0), PyArray_DATA(Slm));
+
+    return Py_BuildValue("OO", Sl0, Slm);
+}
+
 
 

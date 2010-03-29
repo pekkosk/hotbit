@@ -33,6 +33,8 @@ static PyMethodDef hotbit_methods[] = {
       "due to a multipole at a certain distance." },
     { "local_to_local", py_local_to_local, METH_VARARGS,
       "Local-to-local transformation, i.e. shift the expansion origin to a new positions." },
+    { "transform_multipole", py_transform_multipole, METH_VARARGS,
+      "Transform a multipole moment given a linear cartesian transformation matrix." },
     { NULL, NULL, 0, NULL }
 };
 
