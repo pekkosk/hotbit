@@ -130,3 +130,20 @@ class MultipolePeriodicity:
         self.L = ( L0_l, L_L )
 
         self.timer.stop('multipole_to_local')
+
+        ###
+
+        self.phi  = np.zeros(len(a), dtype=float)
+        self.E    = np.zeros([len(a), 3], dtype=float)
+    
+        ###
+
+        self.timer.start('multipole_to_local')
+
+        for i in a:
+            loc0_l, loc_L       = local_to_local(i.get_position()-self.r0, self.l_max, L0_l, L_L, 1)
+            print loc0_l, loc_L
+            self.phi[i.index]   = loc0_l[0]
+            self.E[i.index, :]  = [ -loc_L[0].real, -loc_L[0].imag, loc0_l[1] ]
+
+        self.timer.stop('multipole_to_local')
