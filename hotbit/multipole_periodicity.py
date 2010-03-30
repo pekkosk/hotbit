@@ -8,6 +8,8 @@ of the shape (Gaussian/Slater) of the charges, which is short ranged and
 can be easily added later.
 """
 
+from math import sqrt
+
 import numpy as np
 
 from multipole import get_moments, zero_moments
@@ -15,6 +17,23 @@ from multipole import multipole_to_multipole, multipole_to_local
 from multipole import local_to_local, transform_multipole
 
 from box.timing import Timer
+
+
+def n_from_ranges(s, n):
+    r = [ ]
+
+    for i1, i2 in s:
+        if i1 == -np.Inf:
+            j1 = -n
+        else:
+            j1 = int(i1)
+        if i2 == np.Inf:
+            j2 = n+1
+        else:
+            j2 = int(i2)+1
+        r += [ ( j1, j2 ) ]
+
+    return r
 
 
 class MultipolePeriodicity:
@@ -51,49 +70,56 @@ class MultipolePeriodicity:
 
     def update(self, a, q):
         """
-        Compute multipoles.
+        Compute multipoles, do the transformations, and compute the electrostatic
+        potential and field on each atom in a.
 
         Parameters:
         -----------
-        r:   Hotbit Atoms object, or atoms object that implements the transform
+        a:   Hotbit Atoms object, or atoms object that implements the transform
              and rotation interface.
         q:   Charges
         """
         self.timer.start('multipole_to_multipole')
 
-        r  = a.get_positions()
+        nat  = len(a)
+        r    = a.get_positions()
 
-        # FIXME!!! Center of gravity okay?
+        # FIXME!!! Center of box okay?
         # Probably not, needs to center for
         # rotation operations.
-        self.r0  = np.sum(r, 0)/r.shape[0]
+        cell = a.get_cell()
+        self.r0  = ( cell[0, :] + cell[1, :] + cell[2, :] )/2
 
         T0_l, T_L = get_moments(r, q, self.l_max, self.r0)
 
         self.M = [ ( T0_l.copy(), T_L.copy() ) ]
 
-        s1, s2, s3  = a.get_symmetry_operation_ranges()
+        sym_ranges  = a.get_symmetry_operation_ranges()
+        n1, n2, n3  = n_from_ranges(sym_ranges, self.n)
 
         # Compute telescoped multipoles
         level = 1
-        for k in range(self.k-1):
+        for k in range(self.k-2):
             M0_l  = T0_l.copy()
             M_L   = T_L.copy()
 
-            for x1 in range(-self.n, self.n+1):
-                for x2 in range(-self.n, self.n+1):
-                    for x3 in range(-self.n, self.n+1):
+            for x1 in range(*n1):
+                for x2 in range(*n2):
+                    for x3 in range(*n3):
                         # Loop over all symmetry operations and compute
                         # telescoped multipoles
-                        # FIXME!!! Currently only support continuous symmetries,
+                        # FIXME!!! Currently only supports continuous symmetries,
                         # think about discrete/recurrent ones.
                         # FIXME!!! Currently assumes periodicity in all three
                         # spatial directions.
+                        # FIXME!!! *level* probably needs to multiply x1, x2 and x3.
+                        # Think about this.
+                        # FIXME!!! No rotations yet
 
                         # The origin is already okay, skip it
                         if x1 != 0 or x2 != 0 or x3 != 0:
-                            r = a.transform([0.0,0.0,0.0], [x1,x2,x3])*level
-                            multipole_to_multipole(r, self.l_max,
+                            r1 = a.transform(self.r0, [x1*level,x2*level,x3*level])
+                            multipole_to_multipole(r1-self.r0, self.l_max,
                                                    M0_l, M_L, T0_l, T_L)
 
             self.M += [ ( T0_l.copy(), T_L.copy() ) ]
@@ -107,25 +133,26 @@ class MultipolePeriodicity:
         self.timer.start('multipole_to_local')
 
         # Compute the local expansion from telescoped multipoles
-        L0_l, L_L  = zero_moments(self.l_max)
-        n_max      = self.n + 2*self.n+1
-        Mi         = len(self.M)
+        L0_l, L_L      = zero_moments(self.l_max)
+        nm1, nm2, nm3  = n_from_ranges(sym_ranges, self.n + 2*self.n + 1)
+        Mi             = len(self.M)-1
         for k in range(self.k-1):
-            level /= 2*self.n+1
-            Mi    -= 1
-
             M0_l, M_L  = self.M[Mi]
 
-            for x1 in range(-n_max, n_max+1):
-                for x2 in range(-n_max, n_max+1):
-                    for x3 in range(-n_max, n_max+1):
+            for x1 in range(*nm1):
+                for x2 in range(*nm2):
+                    for x3 in range(*nm3):
                         # Loop over all symmetry operations and compute the
                         # local expansion from the telescoped multipoles
 
                         # No local expansion in the inner region
-                        if abs(x1) > self.n and abs(x2) > self.n and abs(x3) > self.n:
-                            r = a.transform([0.0,0.0,0.0], [x1,x2,x3])*level
-                            multipole_to_local(-r, self.l_max, M0_l, M_L, L0_l, L_L)
+                        if abs(x1) > self.n or abs(x2) > self.n or abs(x3) > self.n:
+                            r1 = a.transform(self.r0, [x1*level,x2*level,x3*level])
+                            multipole_to_local(r1-self.r0, self.l_max,
+                                                M0_l, M_L, L0_l, L_L)
+
+            level /= 2*self.n+1
+            Mi    -= 1
 
         self.L = ( L0_l, L_L )
 
@@ -133,17 +160,77 @@ class MultipolePeriodicity:
 
         ###
 
-        self.phi  = np.zeros(len(a), dtype=float)
-        self.E    = np.zeros([len(a), 3], dtype=float)
+        self.phi  = np.zeros(nat, dtype=float)
+        self.E    = np.zeros([nat, 3], dtype=float)
     
         ###
 
-        self.timer.start('multipole_to_local')
+        self.timer.start('local_to_local')
 
         for i in a:
-            loc0_l, loc_L       = local_to_local(i.get_position()-self.r0, self.l_max, L0_l, L_L, 1)
-            print loc0_l, loc_L
+            loc0_l, loc_L       = local_to_local(i.get_position()-self.r0,
+                                                 self.l_max, L0_l, L_L, 1)
             self.phi[i.index]   = loc0_l[0]
             self.E[i.index, :]  = [ -loc_L[0].real, -loc_L[0].imag, loc0_l[1] ]
 
-        self.timer.stop('multipole_to_local')
+        self.timer.stop('local_to_local')
+
+        ###
+
+        self.timer.start('near_field')
+
+        for x1 in range(*n1):
+            for x2 in range(*n2):
+                for x3 in range(*n3):
+
+                    # self-interaction needs to be treated separately
+                    if x1 != 0 or x2 != 0 or x3 != 0:
+                        # construct a matrix with distances
+                        # FIXME!!! This does twice the work, but is probably
+                        # faster than using a Python loop
+                        r1        = a.transform(self.r0, [x1,x2,x3])
+
+                        dr        = r.reshape(nat, 1, 3) - (r1+r-self.r0).reshape(1, nat, 3)
+                        abs_dr    = np.sqrt(np.sum(dr*dr, axis=2))
+                        phi       = q/abs_dr
+                        E         = q.reshape(1, nat, 1)*dr/(abs_dr**3).reshape(nat, nat, 1)
+
+                        self.phi += np.sum(phi, axis=1)
+                        self.E   += np.sum(E, axis=1)
+
+        self.timer.stop('near_field')
+
+
+    def get_moments(self):
+        """
+        Return the multipole moments.
+        """
+        return self.M
+
+    
+    def get_local_expansion(self):
+        """
+        Return the local expansion of the potential.
+        """
+        return self.L
+
+
+    def get_potential(self):
+        """
+        Return the electrostatic potential for each atom.
+        """
+        return self.phi
+
+
+    def get_field(self):
+        """
+        Return the electrostatic field for each atom.
+        """
+        return self.E
+
+
+    def get_potential_and_field(self):
+        """
+        Return the both, the electrostatic potential and the field for each atom.
+        """
+        return self.phi, self.E
