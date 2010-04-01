@@ -214,13 +214,11 @@ class MultipoleExpansion:
 
         # Dipole correction for 3D sum
         s1, s2, s3 = sym_ranges
-        if s1[1] == np.Inf and s2[1] == np.Inf and s3[1] == np.Inf and False:
+        if s1[1] == np.Inf and s2[1] == np.Inf and s3[1] == np.Inf:
             Ml0, Mlm = self.M[0]
 
             dip  = np.array([-2*Mlm[0].real, 2*Mlm[0].imag, Ml0[1]])
             dip *= 4*pi/(3*a.get_volume())
-
-            #print Ml0
 
             self.phi -= np.dot(r-self.r0, dip)
             self.E   += dip

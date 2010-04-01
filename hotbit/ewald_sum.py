@@ -5,16 +5,23 @@ Ewald summation. Reference for the multipole summation.
 from math import log, pi, sqrt
 
 import numpy as np
-
+# FIXME!!! Requires scipy, contribute erfc to numpy
 from scipy.special import erfc
 
 from ase.units import Hartree, Bohr
 
+from box.timing import Timer
+
 
 class EwaldSum:
-    def __init__(self, accuracy_goal, weight):
+    def __init__(self, accuracy_goal, weight, timer=None):
         self.accuracy_goal  = accuracy_goal
         self.weight         = weight
+
+        if timer is None:
+            self.timer  = Timer('EwaldSum')
+        else:
+            self.timer  = timer
 
 
     def update(self, a, q):
@@ -36,6 +43,8 @@ class EwaldSum:
         cell_cv      = a.get_cell()
         rec_cell_vc  = np.linalg.inv(cell_cv)
         r_av         = a.get_positions()
+
+        self.timer.start('reciprocal sum')
 
         # Reciprocal sum
         lx, ly, lz   = np.sqrt(np.sum(rec_cell_vc**2, axis=0))
@@ -70,6 +79,10 @@ class EwaldSum:
                     ( si * np.sin(phase) + co * np.cos(phase) ),
                     axis=0 ), axis=0 ), axis=0 )
         self.phi *= 4*pi/a.get_volume()
+
+        self.timer.stop('reciprocal sum')
+
+        self.timer.start('real space sum')
 
         # Real space sum
         lx, ly, lz   = np.sqrt(np.sum(cell_cv**2, axis=1))
@@ -107,6 +120,8 @@ class EwaldSum:
         phi[np.diag_indices_from(phi)]   = 0.0
 
         self.phi += np.sum(phi, axis=1)
+
+        self.timer.stop('real space sum')
 
         # Self energy
         self.phi -= 2*q*sqrt(self.alpha/pi)
