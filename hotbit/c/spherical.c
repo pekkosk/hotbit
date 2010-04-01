@@ -21,7 +21,7 @@
 /*
  * Transform cartesian into spherical coordinates
  */
-void cartesian2spherical(double *r,         /* shape [3], distance vector */
+void cartesian_to_spherical(double *r,         /* shape [3], distance vector */
                          double *x,         /* absolute distance */
                          double *costh,     /* cos(theta) angle */
                          double *phi        /* phi angle */
@@ -76,7 +76,8 @@ void solid_harmonic_R(double x,
         for (m = 1; m <= l-2; ++m) {
             j = j+1;
 
-            Plm[j] = ( (2*l-1)*costh*Plm[lm2index(l-1, m)] - Plm[lm2index(l-2, m)] )/((l+m)*(l-m));
+            Plm[j] = ( (2*l-1)*costh*Plm[lm2index(l-1, m)] -
+                       Plm[lm2index(l-2, m)] )/((l+m)*(l-m));
         }
     }
 
@@ -208,7 +209,7 @@ void solid_harmonic_I(double x,
  */
 
 
-PyObject *py_cartesian2spherical(PyObject *self, PyObject *args)
+PyObject *py_cartesian_to_spherical(PyObject *self, PyObject *args)
 {
     PyObject *r, *s;
     double *sd;
@@ -231,7 +232,7 @@ PyObject *py_cartesian2spherical(PyObject *self, PyObject *args)
     s = PyArray_SimpleNew(1, dims, NPY_DOUBLE);
     sd = PyArray_DATA(s);
 
-    cartesian2spherical(PyArray_DATA(r), &sd[0], &sd[1], &sd[2]);
+    cartesian_to_spherical(PyArray_DATA(r), &sd[0], &sd[1], &sd[2]);
 
     Py_DECREF(r);
 
@@ -242,6 +243,7 @@ PyObject *py_cartesian2spherical(PyObject *self, PyObject *args)
 PyObject *py_solid_harmonic_R(PyObject *self, PyObject *args)
 {
     PyObject *dr;
+    double *drd;
     int l_max;
 
     double x, costh, phi;
@@ -263,8 +265,6 @@ PyObject *py_solid_harmonic_R(PyObject *self, PyObject *args)
         PyErr_SetString(PyExc_TypeError, "Distance vector needs to be float.");
         return NULL;
     }
-
-    cartesian2spherical(PyArray_DATA(dr), &x, &costh, &phi);
 
     if (Rl0) {
         if (!PyArray_ISFLOAT(Rl0)) {
@@ -302,7 +302,14 @@ PyObject *py_solid_harmonic_R(PyObject *self, PyObject *args)
         Rlm = PyArray_ZEROS(1, dims, NPY_CDOUBLE, NPY_FALSE);
     }
 
-    solid_harmonic_R(x, costh, phi, l_max, PyArray_DATA(Rl0), PyArray_DATA(Rlm));
+    drd = PyArray_DATA(dr);
+    if (drd[0] == 0 && drd[1] == 0 && drd[2] == 0) {
+        (*(double*) PyArray_DATA(Rl0)) += 1.0;
+    } else {
+        cartesian_to_spherical(drd, &x, &costh, &phi);
+        solid_harmonic_R(x, costh, phi, l_max,
+                         PyArray_DATA(Rl0), PyArray_DATA(Rlm));
+    }
 
     return Py_BuildValue("OO", Rl0, Rlm);
 }
@@ -332,7 +339,7 @@ PyObject *py_solid_harmonic_I(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    cartesian2spherical(PyArray_DATA(dr), &x, &costh, &phi);
+    cartesian_to_spherical(PyArray_DATA(dr), &x, &costh, &phi);
 
     if (Il0) {
         if (!PyArray_ISFLOAT(Il0)) {

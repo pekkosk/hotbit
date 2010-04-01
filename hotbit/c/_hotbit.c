@@ -19,7 +19,7 @@ static PyMethodDef hotbit_methods[] = {
       "Free the workspace of the generalized eigensolver." },
     { "fast_slako_transformations", py_fast_slako_transformations, METH_VARARGS,
       "Slater-Koster transformation." },
-    { "cartesian2spherical", py_cartesian2spherical, METH_VARARGS,
+    { "cartesian_to_spherical", py_cartesian_to_spherical, METH_VARARGS,
       "Transform cartesian into spherical coordinates." },
     { "solid_harmonic_R", py_solid_harmonic_R, METH_VARARGS,
       "Compute the regular solid harmonics." },

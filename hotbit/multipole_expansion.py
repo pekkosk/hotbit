@@ -1,5 +1,5 @@
 """
-This module contains the MultipolePeriodicity class, which computes the
+This module contains the MultipoleExpansion class, which computes the
 electrostatic potential and field for a set of point charges under the
 respective symmetry operations.
 
@@ -8,9 +8,11 @@ of the shape (Gaussian/Slater) of the charges, which is short ranged and
 can be easily added later.
 """
 
-from math import sqrt
+from math import pi, sqrt
 
 import numpy as np
+
+from ase.units import Hartree, Bohr
 
 from multipole import get_moments, zero_moments
 from multipole import multipole_to_multipole, multipole_to_local
@@ -36,10 +38,10 @@ def n_from_ranges(s, n):
     return r
 
 
-class MultipolePeriodicity:
+class MultipoleExpansion:
     def __init__(self, l_max=8, n=3, k=5, timer=None):
         """
-        Instantiate a new MultipolePeriodicity object which computes
+        Instantiate a new MultipoleExpansion object which computes
         the electrostatic interaction by direct summation using a
         telescoped multipole expansion.
 
@@ -54,7 +56,7 @@ class MultipolePeriodicity:
         if l_max < 1:
             raise ValueError("l_max must be >= 1.")
         if n % 2 != 1 or n < 3:
-            raise ValueError("k must be >= 3 and odd.")
+            raise ValueError("n must be >= 3 and odd.")
         if k < 1:
             raise ValueError("k must be >= 1.")
 
@@ -63,15 +65,15 @@ class MultipolePeriodicity:
         self.k      = k
 
         if timer is None:
-            self.timer  = Timer('MultipolePeriodicity')
+            self.timer  = Timer('MultipoleExpansion')
         else:
             self.timer  = timer
 
 
     def update(self, a, q):
         """
-        Compute multipoles, do the transformations, and compute the electrostatic
-        potential and field on each atom in a.
+        Compute multipoles, do the transformations, and compute the
+        electrostatic potential and field on each atom in a.
 
         Parameters:
         -----------
@@ -110,10 +112,6 @@ class MultipolePeriodicity:
                         # telescoped multipoles
                         # FIXME!!! Currently only supports continuous symmetries,
                         # think about discrete/recurrent ones.
-                        # FIXME!!! Currently assumes periodicity in all three
-                        # spatial directions.
-                        # FIXME!!! *level* probably needs to multiply x1, x2 and x3.
-                        # Think about this.
                         # FIXME!!! No rotations yet
 
                         # The origin is already okay, skip it
@@ -179,24 +177,57 @@ class MultipolePeriodicity:
 
         self.timer.start('near_field')
 
+        # Contributing of neighboring boxes
         for x1 in range(*n1):
             for x2 in range(*n2):
                 for x3 in range(*n3):
-
                     # self-interaction needs to be treated separately
                     if x1 != 0 or x2 != 0 or x3 != 0:
                         # construct a matrix with distances
-                        # FIXME!!! This does twice the work, but is probably
-                        # faster than using a Python loop
                         r1        = a.transform(self.r0, [x1,x2,x3])
 
-                        dr        = r.reshape(nat, 1, 3) - (r1+r-self.r0).reshape(1, nat, 3)
+                        dr        = r.reshape(nat, 1, 3) - \
+                            (r1+r-self.r0).reshape(1, nat, 3)
                         abs_dr    = np.sqrt(np.sum(dr*dr, axis=2))
                         phi       = q/abs_dr
-                        E         = q.reshape(1, nat, 1)*dr/(abs_dr**3).reshape(nat, nat, 1)
+                        E         = q.reshape(1, nat, 1)*dr/ \
+                            (abs_dr**3).reshape(nat, nat, 1)
 
                         self.phi += np.sum(phi, axis=1)
                         self.E   += np.sum(E, axis=1)
+
+        # Self-contribution
+        dr        = r.reshape(nat, 1, 3) - r.reshape(1, nat, 3)
+        abs_dr    = np.sqrt(np.sum(dr*dr, axis=2))
+
+        # Avoid divide by zero
+        abs_dr[np.diag_indices_from(abs_dr)]  = 1.0
+
+        phi       = q/abs_dr
+        E         = q.reshape(1, nat, 1)*dr/(abs_dr**3).reshape(nat, nat, 1)
+
+        phi[np.diag_indices_from(phi)]   = 0.0
+        E[np.diag_indices_from(phi), :]  = 0.0
+
+        self.phi += np.sum(phi, axis=1)
+        self.E   += np.sum(E, axis=1)
+
+        # Dipole correction for 3D sum
+        s1, s2, s3 = sym_ranges
+        if s1[1] == np.Inf and s2[1] == np.Inf and s3[1] == np.Inf and False:
+            Ml0, Mlm = self.M[0]
+
+            dip  = np.array([-2*Mlm[0].real, 2*Mlm[0].imag, Ml0[1]])
+            dip *= 4*pi/(3*a.get_volume())
+
+            #print Ml0
+
+            self.phi -= np.dot(r-self.r0, dip)
+            self.E   += dip
+
+        # Multiply with permittivity to convert to eV/A
+        self.phi *= Hartree*Bohr
+        self.E   *= Hartree*Bohr
 
         self.timer.stop('near_field')
 

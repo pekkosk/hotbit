@@ -11,7 +11,8 @@ L      l and m for l != 0
 
 import numpy as np
 
-from _hotbit import solid_harmonic_R, multipole_to_multipole, multipole_to_local, local_to_local, transform_multipole
+from _hotbit import solid_harmonic_R, multipole_to_multipole
+from _hotbit import multipole_to_local, local_to_local, transform_multipole
 
 
 def lm2index(l, m):
@@ -34,7 +35,8 @@ def zero_moments(l_max):
     Return array with zero moments.
     """
 
-    return np.zeros([l_max+1], dtype=float), np.zeros([lm2index(l_max,l_max)+1], dtype=complex)
+    return np.zeros([l_max+1], dtype=float), \
+        np.zeros([lm2index(l_max,l_max)+1], dtype=complex)
 
 
 def get_moments(r, q, l_max, r0):
