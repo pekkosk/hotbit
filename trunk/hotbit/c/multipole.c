@@ -42,7 +42,7 @@ void multipole_to_multipole(double *dr,                      /* shape [3] */
     int j, l, m, lambda, mu, sign;
 
 
-    cartesian2spherical(dr, &x, &costh, &phi);
+    cartesian_to_spherical(dr, &x, &costh, &phi);
 
     solid_harmonic_R(x, costh, phi, l_max, Rl0, Rlm);
 
@@ -130,7 +130,7 @@ void multipole_to_local(double *dr,             /* shape [3] */
     double complex cur_M, cur_I;
 
 
-    cartesian2spherical(dr, &x, &costh, &phi);
+    cartesian_to_spherical(dr, &x, &costh, &phi);
 
     solid_harmonic_I(x, costh, phi, 2*l_max, Il0, Ilm);
 
@@ -234,87 +234,106 @@ void local_to_local(double *dr,                /* shape [3] */
     double complex cur_L, cur_R;
 
 
-    /* Compute R for -dr */
-    cartesian2spherical(dr, &x, &costh, &phi);
+    if (dr[0] == 0.0 && dr[1] == 0.0 && dr[2] == 0.0) {
 
-    solid_harmonic_R(x, -costh, M_PI+phi, l_max_in, Rl0, Rlm);
+        m = min(l_max_in, l_max_out);
 
-    k = 0;
-    /* l_loop2 */
-    for (l = 0; l <= l_max_out; ++l) {
-
-        /*
-         * m = 0
-         */
-
-        /* lambda_loop3 */
-        for (lambda = 0; lambda <= l_max_in - l; ++lambda) {
-
-            /*
-             * mu = 0
-             */
-
-            Ll0_out[l] = Ll0_out[l]
-                + Ll0[l+lambda]*Rl0[lambda];
-
-            /*
-             * mu != 0
-             */
-
-            for (mu = 1; mu <= lambda; ++mu) {
-                Ll0_out[l] = Ll0_out[l]
-                    + 2*creal(Llm[lm2index(l+lambda, mu)]*conj(Rlm[lm2index(lambda, mu)]));
-            }
-
+        for (l = 0; l <= m; ++l) {
+            Ll0_out[l] += Ll0[l];
         }
-        /* lambda_loop3 */
 
-        /*
-         * m != 0
-         */
-
-        /* m_loop2 */
-        for (m = 1; m <= l; ++m) {
-            /* lambda_loop4 */ 
-            for (lambda = 0; lambda <= l_max_in - l; ++lambda) {
-
-                /* mu_loop2 */
-                for (mu = -lambda; mu <= lambda; ++mu) {
-                    if (m+mu < 0) {
-                        cur_L = pow(-1, -mu-m) * conj(Llm[lm2index(l+lambda, -m-mu)]);
-                    }
-                    else if (m+mu == 0) {
-                        cur_L = Ll0[l+lambda];
-                    }
-                    else {
-                        cur_L = Llm[lm2index(l+lambda, m+mu)];
-                    }
-
-                    if (mu < 0) {
-                        cur_R = pow(-1, -mu) * Rlm[lm2index(lambda, -mu)];
-                    }
-                    else if (mu == 0) {
-                        cur_R = Rl0[lambda];
-                    }
-                    else {
-                        cur_R = conj(Rlm[lm2index(lambda, mu)]);
-                    }
-
-                    Llm_out[k] = Llm_out[k] 
-                        + cur_L*cur_R;
-
-                }
-                /* mu_loop2 */
-
-            }
-            /* lambda_loop4 */
-
-            k = k + 1;
+        for (l = 0; l <= lm2index(m, m); ++l) {
+            Llm_out[l] += Llm[l];
         }
-        /* m_loop2 */
 
     }
-    /* l_loop2 */
+    else {
+
+        /* Compute R for -dr */
+        cartesian_to_spherical(dr, &x, &costh, &phi);
+
+        solid_harmonic_R(x, -costh, M_PI+phi, l_max_in, Rl0, Rlm);
+
+        k = 0;
+        /* l_loop2 */
+        for (l = 0; l <= l_max_out; ++l) {
+
+            /*
+             * m = 0
+             */
+
+            /* lambda_loop3 */
+            for (lambda = 0; lambda <= l_max_in - l; ++lambda) {
+
+                /*
+                 * mu = 0
+                 */
+
+                Ll0_out[l] = Ll0_out[l]
+                    + Ll0[l+lambda]*Rl0[lambda];
+
+                /*
+                 * mu != 0
+                 */
+
+                for (mu = 1; mu <= lambda; ++mu) {
+                    Ll0_out[l] = Ll0_out[l]
+                        + 2*creal(Llm[lm2index(l+lambda, mu)]*
+                                  conj(Rlm[lm2index(lambda, mu)]));
+                }
+
+            }
+            /* lambda_loop3 */
+            
+            /*
+             * m != 0
+             */
+
+            /* m_loop2 */
+            for (m = 1; m <= l; ++m) {
+                /* lambda_loop4 */ 
+                for (lambda = 0; lambda <= l_max_in - l; ++lambda) {
+
+                    /* mu_loop2 */
+                    for (mu = -lambda; mu <= lambda; ++mu) {
+                        if (m+mu < 0) {
+                            cur_L = pow(-1, -mu-m) *
+                                conj(Llm[lm2index(l+lambda, -m-mu)]);
+                        }
+                        else if (m+mu == 0) {
+                            cur_L = Ll0[l+lambda];
+                        }
+                        else {
+                            cur_L = Llm[lm2index(l+lambda, m+mu)];
+                        }
+                        
+                        if (mu < 0) {
+                            cur_R = pow(-1, -mu) * Rlm[lm2index(lambda, -mu)];
+                        }
+                        else if (mu == 0) {
+                            cur_R = Rl0[lambda];
+                        }
+                        else {
+                            cur_R = conj(Rlm[lm2index(lambda, mu)]);
+                        }
+
+                        Llm_out[k] = Llm_out[k] 
+                            + cur_L*cur_R;
+                        
+                    }
+                    /* mu_loop2 */
+
+                }
+                /* lambda_loop4 */
+
+                k = k + 1;
+            }
+            /* m_loop2 */
+
+        }
+        /* l_loop2 */
+
+    }
 
 }
 
@@ -339,9 +358,10 @@ void matrix_dot_multipole(int l,
                           )
 {
     int m, n;
-    double complex c;
 
 #ifdef DEBUG
+    double complex c;
+
     printf("=== l = %i ===\n", l);
 
     for (m = -l; m <= l; ++m) {
