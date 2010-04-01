@@ -17,7 +17,7 @@ from hotbit.ewald_sum import EwaldSum
 ###
 
 L_MAX  = 8
-N      = 3
+N      = 5
 K      = 5
 
 Q      = 1.0
@@ -27,26 +27,47 @@ debug  = True
 
 ###
 
+# FIXME!!! Look for more digits
+M_NaCl  = 1.747565
+M_CsCl  = 1.762675
+M_ZnS   = 1.6381
+
 systems = [
-    ( "NaCl", 1.747565, 0.5,
+    ( "NaCl", M_NaCl, 0.5,
        NaCl(['Na', 'Cl'],
             latticeconstant = a0,
             size            = [1, 1, 1]) ),
-#    ( "CsCl", 1.762675, sqrt(3.0)/2,
-#      CsCl(['Cs', 'Cl'],
-#          latticeconstant   = a0,
-#          size              = [1, 1, 1]) ),
-#    ( "ZnS", 1.6381, sqrt(3.0)/4,
-#      ZnS(['Zn', 'S'],
-#          latticeconstant   = a0,
-#          size              = [1, 1, 1]) )
+    ( "CsCl", M_CsCl, sqrt(3.0)/2,
+      CsCl(['Cs', 'Cl'],
+          latticeconstant   = a0,
+          size              = [1, 1, 1]) ),
+    ( "ZnS", M_ZnS, sqrt(3.0)/4,
+      ZnS(['Zn', 'S'],
+          latticeconstant   = a0,
+          size              = [1, 1, 1]) ),
+    ( "large NaCl", M_NaCl, 0.5,
+       NaCl(['Na', 'Cl'],
+            latticeconstant = a0,
+            size            = [4, 4, 4]) ),
+    ( "large CsCl", M_CsCl, sqrt(3.0)/2,
+      CsCl(['Cs', 'Cl'],
+          latticeconstant   = a0,
+          size              = [4, 4, 4]) ),
+    ( "large ZnS", M_ZnS, sqrt(3.0)/4,
+      ZnS(['Zn', 'S'],
+          latticeconstant   = a0,
+          size              = [4, 4, 4]) )
       ]
 
 solvers = [
     MultipoleExpansion(L_MAX, N, K),
-#    MultipoleExpansion(L_MAX, 3, 1),
-    EwaldSum(12, 0.01)
+    EwaldSum(12, 0.001)
 ]
+
+if debug:
+    print "%20s   %8s  %8s  (%8s)" % ( "compound", "M", "ref.", "error" )
+    print "%20s   %8s  %8s  %10s" % ( "-------------------",
+                                       "--------", "--------", "----------" )
 
 for sol in solvers:
     print "=== %s ===" % sol.__class__
@@ -65,10 +86,15 @@ for sol in solvers:
         phi  = sol.get_potential()
         e    = np.sum(a.get_charges()*phi)
         M    = -e*a0*nnd/(len(a)*Hartree*Bohr)
+        err  = abs(M-target_M)
 
         if debug:
-            print phi
-            print e/len(a)
-            print name, M, target_M
+            print "%20s   %8.6f  %8.6f  (%8.6e)" % ( name, M, target_M, err )
+
+        assert err < 1e-3
 
             
+
+if debug:
+    for sol in solvers:
+        sol.timer.summary()
