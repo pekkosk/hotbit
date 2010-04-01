@@ -34,11 +34,11 @@ class EwaldSum:
         self.r_cutoff    = sqrt(log(10.0)*self.accuracy_goal/self.alpha)
 
         cell_cv      = a.get_cell()
-        rec_cell_cv  = np.transpose(np.linalg.inv(cell_cv))
+        rec_cell_vc  = np.linalg.inv(cell_cv)
         r_av         = a.get_positions()
 
         # Reciprocal sum
-        lx, ly, lz   = np.sqrt(np.sum(rec_cell_cv**2, axis=1))
+        lx, ly, lz   = np.sqrt(np.sum(rec_cell_vc**2, axis=0))
 
         maxGx  = int(self.G_cutoff/(2*pi*lx))+1
         maxGy  = int(self.G_cutoff/(2*pi*ly))+1
@@ -49,19 +49,17 @@ class EwaldSum:
         Gz  = 2*pi * np.arange(-maxGz, maxGz+1).reshape( 1,  1, -1,  1)
 
         G   = Gx*np.array([1,0,0])+Gy*np.array([0,1,0])+Gz*np.array([0,0,1])
-        G   = np.dot(G, rec_cell_cv)
+        G   = np.dot(G, rec_cell_vc)
 
-        si  = np.sum( np.sin(np.dot(G, np.transpose(
-                        q.reshape(-1,1)*r_av))), axis=3)
-        co  = np.sum( np.cos(np.dot(G, np.transpose(
-                        q.reshape(-1,1)*r_av))), axis=3)
+        si  = np.sum( np.sin(np.tensordot(G, r_av, axes=(3,1)))*q, axis=3)
+        co  = np.sum( np.cos(np.tensordot(G, r_av, axes=(3,1)))*q, axis=3)
 
         G_sq   = np.sum( G*G, axis=3 )
 
         rec_G_sq = 1.0/G_sq
         rec_G_sq[maxGx, maxGy, maxGz] = 0.0
 
-        phase  = np.dot(G, np.transpose(r_av))
+        phase  = np.tensordot(G, r_av, axes=(3, 1))
 
         si.shape = ( 2*maxGx+1, 2*maxGy+1, 2*maxGz+1, 1 )
         co.shape = ( 2*maxGx+1, 2*maxGy+1, 2*maxGz+1, 1 )
@@ -73,20 +71,12 @@ class EwaldSum:
                     axis=0 ), axis=0 ), axis=0 )
         self.phi *= 4*pi/a.get_volume()
 
-        print self.phi
-
         # Real space sum
         lx, ly, lz   = np.sqrt(np.sum(cell_cv**2, axis=1))
 
         maxrx  = int(self.r_cutoff/lx)+1
         maxry  = int(self.r_cutoff/ly)+1
         maxrz  = int(self.r_cutoff/lz)+1
-
-        print maxrx, maxry, maxrz
-
-        maxrx = 1
-        maxry = 1
-        maxrz = 1
 
         nat  = len(a)
         r    = a.get_positions()
@@ -101,23 +91,26 @@ class EwaldSum:
                         abs_dr    = np.sqrt(np.sum(dr*dr, axis=2))
 
                         phi       = q*erfc(self.sqrt_alpha*abs_dr)/abs_dr
-                        #phi  = q/abs_dr
 
                         self.phi += np.sum(phi, axis=1)
+                        
 
-        # Self-contribution
+        ## Self-contribution
         dr        = r.reshape(nat, 1, 3) - r.reshape(1, nat, 3)
         abs_dr    = np.sqrt(np.sum(dr*dr, axis=2))
 
-        # Avoid divide by zero
+        ## Avoid divide by zero
         abs_dr[np.diag_indices_from(abs_dr)]  = 1.0
 
         phi       = q*erfc(self.sqrt_alpha*abs_dr)/abs_dr
-        #phi       = q/abs_dr
 
         phi[np.diag_indices_from(phi)]   = 0.0
 
         self.phi += np.sum(phi, axis=1)
+
+        # Self energy
+        self.phi -= 2*q*sqrt(self.alpha/pi)
+
         self.phi *= Hartree*Bohr
 
 
