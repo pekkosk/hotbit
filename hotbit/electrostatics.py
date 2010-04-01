@@ -1,18 +1,43 @@
+"""
+Compute electrostatic interaction and construct the 'electrostatic'
+matrix h1 containing the shift in on-site energies.
+
+This module only adds the contribution of the shape of the charge (currently
+only Gaussian). The interaction of point charges is compute by either the Ewald
+or MultipoleExpansion class.
+"""
+
 # Copyright (C) 2008 NSC Jyvaskyla
 # Please see the accompanying LICENSE file for further information.
 
-import numpy as nu
-from scipy.special import erf
-from hotbit import auxil
-from math import sqrt,pi,exp
+from math import exp, log, pi, sqrt
 from weakref import proxy
 from math import sqrt
+
+import numpy as nu
+from scipy.special import erf, erfc
 norm=nu.linalg.norm
 dot=nu.dot
 
+from ase.units import Bohr
+
+from hotbit.ewald_sum import EwaldSum
+from hotbit.multipole_expansion import MultipoleExpansion
+
+
+# Some constants
+log2 = log(2.0)
+
+
+# List of available point-charge Coulomb solvers
+str_to_solver = {
+    'ewald': EwaldSum,
+    'me':    MultipoleExpansion
+    }
+
 
 class Electrostatics:
-    def __init__(self,calc):
+    def __init__(self, calc, solver=None, solver_args={}):
         self.calc=proxy(calc)
         self.norb=calc.el.get_nr_orbitals()
         self.SCC=calc.get('SCC')
@@ -21,12 +46,23 @@ class Electrostatics:
         self.G=nu.zeros((self.N,self.N))
         self.dG=nu.zeros((self.N,self.N,3))
 
+        if solver is None:
+            self.solver = None
+            self.gamma  = self.gamma_direct
+        else:
+            self.solver = str_to_solver[solver](timer = self.calc.timer,
+                                                **solver_args)
+            self.gamma  = self.gamma_correction
+
 
     def set_dq(self,dq):
         """ (Re)setting dq gives new gamma-potential. """
         self.dq=dq
-        self.epsilon = nu.array( [dot(self.G[i,:],self.dq) for i in range(self.N)] )
-            
+        self.epsilon = nu.sum(self.G*self.dq, axis=1)
+        if self.solver is not None:
+            self.solver.update(self.calc.el.atoms, dq)
+            self.epsilon += self.solver.get_potential()*Bohr
+
 
     def coulomb_energy(self):
         """ Return Coulomb energy. """
@@ -46,10 +82,12 @@ class Electrostatics:
             return nu.zeros((self.N,3))
         else:
             self.calc.start_timing('f_es')
-            f = nu.zeros((self.N,3))
-            for a in range(3):
-                depsilon = [dot(self.dq,self.dG[k,:,a]) for k in range(self.N)]
-                f[:,a] = self.dq * depsilon 
+            if self.solver is None:
+                E = nu.zeros((self.N,3))
+            else:
+                E = self.solver.get_field()
+            depsilon  = nu.sum(self.dq.reshape(1, -1, 1)*self.dG, axis=1)
+            f         = self.dq.reshape(-1, 1) * ( depsilon + E )
             self.calc.stop_timing('f_es')
             return f
 
@@ -97,14 +135,15 @@ class Electrostatics:
         G=nu.zeros((self.N,self.N))
         dG=nu.zeros((self.N,self.N,3))
         rijn, dijn = self.calc.el.get_distances()
-        
+
         lst=self.calc.el.get_property_lists(['i','s'])
         
         for i,si in lst:
             for j,sj in lst[i:]:
                 G[i,j] = sum( [g(si,sj,d) for d in dijn[:,i,j]] )
-                
-                aux = nu.array([ g(si,sj,d,der=1)*r/d for (d,r) in zip(dijn[:,i,j],rijn[:,i,j]) ])
+
+                aux = nu.array([ g(si,sj,d,der=1)*r/d
+                                 for (d,r) in zip(dijn[:,i,j],rijn[:,i,j]) ])
                 if i==j:
                     # exclude n=(0,0,0) from derivatives
                     dG[i,j] = aux[1:,:].sum(axis=0)
@@ -118,25 +157,25 @@ class Electrostatics:
         self.ext = nu.array( [self.calc.env.phi(i) for i in range(self.N)] )
         self.calc.stop_timing('gamma matrix')
 
-                            
-                
 
-
-    def gamma(self,si,sj,r,der=0):
+    def gamma_correction(self,si,sj,r,der=0):
         '''
         Return the gamma for atoms i and j.
-        
-        gamma_ij(r) = erf(c*r)/r * erfc(r/cut)
+        Note that this does not contain the contribution of
+        the point charges, and is hence short ranged.
+
+        gamma_ij(r) = -erfc(c*r)/r * erfc(r/cut)
         
         @param i: atom index (only element information)
         @param j: atom index2 (only element information)
         @param r: distance between atoms.
         @param der: 0 = gamma(r); 1 = dgamma(r)/dr 
         '''
-        cut = self.calc.get('gamma_cut') # for more rapid decay of Coulomb potential
+        # If the correction is used, the system is periodic anyway and hence
+        # 'gamma_cut' is not supported
         ei, ej = [self.calc.el.get_element(s) for s in (si,sj)]
         wi, wj = ei.get_FWHM(), ej.get_FWHM()
-        const=2*nu.sqrt( nu.log(2.0)/(wi**2+wj**2) )
+        const=2*sqrt( log2/(wi**2+wj**2) )
         if r<1E-10:
             assert si==sj
             if der==1:
@@ -144,7 +183,38 @@ class Electrostatics:
             else:
                 return ei.get_U()
         else:
-            ecr=erf(const*r)
+            ecr = -erfc(const*r)
+            if der==0:
+                return ecr/r
+            elif der==1:
+                decr=2/sqrt(pi)*exp(-(const*r)**2)*const - 1/r
+                return (decr - ecr/r)/r 
+            
+                
+    def gamma_direct(self,si,sj,r,der=0):
+        '''
+        Return the gamma for atoms i and j.
+
+        gamma_ij(r) = -erfc(c*r)/r * erfc(r/cut)
+        
+        @param i: atom index (only element information)
+        @param j: atom index2 (only element information)
+        @param r: distance between atoms.
+        @param der: 0 = gamma(r); 1 = dgamma(r)/dr 
+        '''
+        # for more rapid decay of Coulomb potential
+        cut = self.calc.get('gamma_cut')
+        ei, ej = [self.calc.el.get_element(s) for s in (si,sj)]
+        wi, wj = ei.get_FWHM(), ej.get_FWHM()
+        const=2*sqrt( log2/(wi**2+wj**2) )
+        if r<1E-10:
+            assert si==sj
+            if der==1:
+                return nu.zeros((3))
+            else:
+                return ei.get_U()
+        else:
+            ecr = erf(const*r)
             if der==0:
                 if cut==None:
                     return ecr/r
@@ -155,7 +225,7 @@ class Electrostatics:
                 if cut==None:
                     return (decr - ecr/r)/r 
                 else:
-                    f=(1-erf(r/cut))
+                    f=erfc(r/cut)
                     df=-2/sqrt(pi)*exp(-(r/cut)**2)/cut
                     return (df*ecr + f*decr - f*ecr/r)/r 
             

@@ -37,8 +37,8 @@ def D(l, m, n, a, b, g):
 
 ANGLE       = 10*pi/180
 
-NRUNS       = 100
-NAT         = 100
+NRUNS       = 10
+NAT         = 20
 SX, SY, SZ  = 10.0, 10.0, 10.0
 CHARGE      = 1.0
 L_MAX       = 5
