@@ -1,6 +1,13 @@
 """
-Ewald summation. Reference for the multipole summation.
+Ewald summation.
+
+The potential and field returned here does not include the contribution
+of the shape (Gaussian/Slater) of the charges, which is short ranged and
+can be easily added later.
 """
+
+# Copyright (C) 2010 NSC Jyvaskyla, Fh-IWM
+# Please see the accompanying LICENSE file for further information.
 
 from math import log, pi, sqrt
 
@@ -8,11 +15,10 @@ import numpy as np
 # FIXME!!! Requires scipy, contribute erfc to numpy
 from scipy.special import erfc
 
-from ase.units import Hartree, Bohr
-
 from box.timing import Timer
 
 
+# FIXME!!! No field yet in Ewald sum
 class EwaldSum:
     def __init__(self, accuracy_goal, weight, timer=None):
         self.accuracy_goal  = accuracy_goal
@@ -73,12 +79,12 @@ class EwaldSum:
         si.shape = ( 2*maxGx+1, 2*maxGy+1, 2*maxGz+1, 1 )
         co.shape = ( 2*maxGx+1, 2*maxGy+1, 2*maxGz+1, 1 )
 
-        self.phi  = np.sum( np.sum( np.sum(
+        self.phi_a  = np.sum( np.sum( np.sum(
                     ( np.exp(-G_sq/(4*self.alpha))*rec_G_sq 
                       ).reshape(2*maxGx+1, 2*maxGy+1, 2*maxGz+1, 1) *
                     ( si * np.sin(phase) + co * np.cos(phase) ),
                     axis=0 ), axis=0 ), axis=0 )
-        self.phi *= 4*pi/a.get_volume()
+        self.phi_a *= 4*pi/a.get_volume()
 
         self.timer.stop('reciprocal sum')
 
@@ -97,15 +103,15 @@ class EwaldSum:
             for y in range(-maxry, maxry+1):
                 for z in range(-maxrz, maxrz+1):
                     if x != 0 or y != 0 or z != 0:
-                        r1        = np.dot([x,y,z], cell_cv)
+                        r1          = np.dot([x,y,z], cell_cv)
 
-                        dr        = r.reshape(nat, 1, 3) - \
+                        dr          = r.reshape(nat, 1, 3) - \
                             (r1+r).reshape(1, nat, 3)
-                        abs_dr    = np.sqrt(np.sum(dr*dr, axis=2))
+                        abs_dr      = np.sqrt(np.sum(dr*dr, axis=2))
 
-                        phi       = q*erfc(self.sqrt_alpha*abs_dr)/abs_dr
+                        phi         = q*erfc(self.sqrt_alpha*abs_dr)/abs_dr
 
-                        self.phi += np.sum(phi, axis=1)
+                        self.phi_a += np.sum(phi, axis=1)
                         
 
         ## Self-contribution
@@ -119,19 +125,16 @@ class EwaldSum:
 
         phi[np.diag_indices_from(phi)]   = 0.0
 
-        self.phi += np.sum(phi, axis=1)
+        self.phi_a += np.sum(phi, axis=1)
 
         self.timer.stop('real space sum')
 
         # Self energy
-        self.phi -= 2*q*sqrt(self.alpha/pi)
-
-        self.phi *= Hartree*Bohr
-
+        self.phi_a -= 2*q*sqrt(self.alpha/pi)
 
 
     def get_potential(self):
         """
         Return the electrostatic potential for each atom.
         """
-        return self.phi
+        return self.phi_a

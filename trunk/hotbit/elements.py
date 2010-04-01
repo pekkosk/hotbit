@@ -192,21 +192,6 @@ class Elements:
                     if nt==(0,0,0): continue
                     # check that any atom interacts with this unit cell
                     R = nu.array([self.nvector(r=i,ntuple=nt) for i in xrange(self.N)])
-                    # The following loop is computed in fortran for speed-up
-                    #add = False
-                    #for i in xrange(self.N):
-                    #    if add: break
-                    #    for j in xrange(self.N):
-                    #        dR = self.Rn[0][i]-R[j]
-                    #        if dR[0]**2+dR[1]**2+dR[2]**2 <= cut2[i,j]: 
-                    #            add = True
-                    #            break
-
-                    #rn = nu.array(self.Rn[0]).transpose()
-                    #r = nu.array(R).transpose()
-                    #cut = cut2.transpose()
-                    #addn = fortran_doublefor(rn, r, cut, self.N)
-
                     rn  = nu.array(self.Rn[0])
 
                     dRt = rn[:, 0].reshape(1,-1)-R[:, 0].reshape(-1,1)
@@ -217,16 +202,6 @@ class Elements:
                     dR += dRt*dRt
                     addn = nu.any(dR <= cut2)
                     
-                    # into C extension!!
-                    #addn = False
-                    #for i in xrange(self.N):
-                    #    for j in xrange(self.N):
-                    #        dij = nu.linalg.norm( self.Rn[0][i]-R[j] )
-                    #        if dij < self.calc.ia.hscut[i,j]:
-                    #            ijn[i,j,ijnn[i,j]] = n
-                    #            ijnn[i,j] += 1 
-                    #            addn = True
-                                                            
                     if addn:
                         n += 1
                         self.ntuples.append(nt)

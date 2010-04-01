@@ -5,7 +5,6 @@ from math import sqrt
 import numpy as np
 
 from ase import Atoms, write
-from ase.units import Hartree, Bohr
 from ase.lattice.compounds import CsCl, NaCl, ZnS
 
 from hotbit.atoms import Atoms as HotbitAtoms
@@ -23,7 +22,7 @@ K      = 5
 Q      = 1.0
 a0     = 1.0
 
-debug  = True
+debug  = False
 
 ###
 
@@ -45,18 +44,19 @@ systems = [
       ZnS(['Zn', 'S'],
           latticeconstant   = a0,
           size              = [1, 1, 1]) ),
-    ( "large NaCl", M_NaCl, 0.5,
-       NaCl(['Na', 'Cl'],
-            latticeconstant = a0,
-            size            = [4, 4, 4]) ),
-    ( "large CsCl", M_CsCl, sqrt(3.0)/2,
-      CsCl(['Cs', 'Cl'],
-          latticeconstant   = a0,
-          size              = [4, 4, 4]) ),
-    ( "large ZnS", M_ZnS, sqrt(3.0)/4,
-      ZnS(['Zn', 'S'],
-          latticeconstant   = a0,
-          size              = [4, 4, 4]) )
+# Some extended tests, not necessary
+#    ( "large NaCl", M_NaCl, 0.5,
+#       NaCl(['Na', 'Cl'],
+#            latticeconstant = a0,
+#            size            = [4, 4, 4]) ),
+#    ( "large CsCl", M_CsCl, sqrt(3.0)/2,
+#      CsCl(['Cs', 'Cl'],
+#          latticeconstant   = a0,
+#          size              = [4, 4, 4]) ),
+#    ( "large ZnS", M_ZnS, sqrt(3.0)/4,
+#      ZnS(['Zn', 'S'],
+#          latticeconstant   = a0,
+#          size              = [4, 4, 4]) )
       ]
 
 solvers = [
@@ -70,7 +70,8 @@ if debug:
                                        "--------", "--------", "----------" )
 
 for sol in solvers:
-    print "=== %s ===" % sol.__class__
+    if debug:
+        print "=== %s ===" % sol.__class__
     for name, target_M, nnd, a in systems:
         syms = a.get_chemical_symbols()
         a.set_charges([ Q if sym == syms[0] else -Q for sym in syms ])
@@ -85,7 +86,7 @@ for sol in solvers:
 
         phi  = sol.get_potential()
         e    = np.sum(a.get_charges()*phi)
-        M    = -e*a0*nnd/(len(a)*Hartree*Bohr)
+        M    = -e*a0*nnd/(len(a))
         err  = abs(M-target_M)
 
         if debug:

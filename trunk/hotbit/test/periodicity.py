@@ -15,7 +15,7 @@ CHARGE      = 1.0
 
 L_MAX       = 8
 
-debug  = True
+debug  = False
 
 # There is something wrong with the moments here.
 # The error should go down with increasing N.

@@ -8,11 +8,12 @@ of the shape (Gaussian/Slater) of the charges, which is short ranged and
 can be easily added later.
 """
 
+# Copyright (C) 2010 NSC Jyvaskyla, Fh-IWM
+# Please see the accompanying LICENSE file for further information.
+
 from math import pi, sqrt
 
 import numpy as np
-
-from ase.units import Hartree, Bohr
 
 from multipole import get_moments, zero_moments
 from multipole import multipole_to_multipole, multipole_to_local
@@ -116,7 +117,8 @@ class MultipoleExpansion:
 
                         # The origin is already okay, skip it
                         if x1 != 0 or x2 != 0 or x3 != 0:
-                            r1 = a.transform(self.r0, [x1*level,x2*level,x3*level])
+                            r1 = a.transform(self.r0,
+                                             [x1*level, x2*level, x3*level])
                             multipole_to_multipole(r1-self.r0, self.l_max,
                                                    M0_l, M_L, T0_l, T_L)
 
@@ -144,10 +146,12 @@ class MultipoleExpansion:
                         # local expansion from the telescoped multipoles
 
                         # No local expansion in the inner region
-                        if abs(x1) > self.n or abs(x2) > self.n or abs(x3) > self.n:
-                            r1 = a.transform(self.r0, [x1*level,x2*level,x3*level])
+                        if abs(x1) > self.n or abs(x2) > self.n or \
+                                abs(x3) > self.n:
+                            r1 = a.transform(self.r0,
+                                             [x1*level, x2*level, x3*level])
                             multipole_to_local(r1-self.r0, self.l_max,
-                                                M0_l, M_L, L0_l, L_L)
+                                               M0_l, M_L, L0_l, L_L)
 
             level /= 2*self.n+1
             Mi    -= 1
@@ -158,18 +162,20 @@ class MultipoleExpansion:
 
         ###
 
-        self.phi  = np.zeros(nat, dtype=float)
-        self.E    = np.zeros([nat, 3], dtype=float)
+        self.phi_a  = np.zeros(nat, dtype=float)
+        self.E_av    = np.zeros([nat, 3], dtype=float)
     
         ###
 
         self.timer.start('local_to_local')
 
         for i in a:
-            loc0_l, loc_L       = local_to_local(i.get_position()-self.r0,
-                                                 self.l_max, L0_l, L_L, 1)
-            self.phi[i.index]   = loc0_l[0]
-            self.E[i.index, :]  = [ -loc_L[0].real, -loc_L[0].imag, loc0_l[1] ]
+            loc0_l, loc_L          = local_to_local(i.get_position()-self.r0,
+                                                   self.l_max, L0_l, L_L, 1)
+            self.phi_a[i.index]    = loc0_l[0]
+            self.E_av[i.index, :]  = [ -loc_L[0].real,
+                                       -loc_L[0].imag,
+                                        loc0_l[1] ]
 
         self.timer.stop('local_to_local')
 
@@ -184,17 +190,17 @@ class MultipoleExpansion:
                     # self-interaction needs to be treated separately
                     if x1 != 0 or x2 != 0 or x3 != 0:
                         # construct a matrix with distances
-                        r1        = a.transform(self.r0, [x1,x2,x3])
+                        r1      = a.transform(self.r0, [x1,x2,x3])
 
-                        dr        = r.reshape(nat, 1, 3) - \
+                        dr      = r.reshape(nat, 1, 3) - \
                             (r1+r-self.r0).reshape(1, nat, 3)
-                        abs_dr    = np.sqrt(np.sum(dr*dr, axis=2))
-                        phi       = q/abs_dr
-                        E         = q.reshape(1, nat, 1)*dr/ \
+                        abs_dr  = np.sqrt(np.sum(dr*dr, axis=2))
+                        phi     = q/abs_dr
+                        E       = q.reshape(1, nat, 1)*dr/ \
                             (abs_dr**3).reshape(nat, nat, 1)
 
-                        self.phi += np.sum(phi, axis=1)
-                        self.E   += np.sum(E, axis=1)
+                        self.phi_a += np.sum(phi, axis=1)
+                        self.E_av  += np.sum(E, axis=1)
 
         # Self-contribution
         dr        = r.reshape(nat, 1, 3) - r.reshape(1, nat, 3)
@@ -209,8 +215,8 @@ class MultipoleExpansion:
         phi[np.diag_indices_from(phi)]   = 0.0
         E[np.diag_indices_from(phi), :]  = 0.0
 
-        self.phi += np.sum(phi, axis=1)
-        self.E   += np.sum(E, axis=1)
+        self.phi_a += np.sum(phi, axis=1)
+        self.E_av  += np.sum(E, axis=1)
 
         # Dipole correction for 3D sum
         s1, s2, s3 = sym_ranges
@@ -220,12 +226,8 @@ class MultipoleExpansion:
             dip  = np.array([-2*Mlm[0].real, 2*Mlm[0].imag, Ml0[1]])
             dip *= 4*pi/(3*a.get_volume())
 
-            self.phi -= np.dot(r-self.r0, dip)
-            self.E   += dip
-
-        # Multiply with permittivity to convert to eV/A
-        self.phi *= Hartree*Bohr
-        self.E   *= Hartree*Bohr
+            self.phi_a -= np.dot(r-self.r0, dip)
+            self.E_av  += dip
 
         self.timer.stop('near_field')
 
@@ -248,18 +250,18 @@ class MultipoleExpansion:
         """
         Return the electrostatic potential for each atom.
         """
-        return self.phi
+        return self.phi_a
 
 
     def get_field(self):
         """
         Return the electrostatic field for each atom.
         """
-        return self.E
+        return self.E_av
 
 
     def get_potential_and_field(self):
         """
         Return the both, the electrostatic potential and the field for each atom.
         """
-        return self.phi, self.E
+        return self.phi_a, self.E_av
