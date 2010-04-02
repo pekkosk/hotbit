@@ -225,8 +225,7 @@ class Atoms(ase_Atoms):
         cp.set_cell( self.get_cell() )
         return cp
         
+    def __imul__(self, m):
+        raise NotImplementedError('*= not implemented yet, use extended_copy.')
 
 
-
-
-                  

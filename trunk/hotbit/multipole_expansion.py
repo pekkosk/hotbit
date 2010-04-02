@@ -26,14 +26,20 @@ def n_from_ranges(s, n):
     r = [ ]
 
     for i1, i2 in s:
-        if i1 == -np.Inf:
+        if i1 == 0:
+            j1 = 0
+        elif i1 == -np.Inf:
             j1 = -n
         else:
-            j1 = int(i1)
-        if i2 == np.Inf:
+#            j1 = int(i1)
+            j1 = -n
+        if i2 == 0:
+            j2 = 1
+        elif i2 == np.Inf:
             j2 = n+1
         else:
-            j2 = int(i2)+1
+#            j2 = int(i2)+1
+            j2 = n+1
         r += [ ( j1, j2 ) ]
 
     return r
@@ -70,8 +76,31 @@ class MultipoleExpansion:
         else:
             self.timer  = timer
 
+        # Last positions
+        self.r_av  = None
+        # Last charges
+        self.q_a   = None
+        # Last expansion origin
+        self.r0_v  = None
 
-    def update(self, a, q):
+
+    def update(self, a, q=None, r0=None):
+        if q is None:
+            q = a.get_charges()
+
+        if r0 is None:
+            r0 = np.zeros(3, dtype=float)
+
+        r = a.get_positions()
+        # FIXME!!! Check for change in cell, symmetries
+        if self.r_av is None or self.q_a is None or self.r0_v is None:
+           self._update(a, q, r0)
+        elif np.any(r != self.r_av) or np.any(q != self.q_a) or \
+                np. any(r0 != self.r0_v):
+           self._update(a, q, r0)
+
+
+    def _update(self, a, q, r0=None):
         """
         Compute multipoles, do the transformations, and compute the
         electrostatic potential and field on each atom in a.
@@ -81,19 +110,18 @@ class MultipoleExpansion:
         a:   Hotbit Atoms object, or atoms object that implements the transform
              and rotation interface.
         q:   Charges
+        r0:  Origin of the expansion
         """
         self.timer.start('multipole_to_multipole')
+
+        self.r_av  = a.get_positions().copy()
+        self.q_a   = q.copy()
+        self.r0_v  = r0
 
         nat  = len(a)
         r    = a.get_positions()
 
-        # FIXME!!! Center of box okay?
-        # Probably not, needs to center for
-        # rotation operations.
-        cell = a.get_cell()
-        self.r0  = ( cell[0, :] + cell[1, :] + cell[2, :] )/2
-
-        T0_l, T_L = get_moments(r, q, self.l_max, self.r0)
+        T0_l, T_L = get_moments(r, q, self.l_max, self.r0_v)
 
         self.M = [ ( T0_l.copy(), T_L.copy() ) ]
 
@@ -111,16 +139,18 @@ class MultipoleExpansion:
                     for x3 in range(*n3):
                         # Loop over all symmetry operations and compute
                         # telescoped multipoles
-                        # FIXME!!! Currently only supports continuous symmetries,
-                        # think about discrete/recurrent ones.
-                        # FIXME!!! No rotations yet
+                        # FIXME!!! Currently only supports continuous
+                        # symmetries, think about discrete/recurrent ones.
 
                         # The origin is already okay, skip it
                         if x1 != 0 or x2 != 0 or x3 != 0:
-                            r1 = a.transform(self.r0,
-                                             [x1*level, x2*level, x3*level])
-                            multipole_to_multipole(r1-self.r0, self.l_max,
-                                                   M0_l, M_L, T0_l, T_L)
+                            r1  = a.transform(self.r0_v,
+                                              [x1*level, x2*level, x3*level])
+                            T   = a.rotation([x1*level, x2*level, x3*level])
+                            S0_L, S_l = transform_multipole(T, self.l_max,
+                                                            M0_l, M_L)
+                            multipole_to_multipole(r1-self.r0_v, self.l_max,
+                                                   S0_L, S_l, T0_l, T_L)
 
             self.M += [ ( T0_l.copy(), T_L.copy() ) ]
 
@@ -148,10 +178,13 @@ class MultipoleExpansion:
                         # No local expansion in the inner region
                         if abs(x1) > self.n or abs(x2) > self.n or \
                                 abs(x3) > self.n:
-                            r1 = a.transform(self.r0,
+                            r1  = a.transform(self.r0_v,
                                              [x1*level, x2*level, x3*level])
-                            multipole_to_local(r1-self.r0, self.l_max,
-                                               M0_l, M_L, L0_l, L_L)
+                            T   = a.rotation([x1*level, x2*level, x3*level])
+                            S0_L, S_l = transform_multipole(T, self.l_max,
+                                                            M0_l, M_L)
+                            multipole_to_local(r1-self.r0_v, self.l_max,
+                                               S0_L, S_l, L0_l, L_L)
 
             level /= 2*self.n+1
             Mi    -= 1
@@ -170,7 +203,7 @@ class MultipoleExpansion:
         self.timer.start('local_to_local')
 
         for i in a:
-            loc0_l, loc_L          = local_to_local(i.get_position()-self.r0,
+            loc0_l, loc_L          = local_to_local(i.get_position()-self.r0_v,
                                                    self.l_max, L0_l, L_L, 1)
             self.phi_a[i.index]    = loc0_l[0]
             self.E_av[i.index, :]  = [ -loc_L[0].real,
@@ -190,10 +223,13 @@ class MultipoleExpansion:
                     # self-interaction needs to be treated separately
                     if x1 != 0 or x2 != 0 or x3 != 0:
                         # construct a matrix with distances
-                        r1      = a.transform(self.r0, [x1,x2,x3])
+                        r1      = a.transform(self.r0_v, [x1, x2, x3])
+                        T       = a.rotation([x1, x2, x3])
+
+                        rT      = np.dot(r-self.r0_v, T)
 
                         dr      = r.reshape(nat, 1, 3) - \
-                            (r1+r-self.r0).reshape(1, nat, 3)
+                            (r1+rT).reshape(1, nat, 3)
                         abs_dr  = np.sqrt(np.sum(dr*dr, axis=2))
                         phi     = q/abs_dr
                         E       = q.reshape(1, nat, 1)*dr/ \
@@ -212,8 +248,8 @@ class MultipoleExpansion:
         phi       = q/abs_dr
         E         = q.reshape(1, nat, 1)*dr/(abs_dr**3).reshape(nat, nat, 1)
 
-        phi[np.diag_indices_from(phi)]   = 0.0
-        E[np.diag_indices_from(phi), :]  = 0.0
+        phi[np.diag_indices_from(phi)]  = 0.0
+        E[np.diag_indices_from(phi)]    = 0.0
 
         self.phi_a += np.sum(phi, axis=1)
         self.E_av  += np.sum(E, axis=1)
@@ -226,7 +262,7 @@ class MultipoleExpansion:
             dip  = np.array([-2*Mlm[0].real, 2*Mlm[0].imag, Ml0[1]])
             dip *= 4*pi/(3*a.get_volume())
 
-            self.phi_a -= np.dot(r-self.r0, dip)
+            self.phi_a -= np.dot(r-self.r0_v, dip)
             self.E_av  += dip
 
         self.timer.stop('near_field')
@@ -262,6 +298,26 @@ class MultipoleExpansion:
 
     def get_potential_and_field(self):
         """
-        Return the both, the electrostatic potential and the field for each atom.
+        Return the both, the electrostatic potential and the field for each
+        atom.
         """
         return self.phi_a, self.E_av
+
+
+### For use as a standalone calculator
+
+    def get_potential_energy(self, a):
+        """
+        Return the Coulomb energy.
+        """
+        self.update(a)
+
+        return np.sum(self.q_a*self.phi_a)/2
+
+    def get_forces(self, a):
+        """
+        Return forces
+        """
+        self.update(a)
+
+        return self.q_a.reshape(-1, 1)*self.E_av

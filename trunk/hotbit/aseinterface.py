@@ -41,6 +41,7 @@ class Hotbit(Output):
                       verbose_SCC=False,
                       width=0.02,
                       mixer=None,
+                      coulomb_solver=None,
                       filename=None):
         """
         Hotbit -- density-functional tight-binding calculator
@@ -69,13 +70,13 @@ class Hotbit(Output):
                           * If elements['others']='default', use default parameters for all other
                             interactions, e.g. {'CH':'C_H.par','others':'default'}
 
-        mixer             Density mixer. 
+        mixer:            Density mixer. 
                           example: {'name':'Anderson','mixing_constant':0.3, 'memory':5}.
-        charge            Total charge for system (-1 means an additional electron)
-        width             Width of Fermi occupation (eV)
-        SCC               Self-Consistent Charge calculation
+        charge:           Total charge for system (-1 means an additional electron)
+        width:            Width of Fermi occupation (eV)
+        SCC:              Self-Consistent Charge calculation
                           * True for SCC-DFTB, False for DFTB
-        kpts              Number of k-points.
+        kpts:             Number of k-points.
                           * For translational symmetry points are along the directions
                             given by the cell vectors.
                           * For general symmetries, you need to look at the info
@@ -83,16 +84,23 @@ class Hotbit(Output):
         physical_k_points Use physical (realistic) k-points for generally periodic systems.
                           * Ignored with normal translational symmetry
                           * True for physically allowed k-points in periodic symmetries.
-        maxiter           Maximum number of self-consistent iterations 
+        maxiter:          Maximum number of self-consistent iterations 
                           * only for SCC-DFTB
-        gamma_cut         Range for Coulomb interaction. 
+        coulomb_solver:   Select Coulomb solver. Choices are
+                          * None:     direct summation, see also gamma_cut
+                          * 'ewald':  Ewald summation, only works for bravais
+                                      containers and becomes slow for large
+                                      systems.
+                          * 'me':     Multipole expansion
+        gamma_cut:        Range for Coulomb interaction if direct summation is
+                          selected (see coulomb_solver)
                           * At the moment Coulomb interaction is 1/r*(1-erf(r/gamma_cut))
                             for faster convergence. This is quick & dirty way to
                             calculate electostatics and will be implemented properly.
-        txt               Filename for log-file.
+        txt:              Filename for log-file.
                           * None: standard output
                           * '-': throw output to trash (/null) 
-        verbose_SCC       Increase verbosity in SCC iterations.
+        verbose_SCC:      Increase verbosity in SCC iterations.
         """
         from copy import copy
         import os
@@ -111,7 +119,8 @@ class Hotbit(Output):
                         'gamma_cut':gamma_cut,
                         'txt':txt,
                         'verbose_SCC':verbose_SCC,
-                        'mixer':mixer}
+                        'mixer':mixer,
+                        'coulomb_solver':coulomb_solver}
 
         if parameters!=None:
             os.environ.data['HOTBIT_PARAMETERS']=parameters
@@ -146,7 +155,8 @@ class Hotbit(Output):
                           'parameters',
                           'txt',
                           'verbose_SCC',
-                          'kpts']
+                          'kpts',
+                          'coulomb_solver']
 
         ret = Hotbit()
         # TODO: if output file already opened (unless /null or stdout)
@@ -345,8 +355,8 @@ class Hotbit(Output):
         self.gd=Grids(self)
         pbc=atoms.get_pbc()
         # FIXME: gamma_cut -stuff
-        if self.get('SCC') and nu.any(pbc) and self.get('gamma_cut')==None:
-            raise NotImplementedError('SCC not implemented for periodic systems yet (see parameter gamma_cut).')
+        #if self.get('SCC') and nu.any(pbc) and self.get('gamma_cut')==None:
+        #    raise NotImplementedError('SCC not implemented for periodic systems yet (see parameter gamma_cut).')
         if nu.any(pbc) and abs(self.get('charge'))>0.0:
             raise AssertionError('Charged system cannot be periodic.')
         self.flush()

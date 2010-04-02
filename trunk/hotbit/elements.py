@@ -183,6 +183,7 @@ class Elements:
         
         # calculate the distances from unit cell 0 to ALL other possible; select chemically interacting
         self.calc.start_timing('operations')
+        # FIXME!!! This does not consider 'gamma_cut'!
         cut2 = self.calc.ia.hscut**2
         n = 1
         for n1 in self.ranges[0]:

@@ -59,9 +59,9 @@ def compute_rhoe(wf, occ, e):
 class States:
 
     def __init__(self,calc):
-        self.es=Electrostatics(calc)
+        self.es=Electrostatics(calc, calc.get('coulomb_solver'))
         self.solver=Solver(calc)
-        self.calc=proxy(calc)       
+        self.calc=proxy(calc)
         self.nat=len(calc.el)
         self.norb=calc.el.get_nr_orbitals()
         self.prev_dq=[None,None]
