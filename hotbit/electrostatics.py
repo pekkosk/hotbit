@@ -37,7 +37,7 @@ str_to_solver = {
 
 
 class Electrostatics:
-    def __init__(self, calc, solver=None, solver_args={}):
+    def __init__(self, calc, solver=None, accuracy_goal=12, solver_args={}):
         self.calc=proxy(calc)
         self.norb=calc.el.get_nr_orbitals()
         self.SCC=calc.get('SCC')
@@ -45,6 +45,8 @@ class Electrostatics:
         self.dq=nu.zeros((self.N))
         self.G=nu.zeros((self.N,self.N))
         self.dG=nu.zeros((self.N,self.N,3))
+
+        self.accuracy_goal = accuracy_goal
 
         if solver is None:
             self.solver = None
@@ -131,6 +133,16 @@ class Electrostatics:
         dG_ij = sum_n gamma'_ij(Rijn) hat(Rijn) 
         '''
         self.calc.start_timing('gamma matrix')
+
+        # Heuristics to estimate the cut-off for the Coulomb correction.
+        # Not yet used.
+        if self.gamma == self.gamma_direct:
+            cutoff  = self.calc.get('gamma_cut')
+        else:
+            min_U = min([ self.calc.el.get_element(s).get_U()
+                          for s in self.calc.el.get_present() ])
+            cutoff = sqrt(log(10.0)*self.accuracy_goal/(sqrt(pi/2)*min_U))
+
         g=self.gamma
         G=nu.zeros((self.N,self.N))
         dG=nu.zeros((self.N,self.N,3))

@@ -16,8 +16,8 @@ from hotbit.ewald_sum import EwaldSum
 ###
 
 L_MAX  = 8
-N      = 5
-K      = 5
+N      = 7
+K      = 3
 
 Q      = 1.0
 a0     = 1.0
@@ -85,8 +85,8 @@ for sol in solvers:
         sol.update(ha, ha.get_charges())
 
         phi  = sol.get_potential()
-        e    = np.sum(a.get_charges()*phi)
-        M    = -e*a0*nnd/(len(a))
+        e    = np.sum(a.get_charges()*phi)/2
+        M    = -2*e*a0*nnd/(len(a))
         err  = abs(M-target_M)
 
         if debug:
