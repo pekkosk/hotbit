@@ -168,7 +168,7 @@ def tail_smoothening(x,y):
             for i in range(k+2,N):
                 y[i]=c2*(xmax-x[i])**2 + c3*(xmax-x[i])**3
             y[-1]=0.0 #once more excplicitly            
-            if all(y[k:]*sgn>=0):
+            if nu.all(y[k:]*sgn>=0):
                 break
             if m==9:
                 raise RuntimeError('Problems with function smoothening; need for new algorithm?')

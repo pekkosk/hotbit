@@ -115,7 +115,7 @@ class SlaterKosterTable:
                     s='--'
                     lw = 4
                     alpha = 0.2
-                if all(abs(self.tables[p][:,i])<1E-10):
+                if nu.all(abs(self.tables[p][:,i])<1E-10):
                     ax.text(0.03,0.02+p*0.15,'No %s integrals for <%s|%s>' %(name,s1,s2),transform=ax.transAxes,size=10)
                     if not ax.is_last_row():
                         pl.xticks([],[])

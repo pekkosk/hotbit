@@ -482,6 +482,9 @@ class Hotbit(Output):
 
     # some not implemented ASE-assumed methods
     def get_fermi_level(self):
+        """
+        Return the Fermi-energy (chemical potential) in eV.
+        """
         return self.st.occu.get_mu() * Hartree
 
 
@@ -655,6 +658,39 @@ class Hotbit(Output):
         if self.flags['bonds']==False:
             self.bonds = MullikenBondAnalysis(self)
             self.flags['bonds']=True
+            
+            
+    def get_atom_energy(self,I):
+        """ 
+        Return the energy of atom I (in eV).
+        
+        parameters:
+        ===========
+        I:         atom index
+        """
+        self._init_bonds(self)
+        return self.bonds.atom_energy(I)
+    
+    
+    def get_promotion_energy(self, I):
+        """ 
+        Return atom's promotion energy (in eV). 
+        
+        E_prom = sum_(mu in I) q_mu*H^0_(mu,mu)(k) - E_free(I)
+        
+        parameters:
+        ===========
+        I:         atom index
+        """
+        self._init_bonds()
+        return self.bonds.promotion_energy(I)
+    
+    
+    def get_bond_energy(self):
+        raise NotImplementedError
+    
+    def get_atom_and_bonding_energy(self):
+        raise NotImplementedError
 
     def get_mayer_bond_order(self):
         raise NotImplementedError
@@ -672,15 +708,5 @@ class Hotbit(Output):
     def get_angmom_ecov(self):
         raise NotImplementedError
     
-    def get_atom_energy(self):
-        raise NotImplementedError
-    
-    def get_bond_energy(self):
-        raise NotImplementedError
-    
-    def get_atom_promotion_energy(self):
-        raise NotImplementedError
-    
-    def get_atom_and_bonding_energy(self):
-        raise NotImplementedError
+ 
         
