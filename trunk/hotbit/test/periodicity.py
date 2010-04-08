@@ -80,8 +80,10 @@ def electrostatics_test(b, r=3, r0=None):
 
     # Multipole moments from large cell,
     # transform symmetrically around the origin
-    rep  = [ (r-1)/2 if i else 0 for i in b.get_pbc() ]
-    rep  = [ (-(r-1)/2, (r-1)/2) if i else (0, 0) for i in b.get_pbc() ]
+    #rep  = [ (r-1)/2 if i else 0 for i in b.get_pbc() ]
+    #rep  = [ (-(r-1)/2, (r-1)/2) if i else (0, 0) for i in b.get_pbc() ]
+    rep  = [ (0,(r-1)/2)[i] for i in b.get_pbc() ]
+    rep  = [ ((0,0),(-(r-1)/2, (r-1)/2))[i] for i in b.get_pbc() ]
     c    = b.extended_copy(tuple(rep))
 
     M0_l, M_L  = get_moments(c.get_positions(), c.get_charges(), L_MAX, r0)
