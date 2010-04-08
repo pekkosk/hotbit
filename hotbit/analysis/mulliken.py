@@ -278,40 +278,7 @@ class DensityOfStates(MullikenAnalysis):
         else:       
             return egrid,ldos
 
-
-    def projected_local_density_of_states(self,width=0.05,window=None,npts=501):
-        """
-        Return state density for all atoms as a function of energy and angmom.
-        
-        parameters:
-        ===========
-        width:     energy broadening (in eV)
-        window:    energy window around Fermi-energy; 2-tuple (eV)
-        npts:      number of grid points for energy
-        
-        return:    energy grid, ldos[atom-index, angmom, energy grid-index]
-        """
-        mn, mx = self.emin, self.emax
-        if window is not None:
-            mn, mx = window
-                   
-        # only states within window 
-        kl,al,el = [],[],[]        
-        for k in range(self.nk):
-            for a in range(self.norb):
-                if mn<=self.e[k,a]<=mx:
-                    kl.append(k)
-                    al.append(a)
-                    el.append(self.e[k,a]) 
-                
-        pldos = nu.zeros((self.N,3,npts))
-        for i in range(self.N):
-            q = nu.array( [self.atom_wf_all_angmom_mulliken(i,k,a,wk=True) for k,a in zip(kl,al)] )
-            for l in range(3):
-                egrid, pldos[i,l] = mix.broaden( el,q[:,l],width=width,N=npts,a=mn,b=mx )
-        return egrid,pldos
-
-        
+       
 
 
 class MullikenBondAnalysis(MullikenAnalysis):    
@@ -322,27 +289,103 @@ class MullikenBondAnalysis(MullikenAnalysis):
         """
         raise NotImplementedError('needs re-writing for k-points')
         MullikenAnalysis.__init__(self, calc)
-        self.bar_epsilon = nu.zeros_like(self.H0)
+        self.eps_bar = nu.zeros_like(self.H0)
         for i in range(len(self.H0)):
             for j in range(len(self.H0)):
-                self.bar_epsilon[i,j] = 0.5*(self.H0[i,i] + self.H0[j,j])
+                self.eps_bar[i,j] = 0.5*(self.H0[i,i] + self.H0[j,j])
 
 
-    def get_mayer_bond_order(self, a, b):
-        """ Returns the Mayer bond-order of the bond between the
-        atoms A and B (a and b are atom indices). """
+    def get_mayer_bond_order(self, I, J):
+        """
+        Return Mayer bond-order between two atoms.
+        
+        parameters:
+        ===========
+        I:        first atom index
+        J:        second atom index
+        """
         assert type(a) == int
         assert type(b) == int
-        A = self.calc.el.orbitals(a, indices=True)
-        B = self.calc.el.orbitals(b, indices=True)
-        B_AB = 0
-        for i in A:
-            for j in B:
-                B_AB += self.rho_tilde_S[i,j]*self.rho_tilde_S[j,i]
-        return B_AB
+        oI = self.calc.el.orbitals(I, indices=True)
+        oJ = self.calc.el.orbitals(J, indices=True)
+        B_IJ = 0
+        for i in oI:
+            for j in oJ:
+                B_IJ += self.rho_tilde_S[i,j]*self.rho_tilde_S[j,i]
+        return B_IJ
 
 
-    def get_covalent_energy(self):
+
+    def atom_energy(self, I):
+        """ 
+        Return the absolute atom energy (in eV).
+        
+        parameters:
+        ===========
+        I:         atom index
+        """
+        gamma_II = self.calc.st.es.gamma(I,I)*Hartree
+        dq_I = self.atom_mulliken(I) - self.calc.el.get_valences()[I]
+        return 0.5*gamma_II*dq_I**2 + self.E_prom_I(I)
+
+
+    def promotion_energy(self, I):
+        """ 
+        Return atom's promotion energy (in eV). 
+        
+        E_prom = sum_(mu in I) q_mu*H^0_(mu,mu)(k) - E_free(I)
+        
+        parameters:
+        ===========
+        I:         atom index
+        """
+        symb = self.calc.el.symbols[I]
+        efree = self.calc.el.elements[s].get_free_atom_energy()
+        e = 0.0
+        for mu in self.calc.el.orbitals(I, indices=True):
+            e += self.basis_mulliken(mu) * self.st.wk*self.st.H0[:,mu,mu]
+        return e - efree
+
+
+    def bond_energy(self, I, J):
+        """ 
+        Return the absolute bond energy between atoms (in eV). 
+        
+        parameters:
+        ===========
+        I,J:     atom indices
+        """
+        if I == J:
+             return 0
+        dist_IJ = self.calc.el.distance(I, J)
+
+        sI = self.calc.el.symbol(I)
+        sJ = self.calc.el.symbol(J)
+        V_rep_IJ = self.calc.rep.vrep[sI+sJ](dist_IJ)*Hartree
+
+        gamma_IJ = self.calc.st.es.gamma(I, J)*Hartree
+        dq_I = self.atom_mulliken(I) - self.calc.el.get_valences()[I]
+        dq_J = self.atom_mulliken(J) - self.calc.el.get_valences()[J]
+
+        ret = V_rep_IJ + gamma_IJ*dq_I*dq_J
+        for m in self.calc.el.orbitals(I, indices=True):
+            for n in self.calc.el.orbitals(J, indices=True):
+                mat = self.rho[n,m]*self.H0[m,n]-self.rho_tilde[n,m]*self.S[m,n]*self.bar_epsilon[m,n]
+                ret += (mat + mat.conjugate())
+        return ret
+
+
+    def atom_and_bond_energy(self, I):
+        """ Return the atom I's contribution to the total binding
+        energy of the system. """
+        ret = self.A_I(I)
+        for J in range(len(self.calc.el)):
+            if J != I:
+                ret += 0.5*self.B_IJ(I,J)
+        return ret
+
+
+    def covalent_energy(self):
         """ Returns the covalent bond energy of the whole system. """
         E_bs = self.calc.st.band_structure_energy()*Hartree
         E = nu.sum(self.rho*self.bar_epsilon*self.S)
@@ -350,6 +393,7 @@ class MullikenBondAnalysis(MullikenAnalysis):
 
 
     def get_E_cov_m_n(self, m, n, sigma, npts=500, e_min=None, e_max=None, occupations=False):
+        # name-> orbital_pair_covalent_energy
         """ Return the covalent energy of the orbital pairs mu and nu
         as a function of an energy. Returns the energy grid and covalent
         energy grid, where the fermi-energy is shifted to zero. """
@@ -375,6 +419,7 @@ class MullikenBondAnalysis(MullikenAnalysis):
 
 
     def get_E_cov_I_J(self, I, J, sigma, npts=500, e_min=None, e_max=None, occupations=False):
+        # name: atom_pair_covalent_energy
         """ Returns the energy grid and corresponding covalent bonding
             energy values for the atom pair I-J. """
         I = self.calc.el.orbitals(I, indices=True)
@@ -389,6 +434,7 @@ class MullikenBondAnalysis(MullikenAnalysis):
 
 
     def get_E_cov_la_lb(self, la, lb, sigma, npts=500, e_min=None, e_max=None, occupations=False):
+        # angmom_pair_covalent_energy
         print "Covalent energy graph for angular momenta %s and %s..." % (la, lb)
         e_g = None
         E_cov_lalb = nu.zeros(npts)
@@ -421,55 +467,3 @@ class MullikenBondAnalysis(MullikenAnalysis):
                         w_k += rho_k[i,j]*mat[j,i]
             E_cov_mn += add*w_k
         return e_g, E_cov_mn
-
-
-    def A_I(self, I):
-        """ Return the absolute energy of atom I. """
-        gamma_II = self.calc.st.es.gamma(I,I)*Hartree
-        dq_I = self.atom_mulliken(I) - self.calc.el.get_valences()[I]
-        return 0.5*gamma_II*dq_I**2 + self.E_prom_I(I)
-
-
-    def E_prom_I(self, I):
-        """ Return the promotion energy of atom I. """
-        orb_indices = self.calc.el.orbitals(I, indices=True)
-        ret = 0.0
-        for m in orb_indices:
-            q_mu = self.basis_mulliken(m)
-            q_mu_free = self.calc.el.get_free_population(m)
-            ret += (q_mu-q_mu_free)*self.H0[m,m]
-        return ret
-
-
-    def B_IJ(self, I, J):
-        """ Return the absolute bond energy between atoms I and J. """
-        if I == J:
-             return 0
-        dist_IJ = self.calc.el.distance(I, J)
-
-        sI = self.calc.el.symbol(I)
-        sJ = self.calc.el.symbol(J)
-        V_rep_IJ = self.calc.rep.vrep[sI+sJ](dist_IJ)*Hartree
-
-        gamma_IJ = self.calc.st.es.gamma(I, J)*Hartree
-        dq_I = self.atom_mulliken(I) - self.calc.el.get_valences()[I]
-        dq_J = self.atom_mulliken(J) - self.calc.el.get_valences()[J]
-
-        ret = V_rep_IJ + gamma_IJ*dq_I*dq_J
-        for m in self.calc.el.orbitals(I, indices=True):
-            for n in self.calc.el.orbitals(J, indices=True):
-                mat = self.rho[n,m]*self.H0[m,n]-self.rho_tilde[n,m]*self.S[m,n]*self.bar_epsilon[m,n]
-                ret += (mat + mat.conjugate())
-        return ret
-
-
-    def get_AB_I(self, I):
-        """ Return the atom I's contribution to the total binding
-        energy of the system. """
-        ret = self.A_I(I)
-        for J in range(len(self.calc.el)):
-            if J != I:
-                ret += 0.5*self.B_IJ(I,J)
-        return ret
-
-

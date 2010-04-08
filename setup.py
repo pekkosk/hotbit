@@ -11,7 +11,7 @@ sys.path += [ "." ]
 from config import get_system_config
 
 # data files & folders
-folders = ['param','param/inofficial','param/fixed_parameters','hotbit/test/systems',]
+folders = ['param','param/inofficial','param/fixed_parameters']
 data_files = []
 for folder in folders:
     files = []
@@ -20,6 +20,7 @@ for folder in folders:
         if os.path.isfile(fullfile):
             files.append(fullfile)
     data_files.append( (folder,files) )
+data_files.append(('.',['hotbit/hotbit']))
 
 
 ###
