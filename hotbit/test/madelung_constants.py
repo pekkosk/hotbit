@@ -74,7 +74,10 @@ for sol in solvers:
         print "=== %s ===" % sol.__class__
     for name, target_M, nnd, a in systems:
         syms = a.get_chemical_symbols()
-        a.set_charges([ Q if sym == syms[0] else -Q for sym in syms ])
+        
+        #a.set_charges([ (Q if sym == syms[0] else -Q) for sym in syms ])
+        # to work with older versions
+        a.set_charges([ (-Q,Q)[sym==syms[0]] for sym in syms ])
 
         a.translate([0.25*a0,0.25*a0,0.25*a0])
         if debug:
