@@ -536,3 +536,5 @@ class Elements:
         for s in self.symbols:
             e += self.elements[s].get_free_atom_energy()
         return e
+    
+    

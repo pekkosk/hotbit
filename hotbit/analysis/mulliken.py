@@ -37,6 +37,7 @@ class MullikenAnalysis:
         """
         self.calc = proxy(calc)
         st = self.calc.st
+        self.st = st
         self.N = self.calc.el.N
         self.nk = self.calc.st.nk
         self.wk = self.calc.st.wk.copy()
@@ -56,16 +57,6 @@ class MullikenAnalysis:
                 self.aux[k,a] = ( wfc[k,a] * nu.dot(wf[k,a],st.S[k].transpose()) ).real 
 
 
-    def get_rhoa(self,a):
-        """ 
-        Return the density matrix for eigenstate a, for all k-points.
-        """
-        rho = nu.zeros_like(self.rhoSk)
-        for k,wk in enumerate(self.wk):
-            rho[k] = wk*nu.outer(self.calc.st.wf[k,a,:],self.calc.st.wf[k,a,:].conjugate()).real
-        return rho
-
-
     def trace_I(self,I,matrix):
         """ Return partial trace over atom I's orbitals. """
         ret = 0.0
@@ -75,7 +66,7 @@ class MullikenAnalysis:
         return ret
 
 
-    def atoms_mulliken(self):
+    def get_atoms_mulliken(self):
         """ Return Mulliken populations. """
         q = []
         for o1, no in self.calc.el.get_property_lists(['o1','no']):
@@ -83,7 +74,7 @@ class MullikenAnalysis:
         return nu.array(q)-self.calc.el.get_valences()
 
 
-    def atom_mulliken(self, I):
+    def get_atom_mulliken(self, I):
         """ 
         Return Mulliken population for atom I.
         
@@ -95,7 +86,7 @@ class MullikenAnalysis:
         return sum( self.diag[orbs] )
 
 
-    def basis_mulliken(self, mu):
+    def get_basis_mulliken(self, mu):
         """ 
         Return Mulliken population of given basis state.
         
@@ -106,7 +97,7 @@ class MullikenAnalysis:
         return self.diag[mu] 
     
     
-    def atom_all_angmom_mulliken(self,I):
+    def get_atom_all_angmom_mulliken(self,I):
         """ Return the Mulliken population of atom I from eigenstate a, for all angmom."""
         
         orbs = self.calc.el.orbitals(I,indices=True)
@@ -118,7 +109,7 @@ class MullikenAnalysis:
         return pop 
 
 
-    def atom_wf_mulliken(self,I,k,a,wk=True):
+    def get_atom_wf_mulliken(self,I,k,a,wk=True):
         """
         Return Mulliken population for given atom and wavefunction.
                
@@ -135,7 +126,7 @@ class MullikenAnalysis:
         return w*self.aux[k,a,orbs].sum()
 
 
-    def atom_wf_all_orbital_mulliken(self,I,k,a,wk=True):
+    def get_atom_wf_all_orbital_mulliken(self,I,k,a,wk=True):
         """
         Return orbitals' Mulliken populations for given atom and wavefunction.
         
@@ -155,7 +146,7 @@ class MullikenAnalysis:
         return nu.array(q)
 
 
-    def atom_wf_all_angmom_mulliken(self,I,k,a,wk=True):
+    def get_atom_wf_all_angmom_mulliken(self,I,k,a,wk=True):
         """ 
         Return atom's Mulliken populations for all angmom for given wavefunction.
         
@@ -168,7 +159,7 @@ class MullikenAnalysis:
         
         return: array (length 3) containing s,p and d-populations      
         """
-        all = self.atom_wf_all_orbital_mulliken(I,k,a,wk)
+        all = self.get_atom_wf_all_orbital_mulliken(I,k,a,wk)
         pop = nu.zeros((3,))
         pop[0] = all[0]
         if len(all)>1: pop[1] = all[1:4].sum()
@@ -194,7 +185,7 @@ class DensityOfStates(MullikenAnalysis):
         
 
 
-    def density_of_states(self,broaden=False,width=0.05,window=None,npts=501):
+    def get_density_of_states(self,broaden=False,width=0.05,window=None,npts=501):
         """
         Return the full density of states.
         
@@ -228,7 +219,7 @@ class DensityOfStates(MullikenAnalysis):
         return e,dos
 
 
-    def local_density_of_states(self,projected=False,width=0.05,window=None,npts=501):
+    def get_local_density_of_states(self,projected=False,width=0.05,window=None,npts=501):
         """
         Return state density for all atoms as a function of energy.
         
@@ -265,10 +256,10 @@ class DensityOfStates(MullikenAnalysis):
         if projected:
             pldos = nu.zeros((self.N,3,npts))
         for i in range(self.N):
-            q = [ self.atom_wf_mulliken(i,k,a,wk=True) for k,a in zip(kl,al) ]
+            q = [ self.get_atom_wf_mulliken(i,k,a,wk=True) for k,a in zip(kl,al) ]
             egrid, ldos[i,:] = mix.broaden( el,q,width=width,N=npts,a=mn,b=mx )
             if projected:
-                q = nu.array( [self.atom_wf_all_angmom_mulliken(i,k,a,wk=True) for k,a in zip(kl,al)] )
+                q = nu.array( [self.get_atom_wf_all_angmom_mulliken(i,k,a,wk=True) for k,a in zip(kl,al)] )
                 for l in range(3):
                     egrid, pldos[i,l] = mix.broaden( el,q[:,l],width=width,N=npts,a=mn,b=mx )
             
@@ -287,36 +278,41 @@ class MullikenBondAnalysis(MullikenAnalysis):
         """ 
         Class for bonding analysis using Mulliken charges. 
         """
-        raise NotImplementedError('needs re-writing for k-points')
+        #raise NotImplementedError('needs re-writing for k-points')
         MullikenAnalysis.__init__(self, calc)
-        self.eps_bar = nu.zeros_like(self.H0)
-        for i in range(len(self.H0)):
-            for j in range(len(self.H0)):
-                self.eps_bar[i,j] = 0.5*(self.H0[i,i] + self.H0[j,j])
-
-
-    def get_mayer_bond_order(self, I, J):
+        rhoSk = []
+        for k in range(self.nk):
+            rhoSk.append( nu.dot(self.st.rho[k],self.st.S[k]) ) 
+        self.rhoSk = nu.array(rhoSk)
+        self.SCC = self.calc.get('SCC')
+        
+        
+    def get_mayer_bond_order(self,i,j):
         """
         Return Mayer bond-order between two atoms.
+        
+        Warning: appears to work only with periodic systems
+        where orbitals have no overlap with own images.
         
         parameters:
         ===========
         I:        first atom index
         J:        second atom index
         """
-        assert type(a) == int
-        assert type(b) == int
-        oI = self.calc.el.orbitals(I, indices=True)
-        oJ = self.calc.el.orbitals(J, indices=True)
-        B_IJ = 0
-        for i in oI:
-            for j in oJ:
-                B_IJ += self.rho_tilde_S[i,j]*self.rho_tilde_S[j,i]
-        return B_IJ
+        assert type(i)==int and type(j)==int
+        orbi = self.calc.el.orbitals(i, indices=True)
+        orbj = self.calc.el.orbitals(j, indices=True)
+        
+        M = 0.0
+        for k in xrange(self.nk):
+            for mu in orbi:
+                for nu in orbj:
+                    M += self.wk[k] * self.rhoSk[k,mu,nu]*self.rhoSk[k,nu,mu]
+        assert abs(M.imag)<1E-12
+        return M.real
 
 
-
-    def atom_energy(self, I):
+    def get_atom_energy(self, I):
         """ 
         Return the absolute atom energy (in eV).
         
@@ -324,68 +320,76 @@ class MullikenBondAnalysis(MullikenAnalysis):
         ===========
         I:         atom index
         """
-        gamma_II = self.calc.st.es.gamma(I,I)*Hartree
-        dq_I = self.atom_mulliken(I) - self.calc.el.get_valences()[I]
-        return 0.5*gamma_II*dq_I**2 + self.E_prom_I(I)
+        if self.SCC:
+            coul = 0.5*self.calc.st.es.G[I,I]*self.st.dq[I]**2
+        else:
+            coul = 0.0         
+        rep = self.calc.rep.get_pair_repulsive_energy(I,I) #self-repulsion for pbc
+        return coul*Hartree + self.get_promotion_energy(I) + rep*Hartree
 
 
-    def promotion_energy(self, I):
+    def get_promotion_energy(self, I):
         """ 
         Return atom's promotion energy (in eV). 
         
-        E_prom = sum_(mu in I) q_mu*H^0_(mu,mu)(k) - E_free(I)
+        energy = sum_k w_k sum_(m,n in I) rho_mn(k) H^0_nm(k) - E_free(I)
         
         parameters:
         ===========
         I:         atom index
         """
-        symb = self.calc.el.symbols[I]
-        efree = self.calc.el.elements[s].get_free_atom_energy()
+        orbi = self.calc.el.orbitals(I, indices=True)
         e = 0.0
-        for mu in self.calc.el.orbitals(I, indices=True):
-            e += self.basis_mulliken(mu) * self.st.wk*self.st.H0[:,mu,mu]
-        return e - efree
+        for k in range(self.nk):
+            for m1 in orbi:
+                for m2 in orbi:
+                    e += self.wk[k]*self.st.rho[k,m1,m2]*self.st.H0[k,m2,m1]
+        assert abs(e.imag)<1E-12
+        e = e - self.calc.el.elements[self.calc.el.symbols[I]].get_free_atom_energy()
+        return e.real * Hartree
 
 
-    def bond_energy(self, I, J):
+    def get_bond_energy(self,i,j):
         """ 
         Return the absolute bond energy between atoms (in eV). 
         
         parameters:
         ===========
-        I,J:     atom indices
+        i,j:     atom indices
         """
-        if I == J:
-             return 0
-        dist_IJ = self.calc.el.distance(I, J)
-
-        sI = self.calc.el.symbol(I)
-        sJ = self.calc.el.symbol(J)
-        V_rep_IJ = self.calc.rep.vrep[sI+sJ](dist_IJ)*Hartree
-
-        gamma_IJ = self.calc.st.es.gamma(I, J)*Hartree
-        dq_I = self.atom_mulliken(I) - self.calc.el.get_valences()[I]
-        dq_J = self.atom_mulliken(J) - self.calc.el.get_valences()[J]
-
-        ret = V_rep_IJ + gamma_IJ*dq_I*dq_J
-        for m in self.calc.el.orbitals(I, indices=True):
-            for n in self.calc.el.orbitals(J, indices=True):
-                mat = self.rho[n,m]*self.H0[m,n]-self.rho_tilde[n,m]*self.S[m,n]*self.bar_epsilon[m,n]
-                ret += (mat + mat.conjugate())
-        return ret
+        rep = self.calc.rep.get_pair_repulsive_energy(i,j)
+        if self.SCC:
+            coul = self.st.es.G[i,j]*self.st.dq[i]*self.st.dq[j]
+        else:
+            coul = 0.0
+                
+        orbi = self.calc.el.orbitals(i,indices=True)
+        orbj = self.calc.el.orbitals(j,indices=True)
+        ebs = 0.0
+        for k in range(self.nk):
+            for mu in orbi:
+                for nu in orbj:
+                    ebs += self.wk[k]* 2*(self.st.rho[k,mu,nu]*self.st.H0[k,nu,mu] ).real
+        return (rep + coul + ebs)*Hartree
 
 
-    def atom_and_bond_energy(self, I):
-        """ Return the atom I's contribution to the total binding
-        energy of the system. """
-        ret = self.A_I(I)
-        for J in range(len(self.calc.el)):
-            if J != I:
-                ret += 0.5*self.B_IJ(I,J)
-        return ret
+    def get_atom_and_bond_energy(self, i):
+        """
+        Return given atom's contribution to cohesion (in eV).
+        
+        parameters:
+        ===========
+        i:    atom index
+        """
+        ea = self.get_atom_energy(i)
+        eb = 0.0
+        for j in range(self.N):
+            if j==i: continue
+            eb += 0.5 * self.get_bond_energy(i,j)
+        return ea + eb
 
 
-    def covalent_energy(self):
+    def get_covalent_energy(self):
         """ Returns the covalent bond energy of the whole system. """
         E_bs = self.calc.st.band_structure_energy()*Hartree
         E = nu.sum(self.rho*self.bar_epsilon*self.S)

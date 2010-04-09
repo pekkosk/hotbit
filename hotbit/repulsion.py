@@ -89,7 +89,7 @@ class Repulsion:
     
 
     def get_repulsive_energy(self):
-        """ Calculate the repulsive energy. """
+        """ Return the repulsive energy (in eV). """
         self.calc.start_timing('e_rep')
         
         # TODO: be more selective with n (for efficiency)
@@ -110,7 +110,30 @@ class Repulsion:
                         erep+=self.vrep[si+sj](d)
         self.calc.stop_timing('e_rep') 
         return erep*Hartree
-
+    
+    
+    def get_pair_repulsive_energy(self,i,j):
+        """
+        Return the repulsive energy of given atom pair.
+        
+        parameters:
+        ===========
+        i,j:     atom indices
+        """
+        si = self.calc.el.symbols[i]
+        sj = self.calc.el.symbols[j]                        
+        Rijn = self.calc.el.rijn
+        erep=0.0
+        for n,rijn in enumerate(Rijn[:,i,j]): 
+            if i==j and n==0: continue
+            d = nu.sqrt( rijn[0]**2+rijn[1]**2+rijn[2]**2 )
+            if d>self.rmax: continue
+            if i==j:
+                erep += 0.5*self.vrep[si+sj](d)
+            else:
+                erep += self.vrep[si+sj](d)      
+        return erep
+    
 
     def get_repulsive_forces(self):
         """ 
