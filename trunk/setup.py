@@ -1,6 +1,5 @@
 import os
 import sys
-
 import numpy as np
 
 from distutils.core import setup, Extension
@@ -35,12 +34,18 @@ get_system_config(inc_dirs,  libs, lib_dirs,
                   extra_link, extra_compile,
                   msgs)
 
+# this is probably silly way of doin this:
+version = '0.1'
+revision=os.popen('svnversion .').readline()[:-1]
+f=open('./hotbit/version.py','w').write('hotbit_version = "%s (svn=%s)"\n' %(version,revision))
+
+
 setup(
     name         = "hotbit",
     url          = "https://trac.cc.jyu.fi/projects/hotbit",
     description  = "Density-functional tight-binding calculator for ASE",
     author_email = "pekka.koskinen@iki.fi",
-    version      = "0.1",
+    version      = version,
     packages     = [
         "box",
         "box.wedgeatoms",
