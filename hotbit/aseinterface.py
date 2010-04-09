@@ -16,14 +16,13 @@ from environment import Environment
 from repulsion import Repulsion
 from states import States
 from grids import Grids
+from hotbit.version import hotbit_version
 from hotbit.analysis import MullikenAnalysis
 from hotbit.analysis import MullikenBondAnalysis
 from hotbit.analysis import DensityOfStates
 from hotbit.output import Output
 import box.mix as mix
 from time import time
-
-
 
 
 class Hotbit(Output):
@@ -269,8 +268,7 @@ class Hotbit(Output):
         from os.path import abspath, curdir
         from os import environ
 
-        revision=popen('svnversion %s' %environ.get('HOTBIT_DIR') ).readline()
-        self.version='0.1 (svn=%s)' %revision[:-1]
+        self.version=hotbit_version
         print>>self.txt,  '\n\n\n\n\n'
         print>>self.txt,  ' _           _    _     _ _'
         print>>self.txt,  '| |__   ___ | |_ | |__ |_| |_'

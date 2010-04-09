@@ -91,6 +91,7 @@ parser.add_option("-h", "--help", dest='help',action="store_true",default=False,
 parser.add_option('-e','--examples',dest='examples',action='store_true',default=False,help='list and copy examples')
 parser.add_option('-s','--show-examples',dest='show',action='store_true',default=False,help='list and show examples')
 parser.add_option('-l','--list',dest='list',action='store_true',default=False,help='list source code')
+parser.add_option('-v','--version',dest='version',action='store_true',default=False,help='print hotbit version')
 
 options, args = parser.parse_args( sys.argv[1:] )
 
@@ -101,6 +102,10 @@ if options.help:
     print '-------------------------'
     parser.print_help()
     print __doc__
+    raise SystemExit
+
+if options.version:
+    print 'Hotbit version %s' %(hotbit_version)
     raise SystemExit
     
 if len(args)==0:
