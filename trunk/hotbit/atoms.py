@@ -159,6 +159,7 @@ class Atoms(ase_Atoms):
                 if isinstance(n[i],tuple):
                     ops.append( nu.arange(n[i][0],n[i][1]+1) )
                 elif isinstance(n[i],int):
+                    assert n[i]>0
                     rng = nu.arange(0,n[i])
                     if r[i,0]!=-nu.Inf:
                         # if nr. of ops is finite, center copies wrt. 0

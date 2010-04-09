@@ -519,6 +519,8 @@ class Hotbit(Output):
     #
     def _init_mulliken(self):
         """ Initialize Mulliken analysis. """ 
+        if self.calculation_required(self.el.atoms,['energy']):
+            raise AssertionError('Electronic structure is not solved yet!')
         if self.flags['Mulliken']==False:
             self.MA = MullikenAnalysis(self)
             self.flags['Mulliken']=True
@@ -536,7 +538,7 @@ class Hotbit(Output):
         I:        atom index
         """
         self._init_mulliken()
-        return self.MA.atom_mulliken(I)
+        return self.MA.get_atom_mulliken(I)
         
         
     def get_basis_mulliken(self,mu):
@@ -548,7 +550,7 @@ class Hotbit(Output):
         mu:     orbital index (see Elements' methods for indices)
         """ 
         self._init_mulliken()
-        return self.MA.basis_mulliken(mu)
+        return self.MA.get_basis_mulliken(mu)
     
     
     def get_atom_wf_mulliken(self,I,k,a,wk=True):
@@ -563,7 +565,7 @@ class Hotbit(Output):
         wk:     embed k-point weight in population
         """
         self._init_mulliken()
-        return self.MA.atom_wf_mulliken(I,k,a,wk)
+        return self.MA.get_atom_wf_mulliken(I,k,a,wk)
         
     
     def get_atom_wf_all_orbital_mulliken(self,I,k,a):
@@ -577,7 +579,7 @@ class Hotbit(Output):
         a:      eigenstate index
         """
         self._init_mulliken()
-        return self.MA.atom_wf_all_orbital_mulliken(I,k,a)
+        return self.MA.get_atom_wf_all_orbital_mulliken(I,k,a)
         
     
     def get_atom_wf_all_angmom_mulliken(self,I,k,a,wk=True):
@@ -594,7 +596,7 @@ class Hotbit(Output):
         return: array (length 3) containing s,p and d-populations      
         """
         self._init_mulliken()
-        return self.MA.atom_wf_all_angmom_mulliken(I,k,a,wk)
+        return self.MA.get_atom_wf_all_angmom_mulliken(I,k,a,wk)
 
         
     #
@@ -602,6 +604,8 @@ class Hotbit(Output):
     #
     def _init_DOS(self):
         """ Initialize Density of states analysis. """
+        if self.calculation_required(self.el.atoms,['energy']):
+            raise AssertionError('Electronic structure is not solved yet!')
         if self.flags['DOS']==False:
             self.DOS = DensityOfStates(self)
             self.flags['DOS']=True
@@ -627,7 +631,7 @@ class Hotbit(Output):
                         pldos[atom, angmom, grid]
         """
         self._init_DOS()
-        return self.DOS.local_density_of_states(projected,width,window,npts)
+        return self.DOS.get_local_density_of_states(projected,width,window,npts)
     
         
     def get_density_of_states(self,broaden=False,width=0.05,window=None,npts=501):
@@ -648,13 +652,15 @@ class Hotbit(Output):
         npts:        number of data points in output
         """
         self._init_DOS()
-        return self.DOS.density_of_states(broaden,width,window,npts)
+        return self.DOS.get_density_of_states(broaden,width,window,npts)
     
 
 
     # Bonding analysis
     def _init_bonds(self):
         """ Initialize Mulliken bonding analysis. """
+        if self.calculation_required(self.el.atoms,['energy']):
+            raise AssertionError('Electronic structure is not solved yet!')
         if self.flags['bonds']==False:
             self.bonds = MullikenBondAnalysis(self)
             self.flags['bonds']=True
@@ -668,32 +674,67 @@ class Hotbit(Output):
         ===========
         I:         atom index
         """
-        self._init_bonds(self)
-        return self.bonds.atom_energy(I)
-    
-    
-    def get_promotion_energy(self, I):
+        self._init_bonds()
+        return self.bonds.get_atom_energy(I)
+
+
+
+    def get_mayer_bond_order(self,i,j):
+        """
+        Return Mayer bond-order between two atoms.
+        
+        Warning: appears to work only with periodic systems
+        where orbitals have no overlap with own images.
+        
+        parameters:
+        ===========
+        I:        first atom index
+        J:        second atom index
+        """
+        self._init_bonds()
+        return self.bonds.get_mayer_bond_order(i,j)
+
+
+    def get_promotion_energy(self,I):
         """ 
         Return atom's promotion energy (in eV). 
         
-        E_prom = sum_(mu in I) q_mu*H^0_(mu,mu)(k) - E_free(I)
+        energy = sum_k w_k sum_(m,n in I) rho_mn(k) H^0_nm(k) - E_free(I)
+        Loses meaning for periodic systems with 'self-overlap' for orbitals.
         
         parameters:
         ===========
         I:         atom index
         """
         self._init_bonds()
-        return self.bonds.promotion_energy(I)
-    
-    
-    def get_bond_energy(self):
-        raise NotImplementedError
-    
-    def get_atom_and_bonding_energy(self):
-        raise NotImplementedError
+        return self.bonds.get_promotion_energy(I)
 
-    def get_mayer_bond_order(self):
-        raise NotImplementedError
+
+    def get_bond_energy(self,i,j):
+        """ 
+        Return the absolute bond energy between atoms (in eV). 
+        
+        Loses meaning for periodic systems with 'self-overlap' for orbitals.
+        
+        parameters:
+        ===========
+        i,j:     atom indices
+        """
+        self._init_bonds()
+        return self.bonds.get_bond_energy(i,j)
+        
+    
+    def get_atom_and_bond_energy(self,i):
+        """
+        Return given atom's contribution to cohesion.
+        
+        parameters:
+        ===========
+        i:    atom index
+        """
+        self._init_bonds()
+        return self.bonds.get_atom_and_bond_energy(i)
+        
     
     def get_ecov(self):
         raise NotImplementedError
