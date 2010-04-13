@@ -366,6 +366,7 @@ class Elements:
         self.first_orbitals=[]
         self.orbital_atoms=[]
         self.norb=0
+        ls = ['s','p','d']
         for i,symb in enumerate(self.symbols):
             el=self.elements[symb]
             atomorb=[]
@@ -374,7 +375,8 @@ class Elements:
                 self.norb+=1
                 Rnl=el.get_Rnl_function(ao)
                 self.orbital_atoms.append(i)
-                atomorb.append({'atom':i,'symbol':symb,'orbital':ao,\
+                angmom = ls.index(ao[0])
+                atomorb.append({'atom':i,'symbol':symb,'orbital':ao,'angmom':angmom,\
                                 'index':self.norb-1,'energy':e,'atomindex':k,'Rnl':Rnl})
             self.nr_orbitals.append(len(atomorb))
             self.atomorb.append(atomorb)

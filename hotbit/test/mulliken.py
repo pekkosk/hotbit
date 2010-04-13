@@ -5,9 +5,57 @@ from hotbit import *
 from hotbit.atoms import Atoms
 from hotbit.test.misc import default_param
 from numpy import *
+from box.systems import graphene
 from ase.data.molecules import molecule
 
 eps = 1E-6
+
+if True:
+    atoms = graphene(2,2,1.42)
+    calc = Hotbit(SCC=False,kpts=(4,4,1),txt='-',**default_param)
+    atoms.set_calculator(calc)
+    atoms.get_potential_energy()
+    
+    # compare to Fig.4 of Koskinen & Makinen, CMS 47, 237 (2009)
+    if False:
+        w=0.2
+        x,y = calc.get_covalent_energy('default',width=w,window=(-20,15))
+        plot(x,y,label='total')
+        axhline(0)
+        x,y = calc.get_covalent_energy('angmom',i=0,j=0,width=w,window=(-20,15))
+        plot(x,y,label='ss')
+        x,y = calc.get_covalent_energy('angmom',i=0,j=1,width=w,window=(-20,15))
+        plot(x,y,label='sp')
+        x,y = calc.get_covalent_energy('angmom',i=1,j=1,width=w,window=(-20,15))
+        plot(x,y,label='pp')
+        legend()
+        show()
+    
+    
+    x0,y0 = calc.get_covalent_energy('default')
+    x1,y1 = calc.get_covalent_energy('angmom',i=0,j=0)
+    x2,y2 = calc.get_covalent_energy('angmom',i=0,j=1)
+    x3,y3 = calc.get_covalent_energy('angmom',i=1,j=1)
+    assert abs(y0.sum()-(y1+y2+y3).sum())<eps
+    
+    atoms = graphene(1,1,1.42)
+    calc = Hotbit(SCC=False,kpts=(1,1,1),txt='-',**default_param)
+    atoms.set_calculator(calc)
+    atoms.get_potential_energy()
+    
+    x,y = calc.get_covalent_energy('default')
+    x1,y1 = calc.get_covalent_energy('atoms',i=0,j=0)
+    x2,y2 = calc.get_covalent_energy('atoms',i=0,j=1)
+    x3,y3 = calc.get_covalent_energy('atoms',i=1,j=1)
+    assert abs((y1+y2+y3).sum()-y.sum())<eps
+    
+    sm = 0.0
+    for i in range(calc.st.norb):
+        for j in range(i,calc.st.norb):
+            x1,y1 = calc.get_covalent_energy('orbitals',i=i,j=j) 
+            sm += y1.sum()
+    assert abs(y.sum()-sm)<eps
+
 
 if True:
     # check that C1H1-presentation of C6H6 goes right
@@ -137,13 +185,21 @@ if True:
 #   Mayer bond order
 #
 if True:
-    from box.systems import graphene
-    atoms = graphene(5,5,1.42)
-    calc = Hotbit(SCC=False,kpts=(4,4,1),txt='-',**default_param)
+    atoms = graphene(4,4,1.42)
+    calc = Hotbit(SCC=False,kpts=(8,8,1),txt='-',**default_param)
     atoms.set_calculator(calc)
     atoms.get_potential_energy()
-    assert abs(calc.get_mayer_bond_order(1,2)-1.23991552639)<eps
+    assert abs(calc.get_mayer_bond_order(1,2)-1.24155188722)<eps
+    assert abs(calc.get_atom_energy(0)-6.95260830265)<eps
+    assert abs(calc.get_atom_and_bond_energy(0)--9.62628777865)<eps
+    assert abs(calc.get_promotion_energy(0)-6.95260830265)<eps
+    assert abs(calc.get_bond_energy(1,2)--12.0027553172)<eps
 
+    #print 'graphene'
+    #print 'A_C:',calc.get_atom_energy(0)
+    #print 'AB_C:',calc.get_atom_and_bond_energy(0)
+    #print 'prom_C',calc.get_promotion_energy(0)
+    #print 'B_CC:',calc.get_bond_energy(1,2)
 
 
 if True:
@@ -155,7 +211,7 @@ if True:
     ## using CH to model benzene
     a = Atoms('CH',[(1.395,0,0),(2.482,0,0)],container='Wedge')
     a.container.set(M=6,height=3)
-    calc = Hotbit(SCC=True,kpts=(6,1,1),txt='-',**default_param)
+    calc = Hotbit(SCC=False,kpts=(6,1,1),txt='-',**default_param)
     a.set_calculator(calc)
     e1 = a.get_potential_energy()
     
@@ -167,6 +223,7 @@ if True:
     BCH = calc.get_bond_energy(0,1)
     ABC = calc.get_atom_and_bond_energy(0)
     ABH = calc.get_atom_and_bond_energy(1)
+    
     #print 'CH'
     #print 'prom',promC,promH
     #print 'atom',AC, AH
@@ -177,12 +234,12 @@ if True:
        
     # 2) Using the full benzene
     atoms = a.extended_copy(((-2,3),1,1))
-    calc = Hotbit(SCC=True,txt='-',**default_param)
+    calc = Hotbit(SCC=False,txt='-',**default_param)
     atoms.set_calculator(calc)
     e = atoms.get_potential_energy()
     assert abs(e-6*e1)<eps
     
-    #print '\nC6H6'
+    
     promC = calc.get_promotion_energy(0)
     promH = calc.get_promotion_energy(1)
     AC = calc.get_atom_energy(0)
@@ -194,6 +251,7 @@ if True:
     # the energies are different here in C6H6-case than in 
     # the CH-case, because energies are divided differently
     # into bonding and atoms
+    #print '\nC6H6'
     #print 'prom',promC,promH
     #print 'atom',AC, AH
     #print 'bond',BCC,BCH
@@ -203,7 +261,6 @@ if True:
     #
     # graphene
     #
-    from box.systems import graphene
     atoms = graphene(1,1,1.42)
     calc = Hotbit(SCC=False,kpts=(10,10,1),txt='-',**default_param)
     atoms.set_calculator(calc)
@@ -260,4 +317,4 @@ if False:
     
     
     
-    
+        

@@ -131,7 +131,7 @@ class Repulsion:
             if i==j:
                 erep += 0.5*self.vrep[si+sj](d)
             else:
-                erep += self.vrep[si+sj](d)      
+                erep += self.vrep[si+sj](d)
         return erep
     
 

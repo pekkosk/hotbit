@@ -281,9 +281,19 @@ class MullikenBondAnalysis(MullikenAnalysis):
         #raise NotImplementedError('needs re-writing for k-points')
         MullikenAnalysis.__init__(self, calc)
         rhoSk = []
+        HS = []
+        rhoM = []
+        n=self.st.norb
+        aux = nu.diag(self.st.H0[0]).repeat(n).reshape((n,n))
+        #epsilon-bar matrix of Bornsen et al J.Phys.:Cond.mat 11, L287 (1999)
+        eps = 0.5*(aux+aux.transpose())   
         for k in range(self.nk):
-            rhoSk.append( nu.dot(self.st.rho[k],self.st.S[k]) ) 
+            rhoSk.append( nu.dot(self.st.rho[k],self.st.S[k]) )
+            HS.append( self.st.H0[k] - self.st.S[k]*eps )
+            rhoM.append( self.st.rho[k]*((self.st.H0[k]-self.st.S[k]*eps).transpose()) ) 
         self.rhoSk = nu.array(rhoSk)
+        self.rhoM = nu.array(rhoM)
+        self.HS = nu.array(HS)
         self.SCC = self.calc.get('SCC')
         
         
@@ -316,6 +326,9 @@ class MullikenBondAnalysis(MullikenAnalysis):
         """ 
         Return the absolute atom energy (in eV).
         
+        Warning: bonding & atom energy analysis less clear for
+        systems where orbitals overlap with own periodic images.
+        
         parameters:
         ===========
         I:         atom index
@@ -324,34 +337,57 @@ class MullikenBondAnalysis(MullikenAnalysis):
             coul = 0.5*self.calc.st.es.G[I,I]*self.st.dq[I]**2
         else:
             coul = 0.0         
-        rep = self.calc.rep.get_pair_repulsive_energy(I,I) #self-repulsion for pbc
-        return coul*Hartree + self.get_promotion_energy(I) + rep*Hartree
+        
+        elm = self.calc.el.elements[self.calc.el.symbols[I]]
+        o1, no = self.calc.el.get_property_lists(['o1','no'])[I]
+        
+        ecorr = 0.0
+        for mu in range(o1,o1+no):
+            emu = self.calc.el.orbitals(mu,basis=True)['energy']
+            ecorr += self.calc.el.get_free_population(mu) * (self.st.H0[0,mu,mu]-emu)
+            #ecorr += self.get_basis_mulliken(mu)*self.st.H0[0,mu,mu] - self.calc.el.get_free_population(mu)*emu
+        
+        eorb = 0.0
+        for k,wk in enumerate(self.wk):
+            eorb += wk*nu.sum( self.rhoM[k,o1:o1+no,o1:o1+no] )
+        #eorb = sum( [self.wk[k]*nu.sum(self.rhoM[k,o1:o1+no,o1:o1+no]) for k in range(self.nk)] )
+        
+        erep = self.calc.rep.get_pair_repulsive_energy(I,I) #self-repulsion for pbc
+        A = (coul + erep + ecorr + eorb )*Hartree + self.get_promotion_energy(I) 
+        assert abs(A.imag)<1E-12
+        return A.real
 
 
     def get_promotion_energy(self, I):
         """ 
         Return atom's promotion energy (in eV). 
         
-        energy = sum_k w_k sum_(m,n in I) rho_mn(k) H^0_nm(k) - E_free(I)
+        Defined as:
+            E_prom,I = sum_(mu in I) [q_(mu) - q_(mu)^0] H_(mu,mu)(k=0)
+        
+        Warning: bonding & atom energy analysis less clear for
+        systems where orbitals overlap with own periodic images.
         
         parameters:
         ===========
         I:         atom index
         """
-        orbi = self.calc.el.orbitals(I, indices=True)
         e = 0.0
-        for k in range(self.nk):
-            for m1 in orbi:
-                for m2 in orbi:
-                    e += self.wk[k]*self.st.rho[k,m1,m2]*self.st.H0[k,m2,m1]
+        for mu in self.calc.el.orbitals(I, indices=True):
+            q = self.get_basis_mulliken(mu)
+            q0 = self.calc.el.get_free_population(mu)
+            e += (q-q0)*self.st.H0[0,mu,mu]
+            
         assert abs(e.imag)<1E-12
-        e = e - self.calc.el.elements[self.calc.el.symbols[I]].get_free_atom_energy()
         return e.real * Hartree
 
 
     def get_bond_energy(self,i,j):
         """ 
-        Return the absolute bond energy between atoms (in eV). 
+        Return the absolute bond energy between atoms (in eV).
+        
+        Warning: bonding & atom energy analysis less clear for
+        systems where orbitals overlap with own periodic images. 
         
         parameters:
         ===========
@@ -363,19 +399,20 @@ class MullikenBondAnalysis(MullikenAnalysis):
         else:
             coul = 0.0
                 
-        orbi = self.calc.el.orbitals(i,indices=True)
-        orbj = self.calc.el.orbitals(j,indices=True)
+        o1i, noi = self.calc.el.get_property_lists(['o1','no'])[i]
+        o1j, noj = self.calc.el.get_property_lists(['o1','no'])[j]
         ebs = 0.0
-        for k in range(self.nk):
-            for mu in orbi:
-                for nu in orbj:
-                    ebs += self.wk[k]* 2*(self.st.rho[k,mu,nu]*self.st.H0[k,nu,mu] ).real
-        return (rep + coul + ebs)*Hartree
+        for k,wk in enumerate(self.wk):
+            ebs += 2*wk*nu.sum( self.rhoM[k,o1i:o1i+noi,o1j:o1j+noj].real )
+        return (rep + coul + ebs) * Hartree
 
 
     def get_atom_and_bond_energy(self, i):
         """
         Return given atom's contribution to cohesion (in eV).
+        
+        Warning: bonding & atom energy analysis less clear for
+        systems where orbitals overlap with own periodic images.
         
         parameters:
         ===========
@@ -388,86 +425,101 @@ class MullikenBondAnalysis(MullikenAnalysis):
             eb += 0.5 * self.get_bond_energy(i,j)
         return ea + eb
 
-
-    def get_covalent_energy(self):
-        """ Returns the covalent bond energy of the whole system. """
-        E_bs = self.calc.st.band_structure_energy()*Hartree
-        E = nu.sum(self.rho*self.bar_epsilon*self.S)
-        return E_bs - E
-
-
-    def get_E_cov_m_n(self, m, n, sigma, npts=500, e_min=None, e_max=None, occupations=False):
-        # name-> orbital_pair_covalent_energy
-        """ Return the covalent energy of the orbital pairs mu and nu
-        as a function of an energy. Returns the energy grid and covalent
-        energy grid, where the fermi-energy is shifted to zero. """
-        if e_min == None:
-            e_min = min(self.eigs)
-        if e_max == None:
-            e_max = max(self.eigs)
-            e_range = e_max - e_min
-            e_min -= e_range*0.1
-            e_max += e_range*0.1
-        e_g = nu.linspace(e_min, e_max, npts)
-        f = self.calc.st.get_occupations()
-        E_cov_mn = nu.zeros_like(e_g)
-        mat_nm = self.H0[n,m] - self.bar_epsilon[n,m]*self.S[n,m]
-        for k, e_k in enumerate(self.eigs):
-            rho_k_mn = self.calc.st.wf[0,k,m]*self.calc.st.wf[0,k,n].conjugate()
-            if occupations:
-                rho_k_mn *= f[k]
-            E_cov_k = rho_k_mn*mat_nm
-            add = self.gauss_fct(e_g, e_k, sigma)*E_cov_k
-            E_cov_mn += add
-        return e_g, E_cov_mn
-
-
-    def get_E_cov_I_J(self, I, J, sigma, npts=500, e_min=None, e_max=None, occupations=False):
-        # name: atom_pair_covalent_energy
-        """ Returns the energy grid and corresponding covalent bonding
-            energy values for the atom pair I-J. """
-        I = self.calc.el.orbitals(I, indices=True)
-        J = self.calc.el.orbitals(J, indices=True)
-        E_cov_IJ = nu.zeros(npts)
-        e_g = None
-        for m in I:
-            for n in J:
-                e_g, E_cov_mn = self.get_E_cov_m_n(m, n, sigma, npts, e_min, e_max, occupations=occupations)
-                E_cov_IJ += E_cov_mn
-        return e_g, 2*E_cov_IJ
-
-
-    def get_E_cov_la_lb(self, la, lb, sigma, npts=500, e_min=None, e_max=None, occupations=False):
-        # angmom_pair_covalent_energy
-        print "Covalent energy graph for angular momenta %s and %s..." % (la, lb)
-        e_g = None
-        E_cov_lalb = nu.zeros(npts)
-        if len(la) != 1 or len(lb) != 1:
-            raise Exception('Give only one angular momentum at a time.')
-        if e_min == None:
-            e_min = min(self.eigs)
-        if e_max == None:
-            e_max = max(self.eigs)
-            e_range = e_max - e_min
-            e_min -= e_range*0.1
-            e_max += e_range*0.1
-        e_g = nu.linspace(e_min, e_max, npts)
-        E_cov_mn = nu.zeros_like(e_g)
-        f = self.calc.st.get_occupations()
-        for k, e_k in enumerate(self.eigs):
-            print "  %s%s: Analyzing state %i/%i" % (la, lb, k+1, len(self.eigs))
-            rho_k = self.get_rho_k(k)
-            if occupations:
-                rho_k *= f[k]
-            mat = self.H0 - self.bar_epsilon*self.S
-            add = self.gauss_fct(e_g, e_k, sigma)
-            w_k = 0.0
-            for i, orb_i in enumerate(self.calc.el.orb):
-                for j, orb_j in enumerate(self.calc.el.orb):
-                    orb_type_i = orb_i['orbital']
-                    orb_type_j = orb_j['orbital']
-                    if (la == orb_type_i[0] and lb == orb_type_j[0]) or\
-                       (la == orb_type_j[0] and lb == orb_type_i[0]):
-                        w_k += rho_k[i,j]*mat[j,i]
-            E_cov_mn += add*w_k
-        return e_g, E_cov_mn
+    
+    def get_covalent_energy(self,mode='default',i=None,j=None,width=None,window=None,npts=501):
+        """
+        Return covalent bond energies in different modes. (eV)
+        
+        ecov is described in 
+        Bornsen, Meyer, Grotheer, Fahnle, J. Phys.:Condens. Matter 11, L287 (1999) and
+        Koskinen, Makinen Comput. Mat. Sci. 47, 237 (2009)
+        
+        
+        
+        parameters:
+        ===========
+        mode:    'default' total covalent energy
+                 'orbitals' covalent energy for orbital pairs
+                 'atoms' covalent energy for atom pairs
+                 'angmom' covalent energy for angular momentum components
+        i,j:     atom or orbital indices, or angular momentum pairs
+        width:   * energy broadening (in eV) for ecov
+                 * if None, return energy eigenvalues and corresponding 
+                   covalent energies in arrays, directly
+        window:  energy window (in eV wrt Fermi-level) for broadened ecov
+        npts:    number of points in energy grid (only with broadening) 
+    
+        return:
+        =======
+        x,y:     * if width==None, x is list of energy eigenvalues (including k-points)
+                   and y covalent energies of those eigenstates
+                 * if width!=None, x is energy grid for ecov.
+                 * energies (both energy grid and ecov) are in eV.
+         
+        Note: energies are always shifted so that Fermi-level is at zero. 
+              Occupations are not otherwise take into account (while k-point weights are)
+        """
+        eps = 1E-6
+        x, y = [], []
+        wf = self.st.wf
+        energy = self.st.e - self.st.occu.get_mu()
+        if window==None:
+            mn,mx = energy.flatten().min()-eps, energy.flatten().max()+eps
+        else:
+            mn,mx = window[0]/Hartree, window[1]/Hartree
+        
+        if mode=='angmom':
+            lorbs = [[],[],[]]
+            for m,orb in enumerate(self.calc.el.orbitals()):
+                lorbs[orb['angmom']].append(m)
+            oi, oj = nu.array(lorbs[i]), nu.array(lorbs[j])
+        elif mode=='atoms':
+            o1i, noi = self.calc.el.get_property_lists(['o1','no'])[i]
+            o1j, noj = self.calc.el.get_property_lists(['o1','no'])[j]
+            
+        for k,wk in enumerate(self.wk):
+            for a in range(self.norb):
+                if not mn<=energy[k,a]<=mx:
+                    continue 
+                x.append( energy[k,a] )
+                if mode == 'default':
+                    e = 0.0
+                    for m in range(self.norb):
+                        e += wk*nu.sum( (wf[k,a,m]*wf[k,a,:].conj()*self.HS[k,:,m]) )
+                    y.append(e)
+                elif mode == 'orbitals':
+                    if i!=j:
+                        y.append( wk*2*(wf[k,a,i]*wf[k,a,j].conj()*self.HS[k,j,i]).real )
+                    else:
+                        y.append( wk*wf[k,a,i]*wf[k,a,j].conj()*self.HS[k,j,i])
+                elif mode == 'atoms':
+                    e = 0.0
+                    if i!=j:
+                        for m in range(o1i,o1i+noi):
+                            for n in range(o1j,o1j+noj):
+                                e += wk*2*(wf[k,a,m]*wf[k,a,n].conj()*self.HS[k,n,m]).real
+                    else:
+                        for m in range(o1i,o1i+noi):
+                            for n in range(o1j,o1j+noj):
+                                e += wk*(wf[k,a,m]*wf[k,a,n].conj()*self.HS[k,n,m])
+                    y.append(e)
+                elif mode == 'angmom':
+                    e = 0.0                                
+                    for m in lorbs[i]:                           
+                        e += wk*nu.sum( wf[k,a,m]*wf[k,a,oj].conj()*self.HS[k,oj,m] )
+                    if i!=j:
+                        e += e.conj()
+                    y.append(e)
+                else:
+                    raise NotImplementedError('Unknown covalent energy mode "%s".' %mode) 
+                    
+        x,y = nu.array(x), nu.array(y)
+        assert nu.all( abs(y.imag)<1E-12 )
+        y=y.real
+        if width==None:
+            return x * Hartree, y * Hartree
+        else:
+            e,ecov = mix.broaden(x, y, width=width/Hartree, N=npts, a=mn, b=mx)
+            return e * Hartree, ecov * Hartree
+                   
+                
