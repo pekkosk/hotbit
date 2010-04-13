@@ -46,6 +46,46 @@ def check_forces(atoms, dx=1e-6):
     return ( ffd, f0, np.max(np.abs(df)) )
 
 
+def check_field(atoms, calc, dx=1e-6):
+    """
+    Compute electostatic field and compare to electrostatic field computed
+    numerically from a finite differences approach from the electrostatic
+    potential.
+    """
+
+    E0   = calc.get_field(atoms).copy()
+    Efd  = E0.copy()
+
+    for a in atoms:
+        r0  = a.get_position().copy()
+
+        a.set_x(r0[0]-dx)
+        px1  = calc.get_potential(atoms)[a.index]
+        a.set_x(r0[0]+dx)
+        px2  = calc.get_potential(atoms)[a.index]
+        a.set_x(r0[0])
+
+        a.set_y(r0[1]-dx)
+        py1  = calc.get_potential(atoms)[a.index]
+        a.set_y(r0[1]+dx)
+        py2  = calc.get_potential(atoms)[a.index]
+        a.set_y(r0[1])
+
+        a.set_z(r0[2]-dx)
+        pz1  = calc.get_potential(atoms)[a.index]
+        a.set_z(r0[2]+dx)
+        pz2  = calc.get_potential(atoms)[a.index]
+        a.set_z(r0[2])
+
+        Efd[a.index, 0]  = -(px2-px1)/(2*dx)
+        Efd[a.index, 1]  = -(py2-py1)/(2*dx)
+        Efd[a.index, 2]  = -(pz2-pz1)/(2*dx)
+
+    dE = Efd-E0
+
+    return ( Efd, E0, np.max(np.abs(dE)) )
+
+
 def check_virial(atoms, de=1e-6):
     """
     Compute virial and compare to virial computed numerically from a 
