@@ -668,6 +668,9 @@ class Hotbit(Output):
         """ 
         Return the energy of atom I (in eV).
         
+        Warning: bonding & atom energy analysis less clear for
+        systems where orbitals overlap with own periodic images.
+        
         parameters:
         ===========
         I:         atom index
@@ -681,8 +684,8 @@ class Hotbit(Output):
         """
         Return Mayer bond-order between two atoms.
         
-        Warning: appears to work only with periodic systems
-        where orbitals have no overlap with own images.
+        Warning: bonding & atom energy analysis less clear for
+        systems where orbitals overlap with own periodic images.
         
         parameters:
         ===========
@@ -700,6 +703,9 @@ class Hotbit(Output):
         energy = sum_k w_k sum_(m,n in I) rho_mn(k) H^0_nm(k) - E_free(I)
         Loses meaning for periodic systems with 'self-overlap' for orbitals.
         
+        Warning: bonding & atom energy analysis less clear for
+        systems where orbitals overlap with own periodic images.
+        
         parameters:
         ===========
         I:         atom index
@@ -712,7 +718,8 @@ class Hotbit(Output):
         """ 
         Return the absolute bond energy between atoms (in eV). 
         
-        Loses meaning for periodic systems with 'self-overlap' for orbitals.
+        Warning: bonding & atom energy analysis less clear for
+        systems where orbitals overlap with own periodic images.
         
         parameters:
         ===========
@@ -733,19 +740,42 @@ class Hotbit(Output):
         self._init_bonds()
         return self.bonds.get_atom_and_bond_energy(i)
         
+        
+    def get_covalent_energy(self,mode='default',i=None,j=None,width=None,window=None,npts=501):
+        """
+        Return covalent bond energies in different modes. (eV)
+        
+        ecov is described in 
+        Bornsen, Meyer, Grotheer, Fahnle, J. Phys.:Condens. Matter 11, L287 (1999) and
+        Koskinen, Makinen Comput. Mat. Sci. 47, 237 (2009)
+        
+        
+        
+        parameters:
+        ===========
+        mode:    'default' total covalent energy
+                 'orbitals' covalent energy for orbital pairs
+                 'atoms' covalent energy for atom pairs
+                 'angmom' covalent energy for angular momentum components
+        i,j:     atom or orbital indices, or angular momentum pairs
+        width:   * energy broadening (in eV) for ecov
+                 * if None, return energy eigenvalues and corresponding 
+                   covalent energies in arrays, directly
+        window:  energy window (in eV wrt Fermi-level) for broadened ecov
+        npts:    number of points in energy grid (only with broadening) 
     
-    def get_ecov(self):
-        raise NotImplementedError
-    
-    def get_atom_pair_ecov(self):
-        """ ecov_I_J"""
-        raise NotImplementedError
-    
-    def get_orbital_pair_ecov(self):
-        raise NotImplementedError
-    
-    def get_angmom_ecov(self):
-        raise NotImplementedError
+        return:
+        =======
+        x,y:     * if width==None, x is list of energy eigenvalues (including k-points)
+                   and y covalent energies of those eigenstates
+                 * if width!=None, x is energy grid for ecov.
+                 * energies (both energy grid and ecov) are in eV.
+         
+        Note: energies are always shifted so that Fermi-level is at zero. 
+              Occupations are not otherwise take into account (while k-point weights are)
+        """
+        self._init_bonds()
+        return self.bonds.get_covalent_energy(mode,i,j,width,window,npts)
     
  
         
