@@ -42,7 +42,7 @@ calc2 = Hotbit(SCC          = True,
                mixer        = { 'name': 'anderson', 'convergence': 1e-6 },
                txt          = 'polyethene.cal')
 calc3 = Hotbit(SCC             = True,
-               coulomb_solver  = MultipoleExpansion(8, 7, 1),
+               coulomb_solver  = MultipoleExpansion(8, 3, 5),
                verbose_SCC     = True,
                kpts            = (1,1,20),
                mixer           = { 'name': 'anderson', 'convergence': 1e-6 },
