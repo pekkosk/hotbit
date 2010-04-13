@@ -9,7 +9,7 @@ from hotbit.atoms import Atoms as HotbitAtoms
 from hotbit.multipole import get_moments
 from hotbit.multipole_expansion import MultipoleExpansion
 
-from box.fd_forces import check_forces
+from box.fd_forces import check_forces, check_field
 
 ###
 
@@ -26,32 +26,35 @@ debug  = False
 ###
 
 TOL_MOM = {
-    3: 1e-5,
+    3: 1e-7,
     5: 1e-7
     }
 TOL_PHI = {
-    3: 1e-4,
-    5: 1e-6
+    3: 1e-5,
+    5: 1e-7
     }
 TOL_E = {
-    3: 1e-4,
-    5: 1e-6
+    3: 1e-5,
+    5: 1e-7
     }
 TOL_FOR = 1e-6
+#TOL_FIELD = 1e-3
 
 ###
 
 def electrostatics_test(b, r=3, r0=None):
     if r0 is None:
-        r0 = np.sum(b.get_cell(), axis=0)/2
+        r0 = np.sum(b.get_positions(), axis=0)/len(a)
 
     # Check multipole moments
-    mp  = MultipoleExpansion(L_MAX, r, 3)
-    mp.update(b, b.get_charges(), r0)
+    mp  = MultipoleExpansion(L_MAX, r, 3, r0)
+    mp.update(b, b.get_charges())
 
-    # Store moments for later
+    # Store moments and field for later
     moments          = mp.get_moments()
     M0_l_mp, M_L_mp  = moments[1]
+
+    phi_mp, E_mp     = mp.get_potential_and_field(b)
 
     # Check if the field is the derivative of the potential
     b.set_calculator(mp)
@@ -66,17 +69,22 @@ def electrostatics_test(b, r=3, r0=None):
 
     assert err < TOL_FOR
 
-    # Next neighbor shell by multipole expansion
-    mp  = MultipoleExpansion(L_MAX, r, 2)
-    mp.update(b, b.get_charges(), r0)
-
-    phi_mp, E_mp     = mp.get_potential_and_field()
+#    ffd, f0, err = check_field(b, mp)
+#    if debug:
+#        print "Finite differences field:"
+#        print ffd
+#        print "Analytical field:"
+#        print f0
+#        print "Error:"
+#        print err
+#
+#    assert err < TOL_FIELD
 
     # Next neighbor shell by direct summation
-    mp  = MultipoleExpansion(L_MAX, 3*r, 1)
-    mp.update(b, b.get_charges(), r0)
+    mp  = MultipoleExpansion(L_MAX, r*r*r, 1, r0)
+    mp.update(b, b.get_charges())
 
-    phi_dir, E_dir  = mp.get_potential_and_field()
+    phi_dir, E_dir  = mp.get_potential_and_field(b)
 
     # Multipole moments from large cell,
     # transform symmetrically around the origin
@@ -116,15 +124,23 @@ def electrostatics_test(b, r=3, r0=None):
 
 
 for i in range(NRUNS):
-    q  = (2*np.random.random([NAT])-1)*CHARGE
-    q -= np.sum(q)/len(q)
+#    r  = np.random.random([NAT,3])*SX
+#
+#    q  = (2*np.random.random([NAT])-1)*CHARGE
+#    q -= np.sum(q)/len(q)
 
-    if True:
+    r  = [ [   SX/4,   SY/4,   SZ/4 ],
+           [ 3*SX/4,   SY/4,   SZ/4 ],
+           [   SX/4, 3*SY/4,   SZ/4 ],
+           [   SX/4,   SY/4, 3*SZ/4 ] ]
+    q  = [ 1, -1, 1, -1 ]
+
+    if False:
         # no periodicity, this should simply not fail
         if debug:
             print "0D"
         a = Atoms('%iH' % NAT,
-                  positions  = np.random.random([NAT,3])*SX,
+                  positions  = r,
                   charges    = q,
                   cell       = [ SX, SY, SZ ],
                   pbc        = False
@@ -143,7 +159,7 @@ for i in range(NRUNS):
         if debug:
             print "1D"
         a = Atoms('%iH' % NAT,
-                  positions  = np.random.random([NAT,3])*SX,
+                  positions  = r,
                   charges    = q,
                   cell       = [ SX, SY, SZ ],
                   pbc        = [ False, False, True ]
@@ -162,7 +178,7 @@ for i in range(NRUNS):
         if debug:
             print "1D - twisted"
         a = Atoms('%iH' % NAT,
-                  positions  = (np.random.random([NAT,3])-0.5)*SX,
+                  positions  = r,
                   charges    = q,
                   cell       = [ SX, SY, SZ ],
                   pbc        = [ False, False, True ]
@@ -176,8 +192,8 @@ for i in range(NRUNS):
             height     = SZ
             )
 
-        electrostatics_test(b, 3, r0=np.zeros(3))
-        electrostatics_test(b, 5, r0=np.zeros(3))
+        electrostatics_test(b, 3)
+        electrostatics_test(b, 5)
 
 
     if True:
@@ -185,7 +201,7 @@ for i in range(NRUNS):
         if debug:
             print "2D"
         a = Atoms('%iH' % NAT,
-                  positions  = np.random.random([NAT,3])*SX,
+                  positions  = r,
                   charges    = q,
                   cell       = [ SX, SY, SZ ],
                   pbc        = [ True, False, True ]
@@ -204,7 +220,7 @@ for i in range(NRUNS):
         if debug:
             print "3D"
         a = Atoms('%iH' % NAT,
-                  positions  = np.random.random([NAT,3])*SX,
+                  positions  = r,
                   charges    = q,
                   cell       = [ SX, SY, SZ ],
                   pbc        = True
@@ -214,7 +230,7 @@ for i in range(NRUNS):
             container  = 'Bravais'
             )
 
-        electrostatics_test(a, 3)
-        electrostatics_test(a, 5)
+        electrostatics_test(b, 3)
+        electrostatics_test(b, 5)
 
 
