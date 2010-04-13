@@ -14,12 +14,12 @@ from math import exp, log, pi, sqrt
 from weakref import proxy
 from math import sqrt
 
+from ase.units import Hartree, Bohr
+
 import numpy as nu
 from scipy.special import erf, erfc
 norm=nu.linalg.norm
 dot=nu.dot
-
-from ase.units import Bohr
 
 from hotbit.ewald_sum import EwaldSum
 from hotbit.multipole_expansion import MultipoleExpansion
@@ -29,15 +29,8 @@ from hotbit.multipole_expansion import MultipoleExpansion
 log2 = log(2.0)
 
 
-# List of available point-charge Coulomb solvers
-str_to_solver = {
-    'ewald': EwaldSum,
-    'me':    MultipoleExpansion
-    }
-
-
 class Electrostatics:
-    def __init__(self, calc, solver=None, accuracy_goal=12, solver_args={}):
+    def __init__(self, calc, solver=None, accuracy_goal=12):
         self.calc=proxy(calc)
         self.norb=calc.el.get_nr_orbitals()
         self.SCC=calc.get('SCC')
@@ -52,9 +45,9 @@ class Electrostatics:
             self.solver = None
             self.gamma  = self.gamma_direct
         else:
-            self.solver = str_to_solver[solver](timer = self.calc.timer,
-                                                **solver_args)
-            self.gamma  = self.gamma_correction
+            self.solver        = solver
+            self.solver.timer  = self.calc.timer
+            self.gamma         = self.gamma_correction
 
 
     def set_dq(self,dq):
@@ -63,6 +56,8 @@ class Electrostatics:
         self.epsilon = nu.sum(self.G*self.dq, axis=1)
         if self.solver is not None:
             self.solver.update(self.calc.el.atoms, dq)
+            # Unit mess: The Coulomb solver is unit agnostic, but the Elements
+            # object returns the distances in Bohr (from get_distances())
             self.epsilon += self.solver.get_potential()*Bohr
 
 
@@ -87,7 +82,10 @@ class Electrostatics:
             if self.solver is None:
                 E = nu.zeros((self.N,3))
             else:
-                E = self.solver.get_field()
+                # Unit mess: The Coulomb solver is unit agnostic, but the
+                # Elements object returns the distances in Bohr
+                # (from get_distances())
+                E = self.solver.get_field()*Bohr**2
             depsilon  = nu.sum(self.dq.reshape(1, -1, 1)*self.dG, axis=1)
             f         = self.dq.reshape(-1, 1) * ( depsilon + E )
             self.calc.stop_timing('f_es')
@@ -151,7 +149,7 @@ class Electrostatics:
         lst=self.calc.el.get_property_lists(['i','s'])
         
         for i,si in lst:
-            for j,sj in lst[i:]:
+            for j,sj in lst:
                 G[i,j] = sum( [g(si,sj,d) for d in dijn[:,i,j]] )
 
                 aux = nu.array([ g(si,sj,d,der=1)*r/d
@@ -160,12 +158,10 @@ class Electrostatics:
                     # exclude n=(0,0,0) from derivatives
                     dG[i,j] = aux[1:,:].sum(axis=0)
                 elif i!=j:
-                    G[j,i] = G[i,j] 
                     dG[i,j] = aux.sum(axis=0)
-                    dG[j,i] = -dG[i,j]
 
-        self.G, self.dG = G, dG
-                
+        self.G, self.dG  = G, dG
+
         self.ext = nu.array( [self.calc.env.phi(i) for i in range(self.N)] )
         self.calc.stop_timing('gamma matrix')
 
@@ -196,10 +192,12 @@ class Electrostatics:
                 return ei.get_U()
         else:
             ecr = -erfc(const*r)
+            #ecr = 0.0
             if der==0:
                 return ecr/r
             elif der==1:
-                decr=2/sqrt(pi)*exp(-(const*r)**2)*const - 1/r
+                decr=2/sqrt(pi)*exp(-(const*r)**2)*const
+                #decr = 0.0
                 return (decr - ecr/r)/r 
             
                 
@@ -227,6 +225,7 @@ class Electrostatics:
                 return ei.get_U()
         else:
             ecr = erf(const*r)
+#            ecr = 1.0
             if der==0:
                 if cut==None:
                     return ecr/r
@@ -234,6 +233,7 @@ class Electrostatics:
                     return ecr/r*(1-erf(r/cut))
             elif der==1:
                 decr=2/sqrt(pi)*exp(-(const*r)**2)*const
+#                decr = 0.0
                 if cut==None:
                     return (decr - ecr/r)/r 
                 else:
@@ -242,3 +242,17 @@ class Electrostatics:
                     return (df*ecr + f*decr - f*ecr/r)/r 
             
                 
+### For use as a standalone calculator
+
+    def get_potential_energy(self, a):
+        self.calc.el.update_geometry(a)
+        self.construct_Gamma_matrix()
+        self.set_dq(a.get_charges())
+        return self.coulomb_energy()*Hartree
+
+    def get_forces(self, a):
+        self.calc.el.update_geometry(a)
+        self.construct_Gamma_matrix()
+        self.set_dq(a.get_charges())
+        return self.gamma_forces()*Hartree/Bohr
+        

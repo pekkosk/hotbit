@@ -1,5 +1,4 @@
 import numpy as nu
-import pylab as pl
 from scipy.integrate import odeint
 from box.data import data
 from copy import copy
@@ -10,6 +9,12 @@ from box.timing import Timer
 from time import asctime
 import math
 import pickle
+
+try:
+    import pylab as pl
+except:
+    pl = None
+
 array=nu.array
 sqrt=math.sqrt
 pi=math.pi
