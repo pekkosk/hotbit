@@ -113,8 +113,8 @@ if len(args)==0:
 else:
     arg = args[0]
 
-hbdir = os.environ.get('HOTBIT_DIR')
-exdir = os.path.join(hbdir,'hotbit','examples')
+pardir = os.environ.get('HOTBIT_PARAMETERS')
+exdir = os.path.join(pardir,'..','examples')
 
    
 if options.examples: 

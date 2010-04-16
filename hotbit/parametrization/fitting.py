@@ -6,9 +6,11 @@ from box import mix
 from box import Atoms
 from box.interpolation import Function
 from ase import read, PickleTrajectory
+from box import NullCalculator
 import pylab as pl
 from copy import copy
 from sys import stdout
+import os
 
 
 
@@ -347,7 +349,8 @@ class RepulsiveFitting:
         if comment==None: comment=label
         if label==None: label=comment
         self.deriv.append([R,dvrep,weight,color,label])
-        self.add_comment(comment)
+        if comment!='_nolegend_':
+            self.add_comment(comment)
 
 
     def append_scalable_system(self,weight,calc,atoms,comment=None,label=None,color=None):
@@ -412,6 +415,41 @@ class RepulsiveFitting:
         self.append_scalable_system(weight,calc,atoms,comment=comment,label=label,color=color)
 
 
+    def append_equilibrium_trajectory(self,weight,calc,traj,comment=None,label=None,color=None):
+        """
+        Calculates the V'rep(r) from a given equilibrium trajectory.
+        
+        The trajectory is set of three (or more, albeit not necessary) frames
+        where atoms move near their equilibrium structure. To first approximation,
+        the energies of these frames ARE THE SAME. This method is then
+        equivalent to append_energy_curve method for given trajectory,
+        only so that the curve is flat.
+
+        parameters:
+        ===========        
+        weight:              fitting weight 
+        calc:                Hotbit calculator (remember charge and k-points)
+        traj:                filename for ASE trajectory (energies need not be defined)  
+        comment:             fitting comment for par-file (replaced by comment if None)       
+        label:               plotting label (replaced by comment if None)
+        color:               plotting color
+        """
+        traj1 = PickleTrajectory(traj)
+        atoms2 = traj1[0].copy()
+        calc2 = NullCalculator()
+        atoms2.set_calculator(calc2)
+        tmpfile = '_tmp.traj'
+        traj2 = PickleTrajectory(tmpfile,'w',atoms2)
+        for atoms1 in traj1:
+            atoms2.set_positions(atoms1.get_positions())
+            atoms2.get_potential_energy()
+            traj2.write()
+        traj2.close()
+            
+        self.append_energy_curve(weight,calc,tmpfile,comment,label,color)
+        os.remove(tmpfile)
+            
+        
     def append_energy_curve(self,weight,calc,traj,comment=None,label=None,color=None):
         """
         Calculates the V'rep(r) from a given ase-trajectory.
@@ -460,14 +498,15 @@ class RepulsiveFitting:
         N = nu.array(N)
         R = nu.array(R)
         
-            
+        
         # sort radii because of spline
         ind = R.argsort()
         R    = R[ind]
         Edft = Edft[ind]
         Ewr  = Ewr[ind]
         from box.interpolation import SplineFunction
-        vrep = SplineFunction(R, (Edft-Ewr)/N, k=3, s=0)
+        k = min(len(Edft)-2,3)
+        vrep = SplineFunction(R, (Edft-Ewr)/N, k=k, s=0)
 
         color = self._get_color(color)
         for i, r in enumerate(R):

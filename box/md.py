@@ -6,6 +6,25 @@ from ase import VelocityVerlet
 from ase import PickleTrajectory
 from ase.units import fs, Hartree
 
+
+class NullCalculator:
+    def __init__(self):
+        pass
+        
+    def calculation_required(self,atoms,quantities):
+        return False
+    
+    def get_forces(self,atoms):
+        return nu.zeros_like(atoms.get_positions())
+    
+    def get_stress(self,atoms):
+        return None
+    
+    def get_potential_energy(self,atoms=None):
+        return 0.0
+
+
+
 class TrajectoryRecording:
     def __init__(self,atoms,verbose=False):
         self.atoms=atoms

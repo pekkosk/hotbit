@@ -9,18 +9,22 @@ sys.path += [ "." ]
 
 from config import get_system_config
 
-# data files & folders
-folders = ['param','param/inofficial','param/fixed_parameters']
 data_files = []
-for folder in folders:
-    files = []
-    for file in os.listdir(folder):
-        fullfile = os.path.join(folder,file)
-        if os.path.isfile(fullfile):
-            files.append(fullfile)
-    data_files.append( (folder,files) )
-data_files.append(('.',['hotbit/hotbit']))
+# data files & folders (folders nest only two levels down, not three anymore)
+dirs = ['param','examples']
+for dir in dirs:
+   for item in os.listdir(dir):
+       fullitem = os.path.join(dir,item)
+       if os.path.isfile(fullitem):
+           data_files.append((dir,[fullitem]))
+       elif os.path.isdir(fullitem) and '.svn' not in fullitem:
+           for item2 in os.listdir(fullitem):
+               fullitem2 = os.path.join(fullitem,item2)
+               if os.path.isfile(fullitem2):
+                   data_files.append((fullitem,[fullitem2])) 
 
+
+data_files.append(('.',['hotbit/hotbit']))
 
 ###
 inc_dirs       = [ ]
@@ -34,7 +38,7 @@ get_system_config(inc_dirs,  libs, lib_dirs,
                   extra_link, extra_compile,
                   msgs)
 
-# this is probably silly way of doin this:
+# this is probably silly way of doing this:
 version = '0.1'
 revision=os.popen('svnversion .').readline()[:-1]
 f=open('./hotbit/version.py','w').write('hotbit_version = "%s (svn=%s)"\n' %(version,revision))

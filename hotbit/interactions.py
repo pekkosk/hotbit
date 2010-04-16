@@ -45,20 +45,26 @@ class Interactions:
         tables = calc.get('tables')
         present = calc.el.get_present()
         default_dir=environ.get('HOTBIT_PARAMETERS')
+        self.nullpar = default_dir+'/null.par'
         files={}
         if tables!=None:
             tables=tables.copy()
 
+        # first build file list from default place
         if tables==None or ('others' in tables and tables['others']=='default'):
             if tables!=None and 'others' in tables:
                 tables.pop('others')
             for e1 in present:
                 for e2 in present:
+                    # if interaction is specified in table, don't try to find it
+                    if e1+e2 in tables.keys() or e2+e1 in tables.keys():
+                        continue
                     # select file which is present (e.g. H_C.par or C_H.par)
                     file12='./%s_%s.par' %(e1,e2)
                     file21='./%s_%s.par' %(e2,e1)
                     default12='%s/%s_%s.par' %(default_dir,e1,e2)
                     default21='%s/%s_%s.par' %(default_dir,e2,e1)
+                     
                     if isfile(file12):
                         file=file12
                     elif isfile(file21):
@@ -71,25 +77,28 @@ class Interactions:
                         file='not found in default place'
                     files[e1+e2]=files[e2+e1]=file
 
+        # override with custom files
         if tables!=None:
             for table in tables:
                 if table=='others':
                     continue
                 # search table first from present dir, then from default
                 file=tables[table]
-                default='%s/%s' %(default_dir,file)
                 e1,e2=auxil.separate_symbols(table)
-                if isfile(file):
-                    pass
-                elif isfile(default):
-                    file=default
-                else:
-                    file='not found in custom place'
+                if file!=None:
+                    default='%s/%s' %(default_dir,file)
+                    if isfile(file):
+                        pass
+                    elif isfile(default):
+                        file=default
+                    else:
+                        file='not found in custom place (=%s)' %file
                 files[e1+e2]=files[e2+e1]=file
 
-        for file in files:
-            if not isfile(files[file]):
-                raise AssertionError('Interaction for %s %s.' %(file,files[file]))
+        for pair in files:
+#            print pair,files[pair]
+            if files[pair]!=None and not isfile(files[pair]):
+                raise AssertionError('Interaction for %s %s.' %(pair,files[pair]))
         self.files=files
         self.calc=proxy(calc)
         self.present=present
@@ -112,15 +121,16 @@ class Interactions:
     def greetings(self):
         """ Return the interaction specifications """
         txt='Interactions:\n'
-        shown=[]
-        for ia in self.files:
-            file=self.files[ia]
-            if file in shown: continue
-            txt+='  %s in %s\n' %(ia,file)
-            doc=mix.find_value(file,'slako_comment',fmt='strings',default=['no slako doc'])
-            for line in doc:
-                txt+='    *'+line.lstrip()+'\n'
-            shown.append(file)
+        for i,s1 in enumerate(self.present):
+            for s2 in self.present[i:]:
+                file = self.files[s1+s2]
+                if file==None:
+                    txt+='  %s%s: None\n' %(s1,s2)
+                else:
+                    txt+='  %s%s in %s\n' %(s1,s2,file)
+                    doc=mix.find_value(file,'slako_comment',fmt='strings',default=['no slako doc'])
+                    for line in doc:
+                        txt+='    *'+line.lstrip()+'\n'
         return txt
 
 
@@ -133,19 +143,19 @@ class Interactions:
         self.s={}
         self.cut={}
         self.maxh={}
-        self.kill_radii={}
+#        self.kill_radii={}
 
         for si in self.present:
-            for sj in self.present:
-                try:
-                    self.kill_radii[si,sj] = float(mix.find_value(self.files[si+sj],'kill_radius'))
-                except:
-                    self.kill_radii[si,sj] = None
-                try:
-                    table_ij=mix.find_value(self.files[si+sj],'%s_%s_table' %(si,sj),fmt='matrix')
-                    table_ji=mix.find_value(self.files[sj+si],'%s_%s_table' %(sj,si),fmt='matrix')
-                except KeyError:
-                    raise KeyError('Interaction file for %s-%s or %s-%s not found.' %(si,sj,sj,si))
+            for sj in self.present:    
+                if self.files[si+sj]==None:
+                    table_ij=mix.find_value(self.nullpar,'X_X_table',fmt='matrix')
+                    table_ji=table_ij.copy()
+                else:
+                    try:
+                        table_ij=mix.find_value(self.files[si+sj],'%s_%s_table' %(si,sj),fmt='matrix')
+                        table_ji=mix.find_value(self.files[sj+si],'%s_%s_table' %(sj,si),fmt='matrix')
+                    except KeyError:
+                        raise KeyError('Interaction file for %s-%s or %s-%s not found.' %(si,sj,sj,si))
                 self.cut[si+sj]=table_ij[-1,0]
                 self.max_cut=max(self.max_cut,self.cut[si+sj])
                 self.maxh[si+sj]=max( [max(nu.abs(table_ij[:,i])) for i in range(1,11)] )
