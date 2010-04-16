@@ -609,7 +609,7 @@ class KSAllElectron:
         return [(nl,self.enl[nl]) for nl in self.valence]
 
 
-    def write_unl(self,filename,only_valence=True,step=50):
+    def write_unl(self,filename,only_valence=True,step=20):
         """ Append functions unl=Rnl*r, V_effective, V_confinement into file.
             Only valence functions by default.
 

@@ -26,13 +26,17 @@ class Repulsion:
         self.rmax=0.0
         for si in present:
             for sj in present:
-                try:
-                    table_ij=mix.find_value(self.files[si+sj],'%s_%s_table' %(si,sj),fmt='matrix')
-                    table_ji=mix.find_value(self.files[sj+si],'%s_%s_table' %(sj,si),fmt='matrix')
-                except KeyError:
-                    raise KeyError('Interaction file for %s-%s or %s-%s not found.' %(si,sj,sj,si))
-                self.vrep[si+sj]=RepulsivePotential(self.files[si+sj])
-                self.rmax = max( self.rmax, self.vrep[si+sj].get_r_cut() )
+                if self.files[si+sj]==None:
+                    self.vrep[si+sj]=RepulsivePotential(self.calc.ia.nullpar)
+                    self.rmax = max( self.rmax, self.vrep[si+sj].get_r_cut() )
+                else:
+                    try:
+                        table_ij=mix.find_value(self.files[si+sj],'%s_%s_table' %(si,sj),fmt='matrix')
+                        table_ji=mix.find_value(self.files[sj+si],'%s_%s_table' %(sj,si),fmt='matrix')
+                    except KeyError:
+                        raise KeyError('Interaction file for %s-%s or %s-%s not found.' %(si,sj,sj,si))
+                    self.vrep[si+sj]=RepulsivePotential(self.files[si+sj])
+                    self.rmax = max( self.rmax, self.vrep[si+sj].get_r_cut() )
         self.N=calc.el.get_N()
 
     def __del__(self):
@@ -41,17 +45,18 @@ class Repulsion:
     def greetings(self):
         """ Return the repulsion documentations. """
         txt='Repulsions:\n'
-        shown=[]
-        for ia in self.files:
-            file=self.files[ia]
-            if file in shown: continue
-            txt+='  %s in %s\n' %(ia,file)
-            doc=mix.find_value(file,'repulsion_comment',fmt='strings',default=['no repulsion doc'])
-            for line in doc:
-                txt+='    *'+line.lstrip()+'\n'
-            shown.append(file)
+        for i,s1 in enumerate(self.calc.el.present):
+            for s2 in self.calc.el.present[i:]:
+                file = self.files[s1+s2]
+                if file==None:
+                    txt+='  %s%s: None\n' %(s1,s2)
+                else:
+                    txt+='  %s%s in %s\n' %(s1,s2,file)
+                    doc=mix.find_value(file,'repulsion_comment',fmt='strings',default=['no repulsion doc'])
+                    for line in doc:
+                        txt+='    *'+line.lstrip()+'\n'
         return txt
-    
+        
     
     def get_repulsion_distances(self,ela,elb,r_cut):
         """ 

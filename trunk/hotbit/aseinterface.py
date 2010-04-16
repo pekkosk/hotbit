@@ -61,13 +61,15 @@ class Hotbit(Output):
                           * If elements==None, use element info from default directory.
                           * If elements['others']=='default', use default parameters for all other
                             elements than the ones specified. E.g. {'H':'H.elm','others':'default'}
-                            (otherwise all elements present have to be specified excplicitly).
+                            (otherwise all elements present have to be specified explicitly).
 
         tables:           Files for Slater-Koster tables.
                           example: {'CH':'C_H.par','CC':'C_C.par'}
-                          * If elements==None, use default interactions.
-                          * If elements['others']='default', use default parameters for all other
+                          * If tables==None, use default interactions.
+                          * If tables['others']='default', use default parameters for all other
                             interactions, e.g. {'CH':'C_H.par','others':'default'}
+                          * If tables['AB']==None, ignore interactions for A and B 
+                            (both chemical and repulsive)
 
         mixer:            Density mixer. 
                           example: {'name':'Anderson','mixing_constant':0.3, 'memory':5}.
@@ -132,6 +134,8 @@ class Hotbit(Output):
         if filename is not None:
             self.load(filename)
 
+    def copy(self):
+        return self.__copy__()
 
     def __copy__(self):
         """
@@ -350,7 +354,6 @@ class Hotbit(Output):
         self.st=States(self)
         self.rep=Repulsion(self)
         self.env=Environment(self)
-        self.gd=Grids(self)
         pbc=atoms.get_pbc()
         # FIXME: gamma_cut -stuff
         #if self.get('SCC') and nu.any(pbc) and self.get('gamma_cut')==None:
@@ -364,6 +367,7 @@ class Hotbit(Output):
         self.flags['Mulliken'] = False
         self.flags['DOS'] = False
         self.flags['bonds'] = False
+        self.flags['grid'] = False
         self.stop_timing('initialization')
         
         
@@ -455,28 +459,7 @@ class Hotbit(Output):
             self.st
         return self.ecoul
 
-    def get_grid_density(self,spacing=0.2,pad=False):
-        """
-        Return the valence electron density
-        
-        Note that putting wave functions on grid may be very slow; 
-        use sparse grids and small cells.
-        
-        @param spacing: grid spacing. Uses the ASE cell.
-        @param pad: if True, the grid spans the whole ASE cell
-                    (otherwise one grid point short)
-        """
-        self.gd.make_grid(spacing=spacing,pad=pad)
-        return self.gd.get_density()
-    
-    
-    def get_grid_wf(self,i,k=0,spacing=0.2,pad=False):
-        """ 
-        Return state i with given k-point on grid. 
-        """
-        self.gd.make_grid(spacing=spacing,pad=pad)
-        return self.gd.get_wf(i)
-    
+
 
     # some not implemented ASE-assumed methods
     def get_fermi_level(self):
@@ -511,6 +494,49 @@ class Hotbit(Output):
 
     def stop_timing(self, label):
         self.timer.stop(label)
+        
+    #
+    #   grid stuff
+    #
+    def _init_grid(self,spacing=0.2,pad=False):
+        if self.calculation_required(self.el.atoms,['energy']):
+            raise AssertionError('Electronic structure is not solved yet!')
+        if self.flags['grid']==False:
+            self.gd = Grids(self,spacing,pad)
+            self.flags['grid']=True
+        
+
+    def get_grid_density(self,spacing=0.2,pad=False):
+        """
+        Return the valence electron density on a grid.
+        
+        parameters:
+        ===========
+        a:       eigenstate index (band index)
+        k:       k-point index
+        spacing: grid spacing in Angstroms
+        pad:     True for padded edges (grid points at opposite edges 
+                 have the same value)
+        """
+        self._init_grid(spacing,pad)
+        return self.gd.get_density()
+    
+    
+    def get_grid_wf(self,a,k=0,spacing=0.2,pad=False):
+        """ 
+        Return given eigenstate on a grid.
+        
+        parameters:
+        ===========
+        a:       eigenstate index (band index)
+        k:       k-point index
+        spacing: grid spacing in Angstroms
+        pad:     True for padded edges (grid points at opposite edges 
+                 have the same value)
+        """
+        self._init_grid(spacing,pad)
+        return self.gd.get_wf(a,k)
+    
 
     #
     # Mulliken population analysis tools
