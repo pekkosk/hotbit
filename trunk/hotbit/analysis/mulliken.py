@@ -372,6 +372,8 @@ class MullikenBondAnalysis(MullikenAnalysis):
         ===========
         I:         atom index
         """
+        
+        #FIXME H0[0,:,:] is often not the gamma-point!!!
         e = 0.0
         for mu in self.calc.el.orbitals(I, indices=True):
             q = self.get_basis_mulliken(mu)

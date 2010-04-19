@@ -7,79 +7,57 @@ from scipy.special import erf
 
 
 class Grids:
-    def __init__(self,calc,spacing,pad):
+    def __init__(self,calc,h,cutoff=3.0):
         """
         Initialize grids.
         
         parameters:
         ===========
-        spacing: grid spacing in Angstroms
+        h:       grid spacing in Angstroms
         pad:     True for padded edges (grid points at opposite edges 
                  have the same value)
+        cutoff:  cutoff for atomic orbitals
         """
         self.calc = proxy(calc)
-        self.el=proxy(self.calc.el)
-        self.spacing = spacing/Bohr
-#        self.grid = None
-#        self.ng = None
-#        self.gbasis = None
-  
-#        self.Rcut = 5.0/Bohr  # cutoff for atomic radial parts
- #       self.Rcore = 0.3/Bohr # the core-region
-#        self.maxspacing = self.Rcore/sqrt(3*0.5**2)
- #       self._make_grid(spacing,pad)
-             
+        self.el = proxy(self.calc.el)
+        self.h = h/Bohr
+        self.cutoff = cutoff/Bohr # cutoff for atomic orbitals
+        self.clip = 100.0 #clip wfs             
         self.calc.start_timing('init grid')
-  #      if nu.any(self.calc.el.atoms.get_pbc()):
-  #          raise AssertionError('Grid stuff not implemented for periodic systems yet.')
-   #     if spacing>self.maxspacing:
-   #         raise AssertionError('Grid spacing must be smaller than %.3f Angstroms' %(self.maxspacing*Bohr))
-   #     if self.spacing==spacing:
-   #         return
-   #     else:
-   #         self.grid, self.ng, self.gbasis = None, None, None
-    #    self.norb = self.calc.get_number_of_bands()
-   #     self.spacing=spacing
+        
+        
         self.L = self.el.get_cube()        
-        self.N = nu.array( nu.ceil(self.L/spacing),int )
-        self.dr = self.L/self.N
-        if not pad:
-            self.L -= self.dr # this is due to the .cube-format
+        self.N = nu.array( nu.round(self.L/h),int )
+        self.dr = self.L/(self.N-1)
+#        
+#        if not pad:
+#            self.L -= self.dr # this is due to the .cube-format
         self.grid=[]
         for i in range(3):
             self.grid.append( nu.linspace(0,self.L[i],self.N[i]) )
-        
+#        print 'grid',self.grid[0]
         
         self.dV = nu.prod(self.dr)
         self.ng = nu.prod(self.N)
-        #self.grid = []
-        #for i,x in enumerate(self.gd1[0]):
-        #    for j,y in enumerate(self.gd1[1]):
-        #        for k,z in enumerate(self.gd1[2]):
-        #            self.grid.append(nu.array([x,y,z]))
-        
-        #self.grid = nu.zeros((self.N[0],self.N[1],self.N[2],3))
-        #for i,x in enumerate(self.gd1[0]):
-        #    for j,y in enumerate(self.gd1[1]):
-        #        for k,z in enumerate(self.gd1[2]):
-        #            self.grid[i,j,k] = (x,y,z)        
-                    
-        # partial grids
-        self.cutoff = 5.0/Bohr # cutoff for atomi wfs
+
+        # partial grids (where atomic orbitals are first put)        
         self.pN = []
         self.pL = []
         for i in range(3):
-            N = int( nu.ceil(self.cutoff*2/self.dr[i]) )
+            N = int( nu.round(self.cutoff*2/self.dr[i]) )
             if nu.mod(N,2)==0: 
                 N+=1
             self.pN.append(N)
-            self.pL.append(N*self.dr[i])
+            self.pL.append((N-1)*self.dr[i])
         
         self.pL = nu.array(self.pL)
         self.pgrid = []
         for i in range(3):
-            #self.pgrid.append( nu.linspace(0,self.L[i],self.N[i]) )
             self.pgrid.append( [p*self.dr[i]-self.pL[i]/2 for p in xrange(self.pN[i])] )
+#        print self.pgrid[0]
+#        print self.pN
+#        print self.pL
+#        print '---------------'
             
         #self.pgrid = nu.zeros((self.pN[0],self.pN[1],self.pN[2],3))
         #for i in range(self.pN[0]):
@@ -90,10 +68,35 @@ class Grids:
         self._all_basis_orbitals_to_partial_grid()             
         self.calc.stop_timing('init grid') 
         
+        
+    def _return_array(self,a,pad):
+        a=a.copy()
+        a = a.real.clip(-self.clip,self.clip) + 1j*a.imag.clip(-self.clip,self.clip)
+        if nu.all(abs(a.imag)<1E-10):
+            a=a.real
+        if pad:
+            return a
+        else:
+            return a[:-1,:-1,:-1]
+        
     
-    def _basis_orbital_to_partial_grid(self,symbol,otype):
+    def _atomic_orbital_to_partial_grid(self,symbol,otype):
         """
-        Return atomic orbital on a grid.
+        Put atomic orbital on a grid.
+        
+        It looks like this; atom is right in the middle of the grid
+        (number of grid points is odd in each direction)
+        
+        |----------v----------|
+        |     |    |    |     |
+        |---------------------|
+        |     |    |    |     |
+        |----------X----------|
+        |     |    |    |     |
+        |---------------------|
+        |     |    |    |     |
+        |----------^-----------
+        
         
         parameters:
         ===========
@@ -116,164 +119,123 @@ class Grids:
                         rnl = Rnl(d)
                         if abs(rnl)>1E-7:
                             wf[i,j,k] = rnl*angular(r,otype)
-        return wf     
+        return wf    
     
     
     def _all_basis_orbitals_to_partial_grid(self):
         """
-        Put all basis orbital types into grid 
+        Put all atomic orbitals into partial grids -> e.g. patomic['C']['px']
         """
-        self.calc.start_timing('orbitals to grid') 
-        self.basis={}
+        self.calc.start_timing('atomic orbitals to grid') 
+        self.patomic={}
         for symb in self.el.present:
             el = self.el.elements[symb]
             symbol = el.get_symbol()
-            self.basis[symbol] = {}
+            self.patomic[symbol] = {}
             for otype in el.get_orbital_types():
-                wf = self._basis_orbital_to_partial_grid(symbol,otype)
-                self.basis[symbol][otype] = wf
-        self.calc.stop_timing('orbitals to grid')
+                wf = self._atomic_orbital_to_partial_grid(symbol,otype)
+                self.patomic[symbol][otype] = wf
+        self.calc.stop_timing('atomic orbitals to grid')
+        
+        
     
-
-    def _basis_orbital_to_grid(self,I,otype):
+    def get_grid_basis_orbital(self,I,otype,k=0,pad=True):
         """
-        Put basis orbital into the full grid.
+        Return basis orbital on grid.
+        
+        parameters:
+        ===========
+        I:     atom index
+        otype: orbital type ('s','px','py',...)
+        k:     k-point index (basis functions are really the extended
+               Bloch functions for periodic systems)
+        pad:   padded edges in the array
         """
         symbol = self.el.symbols[I]
-        
-        ri = self.el.nvector(I)
-        #position of atom I => grid point N
-        N = nu.array( nu.round(ri/self.dr),int ) 
-        dn = []
-        a,b = nu.zeros((3,2),int),nu.zeros((3,2),int)
-        for i in range(3):
-            mn = N[i]-(self.pN[i]-1)/2        
-            mx = N[i]+(self.pN[i]-1)/2
-            # first is index, second is the NUMBER of items (not index)
-            a[i] =( max(0,mn),min(self.N[i],mx+1) )
-            b[i] =( max(0,-mn),min(self.pN[i],self.pN[i]+self.N[i]-(mx+1)) )
-            #print i,mn,mx,a[i],b[i],a[i,1]-a[i,0], b[i,1]-b[i,0]
+        pwf = self.patomic[symbol][otype]
         wf = nu.zeros(self.N)
-        pwf = self.basis[symbol][otype]
-#        print '--'*10
-#        print self.N
-#        print self.pN
-#        print N
-#        print a[0,0],a[0,1],a[1,0],a[1,1],a[2,0],a[2,1]
-#        print b[0,0],b[0,1],b[1,0],b[1,1],b[2,0],b[2,1]
-        wf[a[0,0]:a[0,1],a[1,0]:a[1,1],a[2,0]:a[2,1]] = pwf[b[0,0]:b[0,1],b[1,0]:b[1,1],b[2,0]:b[2,1]]           
-        return wf
-        
+        phases = self.calc.ia.get_phases()[:,k]
+        for ni,n in enumerate(self.el.ntuples):
+            ri = self.el.nvector(I,n)  
+            if nu.linalg.norm(ri)>nu.linalg.norm(self.L)+self.cutoff: 
+                continue      
+            #position of atom I => grid point N
+            N = nu.array( nu.round(ri/self.dr),int )
+            a,b = [],[]
+            inside = True
+            for i in range(3):
+                lo = N[i]-(self.pN[i]-1)/2        
+                hi = N[i]+(self.pN[i]-1)/2
+                # these are indices
+                a1,a2 = max(0,lo), min(self.N[i]-1,hi)
+                an = a2-a1
+                b1 = max(0,-lo)
+                b2 = b1 + an
+                a.append( slice(a1,a2+1) )
+                b.append( slice(b1,b2+1) )
+                if b1>b2 or a1>a2:
+                    inside = False
+            if inside:
+                wf[a[0],a[1],a[2]] = wf[a[0],a[1],a[2]] + phases[ni]*pwf[b[0],b[1],b[2]]
+        return self._return_array(wf,pad) 
+
     
-    def get_wf(self,a,k=0):
+    
+    def get_grid_wf(self,a,k=0,pad=True):
         """ 
-        ff
+        Return eigenfunction on a grid.
+        
+        parameters:
+        ===========
+        a:     state (band) index
+        k:     k-vector index
+        pad:   padded edges 
         """        
         wf = self.calc.st.wf
-        # TODO: this can be done more efficiently using numpy
-        gwf = nu.zeros(self.N) #TODO: complex
+        
+        if nu.all( abs(self.calc.ia.get_phases()[:,k]-1)<1E-10 ):
+            gwf = nu.zeros(self.N) #TODO: complex
+        else: 
+            gwf = nu.zeros(self.N,complex)
         
         for mu,orb in enumerate(self.el.orbitals()):
             I,otype = orb['atom'],orb['orbital']
-            gwf += wf[k,a,mu]*self._basis_orbital_to_grid(I,otype)
-        return gwf
-                 
-            
-        
-        
-    def basis_orbital_to_grid(self,b):
-        """ 
-        Put (real) basis orbital into grid. 
-        
-        @param b: index of basis orbital.
-        
-        Normalize the orbital by scaling wf within the core region.
-        """
-        self.calc.start_timing('to grid')
-        if self.gbasis!=None:
-            return self.gbasis[b]
-        #aprint 'basis',b
-        basis = nu.zeros(self.ng)
-        atom = self.el.orbitals(b,atom=True)
-        orb = self.el.orbitals(b,basis=True)
-        nvector = self.el.nvector
-        type, Rnl = orb['orbital'], orb['Rnl']
-        core = []
-        for ig,r in enumerate(self.grid):  
-            dr = nvector(r,r0=atom)
-            d = sqrt(dr[0]**2+dr[1]**2+dr[2]**2)
-            if d>self.Rcut: 
-                continue
-            else:
-                basis[ig] = Rnl(d)*angular(dr,type)
-                if d<self.Rcore: core.append(ig)
-        # normalize basis function; correct wf WITHIN CORE region 
-        # to get normalization to one. 
-        nall = sum(basis**2)*self.dV
-        if nall<0.1:
-            raise AssertionError('Some element probably does not have radial functions.')
-        ncore = sum(basis[core]**2)*self.dV
-        if ncore<1E-10:
-            raise AssertionError('Wf core correction not possible; spacing is probably too large.')
-        basis[core] = basis[core] * sqrt((1-nall+ncore)/(ncore))  
-        basis.shape = tuple(self.N)
-        self.calc.stop_timing('to grid')
-        return basis
-    
-    
-    def whole_basis_to_grid(self):
-        """ Put all basis functions to grid. """
-        self.calc.start_timing('basis2grid')
-        gbasis = [ self.basis_orbital_to_grid(b) for b in range(self.norb) ]
-        self.gbasis = nu.array(gbasis)
-        self.calc.stop_timing('basis2grid')
+            gwf += wf[k,a,mu]*self.get_grid_basis_orbital(I,otype,k)
+        return self._return_array(gwf,pad)
             
     
-    def get_wf_old(self,i,k=0):
+    def get_grid_wf_density(self,a,k=0,pad=True):
+        """
+        Return eigenfunction density.
+        
+        Density is not normalized; accurate quantitative analysis
+        on this density are best avoided.
+        
+        parameters:
+        ===========
+        a:     state (band) index
+        k:     k-vector index
+        pad:   padded edges
+        """
+        wf = self.get_grid_wf(a,k,pad=True)
+        return self._return_array(wf*wf.conjugate(),pad) 
+    
+    
+    def get_grid_density(self,pad):
         """ 
-        Put (complex) wave function into grid. 
+        Return electron density on grid.
         
-        @param i: band index
-        @param k: k-point index
-        The wave function is NOT normalized.
-        """
-        if self.gbasis == None:
-            self.whole_basis_to_grid()
-        wf = self.calc.st.wf
-        # TODO: this can be done more efficiently using numpy
-        gwf = nu.zeros_like( self.gbasis[0] ) #TODO: complex
-        for b in range(self.norb):
-            gwf = gwf + self.gbasis[b]*wf[k,b,i] #TODO fix this 
-        return gwf       
-    
-    
-    def get_wf_density(self,i,k=0):
-        """
-        Return normalized density from given eigenfunction.
+        Do not perform accurate analysis on this density.
+        Integrated density differs from the total number of electrons.
+        Bader analysis inaccurate.
         
-        @param i: band index
-        @param k: k-point index
-        
-        Density is normalized by rescaling. 
+        parameters:
+        pad:      padded edges
         """
-        wf = self.get_wf(i,k)
-        dens = wf*wf.conjugate()
-        return dens/(dens.sum()*self.dV)
-    
-    
-    
-    def get_density(self):
-        """ 
-        Return valence electron density on grid.
-        
-        Integrates exactly to the total number of valence electrons. 
-        """
-        k=0        
-        dens = nu.zeros(tuple(self.N))
-        for i,f in enumerate(self.calc.st.f[k,:]):
-            if f<1E-6: break
-            dens = dens + self.get_wf_density(i,k)*float(f) #TODO: k-point weights 
-        assert nu.all(abs(dens.flatten().imag)<1E-10)
-        assert abs(dens.flatten().sum()*self.dV-self.calc.el.get_number_of_electrons())<1E-9
-        return dens.real
+        rho = nu.zeros(tuple(self.N))
+        for k,wk in enumerate(self.calc.st.k):
+            for a,f in enumerate(self.calc.st.f[k,:]):
+                if f<1E-6: break
+                rho = rho + self.get_grid_wf_density(a,k,pad=True)
+        return self._return_array(rho,pad)    
         

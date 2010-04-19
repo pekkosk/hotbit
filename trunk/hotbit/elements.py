@@ -6,7 +6,7 @@ import hotbit.auxil as aux
 import box.mix as mix
 from numpy.linalg.linalg import norm
 from ase.units import Hartree,Bohr
-from os import environ
+from os import environ,path
 from weakref import proxy
 from copy import copy, deepcopy
 #from fortran.misc import fortran_doublefor
@@ -27,13 +27,9 @@ class Elements:
 
         if not isinstance(atoms, ase_Atoms):
             raise AssertionError('Given atoms object has to be ase.Atoms type.')
-        #self.atoms = atoms.copy()
+
         self._update_atoms(atoms)
-            #raise AssertionError('Given atoms object has to be box.Atoms, not ase.Atoms type.')
-        #if isinstance(atoms,Atoms):
-        #    self.atoms=atoms.copy()
-        #else:
-        #    self.atoms=Atoms(atoms)
+
         self.calc=proxy(calc)
         self.symbols=atoms.get_chemical_symbols()
         self.N=len(atoms)
@@ -49,16 +45,36 @@ class Elements:
 
         # default input files if defined. Override them by the custom
         # input files, if specified.
-        default_dir=environ.get('HOTBIT_PARAMETERS')
+        
         self.files={}
-        if elements==None or ('others' in elements and elements['others']=='default'):
-            if elements!=None and 'others' in elements:
-                elements.pop('others')
-            for elem in self.present:
-                self.files[elem]='%s/%s.elm' %(default_dir,elem)
-
+        for key in self.symbols: 
+            self.files[key]=None
+            
+        # set customized files
+        current = path.abspath('.')
+        default = environ.get('HOTBIT_PARAMETERS')
         if elements!=None:
-            self.files.update(elements)
+            for key in elements:
+                if key=='rest': continue
+                file = elements[key]
+                if file[-4:]!='.elm':
+                    file+='.elm'
+                if not path.isfile(file):
+                    raise RutimeError('Custom element file "%s" for %s not found.' %(file,key))
+                else:
+                    file = path.abspath(file)
+                    self.files[key] = file
+        
+        # find element data from default place
+        if elements==None or elements!=None and 'rest' in elements and elements['rest']=='default':
+            for key in self.symbols:
+                if self.files[key]!=None: continue
+                file = path.join(default,'%s.elm' %key)
+                if not path.isfile(file):
+                    raise RutimeError('Default element file "%s" for %s not found.' %(file,key))
+                else:
+                    self.files[key] = file 
+        
         self._elements_initialization()
         self.solved={'ground state':None,'energy':None,'forces':None,'stress':None,'ebs':None,'ecoul':None,'magmoms':None}
 

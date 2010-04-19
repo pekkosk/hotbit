@@ -45,7 +45,7 @@ if phase==2:
 
 if phase==3:
     # fit repulsion
-    tab={'CH':'C_H_norep.par','others':'default'}
+    tab={'CH':'C_H_norep.par','rest':'default'}
     elm={'C':'C.elm','H':'H.elm'}
     mixer={'name':'Anderson','mixing_constant':0.1,'convergence':1E-9}
     calc0 = Hotbit(width=0.1,txt='-',elements=elm,tables=tab,mixer=mixer,SCC=True)
@@ -66,3 +66,7 @@ if phase==3:
     rep.add_comment('Repulsion by Pekka Koskinen')
     rep.write_par('C_H_norep.par',filename='C_H_rep.par')
     rep.plot('CH_rep.pdf')
+    
+    
+
+    
