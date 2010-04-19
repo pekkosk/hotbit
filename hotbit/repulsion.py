@@ -26,17 +26,8 @@ class Repulsion:
         self.rmax=0.0
         for si in present:
             for sj in present:
-                if self.files[si+sj]==None:
-                    self.vrep[si+sj]=RepulsivePotential(self.calc.ia.nullpar)
-                    self.rmax = max( self.rmax, self.vrep[si+sj].get_r_cut() )
-                else:
-                    try:
-                        table_ij=mix.find_value(self.files[si+sj],'%s_%s_table' %(si,sj),fmt='matrix')
-                        table_ji=mix.find_value(self.files[sj+si],'%s_%s_table' %(sj,si),fmt='matrix')
-                    except KeyError:
-                        raise KeyError('Interaction file for %s-%s or %s-%s not found.' %(si,sj,sj,si))
-                    self.vrep[si+sj]=RepulsivePotential(self.files[si+sj])
-                    self.rmax = max( self.rmax, self.vrep[si+sj].get_r_cut() )
+                self.vrep[si+sj]=RepulsivePotential(self.files[si+sj])
+                self.rmax = max( self.rmax, self.vrep[si+sj].get_r_cut() )
         self.N=calc.el.get_N()
 
     def __del__(self):

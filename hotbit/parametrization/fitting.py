@@ -422,8 +422,11 @@ class RepulsiveFitting:
         The trajectory is set of three (or more, albeit not necessary) frames
         where atoms move near their equilibrium structure. To first approximation,
         the energies of these frames ARE THE SAME. This method is then
-        equivalent to append_energy_curve method for given trajectory,
-        only so that the curve is flat.
+        equivalent to append_energy_curve method for given trajectory, with a flat
+        energy curve.
+        * Atoms should move as parallel to the fitted bonds as possible.
+        * Amplitude should be small enough (say, 0.01 Angstroms)
+        
 
         parameters:
         ===========        
@@ -701,7 +704,7 @@ class ParametrizationTest:
         for el in elements:
             ss = "%s%s" % (el, el)
             if el1 == el2 and el1 == el:
-                tables = {ss:par, 'others':'default'}
+                tables = {ss:par, 'rest':'default'}
                 calc = Hotbit(SCC=True, tables=tables)
             else:
                 calc = Hotbit(SCC=True)
@@ -729,7 +732,7 @@ class ParametrizationTest:
         self.E_free = self.get_isolated_energies(self.trajectories, par)
         temp = par.split('_')
         symbols = "%s%s" % (temp[0],temp[1])
-        tables = {symbols:par, 'others':'default'}
+        tables = {symbols:par, 'rest':'default'}
         for i_traj, calc in zip(range(len(self.trajectories)), self.calculators):
             pl.figure(i_traj)
             pl.title(self.trajectories[i_traj])

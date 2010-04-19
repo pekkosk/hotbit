@@ -57,17 +57,19 @@ class Hotbit(Output):
 
         elements:         Files for element data (*.elm). 
                           example: {'H':'H_custom.elm','C':'/../C.elm'}
+                          * If extension '.elm' is omitted, it is assumed. 
                           * Items can also be elements directly: {'H':H} (H is type Element)
                           * If elements==None, use element info from default directory.
-                          * If elements['others']=='default', use default parameters for all other
-                            elements than the ones specified. E.g. {'H':'H.elm','others':'default'}
+                          * If elements['rest']=='default', use default parameters for all other
+                            elements than the ones specified. E.g. {'H':'H.elm','rest':'default'}
                             (otherwise all elements present have to be specified explicitly).
 
         tables:           Files for Slater-Koster tables.
                           example: {'CH':'C_H.par','CC':'C_C.par'}
+                          * If extension '.par' is omitted, it is assumed.
                           * If tables==None, use default interactions.
-                          * If tables['others']='default', use default parameters for all other
-                            interactions, e.g. {'CH':'C_H.par','others':'default'}
+                          * If tables['rest']='default', use default parameters for all other
+                            interactions, e.g. {'CH':'C_H.par','rest':'default'}
                           * If tables['AB']==None, ignore interactions for A and B 
                             (both chemical and repulsive)
 
@@ -498,45 +500,79 @@ class Hotbit(Output):
     #
     #   grid stuff
     #
-    def _init_grid(self,spacing=0.2,pad=False):
+    def set_grid(self,h=0.2,cutoff=3.0):
         if self.calculation_required(self.el.atoms,['energy']):
             raise AssertionError('Electronic structure is not solved yet!')
         if self.flags['grid']==False:
-            self.gd = Grids(self,spacing,pad)
+            self.gd = Grids(self,h,cutoff)
             self.flags['grid']=True
         
+        
+    def get_grid_basis_orbital(self,I,otype,k=0,pad=True):
+        """
+        Return basis orbital on grid.
+        
+        parameters:
+        ===========
+        I:     atom index
+        otype: orbital type ('s','px','py',...)
+        k:     k-point index (basis functions are really the extended
+               Bloch functions for periodic systems)
+        pad:   padded edges in the array
+        """
+        if self.flags['grid']==False:
+            raise AssertionError('Grid needs to be set first by method "set_grid".')
+        return self.gd.get_grid_basis_orbital(I,otype,k,pad)
 
-    def get_grid_density(self,spacing=0.2,pad=False):
-        """
-        Return the valence electron density on a grid.
-        
-        parameters:
-        ===========
-        a:       eigenstate index (band index)
-        k:       k-point index
-        spacing: grid spacing in Angstroms
-        pad:     True for padded edges (grid points at opposite edges 
-                 have the same value)
-        """
-        self._init_grid(spacing,pad)
-        return self.gd.get_density()
-    
-    
-    def get_grid_wf(self,a,k=0,spacing=0.2,pad=False):
+
+    def get_grid_wf(self,a,k=0,pad=True):
         """ 
-        Return given eigenstate on a grid.
+        Return eigenfunction on a grid.
         
         parameters:
         ===========
-        a:       eigenstate index (band index)
-        k:       k-point index
-        spacing: grid spacing in Angstroms
-        pad:     True for padded edges (grid points at opposite edges 
-                 have the same value)
+        a:     state (band) index
+        k:     k-vector index
+        pad:   padded edges 
         """
-        self._init_grid(spacing,pad)
-        return self.gd.get_wf(a,k)
+        if self.flags['grid']==False:
+            raise AssertionError('Grid needs to be set first by method "set_grid".')
+        return self.gd.get_grid_wf(a,k,pad)
     
+    
+    def get_grid_wf_density(self,a,k=0,pad=True):
+        """
+        Return eigenfunction density.
+        
+        Density is not normalized; accurate quantitative analysis
+        on this density are best avoided.
+        
+        parameters:
+        ===========
+        a:     state (band) index
+        k:     k-vector index
+        pad:   padded edges
+        """
+        if self.flags['grid']==False:
+            raise AssertionError('Grid needs to be set first by method "set_grid".')
+        return self.gd.get_grid_wf_density(a,k,pad)
+    
+    
+    def get_grid_density(self,pad=True):
+        """ 
+        Return electron density on grid.
+        
+        Do not perform accurate analysis on this density.
+        Integrated density differs from the total number of electrons.
+        Bader analysis inaccurate.
+        
+        parameters:
+        pad:      padded edges
+        """
+        if self.flags['grid']==False:
+            raise AssertionError('Grid needs to be set first by method "set_grid".')
+        return self.gd.get_grid_density(pad)
+            
 
     #
     # Mulliken population analysis tools

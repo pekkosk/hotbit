@@ -4,13 +4,13 @@
 from repulsion import RepulsivePotential
 from box import mix
 from box.interpolation import Function
-#from hotbit.fortran.slako import fast_slako_transformations
-#from hotbit.fortran.misc import matrix_blocks
 import numpy as nu
 from hotbit import auxil
 from box.mix import kronecker
 from box.interpolation import MultipleSplineFunction
 from weakref import proxy
+from copy import copy
+from os import path,environ
 
 from _hotbit import fast_slako_transformations
 
@@ -37,74 +37,63 @@ class Interactions:
         Set up the input files for interactions.
 
         If tables==None, use default tables.
-        If tables['others']=='default' use default interactions for the ones not given in tables.
+        If tables['rest']=='default' use default interactions for the ones not given in tables.
 
         """
         from os import environ
         from os.path import isfile
-        tables = calc.get('tables')
+        
+        tables = copy(calc.get('tables'))
         present = calc.el.get_present()
-        default_dir=environ.get('HOTBIT_PARAMETERS')
-        self.nullpar = default_dir+'/null.par'
+        default = environ.get('HOTBIT_PARAMETERS')
+        current = path.abspath('.')
+        self.nullpar = path.join(default,'null.par')    
+        
         files={}
+        for k1 in present:
+            for k2 in present:
+                files[k1+k2] = None
+                
+        # set customized files
         if tables!=None:
-            tables=tables.copy()
+            for key in tables:
+                if key=='rest': continue
+                e1,e2 = auxil.separate_symbols(key)
+                file = tables[key]
+                if file==None:
+                    file = self.nullpar
+                if file[-4:]!='.par':
+                    file+='.par'
+                if not isfile(file):
+                    raise RuntimeError('Custom parameter file "%s" for %s-%s interaction not found.' %(file,e1,e2))
+                file = path.abspath(file)
+                files[e1+e2] = file
+                files[e2+e1] = file
 
-        # first build file list from default place
-        if tables==None or ('others' in tables and tables['others']=='default'):
-            if tables!=None and 'others' in tables:
-                tables.pop('others')
+        # set interactions from default place
+        if tables==None or tables!=None and 'rest' in tables and tables['rest']=='default':
             for e1 in present:
                 for e2 in present:
-                    # if interaction is specified in table, don't try to find it
-                    if e1+e2 in tables.keys() or e2+e1 in tables.keys():
+                    if files[e1+e2]!=None: 
                         continue
-                    # select file which is present (e.g. H_C.par or C_H.par)
-                    file12='./%s_%s.par' %(e1,e2)
-                    file21='./%s_%s.par' %(e2,e1)
-                    default12='%s/%s_%s.par' %(default_dir,e1,e2)
-                    default21='%s/%s_%s.par' %(default_dir,e2,e1)
-                     
-                    if isfile(file12):
-                        file=file12
-                    elif isfile(file21):
-                        file=file21
-                    elif isfile(default12):
-                        file=default12
-                    elif isfile(default21):
-                        file=default21
+                    def12 = path.join(default,'%s_%s.par' %(e1,e2))
+                    def21 = path.join(default,'%s_%s.par' %(e2,e1))
+                    
+                    if isfile(def12):
+                        file = def12
+                    elif isfile(def21):
+                        file = def21
                     else:
-                        file='not found in default place'
-                    files[e1+e2]=files[e2+e1]=file
-
-        # override with custom files
-        if tables!=None:
-            for table in tables:
-                if table=='others':
-                    continue
-                # search table first from present dir, then from default
-                file=tables[table]
-                e1,e2=auxil.separate_symbols(table)
-                if file!=None:
-                    default='%s/%s' %(default_dir,file)
-                    if isfile(file):
-                        pass
-                    elif isfile(default):
-                        file=default
-                    else:
-                        file='not found in custom place (=%s)' %file
-                files[e1+e2]=files[e2+e1]=file
-
-        for pair in files:
-#            print pair,files[pair]
-            if files[pair]!=None and not isfile(files[pair]):
-                raise AssertionError('Interaction for %s %s.' %(pair,files[pair]))
+                        raise RuntimeError('Default parameter files "%s" or "%s" for %s-%s interaction not found.' %(def12,def21,e1,e2))
+                    file = path.abspath(file)
+                    files[e1+e2] = file
+                    files[e2+e1] = file
+               
         self.files=files
         self.calc=proxy(calc)
         self.present=present
         self.max_cut=0.0 # maximum interaction range in Bohrs
         self.read_tables()
-#        self.check_box_size()
         self.first=True
 
     def __del__(self):
@@ -146,16 +135,13 @@ class Interactions:
 #        self.kill_radii={}
 
         for si in self.present:
-            for sj in self.present:    
-                if self.files[si+sj]==None:
-                    table_ij=mix.find_value(self.nullpar,'X_X_table',fmt='matrix')
+            for sj in self.present:   
+                if mix.find_value(self.files[si+sj],'X_X_table',fmt='test'):
+                    table_ij=mix.find_value(self.files[si+sj],'X_X_table' %(si,sj),fmt='matrix')
                     table_ji=table_ij.copy()
                 else:
-                    try:
-                        table_ij=mix.find_value(self.files[si+sj],'%s_%s_table' %(si,sj),fmt='matrix')
-                        table_ji=mix.find_value(self.files[sj+si],'%s_%s_table' %(sj,si),fmt='matrix')
-                    except KeyError:
-                        raise KeyError('Interaction file for %s-%s or %s-%s not found.' %(si,sj,sj,si))
+                    table_ij=mix.find_value(self.files[si+sj],'%s_%s_table' %(si,sj),fmt='matrix')
+                    table_ji=mix.find_value(self.files[sj+si],'%s_%s_table' %(sj,si),fmt='matrix')
                 self.cut[si+sj]=table_ij[-1,0]
                 self.max_cut=max(self.max_cut,self.cut[si+sj])
                 self.maxh[si+sj]=max( [max(nu.abs(table_ij[:,i])) for i in range(1,11)] )
@@ -257,6 +243,14 @@ class Interactions:
         #print R
         D[1:4,1:4] = R[:,:].transpose()
         return D.transpose()
+    
+    
+    def get_phases(self):
+        """ Return phases for symmetry operations and k-points.
+        
+        phases[n,k] 
+        """
+        return nu.array(self.phases)
 
 
     def construct_matrices(self):
@@ -287,6 +281,7 @@ class Interactions:
             phases.append( nu.array([nu.exp(1j*nu.dot(nt,k)) for k in states.k]) )
             DTn.append( self.rotation_transformation(nt) )
             Rot.append( self.calc.el.rotation(nt) )
+        self.phases = phases
 
         lst = el.get_property_lists(['i','s','no','o1'])
         Rijn, dijn = self.calc.el.get_distances()
