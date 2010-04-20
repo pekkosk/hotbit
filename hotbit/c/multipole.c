@@ -621,6 +621,7 @@ PyObject *py_multipole_to_multipole(PyObject *self, PyObject *args)
     int l_max;
     PyObject *Ml0 = NULL;
     PyObject *Mlm = NULL;
+    PyObject *ret;
 
     if (!PyArg_ParseTuple(args, "O!iO!O!|O!O!",
                           &PyArray_Type, &dr, &l_max,
@@ -650,7 +651,12 @@ PyObject *py_multipole_to_multipole(PyObject *self, PyObject *args)
                            PyArray_DATA(Ml0_of_child), PyArray_DATA(Mlm_of_child), 
                            PyArray_DATA(Ml0), PyArray_DATA(Mlm));
 
-    return PyTuple_Pack(2, Ml0, Mlm);
+    /* New tuple, SET_ITEM does not increase reference count */
+    ret = PyTuple_New(2);
+    PyTuple_SET_ITEM(ret, 0, Ml0);
+    PyTuple_SET_ITEM(ret, 1, Mlm);
+
+    return ret;
 }
 
 
@@ -660,6 +666,7 @@ PyObject *py_multipole_to_local(PyObject *self, PyObject *args)
     int l_max;
     PyObject *Ll0 = NULL;
     PyObject *Llm = NULL;
+    PyObject *ret;
 
     if (!PyArg_ParseTuple(args, "O!iO!O!|O!O!",
                           &PyArray_Type, &dr, &l_max,
@@ -689,7 +696,12 @@ PyObject *py_multipole_to_local(PyObject *self, PyObject *args)
                            PyArray_DATA(Ml0), PyArray_DATA(Mlm),
                            PyArray_DATA(Ll0), PyArray_DATA(Llm));
 
-    return PyTuple_Pack(2, Ll0, Llm);
+    /* New tuple, SET_ITEM does not increase reference count */
+    ret = PyTuple_New(2);
+    PyTuple_SET_ITEM(ret, 0, Ll0);
+    PyTuple_SET_ITEM(ret, 1, Llm);
+
+    return ret;
 }
 
 
@@ -699,6 +711,7 @@ PyObject *py_local_to_local(PyObject *self, PyObject *args)
     int l_max_in, l_max_out;
     PyObject *Ll0_out = NULL;
     PyObject *Llm_out = NULL;
+    PyObject *ret;
 
     if (!PyArg_ParseTuple(args, "O!iO!O!i|O!O!",
                           &PyArray_Type, &dr,
@@ -730,7 +743,12 @@ PyObject *py_local_to_local(PyObject *self, PyObject *args)
                    l_max_in, PyArray_DATA(Ll0), PyArray_DATA(Llm),
                    l_max_out, PyArray_DATA(Ll0_out), PyArray_DATA(Llm_out));
 
-    return PyTuple_Pack(2, Ll0_out, Llm_out);
+    /* New tuple, SET_ITEM does not increase reference count */
+    ret = PyTuple_New(2);
+    PyTuple_SET_ITEM(ret, 0, Ll0_out);
+    PyTuple_SET_ITEM(ret, 1, Llm_out);
+
+    return ret;
 }
 
 
@@ -741,6 +759,7 @@ PyObject *py_transform_multipole(PyObject *self, PyObject *args)
     PyObject *Sl0;
     PyObject *Slm;
     npy_intp dims[1];
+    PyObject *ret;
 
     if (!PyArg_ParseTuple(args, "O!iO!O!",
                           &PyArray_Type, &R,
@@ -779,7 +798,13 @@ PyObject *py_transform_multipole(PyObject *self, PyObject *args)
                      PyArray_DATA(Rl0), PyArray_DATA(Rlm),
                      PyArray_DATA(Sl0), PyArray_DATA(Slm));
 
-    return PyTuple_Pack(2, Sl0, Slm);
+
+    /* New tuple, SET_ITEM does not increase reference count */
+    ret = PyTuple_New(2);
+    PyTuple_SET_ITEM(ret, 0, Sl0);
+    PyTuple_SET_ITEM(ret, 1, Slm);
+
+    return ret;
 }
 
 

@@ -251,6 +251,7 @@ PyObject *py_solid_harmonic_R(PyObject *self, PyObject *args)
     npy_intp dims[1];
     PyObject *Rl0 = NULL;
     PyObject *Rlm = NULL;
+    PyObject *ret;
 
 
     if (!PyArg_ParseTuple(args, "O!i|O!O!",
@@ -311,7 +312,12 @@ PyObject *py_solid_harmonic_R(PyObject *self, PyObject *args)
                          PyArray_DATA(Rl0), PyArray_DATA(Rlm));
     }
 
-    return PyTuple_Pack(2, Rl0, Rlm);
+    /* New tuple, SET_ITEM does not increase reference count */
+    ret = PyTuple_New(2);
+    PyTuple_SET_ITEM(ret, 0, Rl0);
+    PyTuple_SET_ITEM(ret, 1, Rlm);
+
+    return ret;
 }
 
 
@@ -325,6 +331,7 @@ PyObject *py_solid_harmonic_I(PyObject *self, PyObject *args)
     npy_intp dims[1];
     PyObject *Il0 = NULL;
     PyObject *Ilm = NULL;
+    PyObject *ret;
 
 
     if (!PyArg_ParseTuple(args, "O!i",
@@ -379,5 +386,10 @@ PyObject *py_solid_harmonic_I(PyObject *self, PyObject *args)
 
     solid_harmonic_I(x, costh, phi, l_max, PyArray_DATA(Il0), PyArray_DATA(Ilm));
 
-    return PyTuple_Pack(2, Il0, Ilm);
+    /* New tuple, SET_ITEM does not increase reference count */
+    ret = PyTuple_New(2);
+    PyTuple_SET_ITEM(ret, 0, Il0);
+    PyTuple_SET_ITEM(ret, 1, Ilm);
+
+    return ret;
 }

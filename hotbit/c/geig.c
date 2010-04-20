@@ -159,6 +159,7 @@ py_geig(PyObject *self, PyObject *args) {
     npy_intp *A_dims, *B_dims;
     PyObject *po_A, *po_B;
     PyObject *po_eV;
+    PyObject *ret;
 
     int typenum;
     PyObject *po_for_A, *po_for_B;
@@ -208,7 +209,12 @@ py_geig(PyObject *self, PyObject *args) {
     /* Release the Fortran-ordered B matrix */
     Py_DECREF(po_for_B);
 
-    return PyTuple_Pack(2, po_eV, po_for_A);
+    /* New tuple, SET_ITEM does not increase reference count */
+    ret = PyTuple_New(2);
+    PyTuple_SET_ITEM(ret, 0, po_eV);
+    PyTuple_SET_ITEM(ret, 1, po_for_A);
+
+    return ret;
 }
 
 
