@@ -311,7 +311,7 @@ PyObject *py_solid_harmonic_R(PyObject *self, PyObject *args)
                          PyArray_DATA(Rl0), PyArray_DATA(Rlm));
     }
 
-    return Py_BuildValue("OO", Rl0, Rlm);
+    return PyTuple_Pack(2, Rl0, Rlm);
 }
 
 
@@ -379,5 +379,5 @@ PyObject *py_solid_harmonic_I(PyObject *self, PyObject *args)
 
     solid_harmonic_I(x, costh, phi, l_max, PyArray_DATA(Il0), PyArray_DATA(Ilm));
 
-    return Py_BuildValue("OO", Il0, Ilm);
+    return PyTuple_Pack(2, Il0, Ilm);
 }

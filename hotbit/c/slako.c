@@ -675,5 +675,5 @@ py_fast_slako_transformations(PyObject *self, PyObject *args)
                                PyArray_DATA(dht),
                                PyArray_DATA(dst));
 
-    return Py_BuildValue("OOOO", ht, st, dht, dst);
+    return PyTuple_Pack(4, ht, st, dht, dst);
 }

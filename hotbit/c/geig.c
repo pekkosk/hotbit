@@ -208,7 +208,7 @@ py_geig(PyObject *self, PyObject *args) {
     /* Release the Fortran-ordered B matrix */
     Py_DECREF(po_for_B);
 
-    return Py_BuildValue("OO", po_eV, po_for_A);
+    return PyTuple_Pack(2, po_eV, po_for_A);
 }
 
 
