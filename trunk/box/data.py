@@ -15,7 +15,7 @@ data={}
 
 data['H'] ={'Z':1, 'symbol':'H', 'name':'hydrogen', 'mass': 1.0079,  'R_cov':0.31,'R_vdw':1.20,'IE':0.0135,'EA':72.27 }            
 data['He']={'Z':2, 'symbol':'He'}
-data['Li']={'Z':3, 'symbol':'Li'}
+data['Li']={'Z':3, 'symbol':'Li', 'R_cov':1.28}
 data['Be']={'Z':4, 'symbol':'Be'}
 data['B'] ={'Z':5, 'symbol':'B'}
 data['C'] ={'Z':6, 'symbol':'C', 'name':'carbon',   'mass':12.0107,  'R_cov':0.76,'R_vdw':1.70,'IE':11.256,'EA':1.594}            
@@ -31,6 +31,7 @@ data['Ar']={'Z':18,'symbol':'Ar'}
 data['K'] ={'Z':19,'symbol':'K', 'name':'potassium','mass':39.0983,  'R_cov':2.03,'R_vdw':2.75,'IE':4.338, 'EA':0.501}             
 data['Ti']={'Z':22,'symbol':'Ti','name':'titanium', 'mass':47.8760,  'R_cov':1.60,'R_vdw':2.15,'IE':6.825, 'EA':0.078}            
 data['Kr']={'Z':36,'symbol':'Kr'}
+data['Sn']={'Z':50, 'symbol':'Sn', 'R_cov':1.39}
 data['Xe']={'Z':54,'symbol':'Xe'}
 data['Pt']={'Z':78,'symbol':'Pt','name':'platinum', 'mass':195.084,  'R_cov':1.36,'R_vdw':1.75,'IE':9.013, 'EA':2.127}
 data['Au']={'Z':79,'symbol':'Au','name':'gold',     'mass':196.9666, 'R_cov':1.36,'R_vdw':1.66,'IE':9.221, 'EA':2.308}                    
@@ -55,6 +56,7 @@ valence_orbitals['Ar']=[]
 valence_orbitals['K']=['4s','4p']
 valence_orbitals['Ti']=['3d','4s','4p']
 valence_orbitals['Kr']=[]
+valence_orbitals['Sn']=['5s','5p']
 valence_orbitals['Xe']=[]
 valence_orbitals['Pt']=['6s','6p','5d']
 valence_orbitals['Au']=['6s','6p','5d']
@@ -87,6 +89,7 @@ aux=[ ['H', '',{'1s':1}],\
       ['Ti','Ar',{'3d':2,'4s':2,'4p':0}],\
       ['Kr','Ar',{'3d':10,'4s':2,'4p':6}],\
       # fifth row
+      ['Sn','Kr',{'4d':10,'5s':2,'5p':2}],
       ['Xe','Kr',{'4d':10,'5s':2,'5p':6}],\
       # sixth row
       ['Pt','Xe',{'4f':14,'5d':9,'6s':1,'6p':0}],\
