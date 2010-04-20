@@ -602,6 +602,7 @@ py_fast_slako_transformations(PyObject *self, PyObject *args)
     double dist;
     PyObject *rhat, *h, *s, *dh, *ds;
     PyObject *ht, *st, *dht, *dst;
+    PyObject *ret;
 
     npy_intp dims[3];
 
@@ -675,5 +676,12 @@ py_fast_slako_transformations(PyObject *self, PyObject *args)
                                PyArray_DATA(dht),
                                PyArray_DATA(dst));
 
-    return PyTuple_Pack(4, ht, st, dht, dst);
+    /* New tuple, SET_ITEM does not increase reference count */
+    ret = PyTuple_New(4);
+    PyTuple_SET_ITEM(ret, 0, ht);
+    PyTuple_SET_ITEM(ret, 1, st);
+    PyTuple_SET_ITEM(ret, 2, dht);
+    PyTuple_SET_ITEM(ret, 3, dst);
+
+    return ret;
 }
