@@ -174,7 +174,7 @@ def tail_smoothening(x,y):
                 raise RuntimeError('Problems with function smoothening; need for new algorithm?')
     return y
 
-def IP_EA(symb,remove_orb,add_orb,remove,add):
+def IP_EA(symb,remove_orb,add_orb,remove,add,add_args={}):
     """ Return ionization potential and electron affinity for given atom,
         and the valence energies of neutral atom.
     
@@ -192,19 +192,20 @@ def IP_EA(symb,remove_orb,add_orb,remove,add):
     electron adding and removal.             
     """
     #from box.data import atom_occupations
-    atom = KSAllElectron(symb, txt='-')
+    atom = KSAllElectron(symb, txt='-', **add_args)
 
     # add electrons -> negative ion
     #occu=atom_occupations[symb].copy()
     w = 'negative.atom'
     occu_add = atom.occu.copy()
     occu_add[add_orb] += add
-    ea = KSAllElectron(symb, configuration=occu_add, restart=w, write=w)
+    ea = KSAllElectron(symb, configuration=occu_add, restart=w, write=w,
+                       **add_args)
     ea.run()
 
     # neutral atom
     w = 'neutral.atom'
-    neutral = KSAllElectron(symb, restart=w, write=w)
+    neutral = KSAllElectron(symb, restart=w, write=w, **add_args)
     neutral.run()
     valence_energies = neutral.get_valence_energies()
 
@@ -213,7 +214,8 @@ def IP_EA(symb,remove_orb,add_orb,remove,add):
     w = 'positive.atom'
     occu_remove = atom.occu.copy()
     occu_remove[remove_orb] -= remove
-    ip = KSAllElectron(symb, configuration=occu_remove, restart=w, write=w)
+    ip = KSAllElectron(symb, configuration=occu_remove, restart=w, write=w,
+                       **add_args)
     ip.run()
 
     e0 = neutral.get_energy()

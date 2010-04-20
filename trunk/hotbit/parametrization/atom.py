@@ -28,6 +28,7 @@ class KSAllElectron:
                       xc='PW92',
                       convergence={'density':1E-7,'energies':1E-7},
                       scalarrel=False,
+                      rmax=100.0,
                       nodegpts=500,
                       mix=0.2,
                       itmax=200,
@@ -57,6 +58,7 @@ class KSAllElectron:
                         * density: max change for integrated |n_old-n_new|
                         * energies: max change in single-particle energy (Hartree)
         scalarrel:      Use scalar relativistic corrections
+        rmax:           radial cutoff
         nodegpts:       total number of grid points is nodegpts times the max number
                         of antinodes for all orbitals
         mix:            effective potential mixing constant
@@ -95,9 +97,9 @@ class KSAllElectron:
         # ... more specific
         self.occu = copy( data[self.symbol]['configuration'] )
         nel_neutral = self.Z
-        assert sum([self.occu[key] for key in self.occu]) == nel_neutral
+        assert sum(self.occu.values()) == nel_neutral
         self.occu.update( configuration )
-        self.nel=sum([self.occu[key] for key in self.occu])
+        self.nel=sum(self.occu.values())
         self.charge=nel_neutral-self.nel
         if self.confinement==None:
             self.confinement_potential=ConfinementPotential('none')
@@ -123,7 +125,7 @@ class KSAllElectron:
         self.total_energy=0.0
 
         maxnodes=max( [n-l-1 for n,l,nl in self.list_states()] )
-        self.rmin, self.rmax, self.N=( 1E-2/self.Z, 100.0, (maxnodes+1)*self.nodegpts )
+        self.rmin, self.rmax, self.N=( 1E-2/self.Z, rmax, (maxnodes+1)*self.nodegpts )
         if self.scalarrel:
             print >> self.txt, 'Using scalar relativistic corrections.'
         print>>self.txt, 'max %i nodes, %i grid points' %(maxnodes,self.N)
