@@ -650,7 +650,7 @@ PyObject *py_multipole_to_multipole(PyObject *self, PyObject *args)
                            PyArray_DATA(Ml0_of_child), PyArray_DATA(Mlm_of_child), 
                            PyArray_DATA(Ml0), PyArray_DATA(Mlm));
 
-    return Py_BuildValue("OO", Ml0, Mlm);
+    return PyTuple_Pack(2, Ml0, Mlm);
 }
 
 
@@ -689,7 +689,7 @@ PyObject *py_multipole_to_local(PyObject *self, PyObject *args)
                            PyArray_DATA(Ml0), PyArray_DATA(Mlm),
                            PyArray_DATA(Ll0), PyArray_DATA(Llm));
 
-    return Py_BuildValue("OO", Ll0, Llm);
+    return PyTuple_Pack(2, Ll0, Llm);
 }
 
 
@@ -730,7 +730,7 @@ PyObject *py_local_to_local(PyObject *self, PyObject *args)
                    l_max_in, PyArray_DATA(Ll0), PyArray_DATA(Llm),
                    l_max_out, PyArray_DATA(Ll0_out), PyArray_DATA(Llm_out));
 
-    return Py_BuildValue("OO", Ll0_out, Llm_out);
+    return PyTuple_Pack(2, Ll0_out, Llm_out);
 }
 
 
@@ -779,7 +779,7 @@ PyObject *py_transform_multipole(PyObject *self, PyObject *args)
                      PyArray_DATA(Rl0), PyArray_DATA(Rlm),
                      PyArray_DATA(Sl0), PyArray_DATA(Slm));
 
-    return Py_BuildValue("OO", Sl0, Slm);
+    return PyTuple_Pack(2, Sl0, Slm);
 }
 
 
