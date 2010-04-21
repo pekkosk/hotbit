@@ -33,7 +33,7 @@ class Hotbit(Output):
                       charge=0.0,
                       SCC=True,
                       kpts=(1,1,1),
-                      physical_k_points=True,
+                      physical_k=True,
                       maxiter=50,
                       gamma_cut=None,
                       txt=None,
@@ -84,7 +84,7 @@ class Hotbit(Output):
                             given by the cell vectors.
                           * For general symmetries, you need to look at the info
                             from the container used
-        physical_k_points Use physical (realistic) k-points for generally periodic systems.
+        physical_k        Use physical (realistic) k-points for generally periodic systems.
                           * Ignored with normal translational symmetry
                           * True for physically allowed k-points in periodic symmetries.
         maxiter:          Maximum number of self-consistent iterations 
@@ -117,7 +117,7 @@ class Hotbit(Output):
                         'width':width/Hartree,
                         'SCC':SCC,
                         'kpts':kpts,
-                        'physical_k_points':physical_k_points,
+                        'physical_k':physical_k,
                         'maxiter':maxiter,
                         'gamma_cut':gamma_cut,
                         'txt':txt,
@@ -694,7 +694,7 @@ class Hotbit(Output):
         return self.DOS.get_local_density_of_states(projected,width,window,npts)
     
         
-    def get_density_of_states(self,broaden=False,width=0.05,window=None,npts=501):
+    def get_density_of_states(self,broaden=False,projected=False,occu=False,width=0.05,window=None,npts=501):
         """
         Return the full density of states.
         
@@ -703,16 +703,25 @@ class Hotbit(Output):
         
         parameters:
         ===========
-        broaden:     If True, return broadened DOS in regular grid
-                     in given energy window. 
-                     If False, return energies of all states, followed
-                     by their weights. 
+        broaden:     * If True, return broadened DOS in regular grid
+                       in given energy window. 
+                     * If False, return energies of all states, followed
+                       by their k-point weights.
+        projected:   project DOS for angular momenta 
+        occu:        for not broadened case, return also state occupations
         width:       Gaussian broadening (eV)
         window:      energy window around Fermi-energy; 2-tuple (eV)
         npts:        number of data points in output
+        
+        return:      * if projected: e[:],dos[:],pdos[l,:] (angmom l=0,1,2)
+                     * if not projected: e[:],dos[:]
+                       * if broaden: e[:] is on regular grid, otherwise e[:] are
+                         eigenvalues and dos[...] corresponding weights
+                     * if occu: e[:],dos[:],occu[:] 
+                          
         """
         self._init_DOS()
-        return self.DOS.get_density_of_states(broaden,width,window,npts)
+        return self.DOS.get_density_of_states(broaden,projected,occu,width,window,npts)
     
 
 

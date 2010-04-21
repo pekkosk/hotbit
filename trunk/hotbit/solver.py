@@ -55,7 +55,6 @@ class Solver:
             st.update(e,wf)
             if not self.SCC:
                 break
-            
             #raise NotImplementedError
             dq_out=st.get_dq()
             done,dq=mixer(dq,dq_out)
