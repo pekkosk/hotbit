@@ -185,7 +185,7 @@ class DensityOfStates(MullikenAnalysis):
         
 
 
-    def get_density_of_states(self,broaden=False,width=0.05,window=None,npts=501):
+    def get_density_of_states(self,broaden=False,projected=False,occu=False,width=0.05,window=None,npts=501):
         """
         Return the full density of states.
         
@@ -197,26 +197,46 @@ class DensityOfStates(MullikenAnalysis):
         broaden:     * If True, return broadened DOS in regular grid
                        in given energy window. 
                      * If False, return energies of all states, followed
-                       by their k-point weights. 
+                       by their k-point weights.
+        projected:   project DOS for angular momenta 
+        occu:        for not broadened case, return also state occupations
         width:       Gaussian broadening (eV)
         window:      energy window around Fermi-energy; 2-tuple (eV)
         npts:        number of data points in output
+        
+        return:      * if projected: e[:],dos[:],pdos[l,:] (angmom l=0,1,2)
+                     * if not projected: e[:],dos[:]
+                       * if broaden: e[:] is on regular grid, otherwise e[:] are
+                         eigenvalues and dos[...] corresponding weights
+                     * if occu: e[:],dos[:],occu[:] 
+                          
         """
+        if broaden and occu or projected and occu:
+            raise AssertionError('Occupation numbers cannot be returned with broadened DOS.')
+        if projected:
+            e,dos,pdos = self.get_local_density_of_states(True,width,window,npts)
+            return e,dos.sum(axis=0),pdos.sum(axis=0)
+            
         mn, mx = self.emin, self.emax
         if window is not None:
             mn, mx = window
             
-        x, y = [],[]
+        x, y, f = [],[],[]
         for a in range(self.calc.el.norb):
             x = nu.concatenate( (x,self.e[:,a]) )
             y = nu.concatenate( (y,self.calc.st.wk) )
+            f = nu.concatenate( (f,self.calc.st.f[:,a]) )
         x=nu.array(x) 
         y=nu.array(y) 
+        f=nu.array(f)
         if broaden:
             e,dos = mix.broaden(x, y, width=width, N=npts, a=mn, b=mx)
         else:
             e,dos = x,y
-        return e,dos
+        if occu:
+            return e,dos,f
+        else:
+            return e,dos
 
 
     def get_local_density_of_states(self,projected=False,width=0.05,window=None,npts=501):
@@ -267,7 +287,7 @@ class DensityOfStates(MullikenAnalysis):
             assert nu.all( abs(ldos-pldos.sum(axis=1))<1E-6 )
             return egrid, ldos, pldos
         else:       
-            return egrid,ldos
+            return egrid, ldos
 
        
 

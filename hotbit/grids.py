@@ -29,13 +29,11 @@ class Grids:
         self.L = self.el.get_cube()        
         self.N = nu.array( nu.round(self.L/h),int )
         self.dr = self.L/(self.N-1)
-#        
-#        if not pad:
-#            self.L -= self.dr # this is due to the .cube-format
+
         self.grid=[]
         for i in range(3):
             self.grid.append( nu.linspace(0,self.L[i],self.N[i]) )
-#        print 'grid',self.grid[0]
+
         
         self.dV = nu.prod(self.dr)
         self.ng = nu.prod(self.N)
@@ -54,16 +52,7 @@ class Grids:
         self.pgrid = []
         for i in range(3):
             self.pgrid.append( [p*self.dr[i]-self.pL[i]/2 for p in xrange(self.pN[i])] )
-#        print self.pgrid[0]
-#        print self.pN
-#        print self.pL
-#        print '---------------'
-            
-        #self.pgrid = nu.zeros((self.pN[0],self.pN[1],self.pN[2],3))
-        #for i in range(self.pN[0]):
-        #    for j in range(self.pN[1]):
-        #        for k in range(self.pN[2]):
-        #            self.pgrid[i,j,k] = (i,j,k)*self.dr - self.pL/2  
+
                     
         self._all_basis_orbitals_to_partial_grid()             
         self.calc.stop_timing('init grid') 
@@ -157,12 +146,17 @@ class Grids:
         phases = self.calc.ia.get_phases()[:,k]
         for ni,n in enumerate(self.el.ntuples):
             ri = self.el.nvector(I,n)  
-            if nu.linalg.norm(ri)>nu.linalg.norm(self.L)+self.cutoff: 
-                continue      
+            inside = True
+            # check first roughly that basis reaches the inside of cell
+            for i in range(3):
+                if ri[i]<-self.cutoff or self.L[i]+self.cutoff<ri[i]:
+                    inside = False
+            if not inside:
+                continue
             #position of atom I => grid point N
             N = nu.array( nu.round(ri/self.dr),int )
             a,b = [],[]
-            inside = True
+            
             for i in range(3):
                 lo = N[i]-(self.pN[i]-1)/2        
                 hi = N[i]+(self.pN[i]-1)/2
@@ -200,7 +194,8 @@ class Grids:
         
         for mu,orb in enumerate(self.el.orbitals()):
             I,otype = orb['atom'],orb['orbital']
-            gwf += wf[k,a,mu]*self.get_grid_basis_orbital(I,otype,k)
+            if abs(wf[k,a,mu])**2>1E-13:
+                gwf += wf[k,a,mu]*self.get_grid_basis_orbital(I,otype,k)
         return self._return_array(gwf,pad)
             
     
@@ -227,7 +222,7 @@ class Grids:
         
         Do not perform accurate analysis on this density.
         Integrated density differs from the total number of electrons.
-        Bader analysis inaccurate.
+        Bader analysis will be inaccurate.
         
         parameters:
         pad:      padded edges
@@ -236,6 +231,6 @@ class Grids:
         for k,wk in enumerate(self.calc.st.k):
             for a,f in enumerate(self.calc.st.f[k,:]):
                 if f<1E-6: break
-                rho = rho + self.get_grid_wf_density(a,k,pad=True)
+                rho = rho + wk*self.get_grid_wf_density(a,k,pad=True)
         return self._return_array(rho,pad)    
         

@@ -389,6 +389,7 @@ class RepulsiveFitting:
 
         dEwr=(e2-e1)/(self.scale*R-R)
         color = self._get_color(color)
+        comment += ';w=%.1f' %weight
         self.append_point(weight,R,-dEwr/N,comment,label,color)
         print>>self.txt, '\nAdding a scalable system %s with %i bonds at R=%.4f.' %(atoms.get_name(),N,R)
 
@@ -451,6 +452,8 @@ class RepulsiveFitting:
             
         self.append_energy_curve(weight,calc,tmpfile,comment,label,color)
         os.remove(tmpfile)
+        if os.path.isfile(tmpfile+'.bak'):
+            os.remove(tmpfile+'.bak')
             
         
     def append_energy_curve(self,weight,calc,traj,comment=None,label=None,color=None):
@@ -501,6 +504,8 @@ class RepulsiveFitting:
         N = nu.array(N)
         R = nu.array(R)
         
+        if nu.any( N-N[0]!=0 ):
+            raise RuntimeError('The number of bonds changes within trajectory %s.' %traj[0].get_name())
         
         # sort radii because of spline
         ind = R.argsort()
@@ -514,7 +519,7 @@ class RepulsiveFitting:
         color = self._get_color(color)
         for i, r in enumerate(R):
             if i==0:
-                com = comment 
+                com = comment + ';w=%.1f' %weight 
             else:
                 label='_nolegend_'
                 com = None
@@ -601,6 +606,7 @@ class RepulsiveFitting:
         for i,r in enumerate(rlist):
             if i==0:
                 com = comment
+                com += ';w=%.1f' %weight
             else:
                 label = '_nolegend_'
                 com = None
@@ -620,7 +626,7 @@ class RepulsiveFitting:
         if len(distances)==0:
             return 0.0,distances
         R = distances.mean()
-        rmin, rmax = distances.max(), distances.min() 
+        rmin, rmax = distances.min(), distances.max()
         if  rmax - rmin > self.tol:
             atoms = calc.get_atoms()
             raise AssertionError('Bond lengths in %s are not the same, they vary between %.6f ... %.6f' %(atoms.get_name(),rmin,rmax) )

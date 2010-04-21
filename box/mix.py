@@ -3,7 +3,7 @@
 # Copyright (C) 2008 NSC Jyvaskyla
 # Please see the accompanying LICENSE file for further information.
 '''
-    A module containing miscellanous utility functions.
+    A module containing miscellaneous utility functions.
 
     Author: P. Koskinen 11.9 2006-
 
@@ -13,7 +13,7 @@ import numpy as nu
 import time
 from math import atan,pi,cos,sin,sqrt
 from numpy import sqrt,pi,exp
-
+   
 
 def fit(f,p,xlist,ylist):
     '''

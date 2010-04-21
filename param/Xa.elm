@@ -1,4 +1,4 @@
-symbol=C     
+symbol=Xa     
 epsilon_2s = -0.1974 
 U=      0.365  
 FWHM=   3.64   

@@ -157,7 +157,7 @@ class States:
 
     def solve(self):
         if self.nk==None:
-            physical = self.calc.get('physical_k_points')
+            physical = self.calc.get('physical_k')
             self.nk, self.k, self.kl, self.wk = self.setup_k_sampling( self.calc.get('kpts'),physical=physical )
             width=self.calc.get('width')
             self.occu = Occupations(self.calc.el.get_number_of_electrons(),width,self.wk)
