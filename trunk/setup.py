@@ -2,7 +2,7 @@ import os
 import sys
 import numpy as np
 
-from distutils.core import setup, Extension
+from distutils.core import setup, Extension, setup_keywords
 from distutils.sysconfig import get_config_var
 
 sys.path += [ "." ]
@@ -21,7 +21,7 @@ for dir in dirs:
            for item2 in os.listdir(fullitem):
                fullitem2 = os.path.join(fullitem,item2)
                if os.path.isfile(fullitem2):
-                   data_files.append((fullitem,[fullitem2])) 
+                   data_files.append((fullitem,[fullitem2]))
 
 
 data_files.append(('.',['hotbit/hotbit']))
@@ -44,7 +44,7 @@ revision=os.popen('svnversion .').readline()[:-1]
 f=open('./hotbit/version.py','w').write('hotbit_version = "%s (svn=%s)"\n' %(version,revision))
 
 
-setup(
+s=setup(
     name         = "hotbit",
     url          = "https://trac.cc.jyu.fi/projects/hotbit",
     description  = "Density-functional tight-binding calculator for ASE",
@@ -63,7 +63,7 @@ setup(
         Extension(
             "_hotbit",
             [ "hotbit/c/_hotbit.c",
-              "hotbit/c/geig.c", 
+              "hotbit/c/geig.c",
               "hotbit/c/slako.c",
               "hotbit/c/spherical.c",
               "hotbit/c/multipole.c" ],
@@ -74,8 +74,16 @@ setup(
             extra_link_args     = extra_link
             )
         ],
-    data_files = data_files    
+    data_files = data_files
     )
+
+try:
+    home = s.command_options['install']['home'][1]
+except KeyError:
+    # installation without parameter --home
+    home = os.getenv('HOME')
+    msgs.append('* No installation directory specified, hotbit installed directly to %s' % home)
+os.chmod('%s/hotbit' % home, 0755)
 
 for msg in msgs:
     print msg
