@@ -60,7 +60,7 @@ class Elements:
                 if file[-4:]!='.elm':
                     file+='.elm'
                 if not path.isfile(file):
-                    raise RutimeError('Custom element file "%s" for %s not found.' %(file,key))
+                    raise RuntimeError('Custom element file "%s" for %s not found.' %(file,key))
                 else:
                     file = path.abspath(file)
                     self.files[key] = file
@@ -71,7 +71,7 @@ class Elements:
                 if self.files[key]!=None: continue
                 file = path.join(default,'%s.elm' %key)
                 if not path.isfile(file):
-                    raise RutimeError('Default element file "%s" for %s not found.' %(file,key))
+                    raise RuntimeError('Default element file "%s" for %s not found.' %(file,key))
                 else:
                     self.files[key] = file 
         
