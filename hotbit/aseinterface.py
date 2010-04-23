@@ -414,17 +414,16 @@ class Hotbit(Output):
             self.el.set_solved('forces')
         return self.f.copy()
     
-    
 
-
-    def get_band_energies(self,kpts):
+    def get_band_energies(self, kpts):
         '''
         Return band energies for explicitly given list of k-points.
         
         @param kpts: list of k-points; e.g. kpts=[(0,0,0),(pi/2,0,0),(pi,0,0)]
         '''
-        raise NotImplementerError
-        
+        self.solve_ground_state(atoms)
+        return self.st.get_band_energies(self, kpts)
+
 
     def get_stress(self,atoms):
         self.solve_ground_state(atoms)
@@ -449,7 +448,7 @@ class Hotbit(Output):
     def get_band_structure_energy(self,atoms):
         if self.calculation_required(atoms, ['ebs']):
             self.solve_ground_state(atoms)
-            self.ebs = self.st.band_structure_energy()*Hartree
+            self.ebs = self.st.get_band_structure_energy()*Hartree
             self.el.set_solved('ebs')
         return self.ebs 
 
@@ -460,7 +459,6 @@ class Hotbit(Output):
             self.ecoul = self.st.es.coulomb_energy()*Hartree 
             self.st
         return self.ecoul
-
 
 
     # some not implemented ASE-assumed methods

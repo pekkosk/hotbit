@@ -170,7 +170,7 @@ class States:
         if True:
             if self.SCC:
                 self.es.construct_Gamma_matrix()
-            self.e, self.wf = self.solver.get_states(self.calc,dq,self.H0,self.S,self.count)
+            self.e, self.wf = self.solver.get_states(self.calc,dq,self.H0,self.S)
             
             self.check_mulliken_charges()
             self.large_update()
@@ -231,14 +231,28 @@ class States:
         self.rhoe = compute_rhoe(self.wf,self.f,self.e)
         self.calc.stop_timing('final update')
 
+
     def get_dq(self):
         return self.dq.copy()
+
 
     def get_eigenvalues(self):
         return self.e.copy()
 
+
+    def get_band_energies(self, kpts):
+        """
+        Return the eigenvalue spectrum for a set of explicitly given k-points.
+        """
+        H0, S, dH0, dS = self.calc.ia.get_matrices(kpts)
+        e, wf = self.solver.get_eigenvalues_and_wavefunctions(H0, S)
+
+        return e
+
+
     def get_occupations(self):
         return self.f.copy()
+
 
     def get_homo(self,occu=0.99):
         """ Return highest *largely* occupied orbital (>occu)
@@ -248,6 +262,7 @@ class States:
         for i in range(self.norb)[::-1]:
             if nu.any( self.f[:,i]>occu ): return i
 
+
     def get_lumo(self,occu=1.01):
         """ Return lowest *largely* unuccopied orbital (<occu)
         
@@ -255,6 +270,7 @@ class States:
         """
         for i in range(self.norb):
             if nu.any( self.f[:,i]<occu ): return i
+
 
     def mulliken(self):
         '''
@@ -279,7 +295,7 @@ class States:
         return nu.array(q)-self.calc.el.get_valences()
 
 
-    def band_structure_energy(self):
+    def get_band_structure_energy(self):
         '''
         Return band structure energy.
         
