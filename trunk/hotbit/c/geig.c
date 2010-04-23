@@ -158,11 +158,11 @@ py_geig(PyObject *self, PyObject *args) {
     npy_intp N;
     npy_intp *A_dims, *B_dims;
     PyObject *po_A, *po_B;
-    PyObject *po_eV;
+    PyObject *po_eval, *po_evec;
     PyObject *ret;
 
     int typenum;
-    PyObject *po_for_A, *po_for_B;
+    PyObject *po_for_B;
 
     if (!PyArg_ParseTuple(args, "O!O!", &PyArray_Type, &po_A, &PyArray_Type, &po_B))
         return NULL;
@@ -185,25 +185,30 @@ py_geig(PyObject *self, PyObject *args) {
     N = A_dims[0];
 
     /*
-     * Create a Fortran-ordered A and B matrix.
-     * The A matrix will additionally contain the eigenvectors on return.
+     * Create a Fortran-ordered B matrix.
      */
-    po_for_A = PyArray_FROMANY(po_A, typenum, 2, 2, NPY_INOUT_FARRAY);
-    if (!po_for_A)
-        return NULL;
     po_for_B = PyArray_FROMANY(po_B, typenum, 2, 2, NPY_IN_FARRAY);
     if (!po_for_B)
         return NULL;
 
-    po_eV = PyArray_SimpleNew(1, A_dims, NPY_DOUBLE);
+    /*
+     * Create eigenvalue and eigenvector array.
+     * The eigenvector array is equal to the A matrix on entry.
+     */
+    po_eval = PyArray_SimpleNew(1, A_dims, NPY_DOUBLE);
+    po_evec = PyArray_NewCopy((PyArrayObject *) po_A, NPY_FORTRANORDER);
 
     /*
      * Solve the eigenvalue problem
      */
     if (typenum == NPY_DOUBLE) {
-        geigr(N, PyArray_DATA(po_for_A),  PyArray_DATA(po_for_B), PyArray_DATA(po_eV));
+        geigr(N,
+              PyArray_DATA(po_evec),  PyArray_DATA(po_for_B),
+              PyArray_DATA(po_eval));
     } else {
-        geigc(N, PyArray_DATA(po_for_A),  PyArray_DATA(po_for_B), PyArray_DATA(po_eV));
+        geigc(N,
+              PyArray_DATA(po_evec),  PyArray_DATA(po_for_B),
+              PyArray_DATA(po_eval));
     }
 
     /* Release the Fortran-ordered B matrix */
@@ -211,8 +216,8 @@ py_geig(PyObject *self, PyObject *args) {
 
     /* New tuple, SET_ITEM does not increase reference count */
     ret = PyTuple_New(2);
-    PyTuple_SET_ITEM(ret, 0, po_eV);
-    PyTuple_SET_ITEM(ret, 1, po_for_A);
+    PyTuple_SET_ITEM(ret, 0, po_eval);
+    PyTuple_SET_ITEM(ret, 1, po_evec);
 
     return ret;
 }

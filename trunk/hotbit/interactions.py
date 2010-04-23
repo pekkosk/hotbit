@@ -253,7 +253,7 @@ class Interactions:
         return nu.array(self.phases)
 
 
-    def construct_matrices(self):
+    def get_matrices(self, kpts=None):
         """ Hamiltonian and overlap matrices. """
         timing = False
         el = self.calc.el
@@ -264,12 +264,21 @@ class Interactions:
         orbs=el.orbitals()
         norb=len(orbs)   
 
-        H0  = nu.zeros((states.nk,norb,norb),complex)
-        S   = nu.zeros((states.nk,norb,norb),complex)
-        dH0 = nu.zeros((states.nk,norb,norb,3),complex)
-        dS  = nu.zeros((states.nk,norb,norb,3),complex)
+        if kpts is None:
+            nk = states.nk
+            ks = states.k
+        else:
+            ks       = np.asarray(kpts)
+            ks.shape = (-1, 3)
+            nk       = ks.shape[0]
 
-        orbitals=[[orb['orbital'] for orb in el.orbitals(i)] for i in range(len(el))]
+        H0  = nu.zeros((nk,norb,norb),complex)
+        S   = nu.zeros((nk,norb,norb),complex)
+        dH0 = nu.zeros((nk,norb,norb,3),complex)
+        dS  = nu.zeros((nk,norb,norb,3),complex)
+
+        orbitals=[[orb['orbital'] for orb in el.orbitals(i)]
+                  for i in range(len(el))]
         orbindex=[el.orbitals(i,indices=True) for i in range(len(el))]
         h, s, dh, ds = zeros((14,)), zeros((14,)), zeros((14,3)), zeros((14,3))
         
@@ -278,7 +287,8 @@ class Interactions:
         Rot = []
         for n in range(len(el.ntuples)):
             nt = el.ntuples[n]  
-            phases.append( nu.array([nu.exp(1j*nu.dot(nt,k)) for k in states.k]) )
+            phases.append( nu.array([nu.exp(1j*nu.dot(nt,k))
+                                     for k in ks]) )
             DTn.append( self.rotation_transformation(nt) )
             Rot.append( self.calc.el.rotation(nt) )
         self.phases = phases
@@ -299,12 +309,6 @@ class Interactions:
                 ij_interact = False
                 r1, r2= htable.get_range()
                                     
-                #for nnt in xrange(self.calc.el.ijnn[i,j]):
-                #    n = self.calc.el.ijn[i,j,nnt]
-                #    if i==j and n==0:
-                #        continue 
-                #    rij = Rijn[n,i,j]
-                #    dij = dijn[n,i,j]
                 for n, (rij,dij) in enumerate(zip(Rijn[:,i,j],dijn[:,i,j])):
                     if i==j and n==0: 
                         continue    
@@ -331,26 +335,11 @@ class Interactions:
                     
                     # make the Slater-Koster transformations
                     obsi, obsj=orbindex[i], orbindex[j]
-                    ht, st, dht, dst = fast_slako_transformations(rijh,dij,noi,noj,h,s,dh,ds)
+                    ht, st, dht, dst = \
+                        fast_slako_transformations(rijh,dij,noi,noj,h,s,dh,ds)
                     
-                    #Rot = self.calc.el.Rot[n]*1.0
-                    #DT = DTn[n]
-                    #phase = phases[n] 
-                    #print 'noi',noi
-                    #print 'noj',noj
-                    #print 'nk',states.nk
-                    #print 'ht.shape',ht.shape,type(ht)
-                    #print 'norb',norb
-                    #print 'R',Rot,type(Rot),Rot.shape
-                    #nk=states.nk
-                    #H0, S, dH0, dS = matrix_blocks(ht,st,dht,dst,DT,R,phase,o1i,o1j,noi,noj,nk,norb)
-                    #H0 = matrix_blocks(ht,st,dht,dst,DT,Rot,phase,noi,noj,norb,nnn)
-                    #H0 = matrix_blocks(norb,noi,noj,nk,ht,st,dht,dst,DT,Rot,phase)
-                    #H0 = matrix_blocks(norb,noi,noj,nk,ht,DT,Rot,phase)
-                    #H0 = matrix_blocks(norb,nk,noi,noj,ht)
-                    #H0 =  matrix_blocks(norb,o1i,o1j,noi,noj,nk,ht,DT,Rot,phase,H0)
-                    
-                    # Here we do the MEL transformation; H'_ij = sum_k H_ik * D_kj^T
+                    # Here we do the MEL transformation;
+                    # H'_ij = sum_k H_ik * D_kj^T
                     DT = DTn[n]
                     ht = dot( ht,DT[0:noj,0:noj] )
                     st = dot( st,DT[0:noj,0:noj] )
@@ -360,10 +349,10 @@ class Interactions:
                     
                     if timing: start('k-points')
                     phase = phases[n] 
-                    hblock  = outer(phase,ht.flatten()).reshape(states.nk,noi,noj)
-                    sblock  = outer(phase,st.flatten()).reshape(states.nk,noi,noj)
-                    dhblock = outer(phase,-dht.flatten()).reshape(states.nk,noi,noj,3)
-                    dsblock = outer(phase,-dst.flatten()).reshape(states.nk,noi,noj,3)
+                    hblock  = outer(phase,ht.flatten()).reshape(nk,noi,noj)
+                    sblock  = outer(phase,st.flatten()).reshape(nk,noi,noj)
+                    dhblock = outer(phase,-dht.flatten()).reshape(nk,noi,noj,3)
+                    dsblock = outer(phase,-dst.flatten()).reshape(nk,noi,noj,3)
                     
                     H0[ :,a:b,c:d]   += hblock 
                     S[  :,a:b,c:d]   += sblock
@@ -376,21 +365,23 @@ class Interactions:
                         Rot = self.calc.el.Rot[n]
                         dht2 = dot( dht,Rot )
                         dst2 = dot( dst,Rot ) 
-                        dh2block = outer(phase,dht2.flatten()).reshape(states.nk,noi,noj,3)
-                        ds2block = outer(phase,dst2.flatten()).reshape(states.nk,noi,noj,3)                        
+                        dh2block = outer(phase,dht2.flatten()).reshape(nk,noi,noj,3)
+                        ds2block = outer(phase,dst2.flatten()).reshape(nk,noi,noj,3)                        
                         dH0[:,c:d,a:b,:] += dh2block.transpose((0,2,1,3)).conjugate()
                         dS[ :,c:d,a:b,:] += ds2block.transpose((0,2,1,3)).conjugate()
                         
                 if i!=j and ij_interact:
                     if timing: start('symm')
-                    # Hermitian (and anti-Hermitian) conjugates; only if matrix block non-zero        
+                    # Hermitian (and anti-Hermitian) conjugates;
+                    # only if matrix block non-zero        
                     # ( H(k) and S(k) can be (anti)symmetrized as a whole )
                     # TODO: symmetrization should be done afterwards
                     H0[ :,c:d,a:b]   =  H0[ :,a:b,c:d].transpose((0,2,1)).conjugate()
                     S[  :,c:d,a:b]   =  S[  :,a:b,c:d].transpose((0,2,1)).conjugate()                    
                     if timing: stop('symm') 
-                        
-        self.H0, self.S, self.dH0, self.dS = H0, S, dH0, dS       
+
+        if kpts is None:
+            self.H0, self.S, self.dH0, self.dS = H0, S, dH0, dS       
                         
         if self.first:
             nonzero = sum( abs(S[0].flatten())>1E-15 )
@@ -399,10 +390,8 @@ class Interactions:
 
         stop('matrix construction')
 
-    def get_matrices(self):
-        self.construct_matrices()
-        return self.H0, self.S, self.dH0, self.dS
-        
+        return H0, S, dH0, dS
+
 
     def get_cutoff(self):
         """ Maximum cutoff. """
