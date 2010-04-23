@@ -77,13 +77,14 @@ s=setup(
     data_files = data_files
     )
 
-try:
-    home = s.command_options['install']['home'][1]
-except KeyError:
-    # installation without parameter --home
-    home = os.getenv('HOME')
-    msgs.append('* No installation directory specified, hotbit installed directly to %s' % home)
-os.chmod('%s/hotbit' % home, 0755)
+if 'install' in s.command_options:
+   try:
+      home = s.command_options['install']['home'][1]
+   except KeyError:
+      # installation without parameter --home
+      home = os.getenv('HOME')
+      msgs.append('* No installation directory specified, hotbit installed directly to %s' % home)
+   os.chmod('%s/hotbit' % home, 0755)
 
 for msg in msgs:
     print msg
