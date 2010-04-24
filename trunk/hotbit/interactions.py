@@ -268,7 +268,7 @@ class Interactions:
             nk = states.nk
             ks = states.k
         else:
-            ks       = np.asarray(kpts)
+            ks       = nu.asarray(kpts)
             ks.shape = (-1, 3)
             nk       = ks.shape[0]
 
@@ -279,7 +279,8 @@ class Interactions:
 
         orbitals=[[orb['orbital'] for orb in el.orbitals(i)]
                   for i in range(len(el))]
-        orbindex=[el.orbitals(i,indices=True) for i in range(len(el))]
+        orbindex=[el.orbitals(i,indices=True)
+                  for i in range(len(el))]
         h, s, dh, ds = zeros((14,)), zeros((14,)), zeros((14,3)), zeros((14,3))
         
         phases = []

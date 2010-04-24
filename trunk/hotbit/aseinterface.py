@@ -421,8 +421,7 @@ class Hotbit(Output):
         
         @param kpts: list of k-points; e.g. kpts=[(0,0,0),(pi/2,0,0),(pi,0,0)]
         '''
-        self.solve_ground_state(atoms)
-        return self.st.get_band_energies(self, kpts)
+        return self.st.get_band_energies(kpts)*Hartree
 
 
     def get_stress(self,atoms):
