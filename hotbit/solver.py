@@ -69,23 +69,26 @@ class Solver:
             e, wf = self.get_eigenvalues_and_wavefunctions(H0, S, H1=H1)
             st.update(e,wf)
 
-            if self.SCC:
-                dq_out=st.get_dq()
-                done,dq=mixer(dq,dq_out)
-                #convergence_plotter.draw(dq)
-                if i%10 == 0:
-                    self.calc.get_output().flush()
-                if self.calc.get('verbose_SCC'):
-                    mixer.echo(self.calc.get_output())
-                if done:
-                    self.iterations=i
-                    self.iter_history.append(i)
-                    break
-                if i==self.maxiter-1:
-                    mixer.out_of_iterations(self.calc.get_output())
-                    #if self.calc.get('verbose_SCC'):
-                    #    convergence_plotter.show()
-                    raise RuntimeError('Out of iterations.')
+            # If we don't do SCC, stop here
+            if not self.SCC:
+                break
+
+            dq_out=st.get_dq()
+            done,dq=mixer(dq,dq_out)
+            #convergence_plotter.draw(dq)
+            if i%10 == 0:
+                self.calc.get_output().flush()
+            if self.calc.get('verbose_SCC'):
+                mixer.echo(self.calc.get_output())
+            if done:
+                self.iterations=i
+                self.iter_history.append(i)
+                break
+            if i==self.maxiter-1:
+                mixer.out_of_iterations(self.calc.get_output())
+                #if self.calc.get('verbose_SCC'):
+                #    convergence_plotter.show()
+                raise RuntimeError('Out of iterations.')
         if self.calc.get('verbose_SCC'):
             mixer.final_echo(self.calc.get_output())
         return st.e,st.wf
