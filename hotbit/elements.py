@@ -224,7 +224,7 @@ class Elements:
                         self.ntuples.append(nt)
                         self.Rn.append(R)
                         self.Rot.append( self.rotation(nt) )
-            
+
         self.ijn = ijn
         self.ijnn = ijnn
         self.Rn = nu.array(self.Rn)

@@ -23,6 +23,7 @@ from hotbit.analysis import MullikenAnalysis
 from hotbit.analysis import MullikenBondAnalysis
 from hotbit.analysis import DensityOfStates 
 
+from hotbit.containers import DoubleChiral
 from hotbit.containers import Bravais
 from hotbit.containers import Chiral
 from hotbit.containers import Wedge

@@ -160,14 +160,15 @@ class Atoms(ase_Atoms):
                     ops.append( nu.arange(n[i][0],n[i][1]+1) )
                 elif isinstance(n[i],int):
                     assert n[i]>0
-                    rng = nu.arange(0,n[i])
-                    if r[i,0]!=-nu.Inf:
-                        # if nr. of ops is finite, center copies wrt. 0
-                        N = r[i,1] - r[i,0] + 1
-                        if len(rng)>N:
-                            raise AssertionError('Too many extended copies (%i) for direction %i. Only %i is allowed.' %(len(rng),i,N) )
-                        rng = rng - len(rng)/2
+                    if r[i,0]==-nu.Inf:
+                        # this symmetry operation has the full range
+                        rng = nu.arange(0,n[i])
+                    else:
+                        # take copies around the 0-operation
+                        start = max(r[i,0],-n[i]/2)
+                        rng = nu.arange(start,start+n[i])
                     ops.append( rng )
+                
                             
             n_list=[]
             for n1 in ops[0]:

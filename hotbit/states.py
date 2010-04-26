@@ -114,6 +114,20 @@ class States:
                 for b in range(kpts[1]):
                     for c in range(kpts[2]):
                         newk = nu.array([kl[0][a],kl[1][b],kl[2][c]])
+                        
+#                        ###########
+#                        #REMOVE
+#                        if abs(newk[0])<0.1:
+#                            newk[0] = newk[2]
+#                        else:
+#                            newk[0] = newk[2] + nu.pi 
+#                        
+#                        k.append( newk )
+#                        wk.append( 1.0/nk0 )
+#                        continue
+#                        ###########
+                        
+                                                    
                         inv_exists = False
                         # if newk's inverse exists, increase its weight by default
                         for ik, oldk in enumerate(k):
@@ -307,7 +321,7 @@ class States:
         for ik in xrange(self.nk):
             diagonal = ( self.rho[ik]*self.H0[ik].transpose() ).sum(axis=1)
             ebs += self.wk[ik] * diagonal.sum() 
-        #assert ebs.imag<1E-13
+        assert ebs.imag<1E-13
         self.calc.stop_timing('e_bs')
         return ebs.real 
 

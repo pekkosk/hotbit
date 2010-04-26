@@ -74,7 +74,7 @@ class Hotbit(Output):
                             (both chemical and repulsive)
 
         mixer:            Density mixer. 
-                          example: {'name':'Anderson','mixing_constant':0.3, 'memory':5}.
+                          example: {'name':'Anderson','mixing_constant':0.2, 'memory':5}.
         charge:           Total charge for system (-1 means an additional electron)
         width:            Width of Fermi occupation (eV)
         SCC:              Self-Consistent Charge calculation
@@ -768,11 +768,8 @@ class Hotbit(Output):
         """ 
         Return atom's promotion energy (in eV). 
         
-        energy = sum_k w_k sum_(m,n in I) rho_mn(k) H^0_nm(k) - E_free(I)
-        Loses meaning for periodic systems with 'self-overlap' for orbitals.
-        
-        Warning: bonding & atom energy analysis less clear for
-        systems where orbitals overlap with own periodic images.
+        Defined as:
+            E_prom,I = sum_(mu in I) [q_(mu) - q_(mu)^0] epsilon_mu
         
         parameters:
         ===========
