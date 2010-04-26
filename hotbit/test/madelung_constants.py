@@ -16,8 +16,8 @@ from hotbit.ewald_sum import EwaldSum
 ###
 
 L_MAX  = 8
-N      = 7
-K      = 3
+N      = 3
+K      = 5
 
 Q      = 1.0
 a0     = 1.0
