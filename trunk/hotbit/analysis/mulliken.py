@@ -304,8 +304,12 @@ class MullikenBondAnalysis(MullikenAnalysis):
         HS = []
         rhoM = []
         n=self.st.norb
-        aux = nu.diag(self.st.H0[0]).repeat(n).reshape((n,n))
+        epsilon = []
+        for mu in xrange(self.norb):
+            epsilon.append( self.calc.el.orbitals(mu,basis=True)['energy'] )
+        epsilon = nu.array(epsilon)
         #epsilon-bar matrix of Bornsen et al J.Phys.:Cond.mat 11, L287 (1999)
+        aux = epsilon.repeat(n).reshape(n,n)
         eps = 0.5*(aux+aux.transpose())   
         for k in range(self.nk):
             rhoSk.append( nu.dot(self.st.rho[k],self.st.S[k]) )
@@ -314,6 +318,7 @@ class MullikenBondAnalysis(MullikenAnalysis):
         self.rhoSk = nu.array(rhoSk)
         self.rhoM = nu.array(rhoM)
         self.HS = nu.array(HS)
+        self.epsilon = nu.array(epsilon)
         self.SCC = self.calc.get('SCC')
         
         
@@ -361,19 +366,12 @@ class MullikenBondAnalysis(MullikenAnalysis):
         elm = self.calc.el.elements[self.calc.el.symbols[I]]
         o1, no = self.calc.el.get_property_lists(['o1','no'])[I]
         
-        ecorr = 0.0
-        for mu in range(o1,o1+no):
-            emu = self.calc.el.orbitals(mu,basis=True)['energy']
-            ecorr += self.calc.el.get_free_population(mu) * (self.st.H0[0,mu,mu]-emu)
-            #ecorr += self.get_basis_mulliken(mu)*self.st.H0[0,mu,mu] - self.calc.el.get_free_population(mu)*emu
-        
         eorb = 0.0
         for k,wk in enumerate(self.wk):
             eorb += wk*nu.sum( self.rhoM[k,o1:o1+no,o1:o1+no] )
-        #eorb = sum( [self.wk[k]*nu.sum(self.rhoM[k,o1:o1+no,o1:o1+no]) for k in range(self.nk)] )
         
         erep = self.calc.rep.get_pair_repulsive_energy(I,I) #self-repulsion for pbc
-        A = (coul + erep + ecorr + eorb )*Hartree + self.get_promotion_energy(I) 
+        A = (coul + erep + eorb )*Hartree + self.get_promotion_energy(I) 
         assert abs(A.imag)<1E-12
         return A.real
 
@@ -383,22 +381,18 @@ class MullikenBondAnalysis(MullikenAnalysis):
         Return atom's promotion energy (in eV). 
         
         Defined as:
-            E_prom,I = sum_(mu in I) [q_(mu) - q_(mu)^0] H_(mu,mu)(k=0)
-        
-        Warning: bonding & atom energy analysis less clear for
-        systems where orbitals overlap with own periodic images.
+            E_prom,I = sum_(mu in I) [q_(mu) - q_(mu)^0] epsilon_mu
         
         parameters:
         ===========
         I:         atom index
         """
-        
-        #FIXME H0[0,:,:] is often not the gamma-point!!!
         e = 0.0
         for mu in self.calc.el.orbitals(I, indices=True):
             q = self.get_basis_mulliken(mu)
             q0 = self.calc.el.get_free_population(mu)
-            e += (q-q0)*self.st.H0[0,mu,mu]
+            emu = self.calc.el.orbitals(mu,basis=True)['energy']
+            e += (q-q0)*emu
             
         assert abs(e.imag)<1E-12
         return e.real * Hartree
