@@ -67,8 +67,8 @@ class RepulsiveFitting:
         """
         self.elm1=Element(symbol1)
         self.elm2=Element(symbol2)
-        self.sym1=symbol1
-        self.sym2=symbol2
+        self.sym1=self.elm1.get_symbol()
+        self.sym2=self.elm2.get_symbol()
         self.r_cut = r_cut
         self.s = s
         self.k = k
@@ -477,7 +477,8 @@ class RepulsiveFitting:
         ===========        
         weight:              fitting weight 
         calc:                Hotbit calculator (remember charge and k-points)
-        traj:                filename for ASE trajectory  
+        traj:                filename for ASE trajectory, or PickleTrajectory
+                             object
         comment:             fitting comment for par-file (replaced by comment if None)       
         label:               plotting label (replaced by comment if None)
         color:               plotting color
@@ -485,8 +486,11 @@ class RepulsiveFitting:
         if comment==None: comment=label
         if label==None: label=comment
 
-        print>>self.txt, "\nAppending energy curve data from %s..." %traj
-        traj = PickleTrajectory(traj)
+        if not ( isinstance(traj, PickleTrajectory) or isinstance(traj, list) ):
+            print>>self.txt, "\nAppending energy curve data from %s..." %traj
+            traj = PickleTrajectory(traj)
+        else:
+            print>>self.txt, '\nAppending energy curve data...'
         Edft, Ewr, N, R = [], [], [], []
         if len(traj)<3:
             raise AssertionError('At least 3 points in energy curve required.')
