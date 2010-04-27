@@ -4,7 +4,7 @@
 
 import sys
 
-from math import exp, sqrt, sin, cos, pi, factorial
+from math import exp, sqrt, sin, cos, pi
 from cmath import exp as cexp
 
 import random
@@ -18,20 +18,22 @@ from _hotbit import multipole_to_multipole, multipole_to_local, local_to_local, 
 
 ###
 
-def D(l, m, n, a, b, g):
-    """
-    This is Wigner's formula. For debugging purposes only.
-    """
-
-    h = 0.0
-    for s in range(0, max(l+abs(m), l+abs(n))+1):
-        f1 = l+n-s
-        f2 = m-n+s
-        f3 = l-m-s
-        if f1 >= 0 and f2 >= 0 and f3 >= 0:
-            h += (-1.0)**(m-n-s)/(factorial(f1)*factorial(s)*factorial(f2)*factorial(f3)) * (cos(b/2))**(2*l+n-m-2*s) * (sin(b/2))**(m-n+2*s)
-
-    return cexp(-1j*m*a) * cexp(-1j*n*g) * h * factorial(l+n)*factorial(l-n)
+### For debugging purposes
+#def D(l, m, n, a, b, g):
+#    """
+#    This is Wigner's formula. For debugging purposes only.
+#    """
+#
+#    h = 0.0
+#    for s in range(0, max(l+abs(m), l+abs(n))+1):
+#        f1 = l+n-s
+#        f2 = m-n+s
+#        f3 = l-m-s
+#        if f1 >= 0 and f2 >= 0 and f3 >= 0:
+#            h += (-1.0)**(m-n-s)/(factorial(f1)*factorial(s)*factorial(f2)*fact#orial(f3)) * (cos(b/2))**(2*l+n-m-2*s) * (sin(b/2))**(m-n+2*s)
+#
+#    return cexp(-1j*m*a) * cexp(-1j*n*g) * h * factorial(l+n)*factorial(l-n)
+###
 
 ###
 
