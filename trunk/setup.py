@@ -84,7 +84,9 @@ if 'install' in s.command_options:
       # installation without parameter --home
       home = os.getenv('HOME')
       msgs.append('* No installation directory specified, hotbit installed directly to %s' % home)
-   os.chmod('%s/hotbit' % home, 0755)
+   
+   hb = os.path.expanduser('%s/hotbit' %home)
+   os.chmod(hb, 0755)
 
 for msg in msgs:
     print msg

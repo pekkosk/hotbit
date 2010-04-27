@@ -114,7 +114,6 @@ class States:
                 for b in range(kpts[1]):
                     for c in range(kpts[2]):
                         newk = nu.array([kl[0][a],kl[1][b],kl[2][c]])
-                        
 #                        ###########
 #                        #REMOVE
 #                        if abs(newk[0])<0.1:
@@ -125,9 +124,7 @@ class States:
 #                        k.append( newk )
 #                        wk.append( 1.0/nk0 )
 #                        continue
-#                        ###########
-                        
-                                                    
+#                        ###########              
                         inv_exists = False
                         # if newk's inverse exists, increase its weight by default
                         for ik, oldk in enumerate(k):
