@@ -17,6 +17,16 @@ from scipy.special import erfc
 
 from box.timing import Timer
 
+# diag_indices_from was introduced in numpy 1.4.0
+if hasattr(np, 'diag_indices_from'):
+    diag_indices_from = np.diag_indices_from
+else:
+    def diag_indices_from(m):
+        i = [ ] 
+        for n in m.shape:
+            i += [ np.arange(n, dtype=int) ]
+        return tuple(i)
+
 
 # FIXME!!! No field yet in Ewald sum
 class EwaldSum:
@@ -119,11 +129,11 @@ class EwaldSum:
         abs_dr    = np.sqrt(np.sum(dr*dr, axis=2))
 
         ## Avoid divide by zero
-        abs_dr[np.diag_indices_from(abs_dr)]  = 1.0
+        abs_dr[diag_indices_from(abs_dr)]  = 1.0
 
         phi       = q*erfc(self.sqrt_alpha*abs_dr)/abs_dr
 
-        phi[np.diag_indices_from(phi)]   = 0.0
+        phi[diag_indices_from(phi)]   = 0.0
 
         self.phi_a += np.sum(phi, axis=1)
 
