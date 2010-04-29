@@ -15,6 +15,7 @@ class Slab:
         pbc = atoms.get_pbc() 
         pbc[2] = True
         atoms.set_pbc(pbc)
+        raise NotImplementedError('Slab container does not work properly')
         
     def __repr__(self):
         pbc=self.atoms.get_pbc()

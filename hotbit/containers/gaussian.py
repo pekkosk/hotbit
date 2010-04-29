@@ -25,6 +25,8 @@ class Gaussian:
         self.R1 = None
         self.R2 = None
         
+        raise NotImplementedError('Gaussian container does not work properly')
+        
     def __repr__(self):
         x='Gaussian: angle1=%.4f, angle2=%.4f, R1=%.4f, R2=%.4f' %(self.angle1,self.angle2,self.R1,self.R2)                                                                                        
         return x

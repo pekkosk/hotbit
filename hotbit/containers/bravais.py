@@ -14,6 +14,7 @@ class Bravais:
         self.type = 'Bravais'
         assert type==self.type
         self.atoms = proxy(atoms)
+        self._set_table() 
         
     def __repr__(self):
         pbc=self.atoms.get_pbc()
@@ -48,8 +49,17 @@ class Bravais:
         else:
             return False        
         
+        
+    def _set_table(self):
+        """ Setup group multiplication-like table. """
+        self.table = []
+        for i,p in enumerate(self.atoms.get_pbc()):
+            self.table.append({'M':[0,nu.Inf][p]}) 
+        
+        
     def get_symmetry_operation_ranges(self):
         """ Return ranges for symmetry operations. """
+        self._set_table()
         ranges = []
         pbc = self.atoms.get_pbc()
         for i in range(3):
@@ -58,6 +68,7 @@ class Bravais:
             else:
                 ranges.append([0,0])
         return nu.array(ranges)
+    
     
     def transform(self,r,n):
         """ Symmetry transformation n for position r. """

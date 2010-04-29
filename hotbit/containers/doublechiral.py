@@ -44,6 +44,7 @@ class DoubleChiral:
         self.height = atoms.get_cell()[2,2]
         self.x = None
         
+        
     def __repr__(self):
         if self.angle==None:
             raise AssertionError('Chiral angle was not set yet.')
@@ -52,6 +53,14 @@ class DoubleChiral:
         else:
             x='DoubleChiral: angle=%.4f (2*pi/%.2f), height=%.4f Ang, x=%.4f' %(self.angle,2*nu.pi/self.angle,self.height,self.x)
         return x
+    
+    
+    def _set_table(self):
+        if abs(self.x)>1E-12:
+            eq = (0,0,int(nu.round(2*self.x)))
+            self.table = [{'M':2,'equivalent':eq},{'M':1},{'M':nu.Inf}]
+        else:
+            self.table = [{'M':2},{'M':1},{'M':nu.Inf}]
     
     
     def get(self,key):
@@ -78,12 +87,14 @@ class DoubleChiral:
         height:   Height of the primitive cell in z-direction
         angle:    angle (in radians) of rotation
         x:        fractional translation offset related to 180 rotation
+                  Only integers and half-integers allowed.
         """
         if container!=None:
             # copy container
             assert angle==None and height==None and x==None and scale_atoms==False
             self.set(angle=container.angle,height=container.height,x=container.x)
         else:
+            assert abs(nu.round(2*x)-2*x)<1E-15
             if not scale_atoms:
                 if angle!=None: self.angle = angle
                 if height!=None: self.height = height
@@ -115,6 +126,7 @@ class DoubleChiral:
         
         self.atoms.set_pbc((True,False,True))
         self.atoms.set_cell(self.get_ase_cell())
+        self._set_table()
         
     def __eq__(self,other):
         if isinstance(other,DoubleChiral) and abs(self.angle-other.angle)<1E-12 \
