@@ -30,6 +30,7 @@ class Wedge:
         self.physical = None
         self.pbcz = False
         
+        
     def __repr__(self):
         x='Wedge: angle=%.4f (2*pi/%.2f, ' %(self.angle,2*nu.pi/self.angle)
         if self.physical:
@@ -42,6 +43,14 @@ class Wedge:
         else:
             x+='(z:no pbc)'
         return x
+    
+    
+    def _set_table(self):
+        if self.pbcz:
+             self.table = [{'M':self.M},{'M':1},{'M':nu.Inf}]
+        else:
+             self.table = [{'M':self.M},{'M':1},{'M':1}]
+            
             
     def set(self, angle=None, height=None, M=None, physical=True, pbcz=None, scale_atoms=False, container=None):
         """ Only height can be reset, not angle. 
@@ -108,8 +117,9 @@ class Wedge:
             self.pbcz = pbcz
             
         self.atoms.set_pbc((True,False,self.pbcz))
-        self.atoms.set_cell(self.get_ase_cell())  
-                   
+        self.atoms.set_cell(self.get_ase_cell())
+        self._set_table()  
+              
             
     def __eq__(self,other):
         if isinstance(other,Wedge) and abs(self.height-other.height)<1E-12 \

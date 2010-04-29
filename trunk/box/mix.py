@@ -14,33 +14,92 @@ import time
 from math import atan,pi,cos,sin,sqrt
 from numpy import sqrt,pi,exp
    
+class _FitFunction:
+    def __init__(self,f,p):
+        self.p=p
+        self.f=f
+    def __call__(self,x,der=0):
+        if der==0:
+            return self.f(x,self.p)
+        else:
+            return self.f(x,self.p,der)
+            
+                
 
-def fit(f,p,xlist,ylist):
+def fit(f,p,xlist,ylist,fct=False):
     '''
     Fit function f(x) with parameters p to given data.
+    
+    parameters:
+    ===========
+    f:        function to fit; usage f(x,p)
+    p:        initial guesses for parameters
+    xlist:    x-data to fit
+    ylist:    y-data to fit
+    fct:      additionally return the function with fitted parameters
     '''
     from scipy.optimize import fmin
     def chi2(p,x,y):
         err = y-f(x,p)
         return sum(err**2)
-    res = fmin(chi2,p,args=(xlist,ylist))
-    return res 
+    res = fmin(chi2,p,args=(nu.array(xlist),nu.array(ylist)))
+    if fct:
+        return res,_FitFunction(f,p)
+    else:
+        return res 
 
 
-def fit1(p,xlist,ylist):
+def fit1(p,xlist,ylist,fct=False):
     '''
     Fit y=a+b*x to given data.
+    
+    parameters:
+    ===========
+    p:        initial guesses for a and b
+    xlist:    x-data to fit
+    ylist:    y-data to fit
+    fct:      additionally return the function with fitted parameters
     '''
-    def f(x,p): return p[0]+p[1]*x
-    return fit(f,p,xlist,ylist)
+    assert len(p)==2
+    def f(x,p,der=0):
+        if der==0: 
+            return p[0]+p[1]*x
+        elif der==1:
+            return p[1]
+        else:
+            return 0.0
+    res = fit(f,p,nu.array(xlist),nu.array(ylist))
+    if fct:
+        return res,_FitFunction(f,res)
+    else:
+        return res 
 
 
-def fit2(p,xlist,ylist):
+def fit2(p,xlist,ylist,fct=False):
     '''
     Fit y=a+0.5*b*(x-c)**2 to given data.
+    
+    parameters:
+    ===========
+    p:        initial guesses for a,b and c
+    xlist:    x-data to fit
+    ylist:    y-data to fit
+    fct:      additionally return the function with fitted parameters
     '''
-    def f(x,p): return p[0]+0.5*p[1]*(x-p[2])**2
-    return fit(f,p,xlist,ylist) 
+    assert len(p)==3
+    def f(x,p,der=0):
+        if der==0: 
+            return p[0]+0.5*p[1]*(x-p[2])**2
+        elif der==1:
+            return p[1]*(x-p[2])
+        elif der==2:
+            return p[1]
+        
+    res = fit(f,p,nu.array(xlist),nu.array(ylist))
+    if fct:
+        return res,_FitFunction(f,res)
+    else:
+        return res  
         
 
 def divisors(x):

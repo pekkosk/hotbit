@@ -34,6 +34,10 @@ class Sphere:
         self.n1 = None
         self.n2 = None
         self.mode = 4 # mode 4 appears to be the best
+        self._set_table()
+        
+    def _set_table(self): 
+        self.table = [{'M':nu.Inf},{'M':nu.Inf},{'M':1}]
         
     def __repr__(self):
         x='Sphere: angle1=%.4f, angle2=%.4f, cos1=(%.2f,%.2f,%.2f), cos2=(%.2f,%.2f,%.2f)' %(self.angle1,self.angle2,self.n1[0],self.n1[1],self.n1[2],self.n2[0],self.n2[1],self.n2[2])                                                                                        

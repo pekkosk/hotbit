@@ -19,7 +19,11 @@ class Chiral:
         assert type==self.type
         self.atoms = proxy(atoms)
         self.angle = None 
-        self.height = atoms.get_cell()[2,2] 
+        self.height = atoms.get_cell()[2,2]
+        self._set_table()
+        
+    def _set_table(self): 
+        self.table = [{'M':1},{'M':1},{'M':nu.Inf}]
         
     def __repr__(self):
         if self.angle==None:

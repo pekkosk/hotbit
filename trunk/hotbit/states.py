@@ -89,6 +89,7 @@ class States:
             
         M = self.calc.el.get_number_of_transformations()
         if isinstance(kpts,tuple):
+            table = self.calc.el.atoms.container.table
             # set up equal-weighted and spaced k-point mesh
             if 0 in kpts:
                 raise AssertionError('Each direction must have at least one k-point! (Gamma-point)')
@@ -106,6 +107,8 @@ class States:
                         raise Warning('Non-physical k-point sampling! ')
                     else:
                         kl.append( nu.linspace(0,2*pi-2*pi/kpts[i],kpts[i]) )
+                        
+                        
                 
             k=[]    
             wk=[]
@@ -113,18 +116,20 @@ class States:
             for a in range(kpts[0]):
                 for b in range(kpts[1]):
                     for c in range(kpts[2]):
-                        newk = nu.array([kl[0][a],kl[1][b],kl[2][c]])
-#                        ###########
-#                        #REMOVE
-#                        if abs(newk[0])<0.1:
-#                            newk[0] = newk[2]
-#                        else:
-#                            newk[0] = newk[2] + nu.pi 
-#                        
-#                        k.append( newk )
-#                        wk.append( 1.0/nk0 )
-#                        continue
-#                        ###########              
+                        newk = nu.array([kl[0][a], kl[1][b], kl[2][c]])
+                        one_equivalent = False
+                        for i in range(3):
+                            if 'equivalent' in table[i]:
+                                if one_equivalent:
+                                    raise NotImplementedError('New type of symmetry; reconsider implementation.')
+                                one_equivalent = True
+                                n = table[i]['equivalent']
+                                for j in range(3):
+                                    if n[j]!=0: break
+                                assert i!=j
+                                assert abs(n[j])>0
+                                newk[i] = newk[i] + 1.0*n[j]/M[i]*newk[j]
+                                
                         inv_exists = False
                         # if newk's inverse exists, increase its weight by default
                         for ik, oldk in enumerate(k):
