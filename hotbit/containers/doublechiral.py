@@ -94,7 +94,8 @@ class DoubleChiral:
             assert angle==None and height==None and x==None and scale_atoms==False
             self.set(angle=container.angle,height=container.height,x=container.x)
         else:
-            assert abs(nu.round(2*x)-2*x)<1E-15
+            if x!=None:
+                assert abs(nu.round(2*x)-2*x)<1E-15
             if not scale_atoms:
                 if angle!=None: self.angle = angle
                 if height!=None: self.height = height

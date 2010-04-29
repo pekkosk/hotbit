@@ -415,13 +415,18 @@ class Hotbit(Output):
         return self.f.copy()
     
 
-    def get_band_energies(self, kpts):
+    def get_band_energies(self, kpts, shift=False):
         '''
         Return band energies for explicitly given list of k-points.
         
         @param kpts: list of k-points; e.g. kpts=[(0,0,0),(pi/2,0,0),(pi,0,0)]
+        shift: shift zero to the Fermi-level
         '''
-        return self.st.get_band_energies(kpts)*Hartree
+        e = self.st.get_band_energies(kpts)*Hartree
+        if shift:
+            return e-self.get_fermi_level()
+        else:
+            return e 
 
 
     def get_stress(self,atoms):
