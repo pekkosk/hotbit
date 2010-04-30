@@ -45,10 +45,17 @@ def graphene(n1,n2,R,height=5.0):
     return atoms
 
                          
-def armchair_ribbon(n1,n2,R):
+def armchair_ribbon(n1,n2,R,pbc='z'):
     """
     Make ribbon out of graphene with armchair edges: n1 armchair periods in x-direction
     and n2 stacked armchairs.
+    
+    parameters:
+    ===========
+    n1:    length (units in periodic direction)
+    n2:    width
+    R:     bond distance
+    pbc:   periodic direction ('z' or 'x')
     """
     a1=vec([3*R,0,0])
     a2=vec([0,2*R*nu.cos(pi/6),0])
@@ -61,11 +68,30 @@ def armchair_ribbon(n1,n2,R):
             atoms += Atom('C',corner+vec([R,0,0]))
             atoms += Atom('C',corner+vec([1.5*R,R*nu.cos(pi/6),0]))
             atoms += Atom('C',corner+vec([2.5*R,R*nu.cos(pi/6),0]))
-    atoms.set_cell( [n1*3*R,n2*2*R*nu.cos(pi/6),1] )
-    atoms.center(vacuum=2,axis=2)
-    atoms.center(vacuum=2,axis=1)
-    atoms.set_pbc((True,False,False))
-    return atoms
+
+    if pbc=='x':
+        atoms.set_cell( [n1*3*R,n2*2*R*nu.cos(pi/6),1] )
+        atoms.center(vacuum=5,axis=2)
+        atoms.center(vacuum=5,axis=1)
+        atoms.set_pbc((True,False,False))
+        return atoms
+    elif pbc=='z':
+        atoms.translate( -atoms.get_center_of_mass() )
+        atoms.rotate('z',nu.pi/2)
+        atoms.rotate('x',nu.pi/2)
+        atoms.center(vacuum=5,axis=1)
+        atoms.translate( -atoms.get_center_of_mass() )
+        zmin = atoms.get_positions()[:,2].min()
+        atoms.translate( (0,0,-zmin) ) 
+        atoms.set_cell( [n2*2*R*nu.cos(pi/6),1,n1*3*R] )
+        atoms.set_pbc((False,False,True))
+        return atoms
+    else:
+        raise NotImplementedError('pbc only along x or z')
+            
+
+
+    
 
 
 def zigzag_ribbon(n1,n2,R):

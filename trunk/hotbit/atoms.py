@@ -3,6 +3,7 @@ import numpy as nu
 from box import mix
 from copy import copy 
 from hotbit.containers import *
+from ase import PickleTrajectory
 
 
 class Atoms(ase_Atoms):
@@ -229,5 +230,29 @@ class Atoms(ase_Atoms):
         
     def __imul__(self, m):
         raise NotImplementedError('*= not implemented yet, use extended_copy.')
+
+
+class ExtendedTrajectory:
+    def __init__(self,filename,atoms,n,mode='w'):
+        """
+        Trajectory for multiple copies of unit cell.
+        
+        parameters:
+        ===========
+        filename:    output .traj -file
+        atoms:       hotbit.Atoms object
+        n:           tuple of number of symmetry operations
+                     or list of tuples for the symmetry operations
+        mode:        'w' write or 'a' append
+        """
+        self.atoms = atoms
+        self.n = n
+        self.ext = self.atoms.extended_copy(n)
+        self.traj = PickleTrajectory(filename,mode,self.ext)
+
+    def write(self):
+        cp = self.atoms.extended_copy(self.n)
+        self.ext.set_positions( cp.get_positions() )
+        self.traj.write()
 
 
