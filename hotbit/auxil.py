@@ -1,5 +1,6 @@
 import numpy as nu
 
+
 def separate_symbols(string):
     """ From given string, separate element symbols AuC=>Au,C"""
     if string[1].islower():

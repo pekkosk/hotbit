@@ -72,7 +72,7 @@ class States:
         self.nk=None
         
        
-    def setup_k_sampling(self,kpts,physical=True):
+    def setup_k_sampling(self,kpts,physical=True,kappa=True):
         '''
         Setup the k-point sampling and their weights.
         
@@ -146,18 +146,33 @@ class States:
         else:
             # work with a given set of k-points
             nk=len(kpts)
-            k=nu.array(kpts)
+            if not kappa:
+                k = self.k_to_kappa_points(kpts)
+            else:
+                k=nu.array(kpts)
             wk=nu.ones(nk)/nk
             kl=None
+            
             
         # now sampling is set up. Check the consistency.
         pbc = self.calc.el.get_pbc()
         for i in range(3):
             for kp in k:
                 if kp[i]>1E-10 and not pbc[i]:
-                    raise AssertionError('Do not set (non-zero) k-points in non-periodic direction!')            
+                    raise AssertionError('Do not set (non-zero) k-points in non-periodic direction!')
+        
         return nk, k, kl, wk
 
+
+    def k_to_kappa_points(self,k):
+        """ Transform normal k-points into kappa-points."""
+        assert self.calc.el.atoms.container.type=='Bravais'
+        L = self.calc.el.atoms.get_cell()
+        kappas = []
+        for kpt in k:
+            kappas.append( nu.dot(L,kpt) )
+        return nu.array(kappas)
+        
 
     def guess_dq(self):
         n=len(self.calc.el)
@@ -174,7 +189,7 @@ class States:
     def solve(self):
         if self.nk==None:
             physical = self.calc.get('physical_k')
-            self.nk, self.k, self.kl, self.wk = self.setup_k_sampling( self.calc.get('kpts'),physical=physical )
+            self.nk, self.k, self.kl, self.wk = self.setup_k_sampling( self.calc.get('kpts'),physical=physical,kappa=self.calc.get('kappa') )
             width=self.calc.get('width')
             self.occu = Occupations(self.calc.el.get_number_of_electrons(),width,self.wk)
         self.calc.start_timing('solve')

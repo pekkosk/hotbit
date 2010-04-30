@@ -3,6 +3,7 @@
 
 from aseinterface import Hotbit
 from atoms import Atoms
+from atoms import ExtendedTrajectory
 from electrostatics import Electrostatics
 from element import Element
 from elements import Elements

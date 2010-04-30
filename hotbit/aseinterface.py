@@ -33,6 +33,7 @@ class Hotbit(Output):
                       charge=0.0,
                       SCC=True,
                       kpts=(1,1,1),
+                      kappa=True,
                       physical_k=True,
                       maxiter=50,
                       gamma_cut=None,
@@ -84,6 +85,7 @@ class Hotbit(Output):
                             given by the cell vectors.
                           * For general symmetries, you need to look at the info
                             from the container used
+        kappa:            use kappa-points instead of k-points
         physical_k        Use physical (realistic) k-points for generally periodic systems.
                           * Ignored with normal translational symmetry
                           * True for physically allowed k-points in periodic symmetries.
@@ -117,6 +119,7 @@ class Hotbit(Output):
                         'width':width/Hartree,
                         'SCC':SCC,
                         'kpts':kpts,
+                        'kappa':kappa,
                         'physical_k':physical_k,
                         'maxiter':maxiter,
                         'gamma_cut':gamma_cut,
@@ -161,6 +164,7 @@ class Hotbit(Output):
                           'txt',
                           'verbose_SCC',
                           'kpts',
+                          'kappa',
                           'coulomb_solver']
 
         ret = Hotbit()
@@ -210,7 +214,7 @@ class Hotbit(Output):
         state['atoms'] = atoms
 
         calc = {}
-        params = ['parameters','mixer','elements','SCC',
+        params = ['parameters','mixer','elements','SCC','kappa',
                   'maxiter','tables','gamma_cut','charge','width']
         for key in params:
             calc[key] = self.__dict__[key]
@@ -293,6 +297,10 @@ class Hotbit(Output):
         print>>self.txt,  '       Electronic temperature:', self.width*Hartree,'eV'
         mixer = self.st.solver.mixer
         print>>self.txt,  '       Mixer:', mixer.get('name'), 'with memory =', mixer.get('memory'), ', mixing constant =', mixer.get('beta')
+        if self.get('kappa'):
+            print>>self.txt,  '       Use kappa-points'
+        else:       
+            print>>self.txt,  '       Use k-points'
         print>>self.txt, self.el.greetings()
         print>>self.txt, self.ia.greetings()
         print>>self.txt, self.rep.greetings()
