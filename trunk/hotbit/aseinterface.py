@@ -13,6 +13,7 @@ from box.timing import Timer
 from elements import Elements
 from interactions import Interactions
 from environment import Environment
+from pairpotential import PairPotential
 from repulsion import Repulsion
 from states import States
 from grids import Grids
@@ -33,7 +34,7 @@ class Hotbit(Output):
                       charge=0.0,
                       SCC=True,
                       kpts=(1,1,1),
-                      kappa=True,
+                      rs='kappa',
                       physical_k=True,
                       maxiter=50,
                       gamma_cut=None,
@@ -85,7 +86,8 @@ class Hotbit(Output):
                             given by the cell vectors.
                           * For general symmetries, you need to look at the info
                             from the container used
-        kappa:            use kappa-points instead of k-points
+        rs:               * 'kappa': use kappa-points 
+                          * 'k': use normal k-points. Only for Bravais lattices.
         physical_k        Use physical (realistic) k-points for generally periodic systems.
                           * Ignored with normal translational symmetry
                           * True for physically allowed k-points in periodic symmetries.
@@ -119,7 +121,7 @@ class Hotbit(Output):
                         'width':width/Hartree,
                         'SCC':SCC,
                         'kpts':kpts,
-                        'kappa':kappa,
+                        'rs':rs,
                         'physical_k':physical_k,
                         'maxiter':maxiter,
                         'gamma_cut':gamma_cut,
@@ -164,7 +166,7 @@ class Hotbit(Output):
                           'txt',
                           'verbose_SCC',
                           'kpts',
-                          'kappa',
+                          'rs',
                           'coulomb_solver']
 
         ret = Hotbit()
@@ -214,7 +216,7 @@ class Hotbit(Output):
         state['atoms'] = atoms
 
         calc = {}
-        params = ['parameters','mixer','elements','SCC','kappa',
+        params = ['parameters','mixer','elements','SCC','rs',
                   'maxiter','tables','gamma_cut','charge','width']
         for key in params:
             calc[key] = self.__dict__[key]
@@ -297,13 +299,12 @@ class Hotbit(Output):
         print>>self.txt,  '       Electronic temperature:', self.width*Hartree,'eV'
         mixer = self.st.solver.mixer
         print>>self.txt,  '       Mixer:', mixer.get('name'), 'with memory =', mixer.get('memory'), ', mixing constant =', mixer.get('beta')
-        if self.get('kappa'):
-            print>>self.txt,  '       Use kappa-points'
-        else:       
-            print>>self.txt,  '       Use k-points'
+        print>>self.txt,  '       Use %s-points' %self.get('rs')
         print>>self.txt, self.el.greetings()
         print>>self.txt, self.ia.greetings()
         print>>self.txt, self.rep.greetings()
+        if self.pp.exists():
+            print>>self.txt, self.pp.greetings()
 
 
     def out(self,text):
@@ -363,6 +364,7 @@ class Hotbit(Output):
         self.ia=Interactions(self)
         self.st=States(self)
         self.rep=Repulsion(self)
+        self.pp=PairPotential(self)
         self.env=Environment(self)
         pbc=atoms.get_pbc()
         # FIXME: gamma_cut -stuff
@@ -399,7 +401,8 @@ class Hotbit(Output):
             ebs=self.get_band_structure_energy(atoms)
             ecoul=self.get_coulomb_energy(atoms)
             erep=self.rep.get_repulsive_energy()
-            self.epot = ebs + ecoul + erep - self.el.efree*Hartree
+            epp=self.pp.get_energy()
+            self.epot = ebs + ecoul + erep + epp - self.el.efree*Hartree
             self.stop_timing('energy')
             self.el.set_solved('energy')
         return self.epot.copy()
@@ -417,8 +420,9 @@ class Hotbit(Output):
             fbs=self.st.get_band_structure_forces()
             frep=self.rep.get_repulsive_forces()
             fcoul=self.st.es.gamma_forces() #zero for non-SCC
+            fpp = self.pp.get_forces()
             self.stop_timing('forces')
-            self.f = (fbs+frep+fcoul)*(Hartree/Bohr)
+            self.f = (fbs+frep+fcoul+fpp)*(Hartree/Bohr)
             self.el.set_solved('forces')
         return self.f.copy()
     
@@ -447,9 +451,31 @@ class Hotbit(Output):
         return self.get('charge')
 
 
-    def get_eigenvalues(self,atoms):
-        self.solve_ground_state(atoms)
+    def get_eigenvalues(self):
         return self.st.get_eigenvalues()*Hartree
+    
+    
+    def get_energy_gap(self):
+        """
+        Return the energy gap. (in eV)
+        
+        Gap is the energy difference between the first states
+        above and below Fermi-level. Return also the probability
+        of having returned the gap; it is the difference
+        in the occupations of these states, divided by 2.
+        """
+        eigs = (self.get_eigenvalues() - self.get_fermi_level()).flatten()
+        occ = self.get_occupations().flatten()
+        ehi, elo=1E10,-1E10
+        for e,f in zip(eigs,occ):
+            if elo<e<=0.0:
+                elo = e
+                flo = f
+            elif 0.0<e<ehi:
+                ehi = e
+                fhi = f
+        return ehi-elo, (flo-fhi)/2      
+
 
 
     def get_occupations(self):
@@ -745,7 +771,7 @@ class Hotbit(Output):
             self.flags['bonds']=True
             
             
-    def get_atom_energy(self,I):
+    def get_atom_energy(self,I=None):
         """ 
         Return the energy of atom I (in eV).
         
@@ -754,7 +780,8 @@ class Hotbit(Output):
         
         parameters:
         ===========
-        I:         atom index
+        I:         atom index. If None, return all atoms' energies
+                   as an array.
         """
         self._init_bonds()
         return self.bonds.get_atom_energy(I)
@@ -777,7 +804,7 @@ class Hotbit(Output):
         return self.bonds.get_mayer_bond_order(i,j)
 
 
-    def get_promotion_energy(self,I):
+    def get_promotion_energy(self,I=None):
         """ 
         Return atom's promotion energy (in eV). 
         
@@ -786,7 +813,8 @@ class Hotbit(Output):
         
         parameters:
         ===========
-        I:         atom index
+        I:         atom index. If None, return all atoms' energies
+                   as an array.
         """
         self._init_bonds()
         return self.bonds.get_promotion_energy(I)
@@ -807,13 +835,14 @@ class Hotbit(Output):
         return self.bonds.get_bond_energy(i,j)
         
     
-    def get_atom_and_bond_energy(self,i):
+    def get_atom_and_bond_energy(self,i=None):
         """
         Return given atom's contribution to cohesion.
         
         parameters:
         ===========
-        i:    atom index
+        i:    atom index. If None, return all atoms' energies
+              as an array.
         """
         self._init_bonds()
         return self.bonds.get_atom_and_bond_energy(i)
@@ -856,4 +885,18 @@ class Hotbit(Output):
         return self.bonds.get_covalent_energy(mode,i,j,width,window,npts)
     
  
+    def add_pair_potential(self,i,j,v,rcut):
+        """
+        Add pair interaction potential function for elements or atoms
+        
+        parameters:
+        ===========
+        i,j:    * atom indices, if integers (0,1,2,...)
+                * elements, if strings ('C','H',...)
+        v:      Pair potential function, that returns energy in Hartrees
+                when pair distance r is given in Bohrs. Syntax:  v(r,der=0)
+                Only one potential per element and atom pair allowed.
+        rcut:   cutoff-distance for potential v, in Bohrs
+        """
+        self.pp.add_pair_potential(i,j,v,rcut)
         

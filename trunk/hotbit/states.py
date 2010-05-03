@@ -72,7 +72,7 @@ class States:
         self.nk=None
         
        
-    def setup_k_sampling(self,kpts,physical=True,kappa=True):
+    def setup_k_sampling(self,kpts,physical=True,rs='kappa'):
         '''
         Setup the k-point sampling and their weights.
         
@@ -83,6 +83,7 @@ class States:
                      (like wedge of angle 2*pi/N, only number of k-points that 
                      divides N, is physically allowed). If physical=False,
                      allow interpolation of this k-sampling.
+        rs:          use 'kappa'- or 'k'-point sampling
         '''
         if kpts!=(1,1,1) and self.calc.get('width')<1E-10:
             raise AssertionError('With k-point sampling width must be>0!')
@@ -146,7 +147,7 @@ class States:
         else:
             # work with a given set of k-points
             nk=len(kpts)
-            if not kappa:
+            if rs=='k':
                 k = self.k_to_kappa_points(kpts)
             else:
                 k=nu.array(kpts)
@@ -189,7 +190,7 @@ class States:
     def solve(self):
         if self.nk==None:
             physical = self.calc.get('physical_k')
-            self.nk, self.k, self.kl, self.wk = self.setup_k_sampling( self.calc.get('kpts'),physical=physical,kappa=self.calc.get('kappa') )
+            self.nk, self.k, self.kl, self.wk = self.setup_k_sampling( self.calc.get('kpts'),physical=physical,rs=self.calc.get('rs') )
             width=self.calc.get('width')
             self.occu = Occupations(self.calc.el.get_number_of_electrons(),width,self.wk)
         self.calc.start_timing('solve')

@@ -297,8 +297,7 @@ class MullikenBondAnalysis(MullikenAnalysis):
     def __init__(self, calc):
         """ 
         Class for bonding analysis using Mulliken charges. 
-        """
-        #raise NotImplementedError('needs re-writing for k-points')
+        """        
         MullikenAnalysis.__init__(self, calc)
         rhoSk = []
         HS = []
@@ -347,7 +346,7 @@ class MullikenBondAnalysis(MullikenAnalysis):
         return M.real
 
 
-    def get_atom_energy(self, I):
+    def get_atom_energy(self, I=None):
         """ 
         Return the absolute atom energy (in eV).
         
@@ -356,8 +355,12 @@ class MullikenBondAnalysis(MullikenAnalysis):
         
         parameters:
         ===========
-        I:         atom index
+        I:         atom index. If None, return all atoms' energies
+                   as an array.
         """
+        if I==None:
+            return nu.array( [self.get_atom_energy(i) for i in range(self.N)] )
+            
         if self.SCC:
             coul = 0.5*self.calc.st.es.G[I,I]*self.st.dq[I]**2
         else:
@@ -371,12 +374,13 @@ class MullikenBondAnalysis(MullikenAnalysis):
             eorb += wk*nu.sum( self.rhoM[k,o1:o1+no,o1:o1+no] )
         
         erep = self.calc.rep.get_pair_repulsive_energy(I,I) #self-repulsion for pbc
-        A = (coul + erep + eorb )*Hartree + self.get_promotion_energy(I) 
+        epp = self.calc.pp.get_pair_energy(I,I) #self-energy from pair potentials
+        A = (coul + erep + epp + eorb )*Hartree + self.get_promotion_energy(I) 
         assert abs(A.imag)<1E-12
         return A.real
 
 
-    def get_promotion_energy(self, I):
+    def get_promotion_energy(self, I=None):
         """ 
         Return atom's promotion energy (in eV). 
         
@@ -385,8 +389,12 @@ class MullikenBondAnalysis(MullikenAnalysis):
         
         parameters:
         ===========
-        I:         atom index
+        I:         atom index. If None, return all atoms' energies
+                   as an array.
         """
+        if I==None:
+            return nu.array( [self.get_promotion_energy(i) for i in range(self.N)] )
+            
         e = 0.0
         for mu in self.calc.el.orbitals(I, indices=True):
             q = self.get_basis_mulliken(mu)
@@ -410,6 +418,8 @@ class MullikenBondAnalysis(MullikenAnalysis):
         i,j:     atom indices
         """
         rep = self.calc.rep.get_pair_repulsive_energy(i,j)
+        epp = self.calc.p.get_pair_energy(i,j)
+        
         if self.SCC:
             coul = self.st.es.G[i,j]*self.st.dq[i]*self.st.dq[j]
         else:
@@ -420,7 +430,7 @@ class MullikenBondAnalysis(MullikenAnalysis):
         ebs = 0.0
         for k,wk in enumerate(self.wk):
             ebs += 2*wk*nu.sum( self.rhoM[k,o1i:o1i+noi,o1j:o1j+noj].real )
-        return (rep + coul + ebs) * Hartree
+        return (rep + epp + coul + ebs) * Hartree
 
 
     def get_atom_and_bond_energy(self, i):
@@ -432,8 +442,12 @@ class MullikenBondAnalysis(MullikenAnalysis):
         
         parameters:
         ===========
-        i:    atom index
+        i:    atom index. If None, return all atoms' energies
+              as an array.
         """
+        if I==None:
+            return nu.array( [self.get_atom_and_bond_energy(i) for i in range(self.N)] )
+            
         ea = self.get_atom_energy(i)
         eb = 0.0
         for j in range(self.N):
@@ -449,8 +463,6 @@ class MullikenBondAnalysis(MullikenAnalysis):
         ecov is described in 
         Bornsen, Meyer, Grotheer, Fahnle, J. Phys.:Condens. Matter 11, L287 (1999) and
         Koskinen, Makinen Comput. Mat. Sci. 47, 237 (2009)
-        
-        
         
         parameters:
         ===========
