@@ -42,7 +42,7 @@ class DoubleChiral:
         self.atoms = proxy(atoms)
         self.angle = None 
         self.height = atoms.get_cell()[2,2]
-        self.x = None
+        self.x = 0.0
         
         
     def __repr__(self):

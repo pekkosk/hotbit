@@ -4,12 +4,10 @@
 import numpy as nu
 from ase.units import Bohr,Hartree
 from box import mix
-#from box import Atoms
 from box.interpolation import Function
 import os
 import ase
 from weakref import proxy
-#import cgitb; cgitb.enable()
 find=mix.find_value
 vec=nu.array
 norm=nu.linalg.norm

@@ -94,7 +94,7 @@ def armchair_ribbon(n1,n2,R,pbc='z'):
     
 
 
-def zigzag_ribbon(n1,n2,R):
+def zigzag_ribbon(n1,n2,R,pbc='z'):
     """
     Make ribbon out of graphene with zigzag edges.
     """
@@ -110,11 +110,27 @@ def zigzag_ribbon(n1,n2,R):
             r.append(corner+vec([R*nu.cos(pi/6),2.5*R,0]))
     cell=[n1*2*R*nu.cos(pi/6),n2*3*R,1]   
     elements=['C']*len(r)         
-    atoms = ase_Atoms(elements,r,cell=cell)
-    atoms.center(vacuum=1.5*R,axis=2)
-    atoms.center(vacuum=1.5*R,axis=1)
-    atoms.set_pbc((True,False,False)) 
-    return atoms
+    atoms = ase_Atoms(elements,r,cell=cell)      
+    if pbc=='x':
+        atoms.set_cell( [n1*3*R,n2*2*R*nu.cos(pi/6),1] )
+        atoms.center(vacuum=5,axis=2)
+        atoms.center(vacuum=5,axis=1)
+        atoms.set_pbc((True,False,False))
+        return atoms
+    elif pbc=='z':
+        atoms.translate( -atoms.get_center_of_mass() )
+        atoms.rotate('z',nu.pi/2)
+        atoms.rotate('x',nu.pi/2)
+        atoms.center(vacuum=5,axis=1)
+        atoms.translate( -atoms.get_center_of_mass() )
+        zmin = atoms.get_positions()[:,2].min()
+        atoms.translate( (0,0,-zmin) ) 
+        atoms.set_cell( [n2*2*R*nu.cos(pi/6),1,n1*3*R] )
+        atoms.set_pbc((False,False,True))
+        return atoms
+    else:
+        raise NotImplementedError('pbc only along x or z')
+    
 
 
 def nanotube_data(n,m,R=1.42):

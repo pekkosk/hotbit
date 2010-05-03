@@ -54,7 +54,11 @@ class Bravais:
         """ Setup group multiplication-like table. """
         self.table = []
         for i,p in enumerate(self.atoms.get_pbc()):
-            self.table.append({'M':[0,nu.Inf][p]}) 
+            if p:
+                M=nu.Inf
+            else:
+                M=0
+            self.table.append({'M':M}) 
         
         
     def get_symmetry_operation_ranges(self):
