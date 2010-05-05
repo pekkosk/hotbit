@@ -297,10 +297,18 @@ class Hotbit(Output):
         print>>self.txt,  'System:',self.el.get_name()        
         print>>self.txt,  '       Charge=%4.1f' % self.charge
         print>>self.txt,  '       Container', self.el.container_info()
-        print>>self.txt,  '       Electronic temperature:', self.width*Hartree,'eV'
+        print>>self.txt,  'Symmetry operations (if any):'
+        rs = self.get('rs')
+        kpts = self.get('kpts')
+        if not isinstance(kpts,tuple):
+            kpts = (NaN,NaN,NaN)
+        M = self.el.get_number_of_transformations()
+        for i in range(3):
+            print>>self.txt, '       %i: pbc=' %i, self.el.atoms.get_pbc()[i],
+            print>>self.txt, ', %s-points=%i, M=%.f' %(rs,kpts[i],M[i])
+        print>>self.txt,  'Electronic temperature:', self.width*Hartree,'eV'
         mixer = self.st.solver.mixer
-        print>>self.txt,  '       Mixer:', mixer.get('name'), 'with memory =', mixer.get('memory'), ', mixing constant =', mixer.get('beta')
-        print>>self.txt,  '       Use %s-points' %self.get('rs')
+        print>>self.txt,  'Mixer:', mixer.get('name'), 'with memory =', mixer.get('memory'), ', mixing constant =', mixer.get('beta')
         print>>self.txt, self.el.greetings()
         print>>self.txt, self.ia.greetings()
         print>>self.txt, self.rep.greetings()

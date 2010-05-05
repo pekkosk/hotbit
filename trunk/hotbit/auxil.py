@@ -9,7 +9,8 @@ def k_to_kappa_points(k,atoms):
     kpts:     list of k-vectors
     atoms:    hotbit.Atoms -object
     """
-    assert atoms.container.type=='Bravais'
+    if atoms.container.type!='Bravais':
+        raise AssertionError('For other than Bravais lattices only kappa-points are allowed.')
     L = atoms.get_cell()
     kappas = []
     for kpt in k:
