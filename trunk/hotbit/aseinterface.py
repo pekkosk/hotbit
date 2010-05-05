@@ -7,6 +7,7 @@
 
 """
 import numpy as nu
+from auxil import k_to_kappa_points
 from ase.units import Bohr, Hartree
 from ase import Atoms
 from box.timing import Timer
@@ -427,14 +428,22 @@ class Hotbit(Output):
         return self.f.copy()
     
 
-    def get_band_energies(self, kpts, shift=False):
+    def get_band_energies(self, kpts, shift=False, rs='kappa'):
         '''
         Return band energies for explicitly given list of k-points.
         
-        @param kpts: list of k-points; e.g. kpts=[(0,0,0),(pi/2,0,0),(pi,0,0)]
-        shift: shift zero to the Fermi-level
+        parameters:
+        ===========
+        kpts:      list of k-points; e.g. kpts=[(0,0,0),(pi/2,0,0),(pi,0,0)]
+                   k- or kappa-points, depending on parameter rs.
+        shift:     shift zero to the Fermi-level
+        rs:        use 'kappa'- or 'k'-points in reciprocal space
         '''
-        e = self.st.get_band_energies(kpts)*Hartree
+        if rs=='k':
+            klist = k_to_kappa_points(kpts,self.el.atoms)
+        elif rs=='kappa':
+            klist = kpts
+        e = self.st.get_band_energies(klist)*Hartree
         if shift:
             return e-self.get_fermi_level()
         else:

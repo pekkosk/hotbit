@@ -1,6 +1,22 @@
 import numpy as nu
 
 
+def k_to_kappa_points(k,atoms):
+    """ Transform normal k-points into kappa-points.
+    
+    parameters:
+    ===========
+    kpts:     list of k-vectors
+    atoms:    hotbit.Atoms -object
+    """
+    assert atoms.container.type=='Bravais'
+    L = atoms.get_cell()
+    kappas = []
+    for kpt in k:
+        kappas.append( nu.dot(L,kpt) )
+    return nu.array(kappas)
+
+
 def separate_symbols(string):
     """ From given string, separate element symbols AuC=>Au,C"""
     if string[1].islower():

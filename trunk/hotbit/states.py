@@ -9,6 +9,7 @@ from occupations import Occupations
 #from hotbit.fortran.misc import fortran_rhoec
 import numpy as nu
 from box import mix
+from auxil import k_to_kappa_points
 pi=nu.pi
 
 
@@ -148,7 +149,7 @@ class States:
             # work with a given set of k-points
             nk=len(kpts)
             if rs=='k':
-                k = self.k_to_kappa_points(kpts)
+                k = k_to_kappa_points(kpts,self.el.atoms)
             else:
                 k=nu.array(kpts)
             wk=nu.ones(nk)/nk
@@ -163,16 +164,6 @@ class States:
                     raise AssertionError('Do not set (non-zero) k-points in non-periodic direction!')
         
         return nk, k, kl, wk
-
-
-    def k_to_kappa_points(self,k):
-        """ Transform normal k-points into kappa-points."""
-        assert self.calc.el.atoms.container.type=='Bravais'
-        L = self.calc.el.atoms.get_cell()
-        kappas = []
-        for kpt in k:
-            kappas.append( nu.dot(L,kpt) )
-        return nu.array(kappas)
         
 
     def guess_dq(self):
