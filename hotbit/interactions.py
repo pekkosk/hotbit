@@ -320,6 +320,9 @@ class Interactions:
                     ds.fill(0)
 
                     rijh  = rij/dij
+                    if dij<0.1:
+                        print nt
+                        raise AssertionError('Distance between atoms %i and %i is only %.4f Bohr' %(i,j,dij) )
                     assert dij>0.1
                     if not r1<=dij<=r2: 
                         continue
@@ -329,7 +332,7 @@ class Interactions:
                     if timing: start('splint+SlaKo+DH')
                     hij, dhij = htable(dij)
                     sij, dsij = stable(dij)
-
+                    
                     indices = htable.get_indices()
                     h[indices], s[indices] = hij, sij
                     dh[indices], ds[indices] = outer(dhij,rijh), outer(dsij,rijh)

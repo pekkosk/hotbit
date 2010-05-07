@@ -44,6 +44,43 @@ def graphene(n1,n2,R,height=5.0):
     atoms.set_pbc((True,True,False))
     return atoms
 
+
+def AGNR(n,units=1,pbc='z',R=1.42):
+    """
+    Make n-armchairn graphene nanoribbon.
+    
+    parameters:
+    ===========
+    n:      ribbon width (atomic rows)
+    length: ribbon length (unit cells)
+    pbc:    periodic direction, 'x' or 'z'
+    R:      bond length 
+    """
+    a = R*nu.sqrt(3)
+    atoms = ase_Atoms()
+    for i in range(n):
+        x0 = 0.0
+        if nu.mod(i,2)==1:
+            x0 = 1.5*R
+        atoms += Atom('C',(x0+0,i*a/2,0))
+        atoms += Atom('C',(x0+R,i*a/2,0))
+        
+    for i in range(units-1):
+        a = atoms.copy()
+        a.translate((3*R,0,0))
+        atoms += a
+    if pbc=='x':
+        atoms.set_pbc((True,False,False))
+        atoms.set_cell((units*3*R,1,1))
+        atoms.center(vacuum=6,axis=1)
+        atoms.center(vacuum=6,axis=2)
+    elif pbc=='z':
+        atoms.rotate('z',nu.pi/2)
+        atoms.rotate('x',nu.pi/2)
+        atoms.set_cell((1,1,units*3*R))
+        atoms.center(vauum=6,axis=0)
+        atoms.center(vauum=6,axis=1)
+    return atoms
                          
 def armchair_ribbon(n1,n2,R,pbc='z'):
     """
@@ -112,7 +149,7 @@ def zigzag_ribbon(n1,n2,R,pbc='z'):
     elements=['C']*len(r)         
     atoms = ase_Atoms(elements,r,cell=cell)      
     if pbc=='x':
-        atoms.set_cell( [n1*3*R,n2*2*R*nu.cos(pi/6),1] )
+        atoms.set_cell( [2*R*nu.cos(pi/6),n1*3*R,1] )
         atoms.center(vacuum=5,axis=2)
         atoms.center(vacuum=5,axis=1)
         atoms.set_pbc((True,False,False))

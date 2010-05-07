@@ -1,10 +1,10 @@
-symbol=Xa     
-epsilon_2s = -0.1974 
+symbol=H  
+epsilon_1s = -0.1974 
 U=      0.365  
 FWHM=   3.64   
 vib=    2290  
 comment:
-C-atom where 2s emulates pp-pi interaction
+H-atom simulating C-atom with only pp-pi interaction
 
 
 

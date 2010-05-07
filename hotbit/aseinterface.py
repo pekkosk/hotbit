@@ -902,7 +902,7 @@ class Hotbit(Output):
         return self.bonds.get_covalent_energy(mode,i,j,width,window,npts)
     
  
-    def add_pair_potential(self,i,j,v,rcut):
+    def add_pair_potential(self,i,j,v,eVA=True):
         """
         Add pair interaction potential function for elements or atoms
         
@@ -910,10 +910,12 @@ class Hotbit(Output):
         ===========
         i,j:    * atom indices, if integers (0,1,2,...)
                 * elements, if strings ('C','H',...)
-        v:      Pair potential function, that returns energy in Hartrees
-                when pair distance r is given in Bohrs. Syntax:  v(r,der=0)
-                Only one potential per element and atom pair allowed.
-        rcut:   cutoff-distance for potential v, in Bohrs
+        v:      Pair potential function. 
+                Only one potential per element and atom pair allowed. 
+                Syntax:  v(r,der=0), v(r=None) returning the
+                interaction range in Bohr or Angstrom.
+        eVA:    True for v in eV and Angstrom
+                False for v in Hartree and Bohr
         """
-        self.pp.add_pair_potential(i,j,v,rcut)
+        self.pp.add_pair_potential(i,j,v,eVA)
         
