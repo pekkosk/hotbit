@@ -32,6 +32,7 @@ from hotbit.containers import Sphere
 from hotbit.containers import Saddle
 from hotbit.containers import Gaussian
 from hotbit.containers import Slab
+from hotbit.containers import ContainerTest1
 
 from hotbit.parametrization import SlaterKosterTable
 from hotbit.parametrization import KSAllElectron
@@ -44,6 +45,7 @@ from os import environ, path
 import atexit
 import _hotbit
 
+hbpar = environ.get('HOTBIT_PARAMETERS')
 fixpar = path.join(environ.get('HOTBIT_PARAMETERS'),'fixed_parameters')
 testpar = path.join(environ.get('HOTBIT_PARAMETERS'),'inofficial')
 

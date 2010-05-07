@@ -19,7 +19,6 @@ data['Li']={'Z':3, 'symbol':'Li', 'R_cov':1.28}
 data['Be']={'Z':4, 'symbol':'Be'}
 data['B'] ={'Z':5, 'symbol':'B'}
 data['C'] ={'Z':6, 'symbol':'C', 'name':'carbon',   'mass':12.0107,  'R_cov':0.76,'R_vdw':1.70,'IE':11.256,'EA':1.594}            
-data['Xa'] ={'Z':6, 'symbol':'Xa', 'name':'2p-carbon',   'mass':12.0107,  'R_cov':0.76,'R_vdw':1.70,'IE':11.256,'EA':1.594}
 data['N'] ={'Z':7, 'symbol':'N', 'name':'nitrogen', 'mass':14.0067,  'R_cov':0.71,'R_vdw':1.55,'IE':14.527,'EA':0.072}            
 data['O'] ={'Z':8, 'symbol':'O', 'name':'oxygen',   'mass':15.9994,  'R_cov':0.66,'R_vdw':1.52,'IE':13.612,'EA':1.460}            
 data['F'] ={'Z':9, 'symbol':'F'}
@@ -45,7 +44,6 @@ valence_orbitals['Li']=['2s','2p']
 valence_orbitals['Be']=['2s','2p']
 valence_orbitals['B'] =['2s','2p']
 valence_orbitals['C'] =['2s','2p']
-valence_orbitals['Xa'] =['2s']
 valence_orbitals['N'] =['2s','2p']
 valence_orbitals['O'] =['2s','2p']
 valence_orbitals['F'] =['2s','2p']
@@ -76,7 +74,6 @@ aux=[ ['H', '',{'1s':1}],\
       ['Be','He',{'2s':2,'2p':0}],\
       ['B', 'He',{'2s':2,'2p':1}],\
       ['C', 'He',{'2s':2,'2p':2}],\
-      ['Xa','He',{'2s':1}],\
       ['N', 'He',{'2s':2,'2p':3}],\
       ['O', 'He',{'2s':2,'2p':4}],\
       ['F', 'He',{'2s':2,'2p':5}],\

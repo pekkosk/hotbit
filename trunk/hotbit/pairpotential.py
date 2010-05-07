@@ -2,7 +2,7 @@
 # Please see the accompanying LICENSE file for further information.
 
 import numpy as nu
-from ase.units import Hartree
+from ase.units import Hartree, Bohr
 from weakref import proxy
 
 def ij2s(i,j):
@@ -33,27 +33,42 @@ class PairPotential:
         print>> self.calc.txt,'Pair potentials:\n'+self.comment
     
 
-    def add_pair_potential(self,i,j,v,rcut):
+    def add_pair_potential(self,i,j,v,eVA=True):
         """
-        Add pair interaction potential function for elements or atoms
+        Add pair interaction potential function for elements or atoms.
         
         parameters:
         ===========
         i,j:    * atom indices, if integers (0,1,2,...)
                 * elements, if strings ('C','H',...)
-        v:      Pair potential function, that returns energy in Hartrees
-                when pair distance r is given in Bohrs. Syntax:  v(r,der=0)
-        rcut:   cutoff-distance for v
+        v:      Pair potential function. 
+                Only one potential per element and atom pair allowed. 
+                Syntax:  v(r,der=0), v(r=None) returning the
+                interaction range in Bohr or Angstrom.
+        eVA:    True for v using  eV and Angstrom
+                False for v using Hartree and Bohr
         """
+        # construct a function that works in atomic units
+        if eVA:
+            def v2(r,der=0):
+                if r==None:
+                    return v(None)/Bohr
+                if der==0:
+                    return v(r/Bohr,der)/Hartree
+                elif der==1:
+                    return v(r/Bohr,der)*Bohr/Hartree
+        else:
+            v2 = v           
+            
         if isinstance(i,int):
             self.comment += '  Atom pair %i-%i\n' %(i,j)
-            self.atomv[ij2s(i,j)] = v
-            self.atomv[ij2s(j,i)] = v
+            self.atomv[ij2s(i,j)] = v2
+            self.atomv[ij2s(j,i)] = v2
         else:
             self.comment += '  Element pair %s-%s\n' %(i,j)
-            self.elemv[i+j]=v
-            self.elemv[j+i]=v
-        self.rcut = max(rcut,self.rcut)
+            self.elemv[i+j]=v2
+            self.elemv[j+i]=v2
+        self.rcut = max(self.rcut, v2(None))
         self.ex = True
         
         

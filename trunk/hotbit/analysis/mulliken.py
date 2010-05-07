@@ -418,7 +418,7 @@ class MullikenBondAnalysis(MullikenAnalysis):
         i,j:     atom indices
         """
         rep = self.calc.rep.get_pair_repulsive_energy(i,j)
-        epp = self.calc.p.get_pair_energy(i,j)
+        epp = self.calc.pp.get_pair_energy(i,j)
         
         if self.SCC:
             coul = self.st.es.G[i,j]*self.st.dq[i]*self.st.dq[j]
@@ -445,8 +445,8 @@ class MullikenBondAnalysis(MullikenAnalysis):
         i:    atom index. If None, return all atoms' energies
               as an array.
         """
-        if I==None:
-            return nu.array( [self.get_atom_and_bond_energy(i) for i in range(self.N)] )
+        if i==None:
+            return nu.array( [self.get_atom_and_bond_energy(j) for j in range(self.N)] )
             
         ea = self.get_atom_energy(i)
         eb = 0.0

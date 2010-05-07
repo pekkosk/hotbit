@@ -112,7 +112,7 @@ def divisors(x):
     lst=[x]
     for i in range(x/2,0,-1):
         if nu.mod(x,i)==0: lst.append(i)        
-    return lst
+    return nu.array(lst)
 
 def gcd(a,b):
     """ Return greatest common divisor of a and b."""

@@ -1,4 +1,3 @@
-# Copyright (C) 2008 NSC Jyvaskyla
 # Please see the accompanying LICENSE file for further information.
 
 from solver import Solver
@@ -10,6 +9,7 @@ from occupations import Occupations
 import numpy as nu
 from box import mix
 from auxil import k_to_kappa_points
+from box.mix import divisors
 pi=nu.pi
 
 
@@ -103,6 +103,14 @@ class States:
                     spacing = 2*pi/kpts[i]
                     kl.append( nu.linspace(-pi+spacing/2,pi-spacing/2,kpts[i]) )
                 else:
+                    
+                    # TODO: choose the closest number of k-points if
+                    # sampling should be physical
+                    # first calculate possible numer of k-points, then
+                    # select the ones closest to the desired one
+                    # nks = M/divisors(M) 
+                    # nk1 = nks[abs(nks-nk).argmin()]                  
+                    
                     # discrete, well-defined sampling; any k-point is not allowed 
                     if kpts[i] not in mix.divisors(M[i]) and physical:
                         print 'Allowed k-points for direction',i,'are',mix.divisors(M[i])
@@ -329,7 +337,7 @@ class States:
         ebs = 0.0
         for ik in xrange(self.nk):
             diagonal = ( self.rho[ik]*self.H0[ik].transpose() ).sum(axis=1)
-            ebs += self.wk[ik] * diagonal.sum() 
+            ebs += self.wk[ik] * diagonal.sum()
         assert ebs.imag<1E-13
         self.calc.stop_timing('e_bs')
         return ebs.real 
