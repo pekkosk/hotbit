@@ -78,8 +78,7 @@ def AGNR(n,units=1,pbc='z',R=1.42):
         atoms.rotate('z',nu.pi/2)
         atoms.rotate('x',nu.pi/2)
         atoms.set_cell((1,1,units*3*R))
-        atoms.center(vauum=6,axis=0)
-        atoms.center(vauum=6,axis=1)
+        atoms.translate( -atoms.get_center_of_mass() )
     return atoms
                          
 def armchair_ribbon(n1,n2,R,pbc='z'):
