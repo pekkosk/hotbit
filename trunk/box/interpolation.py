@@ -812,6 +812,7 @@ def interpolate_path(points, N):
     points - the points that the path connects.
     N - The preferred number of points on the path (the number may be slightly larger than given number)
     """
+    points = nu.array(points)
     path = []
     path.append(points[0]) # start from the first point
     lengths = [norm(kf-ki) for kf, ki in zip(points[1:], points[:-1])] # lengths of the subpaths
@@ -821,7 +822,7 @@ def interpolate_path(points, N):
     dk = nu.sum(lengths)/(N-1.0) # maximum distance between points
     N_i = [] # the number of points on each subpath
     for i in range(len(lengths)):
-        n_i = round(lengths[i] / dk)
+        n_i = round(lengths[i] / dk) + 1
         if n_i*dk < lengths[i]:
             n_i += 1
         N_i.append(n_i)
@@ -836,7 +837,7 @@ def interpolate_path(points, N):
     distances = nu.zeros(len(path))
     for i in range(len(path[1:])):
         distances[i+1] = distances[i] + norm(nu.array(path[i+1])-nu.array(path[i]))
-    return path, distances, label_points
+    return nu.array(path), distances, label_points
 
 
 if __name__=='__main__':
