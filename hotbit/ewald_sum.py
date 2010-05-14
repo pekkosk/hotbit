@@ -15,6 +15,8 @@ import numpy as np
 # FIXME!!! Requires scipy, contribute erfc to numpy
 from scipy.special import erfc
 
+from ase.units import Hartree, Bohr
+
 from box.timing import Timer
 
 # diag_indices_from was introduced in numpy 1.4.0
@@ -148,3 +150,14 @@ class EwaldSum:
         Return the electrostatic potential for each atom.
         """
         return self.phi_a
+
+
+### For use as a standalone calculator
+### Note: These functions assume eV/A units
+
+    def get_potential_energy(self, a, q=None):
+        if q is None:
+            q = a.get_charges()
+
+        self.update(a, q)
+        return Hartree * Bohr * np.sum(q*self.phi_a)/2
