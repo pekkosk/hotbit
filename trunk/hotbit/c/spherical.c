@@ -117,7 +117,7 @@ void solid_harmonic_R(double x,
  * Compute the solid harmonics up to l=l_max
  * Note that the normalization is non-standard.
  *
- *   m              -l+1    i m phi    m
+ *   m              -l-1    i m phi    m
  * I   = (l-m)!   r       e          P   (cos theta)
  *   l                                 l
  */
