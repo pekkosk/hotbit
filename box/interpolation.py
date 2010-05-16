@@ -118,28 +118,39 @@ class MultipleSplineFunction:
                   
   
     def __call__(self,x,der=None):
-        """ Return interpolated values for all functions.
+        """
+        Return interpolated values for all functions.
         
-        parameters:
-        x: x-point (If x is outside the interpolation range, return 0's)
-        der: if None, return both function values and derivatives. If 0,1,2:
-             return function values, first, or second derivatives.
+        Parameters:
+        -----------
+
+        x:     x-point, or x-array
+               (If x is outside the interpolation range, return 0's)
+        der:   if None, return both function values and derivatives. If 0,1,2:
+               return function values, first, or second derivatives.
         """
         if not self.initialized:
             self._initialize()
                   
-        if x<self.x[0] or x>=self.x[-1]:
-            if der==None:
-                return nu.zeros((self.m,)),nu.zeros((self.m))
-            else:
-                return nu.zeros((self.m,))
+        #if x<self.x[0] or x>=self.x[-1]:
+        #    if der==None:
+        #        return nu.zeros((self.m,)),nu.zeros((self.m))
+        #    else:
+        #        return nu.zeros((self.m,))
                
-        #lo, hi = self._find_bin(x)
-        #xlo, xhi=self.x[lo], self.x[hi]
         hi = nu.searchsorted(self.x, x)
         lo = hi-1
+        #assert xlo<=x<=xhi
+
+        # If x > cutoff, descrease hi. In this case hi == lo and all
+        # returned values will be zero.
+        if isinstance(x, nu.ndarray):
+            hi = nu.where(hi == len(self.x), hi-1, hi)
+        else:
+            if hi == len(self.x):
+                hi -= 1
+
         xlo, xhi = self.x[lo], self.x[hi]
-        assert xlo<=x<=xhi
         
         h=self.h
         a, b=(xhi-x)/h, (x-xlo)/h
@@ -267,10 +278,19 @@ class SplineFunction:
         
         Return zero if x beyond the original grid range.
         """
-        if x<self.x[0] or self.x[-1]<x:
-            return 0.0
+        if isinstance(x, nu.ndarray):
+            return nu.where(x < self.x[0],
+                            nu.zeros(len(x)),
+                            nu.where(x > self.x[-1],
+                                     nu.zeros(len(x)),
+                                     splev(x, self.tck, der=der)
+                                     )
+                            )
         else:
-            return splev(x,self.tck,der=der)
+            if x < self.x[0] or x > self.x[-1]:
+                return 0.0
+            else:
+                return splev(x, self.tck, der=der)
         
     def get_name(self):
         """ Return the name of the function. """

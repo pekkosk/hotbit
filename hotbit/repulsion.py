@@ -166,10 +166,7 @@ class RepulsivePotential:
 
     def __call__(self,r,der=0):
         """ Return V_rep(r) or V_rep'(r) """
-        if r>self.r_cut:
-            return 0.0
-        else:
-            return self.v(r,der=der)
+        return self.v(r,der=der)
 
     def read_repulsion(self,file):
         """ Read the repulsive potential from par-file. """
