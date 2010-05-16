@@ -11,6 +11,7 @@ from box.interpolation import MultipleSplineFunction
 from weakref import proxy
 from copy import copy
 from os import path,environ
+from hotbit.io import read_HS
 
 from _hotbit import fast_slako_transformations
 
@@ -62,8 +63,8 @@ class Interactions:
                 file = tables[key]
                 if file==None:
                     file = self.nullpar
-                if file[-4:]!='.par':
-                    file+='.par'
+                #if file[-4:]!='.par':
+                #    file+='.par'
                 if not isfile(file):
                     raise RuntimeError('Custom parameter file "%s" for %s-%s interaction not found.' %(file,e1,e2))
                 file = path.abspath(file)
@@ -136,13 +137,10 @@ class Interactions:
 
         for si in self.present:
             for sj in self.present:   
-                if mix.find_value(self.files[si+sj],'X_X_table',fmt='test'):
-                    table_ij=mix.find_value(self.files[si+sj],'X_X_table' %(si,sj),fmt='matrix')
-                    table_ji=table_ij.copy()
-                else:
-                    table_ij=mix.find_value(self.files[si+sj],'%s_%s_table' %(si,sj),fmt='matrix')
-                    table_ji=mix.find_value(self.files[sj+si],'%s_%s_table' %(sj,si),fmt='matrix')
-                self.cut[si+sj]=table_ij[-1,0]
+                table_ij = read_HS(self.files[si+sj], si, sj)
+                self.cut[si+sj] = table_ij[-1, 0]
+                table_ji = read_HS(self.files[sj+si], sj, si)
+                self.cut[sj+si] = table_ji[-1, 0]
                 self.max_cut=max(self.max_cut,self.cut[si+sj])
                 self.maxh[si+sj]=max( [max(nu.abs(table_ij[:,i])) for i in range(1,11)] )
 
