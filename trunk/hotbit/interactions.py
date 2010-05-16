@@ -136,11 +136,11 @@ class Interactions:
 #        self.kill_radii={}
 
         for si in self.present:
-            for sj in self.present:   
-                table_ij = read_HS(self.files[si+sj], si, sj)
-                self.cut[si+sj] = table_ij[-1, 0]
-                table_ji = read_HS(self.files[sj+si], sj, si)
-                self.cut[sj+si] = table_ji[-1, 0]
+            for sj in self.present:
+                x_ij, table_ij = read_HS(self.files[si+sj], si, sj)
+                self.cut[si+sj] = x_ij[-1]
+                x_ji, table_ji = read_HS(self.files[sj+si], sj, si)
+                self.cut[sj+si] = x_ji[-1]
                 self.max_cut=max(self.max_cut,self.cut[si+sj])
                 self.maxh[si+sj]=max( [max(nu.abs(table_ij[:,i])) for i in range(1,11)] )
 
@@ -148,8 +148,8 @@ class Interactions:
                 valence_i, valence_j=ei.get_valence_orbitals(), ej.get_valence_orbitals()
 
                 pair=si+sj
-                self.h[pair]=MultipleSplineFunction(table_ij[:,0])
-                self.s[pair]=MultipleSplineFunction(table_ij[:,0])
+                self.h[pair]=MultipleSplineFunction(x_ij)
+                self.s[pair]=MultipleSplineFunction(x_ji)
                 for vi in valence_i:
                     for vj in valence_j:
                         li, lj=vi[1], vj[1]
@@ -162,12 +162,12 @@ class Interactions:
                                 # this is tabulated in other table; switch order -> parity factor
                                 parity=(-1)**( aux[li]+aux[lj] )
                                 index=integrals[short[1]+short[0]+short[2]]
-                                self.h[pair].add_function(table_ji[:,index+1]*parity,table,integrals[short])
-                                self.s[pair].add_function(table_ji[:,index+11]*parity,table,integrals[short])
+                                self.h[pair].add_function(table_ji[:,index]*parity,table,integrals[short])
+                                self.s[pair].add_function(table_ji[:,index+10]*parity,table,integrals[short])
                             else:
                                 index=integrals[short]
-                                self.h[pair].add_function(table_ij[:,index+1],table,integrals[short])
-                                self.s[pair].add_function(table_ij[:,index+11],table,integrals[short])
+                                self.h[pair].add_function(table_ij[:,index],table,integrals[short])
+                                self.s[pair].add_function(table_ij[:,index+10],table,integrals[short])
                                 
         # cutoffs for atom pair indices
         N = self.calc.el.N

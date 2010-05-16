@@ -20,7 +20,7 @@ def read_HS_par(fileobj, si, sj):
     else:
         table = mix.find_value(fileobj, '%s_%s_table' % (si, sj), fmt='matrix')
     
-    return table
+    return table[:, 0], table[:, 1:]
 
 
 
