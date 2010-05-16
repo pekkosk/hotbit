@@ -36,7 +36,7 @@ def read_HS_skf(fileobj, si, sj):
         dx, n = fortran_readline(fileobj)
         n = int(n)
 
-    x = dx*np.arange(1, n+1)
+    x = dx*np.arange(0, n)
 
     HS = [ ]
     for i in range(n):
@@ -46,7 +46,7 @@ def read_HS_skf(fileobj, si, sj):
     return HS
 
 
-def read_rep_skf(fileobj, rep_x0=1.0, rep_dx=0.005):
+def read_rep_skf(fileobj, rep_x0=0.1, rep_dx=0.005):
     """
     Read repulsion from DFTB-style .skf file.
     The repulsion in the .skf-file consists of an exponential and a spline

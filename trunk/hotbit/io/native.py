@@ -8,6 +8,12 @@ from box import mix
 def read_HS_par(fileobj, si, sj):
     """
     Read Hamiltonian and overlap data from Hotbit-style .par file.
+
+    Parameters:
+    -----------
+    fileobj:   filename of file-object to read from
+    si:        chemical symbol of the first element
+    sj:        chemical symbol of the second element
     """
     if mix.find_value(fileobj, 'X_X_table', fmt='test'):
         table = mix.find_value(fileobj, 'X_X_table' % (si, sj), fmt='matrix')
@@ -21,6 +27,10 @@ def read_HS_par(fileobj, si, sj):
 def read_rep_par(fileobj):
     """
     Read repulsion data from Hotbit-style .par file.
+
+    Parameters:
+    -----------
+    fileobj:   filename of file-object to read from
     """
     try:
         v = mix.find_value(fileobj, 'repulsion', fmt='matrix')
