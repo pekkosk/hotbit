@@ -5,6 +5,7 @@ import numpy as nu
 from ase.units import Bohr,Hartree
 from box import mix
 from box.interpolation import Function
+from hotbit.io import read_rep
 import os
 import ase
 from weakref import proxy
@@ -172,12 +173,9 @@ class RepulsivePotential:
 
     def read_repulsion(self,file):
         """ Read the repulsive potential from par-file. """
-        try:
-            v=mix.find_value(file,'repulsion',fmt='matrix')
-        except:
-            v=nu.array([[0,0],[1,0],[2,0],[3,0]])
-        self.v=Function('spline',v[:,0],v[:,1],k=3)
-        self.r_cut=v[-1,0]
+        x, v = read_rep(file)
+        self.v=Function('spline', x, v, k=3)
+        self.r_cut=x[-1]
 
     def plot(self):
         """ Plot vrep and derivative. """
