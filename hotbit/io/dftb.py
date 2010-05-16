@@ -40,10 +40,10 @@ def read_HS_skf(fileobj, si, sj):
 
     HS = [ ]
     for i in range(n):
-        HS += [ [ x[i] ] + fortran_readline(fileobj) ]
+        HS += [ fortran_readline(fileobj) ]
     HS = np.array(HS)
 
-    return HS
+    return x, np.array(HS)
 
 
 def read_rep_skf(fileobj, rep_x0=0.1, rep_dx=0.005):
