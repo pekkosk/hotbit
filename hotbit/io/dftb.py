@@ -2,34 +2,91 @@
 DFTB file format.
 See: http://www.dftb.org/
 """
+from copy import copy
 
 import numpy as np
 
+from box.data import data as box_data
+
 from hotbit.io.fortran import fortran_readline
 
-def read_HS_skf(fileobj, si, sj):
+
+
+def read_element_from_skf(fileobj, symbol):
+    """
+    Read element data from DFTB-style .skf file.
+
+    Parameters:
+    -----------
+    fileobj:   filename of file-object to read from
+    symbol:    chemical symbol of the element
+    """
+
+    if isinstance(fileobj, str):
+        fileobj = open(fileobj)
+
+    # First line contains grid spacing and number of grid points, ignore
+    fileobj.readline()
+
+    # Self-energies, spin-polarization energies, Hubbard-U
+    eself = [ 0.0 ]*3
+    U = [ 0.0 ]*3
+    q = [ 0.0 ]*3
+    eself[0], eself[1], eself[2], espin, \
+        U[0], U[1], U[2], q[0], q[1], q[2] = fortran_readline(fileobj)
+
+    # Initialize data from database
+    data = copy(box_data[symbol])
+
+    data['epsilon'] = { }
+    for orbital in data['valence_orbitals']:
+        if 's' in orbital:
+            data['epsilon'][orbital] = eself[2]
+        elif 'p' in orbital:
+            data['epsilon'][orbital] = eself[1]
+        elif 'd' in orbital:
+            data['epsilon'][orbital] = eself[0]
+
+    energies=[]            
+    for orbital in data['valence_orbitals']:            
+        eps = data['epsilon'][orbital]
+        if   's' in orbital: n=1
+        elif 'p' in orbital: n=3
+        elif 'd' in orbital: n=5
+        energies.extend( [eps]*n )                
+    data['onsite_energies'] = energies
+    data['nr_basis_orbitals'] = len(energies)
+    data['valence_energies'] = np.array(energies, dtype=float)
+
+    data['comment'] = None
+
+    # .skf files do not contain basis information
+    return data, None
+
+
+def read_HS_from_skf(fileobj, symboli, symbolj):
     """
     Read Hamitonian and overlap data from DFTB-style .skf file.
 
     Parameters:
     -----------
     fileobj:   filename of file-object to read from
-    si:        chemical symbol of the first element
-    sj:        chemical symbol of the second element
+    symboli:   chemical symbol of the first element
+    symbolj:   chemical symbol of the second element
     """
 
     if isinstance(fileobj, str):
         fileobj = open(fileobj)
     
     # Homoatomic interactions also contain element data
-    if si == sj:
+    if symboli == symbolj:
         # First line contains grid spacing and number of grid points
         dx, n, dummy = fortran_readline(fileobj)
         n = int(n)
 
         # Contains self-energies, spin-polarization energies, Hubbard-U, ...
         l = fileobj.readline()
-        # Don't know what this is for
+        # Mass, and something where I don't know what this is for
         l = fileobj.readline()
     else:
         # First line contains grid spacing and number of grid points
@@ -46,7 +103,8 @@ def read_HS_skf(fileobj, si, sj):
     return x, np.array(HS)
 
 
-def read_rep_skf(fileobj, rep_x0=0.1, rep_dx=0.005):
+
+def read_repulsion_from_skf(fileobj, rep_x0=0.1, rep_dx=0.005):
     """
     Read repulsion from DFTB-style .skf file.
     The repulsion in the .skf-file consists of an exponential and a spline

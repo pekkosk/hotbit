@@ -1,11 +1,9 @@
 import os
 import numpy as nu
 from box import mix
-from box.interpolation import Function
 import numpy as npy
 from box.data import data
-from copy import copy
-find=mix.find_value
+from hotbit.io import read_element
 
 orbital_list=['s','px','py','pz','dxy','dyz','dzx','dx2-y2','d3z2-r2']
                 
@@ -16,7 +14,7 @@ class Element:
         (elm file first searched from present directory,
         then from the default HOTBIT_PARAMETERS/[symbol].elm
         """
-        i=element.find('elm')
+        i=element.rfind('.')+1
         
         if i>=0:
             # element is full file name; get symbol
@@ -33,8 +31,6 @@ class Element:
             symbol=element
             filename=element+'.elm'
             
-        self.data=copy(data[symbol])
-        
         # if .elm file exists, read more data
         hbp = os.environ.get('HOTBIT_PARAMETERS')
         default='%s/%s' %(hbp,filename)
@@ -43,37 +39,12 @@ class Element:
         elif os.path.isfile(default):
             file=default
         else:
-            raise AssertionError('Element data for %s not found neither in %s nor in %s' %(element,'.',hbp))
-            
+            raise AssertionError('Element data for %s not found neither in %s '
+                                 'nor in %s' % (element,'.',hbp))
+
+        self.data, self.functions = read_element(file, symbol)
         self.data['file']=file
-        f=open(file,'r')
-        symb=find(f,'symbol').strip()
-        assert symb==symbol
-        
-        self.data['configuration']  = copy( data[symbol]['configuration'])
-        self.data['valence_number'] = copy( data[symbol]['valence_number'] )
-        self.data['valence_orbitals'] = copy( data[symbol]['valence_orbitals'] )
-        # read data from elm-file
-        self.data['U']=float(find(f,'U'))
-        self.data['FWHM']=float(find(f,'FWHM'))
-        self.data['epsilon']={}
-        for orbital in self.data['valence_orbitals']:
-            self.data['epsilon'][orbital]=float( find(f,'epsilon_%s' %orbital) )
-        self.data['comment']=find(f,'comment',fmt='strings',default=['no comment'])
-        self._read_functions(file)
-        
-        # for internal...
-        energies=[]            
-        for nl in self.data['valence_orbitals']:            
-            eps=self.get_epsilon(nl)
-            if   's' in nl: n=1
-            elif 'p' in nl: n=3
-            elif 'd' in nl: n=5
-            energies.extend( [eps]*n )                
-        self.data['onsite_energies']=energies                
-        self.data['nr_basis_orbitals']=len(energies)                
-        self.data['valence_energies']=npy.array([float(e) for e in energies])
-        
+
         
     def set(self,key,value):
         self.data[key]=value
@@ -176,6 +147,11 @@ class Element:
         """ Return the actual Rnl function object. """
         nl=self._transform_orbital(nl)
         return self.functions['Rnl'][nl]  
+
+
+    def has_Rnl_functions(self):
+        """ Does this element has basis function information? """
+        return self.functions is not None
     
     
     def effective_potential(self,r):
@@ -197,25 +173,6 @@ class Element:
             if abs(wf)>fractional_limit*wfmax: 
                 return r
                 
-        
-    def _read_functions(self,file):
-        """ 
-        Read radial wave functions (R=u/r), self-consistent potentials, 
-        confinements, etc. from given file. 
-        """
-        o=open(file)        
-        default=nu.array([[0,0],[1,0],[2,0],[3,0]])
-        self.functions={'unl':{},'Rnl':{}}
-        for nl in self.get_valence_orbitals():
-            m=find(o,'u_%s' %nl,fmt='matrix',default=default)  
-            self.functions['unl'][nl]=Function('spline',m[:,0],m[:,1])
-            self.functions['Rnl'][nl]=Function('spline',m[:,0],m[:,1]/m[:,0])                                    
-            
-        m=find(o,'effective_potential',fmt='matrix',default=default)  
-        self.functions['effective_potential']=Function('spline',m[:,0],m[:,1])
-        m=find(o,'confinement_potential',fmt='matrix',default=default)  
-        self.functions['confinement_potential']=Function('spline',m[:,0],m[:,1])
-        o.close()
         
     def write_to_file(self,file):
         """
