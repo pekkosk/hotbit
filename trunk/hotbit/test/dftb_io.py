@@ -5,6 +5,7 @@ Test the DFTB file format reader.
 import numpy as np
 
 import ase
+from ase.units import Hartree
 from hotbit import Hotbit
 
 ###
@@ -21,8 +22,8 @@ a.center(vacuum=6.0)
 
 c = Hotbit(
     elements = {
-        'H': dir1 + 'H.elm',
-        'C': dir1 + 'C.elm'
+        'H': dir2 + 'H-H.skf',
+        'C': dir2 + 'C-C.skf'
         },
     tables   = {
         'HH': dir2 + 'H-H.skf',
@@ -38,6 +39,13 @@ ase.FIRE(a).run(fmax=0.01)
 ase.write('C6H6.cfg', a)
 
 ###
+
+for i in c.el.get_present():
+    el = c.el.get_element(i)
+    sym = el.get_symbol()
+    orbs = el.get_valence_orbitals()
+    for orb in orbs:
+        print sym, orb, el.get_epsilon(orb), el.get_epsilon(orb)*Hartree
 
 x = np.linspace(1.0, 12.0, 1000)
 

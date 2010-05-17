@@ -57,8 +57,6 @@ class Elements:
             for key in elements:
                 if key=='rest': continue
                 file = elements[key]
-                if file[-4:]!='.elm':
-                    file+='.elm'
                 if not path.isfile(file):
                     raise RuntimeError('Custom element file "%s" for %s not found.' %(file,key))
                 else:
@@ -95,7 +93,7 @@ class Elements:
         for s in self.present:
             el=self.elements[s]
             comment=el.get_comment()
-            if len(comment) > 0:
+            if comment is not None and len(comment) > 0:
                 if type(self.files[s])==type(''):
                     file=self.files[s]
                     txt+='Element %s in %s\n' %(s,file)
@@ -387,13 +385,27 @@ class Elements:
             el=self.elements[symb]
             atomorb=[]
             self.first_orbitals.append(self.norb)
-            for k,(ao,e) in enumerate(zip(el.get_orbital_types(),el.get_onsite_energies())):
+            for k,(ao,e) in enumerate(zip(el.get_orbital_types(),
+                                          el.get_onsite_energies())):
                 self.norb+=1
-                Rnl=el.get_Rnl_function(ao)
+
                 self.orbital_atoms.append(i)
                 angmom = ls.index(ao[0])
-                atomorb.append({'atom':i,'symbol':symb,'orbital':ao,'angmom':angmom,\
-                                'index':self.norb-1,'energy':e,'atomindex':k,'Rnl':Rnl})
+
+                d = { 'atom': i,
+                      'symbol': symb,
+                      'orbital': ao,
+                      'angmom': angmom,
+                      'index': self.norb-1,
+                      'energy': e,
+                      'atomindex': k }
+                
+                if el.has_Rnl_functions():
+                    Rnl = el.get_Rnl_function(ao)
+                    d['Rnl'] = Rnl
+
+                atomorb.append(d)
+
             self.nr_orbitals.append(len(atomorb))
             self.atomorb.append(atomorb)
             self.orb.extend(atomorb)
