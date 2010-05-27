@@ -65,16 +65,18 @@ def AGNR(n,units=1,pbc='z',R=1.42):
         atoms += Atom('C',(x0+0,i*a/2,0))
         atoms += Atom('C',(x0+R,i*a/2,0))
         
+    a = atoms.copy()
     for i in range(units-1):
-        a = atoms.copy()
-        a.translate((3*R,0,0))
-        atoms += a
+        b = a.copy()
+        b.translate(((i+1)*3*R,0,0))
+        atoms += b
     if pbc=='x':
         atoms.set_pbc((True,False,False))
         atoms.set_cell((units*3*R,1,1))
         atoms.center(vacuum=6,axis=1)
         atoms.center(vacuum=6,axis=2)
     elif pbc=='z':
+        atoms.set_pbc((False,False,True))
         atoms.rotate('z',nu.pi/2)
         atoms.rotate('x',nu.pi/2)
         atoms.set_cell((1,1,units*3*R))

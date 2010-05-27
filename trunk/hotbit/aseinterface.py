@@ -436,7 +436,7 @@ class Hotbit(Output):
         return self.f.copy()
     
 
-    def get_band_energies(self, kpts, shift=False, rs='kappa'):
+    def get_band_energies(self, kpts=None, shift=True, rs='kappa'):
         '''
         Return band energies for explicitly given list of k-points.
         
@@ -447,11 +447,15 @@ class Hotbit(Output):
         shift:     shift zero to the Fermi-level
         rs:        use 'kappa'- or 'k'-points in reciprocal space
         '''
-        if rs=='k':
-            klist = k_to_kappa_points(kpts,self.el.atoms)
-        elif rs=='kappa':
-            klist = kpts
-        e = self.st.get_band_energies(klist)*Hartree
+        if kpts==None:
+            e = self.st.e * Hartree
+        else:
+            if rs=='k':
+                klist = k_to_kappa_points(kpts,self.el.atoms)
+            elif rs=='kappa':
+                klist = kpts
+            e = self.st.get_band_energies(klist)*Hartree
+        
         if shift:
             return e-self.get_fermi_level()
         else:

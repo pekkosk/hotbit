@@ -44,7 +44,7 @@ def fit(f,p,xlist,ylist,fct=False):
         return sum(err**2)
     res = fmin(chi2,p,args=(nu.array(xlist),nu.array(ylist)))
     if fct:
-        return res,_FitFunction(f,p)
+        return res,_FitFunction(f,res)
     else:
         return res 
 
