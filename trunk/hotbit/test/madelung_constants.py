@@ -8,10 +8,7 @@ from ase import Atoms, write
 from ase.lattice.compounds import CsCl, NaCl, ZnS
 
 from hotbit.atoms import Atoms as HotbitAtoms
-from hotbit.multipole_expansion import MultipoleExpansion
-
-from hotbit.ewald_sum import EwaldSum
-
+from hotbit.coulomb import EwaldSum, MultipoleExpansion
 
 ###
 

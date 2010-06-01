@@ -2,8 +2,7 @@ from numpy import *
 
 from ase import *
 from hotbit import *
-from hotbit.ewald_sum import EwaldSum
-from hotbit.multipole_expansion import MultipoleExpansion
+from hotbit.coulomb import MultipoleExpansion
 
 from box.md import check_energy_conservation
 from box.fd_forces import check_forces
