@@ -6,8 +6,8 @@ import numpy as np
 
 from ase import Atoms, write
 from hotbit.atoms import Atoms as HotbitAtoms
-from hotbit.multipole import get_moments
-from hotbit.multipole_expansion import MultipoleExpansion
+from hotbit.coulomb import MultipoleExpansion
+from hotbit.coulomb.multipole import get_moments
 
 from box.fd_forces import check_forces, check_field
 

@@ -56,6 +56,7 @@ s=setup(
         "hotbit",
         "hotbit.analysis",
         "hotbit.containers",
+        "hotbit.coulomb",
         "hotbit.io",
         "hotbit.parametrization",
         "hotbit.test"

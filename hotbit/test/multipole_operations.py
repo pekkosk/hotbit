@@ -12,7 +12,7 @@ import random
 import numpy as np
 import ase
 
-from hotbit.multipole import zero_moments, get_moments
+from hotbit.coulomb.multipole import zero_moments, get_moments
 
 from _hotbit import multipole_to_multipole, multipole_to_local, local_to_local, transform_multipole
 

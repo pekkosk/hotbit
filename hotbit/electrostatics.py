@@ -21,7 +21,7 @@ from scipy.special import erf, erfc
 norm=nu.linalg.norm
 dot=nu.dot
 
-from hotbit.direct_coulomb import DirectCoulomb
+from hotbit.coulomb import DirectCoulomb
 
 # Some constants
 log2 = log(2.0)
