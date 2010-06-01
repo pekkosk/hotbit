@@ -121,6 +121,6 @@ def read_repulsion_from_par(fileobj):
     try:
         v = mix.find_value(fileobj, 'repulsion', fmt='matrix')
     except:
-        v = nu.array([[0,0],[1,0],[2,0],[3,0]])
+        v = np.array([[0,0],[1,0],[2,0],[3,0]])
     
     return v[:, 0], v[:, 1]

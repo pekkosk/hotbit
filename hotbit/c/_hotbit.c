@@ -1,5 +1,10 @@
 /*
- * HOTBIT native extensions
+ * Copyright (C) 2010 NSC Jyvaskyla, Fh-IWM
+ * Please see the accompanying LICENSE file for further information.
+ */
+
+/*
+ * HOTBIT native extensions module
  */
 
 #include <Python.h>

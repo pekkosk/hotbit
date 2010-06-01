@@ -31,6 +31,7 @@ data['Ar']={'Z':18,'symbol':'Ar'}
 data['K'] ={'Z':19,'symbol':'K', 'name':'potassium','mass':39.0983,  'R_cov':2.03,'R_vdw':2.75,'IE':4.338, 'EA':0.501}             
 data['Ti']={'Z':22,'symbol':'Ti','name':'titanium', 'mass':47.8760,  'R_cov':1.60,'R_vdw':2.15,'IE':6.825, 'EA':0.078}            
 data['Kr']={'Z':36,'symbol':'Kr'}
+data['Pd']={'Z':46,'symbol':'Pd'}
 data['Sn']={'Z':50, 'symbol':'Sn', 'R_cov':1.39}
 data['Xe']={'Z':54,'symbol':'Xe'}
 data['Pt']={'Z':78,'symbol':'Pt','name':'platinum', 'mass':195.084,  'R_cov':1.36,'R_vdw':1.75,'IE':9.013, 'EA':2.127}
@@ -56,6 +57,7 @@ valence_orbitals['Ar']=[]
 valence_orbitals['K']=['4s','4p']
 valence_orbitals['Ti']=['3d','4s','4p']
 valence_orbitals['Kr']=[]
+valence_orbitals['Pd']=['5s','5p','4d']
 valence_orbitals['Sn']=['5s','5p']
 valence_orbitals['Xe']=[]
 valence_orbitals['Pt']=['6s','6p','5d']
@@ -90,9 +92,10 @@ aux=[ ['H', '',{'1s':1}],\
       ['Kr','Ar',{'3d':10,'4s':2,'4p':6}],\
       # fifth row
       ['Sn','Kr',{'4d':10,'5s':2,'5p':2}],
-      ['Xe','Kr',{'4d':10,'5s':2,'5p':6}],\
+      ['Pd','Kr',{'4d':10,'5s':0,'5p':0}],
+      ['Xe','Kr',{'4d':10,'5s':2,'5p':6}],
       # sixth row
-      ['Pt','Xe',{'4f':14,'5d':9,'6s':1,'6p':0}],\
+      ['Pt','Xe',{'4f':14,'5d':9,'6s':1,'6p':0}],
       ['Au','Xe',{'4f':14,'5d':10,'6s':1,'6p':0}] ]
           
 configurations={}          
