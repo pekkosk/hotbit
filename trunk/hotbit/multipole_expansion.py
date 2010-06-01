@@ -15,6 +15,8 @@ from math import pi, sqrt
 
 import numpy as np
 
+from neighbors import n_from_ranges
+
 from multipole import get_moments, zero_moments
 from multipole import multipole_to_multipole, multipole_to_local
 from multipole import local_to_local, transform_multipole
@@ -30,29 +32,6 @@ else:
         for n in m.shape:
             i += [ np.arange(n, dtype=int) ]
         return tuple(i)
-
-
-def n_from_ranges(s, n):
-    r = [ ]
-
-    for i1, i2 in s:
-        if i1 == 0:
-            j1 = 0
-        elif i1 == -np.Inf:
-            j1 = -n
-        else:
-#            j1 = int(i1)
-            j1 = -n
-        if i2 == 0:
-            j2 = 1
-        elif i2 == np.Inf:
-            j2 = n+1
-        else:
-#            j2 = int(i2)+1
-            j2 = n+1
-        r += [ ( j1, j2 ) ]
-
-    return r
 
 
 class MultipoleExpansion:
@@ -118,7 +97,6 @@ class MultipoleExpansion:
         a:   Hotbit Atoms object, or atoms object that implements the transform
              and rotation interface.
         q:   Charges
-        r0:  Origin of the expansion
         """
         self.timer.start('multipole_to_multipole')
 
@@ -232,7 +210,7 @@ class MultipoleExpansion:
 
         self.timer.start('near_field')
 
-        # Contributing of neighboring boxes
+        # Contribution of neighboring boxes
         for x1 in range(*n1):
             for x2 in range(*n2):
                 for x3 in range(*n3):

@@ -21,16 +21,24 @@ from scipy.special import erf, erfc
 norm=nu.linalg.norm
 dot=nu.dot
 
-from hotbit.ewald_sum import EwaldSum
-from hotbit.multipole_expansion import MultipoleExpansion
-
+from hotbit.direct_coulomb import DirectCoulomb
 
 # Some constants
 log2 = log(2.0)
 
 
+class GaussianChargeDensity:
+    def __init__(self, cutoff=None):
+        pass
+
+
+class SlaterChargeDensity:
+    def __init__(self, cutoff=None):
+        pass
+
+
 class Electrostatics:
-    def __init__(self, calc, solver=None, accuracy_goal=12):
+    def __init__(self, calc, density=None, solver=None, accuracy_goal=12):
         self.calc=proxy(calc)
         self.norb=calc.el.get_nr_orbitals()
         self.SCC=calc.get('SCC')
@@ -42,8 +50,10 @@ class Electrostatics:
         self.accuracy_goal = accuracy_goal
 
         if solver is None:
-            self.solver = None
-            self.gamma  = self.gamma_direct
+            #self.solver  = DirectCoulomb(self.calc.get('gamma_cut'))
+            #self.gamma   = self.gamma_correction
+            self.solver  = None
+            self.gamma   = self.gamma_direct
         else:
             self.solver        = solver
             self.solver.timer  = self.calc.timer

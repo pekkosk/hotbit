@@ -9,6 +9,9 @@ l      angular momentum number
 L      l and m for l != 0
 """
 
+# Copyright (C) 2010 NSC Jyvaskyla, Fh-IWM
+# Please see the accompanying LICENSE file for further information.
+
 import numpy as np
 
 from _hotbit import solid_harmonic_R, multipole_to_multipole

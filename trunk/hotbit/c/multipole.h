@@ -1,3 +1,8 @@
+/*
+ * Copyright (C) 2010 NSC Jyvaskyla, Fh-IWM
+ * Please see the accompanying LICENSE file for further information.
+ */
+
 #ifndef __MULTIPOLE_H
 #define __MUTLIPOLE_H
 

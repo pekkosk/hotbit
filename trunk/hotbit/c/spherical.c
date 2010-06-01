@@ -1,3 +1,8 @@
+/*
+ * Copyright (C) 2010 NSC Jyvaskyla, Fh-IWM
+ * Please see the accompanying LICENSE file for further information.
+ */
+
 #include <Python.h>
 #define PY_ARRAY_UNIQUE_SYMBOL HOTBIT_ARRAY_API
 #define NO_IMPORT_ARRAY
