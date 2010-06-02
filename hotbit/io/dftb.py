@@ -2,6 +2,7 @@
 DFTB file format.
 See: http://www.dftb.org/
 """
+from math import log, pi, sqrt
 from copy import copy
 
 import numpy as np
@@ -46,6 +47,10 @@ def read_element_from_skf(fileobj, symbol):
             data['epsilon'][orbital] = eself[1]
         elif 'd' in orbital:
             data['epsilon'][orbital] = eself[0]
+
+    # Apparently, only the last U is used
+    data['U'] = U[2]
+    data['FWHM'] = sqrt(8*log(2.0)/pi)/U[2]
 
     energies=[]            
     for orbital in data['valence_orbitals']:            
