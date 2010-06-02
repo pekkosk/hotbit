@@ -40,6 +40,9 @@ log2 = log(2.0)
 
 def get_Gaussian_gamma_correction(a, U, FWHM=None,
                                   cutoff=None, accuracy_goal=12):
+    """
+    Gaussian charge distribution.
+    """
     if FWHM is None:
         FWHM = sqrt(8*log2/pi)/U
 
@@ -73,7 +76,50 @@ def get_Gaussian_gamma_correction(a, U, FWHM=None,
 
 def get_Slater_gamma_correction(a, U, FWHM=None,
                                 cutoff=None, accuracy_goal=12):
-    raise NotImplementedError()
+    """
+    Slater-type charge distribution.
+    See: M. Elstner et al., Phys. Rev. B 58, 7260 (1998)
+    """
+    min_U = nu.min(U)
+    if min_U <= 0.0:
+        raise ValueError("Minimum U (%f) smaller than or equal to zero. " %
+                         min_U)
+
+    if cutoff is None and not a.is_cluster():
+        # Estimate a cutoff from the accuracy goal if the
+        # system is periodic and no cutoff was given
+        cutoff = sqrt(log(10.0)*accuracy_goal/(sqrt(pi/2)*min_U))
+
+    tau = 16*nu.asarray(U)/5
+
+    il, jl, dl, nl = get_neighbors(a, cutoff)
+
+    nat = len(a)
+    G   = nu.zeros([nat, nat], dtype=float)
+    dG  = nu.zeros([nat, nat, 3], dtype=float)
+    G[diag_indices_from(G)] = U
+
+    if il is not None:
+        for i, j, d, n in zip(il, jl, dl/Bohr, nl):
+            fi1  = 1.0/(2*(tau[i]**2-tau[j]**2)**2)
+            fj1  = -tau[i]**4*tau[j]*fi1
+            fi1 *= -tau[j]**4*tau[i]
+
+            fi2  = 1.0/((tau[i]**2-tau[j]**2)**3)
+            fj2  = -(tau[i]**6-3*tau[i]**4*tau[j]**2)*fi2
+            fi2 *=  (tau[j]**6-3*tau[j]**4*tau[i]**2)
+
+            expi = exp(-tau[i]*d)
+            expj = exp(-tau[j]*d)
+
+            G[i, j]     += \
+                expi*(fi1+fi2/d) + \
+                expj*(fj1+fj2/d)
+            dG[i, j, :] += \
+                ( expi*(tau[i]*(fi1+fi2/d) + fi2/(d**2)) + \
+                  expj*(tau[j]*(fj1+fj2/d) + fj2/(d**2)) )*n
+
+    return G, dG
 
 
 _gamma_correction_dict = {
@@ -83,7 +129,8 @@ _gamma_correction_dict = {
 
 
 class Electrostatics:
-    def __init__(self, calc, density='Gaussian', solver=None, accuracy_goal=12):
+    def __init__(self, calc, charge_density='Gaussian',
+                 solver=None, accuracy_goal=12):
         self.calc=proxy(calc)
         self.norb=calc.el.get_nr_orbitals()
         self.SCC=calc.get('SCC')
@@ -94,10 +141,11 @@ class Electrostatics:
 
         self.accuracy_goal = accuracy_goal
 
-        if not density in _gamma_correction_dict.keys():
-            raise RuntimeError("Unknown charge density type: %s." % density)
+        if not charge_density in _gamma_correction_dict.keys():
+            raise RuntimeError("Unknown charge density type: %s." %
+                               charge_density)
 
-        self.gamma_correction = _gamma_correction_dict[density]
+        self.gamma_correction = _gamma_correction_dict[charge_density]
 
         if solver is None:
             self.solver = DirectCoulomb(self.calc.get('gamma_cut'))

@@ -60,7 +60,9 @@ def compute_rhoe(wf, occ, e):
 class States:
 
     def __init__(self,calc):
-        self.es = Electrostatics(calc, solver=calc.get('coulomb_solver'))
+        self.es = Electrostatics(calc,
+            charge_density = calc.get('charge_density'),
+            solver = calc.get('coulomb_solver'))
         self.solver=Solver(calc)
         self.calc=proxy(calc)
         self.nat=len(calc.el)
