@@ -44,6 +44,7 @@ class Hotbit(Output):
                       width=0.02,
                       mixer=None,
                       coulomb_solver=None,
+                      charge_density='Gaussian',
                       filename=None):
         """
         Hotbit -- density-functional tight-binding calculator
@@ -94,17 +95,19 @@ class Hotbit(Output):
                           * True for physically allowed k-points in periodic symmetries.
         maxiter:          Maximum number of self-consistent iterations 
                           * only for SCC-DFTB
-        coulomb_solver:   Select Coulomb solver. Choices are
-                          * None:     direct summation, see also gamma_cut
-                          * 'ewald':  Ewald summation, only works for bravais
-                                      containers and becomes slow for large
-                                      systems.
-                          * 'me':     Multipole expansion
+        coulomb_solver:   The Coulomb solver object. If None, a DirectCoulomb
+                          object will the automatically instantiated.
+                          * only for SCC-DFTB
+        charge_density:   Shape of the excess charge on each atom. Possibilities
+                          are:
+                          * 'Gaussian': Use atom centered Gaussians. This is the
+                            default.
+                          * 'Slater': Slater-type exponentials as used in the
+                            original SCC-DFTB scheme.
+                          * only for SCC-DFTB
         gamma_cut:        Range for Coulomb interaction if direct summation is
-                          selected (see coulomb_solver)
-                          * At the moment Coulomb interaction is 1/r*(1-erf(r/gamma_cut))
-                            for faster convergence. This is quick & dirty way to
-                            calculate electostatics and will be implemented properly.
+                          selected (coulomb_solver = None).
+                          * only for SCC-DFTB
         txt:              Filename for log-file.
                           * None: standard output
                           * '-': throw output to trash (/null) 
@@ -129,7 +132,8 @@ class Hotbit(Output):
                         'txt':txt,
                         'verbose_SCC':verbose_SCC,
                         'mixer':mixer,
-                        'coulomb_solver':coulomb_solver}
+                        'coulomb_solver':coulomb_solver,
+                        'charge_density':charge_density}
 
         if parameters!=None:
             os.environ.data['HOTBIT_PARAMETERS']=parameters

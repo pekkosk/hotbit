@@ -73,7 +73,7 @@ def get_neighbors(a, cutoff=None):
     # cells.
     # For large systems, some kind of binning scheme should implemented.
     sym_ranges  = a.get_symmetry_operation_ranges()
-    if cutoff is None and np.any(np.abs(sym_ranges) == np.Inf):
+    if cutoff is None and not a.is_cluster():
         raise RuntimeError("Please specify a cutoff when searching for "
                            "neighbors in a periodic system.")
 
