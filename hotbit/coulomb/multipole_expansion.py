@@ -23,6 +23,8 @@ from hotbit.coulomb.multipole import local_to_local, transform_multipole
 
 from box.timing import Timer
 
+from hotbit.coulomb.baseclass import Coulomb
+
 # diag_indices_from was introduced in numpy 1.4.0
 if hasattr(np, 'diag_indices_from'):
     diag_indices_from = np.diag_indices_from
@@ -34,7 +36,7 @@ else:
         return tuple(i)
 
 
-class MultipoleExpansion:
+class MultipoleExpansion(Coulomb):
     def __init__(self, l_max=8, n=3, k=5, r0=None, timer=None):
         """
         Instantiate a new MultipoleExpansion object which computes
