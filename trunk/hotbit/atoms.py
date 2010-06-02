@@ -80,7 +80,14 @@ class Atoms(ase_Atoms):
         Return the ranges for symmetry operations in different directions.
         '''
         return self.container.get_symmetry_operation_ranges()
-    
+
+
+    def is_cluster(self):
+        """
+        Check whether the system a cluster, i.e. nonperiodic all directions.
+        """
+        return nu.all(nu.abs(self.get_symmetry_operation_ranges()) != nu.Inf)
+
     
     def _check_symmetry_operation(self,n):
         '''

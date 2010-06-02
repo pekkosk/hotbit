@@ -2,9 +2,8 @@
 Compute electrostatic interaction and construct the 'electrostatic'
 matrix h1 containing the shift in on-site energies.
 
-This module only adds the contribution of the shape of the charge (currently
-only Gaussian). The interaction of point charges is compute by either the Ewald
-or MultipoleExpansion class.
+This module only adds the contribution of the charge density. The interaction
+of point charges is computed by one of the solvers in the Coulomb submodule.
 """
 
 # Copyright (C) 2008 NSC Jyvaskyla
@@ -21,24 +20,70 @@ from scipy.special import erf, erfc
 norm=nu.linalg.norm
 dot=nu.dot
 
+from neighbors import get_neighbors
 from hotbit.coulomb import DirectCoulomb
+
+# diag_indices_from was introduced in numpy 1.4.0
+if hasattr(nu, 'diag_indices_from'):
+    diag_indices_from = nu.diag_indices_from
+else:
+    def diag_indices_from(m):
+        i = [ ] 
+        for n in m.shape:
+            i += [ nu.arange(n, dtype=int) ]
+        return tuple(i)
+
 
 # Some constants
 log2 = log(2.0)
 
 
-class GaussianChargeDensity:
-    def __init__(self, cutoff=None):
-        pass
+def get_Gaussian_gamma_correction(a, U, FWHM=None,
+                                  cutoff=None, accuracy_goal=12):
+    if FWHM is None:
+        FWHM = sqrt(8*log2/pi)/U
+
+    max_FWHM = nu.max(FWHM)
+    if max_FWHM <= 0.0:
+        raise ValueError("Maximum FWHM (%f) smaller than or equal to zero. " %
+                         max_FWHM)
+
+    if cutoff is None and not a.is_cluster():
+        # Estimate a cutoff from the accuracy goal if the
+        # system is periodic and no cutoff was given
+        cutoff = sqrt(log(10.0)*accuracy_goal*max_FWHM/(sqrt(4*log2)))
+
+    il, jl, dl, nl = get_neighbors(a, cutoff)
+
+    nat = len(a)
+    G   = nu.zeros([nat, nat], dtype=float)
+    dG  = nu.zeros([nat, nat, 3], dtype=float)
+    G[diag_indices_from(G)] = U
+
+    if il is not None:
+        for i, j, d, n in zip(il, jl, dl/Bohr, nl):
+            const        = 2*sqrt( log2/(FWHM[i]**2+FWHM[j]**2) )
+            ecr          = -erfc(const*d)
+            decr         = 2/sqrt(pi)*exp(-(const*d)**2)*const
+            G[i, j]     += ecr/d
+            dG[i, j, :] += (ecr/d-decr)*n/d
+
+    return G, dG
 
 
-class SlaterChargeDensity:
-    def __init__(self, cutoff=None):
-        pass
+def get_Slater_gamma_correction(a, U, FWHM=None,
+                                cutoff=None, accuracy_goal=12):
+    raise NotImplementedError()
+
+
+_gamma_correction_dict = {
+    'Gaussian': get_Gaussian_gamma_correction,
+    'Slater': get_Slater_gamma_correction
+    }
 
 
 class Electrostatics:
-    def __init__(self, calc, density=None, solver=None, accuracy_goal=12):
+    def __init__(self, calc, density='Gaussian', solver=None, accuracy_goal=12):
         self.calc=proxy(calc)
         self.norb=calc.el.get_nr_orbitals()
         self.SCC=calc.get('SCC')
@@ -49,15 +94,15 @@ class Electrostatics:
 
         self.accuracy_goal = accuracy_goal
 
+        if not density in _gamma_correction_dict.keys():
+            raise RuntimeError("Unknown charge density type: %s." % density)
+
+        self.gamma_correction = _gamma_correction_dict[density]
+
         if solver is None:
-            #self.solver  = DirectCoulomb(self.calc.get('gamma_cut'))
-            #self.gamma   = self.gamma_correction
-            self.solver  = None
-            self.gamma   = self.gamma_direct
+            self.solver = DirectCoulomb(self.calc.get('gamma_cut'))
         else:
-            self.solver        = solver
-            self.solver.timer  = self.calc.timer
-            self.gamma         = self.gamma_correction
+            self.solver = solver
 
 
     def set_dq(self,dq):
@@ -112,7 +157,7 @@ class Electrostatics:
         
         aux = nu.zeros((self.norb,self.norb))
         for i,o1i,noi in lst:
-            aux[o1i:o1i+noi,:] = self.epsilon[i]        
+            aux[o1i:o1i+noi,:] = self.epsilon[i]
         h1 = 0.5 * ( aux+aux.transpose() )
                 
         # external electrostatics
@@ -132,7 +177,7 @@ class Electrostatics:
         return self.h1
 
 
-    def construct_Gamma_matrix(self):
+    def construct_Gamma_matrix(self, a):
         '''
         Construct the G-matrix and its derivative.
         
@@ -142,33 +187,15 @@ class Electrostatics:
         '''
         self.calc.start_timing('gamma matrix')
 
-        # Heuristics to estimate the cut-off for the Coulomb correction.
-        # Not yet used.
-        if self.gamma == self.gamma_direct:
-            cutoff  = self.calc.get('gamma_cut')
-        else:
-            min_U = min([ self.calc.el.get_element(s).get_U()
-                          for s in self.calc.el.get_present() ])
-            cutoff = sqrt(log(10.0)*self.accuracy_goal/(sqrt(pi/2)*min_U))
+        U = [ self.calc.el.get_element(i).get_U()
+              for i in range(len(a)) ]
+        FWHM = [ self.calc.el.get_element(i).get_FWHM()
+                 for i in range(len(a)) ]
 
-        g=self.gamma
-        G=nu.zeros((self.N,self.N))
-        dG=nu.zeros((self.N,self.N,3))
-        rijn, dijn = self.calc.el.get_distances()
-
-        lst=self.calc.el.get_property_lists(['i','s'])
-        
-        for i,si in lst:
-            for j,sj in lst:
-                G[i,j] = sum( [g(si,sj,d) for d in dijn[:,i,j]] )
-
-                aux = nu.array([ g(si,sj,d,der=1)*r/d
-                                 for (d,r) in zip(dijn[:,i,j],rijn[:,i,j]) ])
-                if i==j:
-                    # exclude n=(0,0,0) from derivatives
-                    dG[i,j] = aux[1:,:].sum(axis=0)
-                elif i!=j:
-                    dG[i,j] = aux.sum(axis=0)
+        G, dG = self.gamma_correction(a, U,
+                                      FWHM = FWHM,
+                                      cutoff = self.calc.get('gamma_cut'),
+                                      accuracy_goal = self.accuracy_goal)
 
         self.G, self.dG  = G, dG
 
@@ -176,93 +203,21 @@ class Electrostatics:
         self.calc.stop_timing('gamma matrix')
 
 
-    def gamma_correction(self,si,sj,r,der=0):
-        '''
-        Return the gamma for atoms i and j.
-        Note that this does not contain the contribution of
-        the point charges, and is hence short ranged.
+    def get_gamma(self):
+        return self.G + self.solver.get_gamma()*Bohr
 
-        gamma_ij(r) = -erfc(c*r)/r * erfc(r/cut)
-        
-        @param i: atom index (only element information)
-        @param j: atom index2 (only element information)
-        @param r: distance between atoms.
-        @param der: 0 = gamma(r); 1 = dgamma(r)/dr 
-        '''
-        # If the correction is used, the system is periodic anyway and hence
-        # 'gamma_cut' is not supported
-        ei, ej = [self.calc.el.get_element(s) for s in (si,sj)]
-        wi, wj = ei.get_FWHM(), ej.get_FWHM()
-        const=2*sqrt( log2/(wi**2+wj**2) )
-        if r<1E-10:
-            assert si==sj
-            if der==1:
-                return nu.zeros((3))
-            else:
-                return ei.get_U()
-        else:
-            ecr = -erfc(const*r)
-            #ecr = 0.0
-            if der==0:
-                return ecr/r
-            elif der==1:
-                decr=2/sqrt(pi)*exp(-(const*r)**2)*const
-                #decr = 0.0
-                return (decr - ecr/r)/r 
-            
-                
-    def gamma_direct(self,si,sj,r,der=0):
-        '''
-        Return the gamma for atoms i and j.
 
-        gamma_ij(r) = -erfc(c*r)/r * erfc(r/cut)
-        
-        @param i: atom index (only element information)
-        @param j: atom index2 (only element information)
-        @param r: distance between atoms.
-        @param der: 0 = gamma(r); 1 = dgamma(r)/dr 
-        '''
-        # for more rapid decay of Coulomb potential
-        cut = self.calc.get('gamma_cut')
-        ei, ej = [self.calc.el.get_element(s) for s in (si,sj)]
-        wi, wj = ei.get_FWHM(), ej.get_FWHM()
-        const=2*sqrt( log2/(wi**2+wj**2) )
-        if r<1E-10:
-            assert si==sj
-            if der==1:
-                return nu.zeros((3))
-            else:
-                return ei.get_U()
-        else:
-            ecr = erf(const*r)
-#            ecr = 1.0
-            if der==0:
-                if cut==None:
-                    return ecr/r
-                else:
-                    return ecr/r*(1-erf(r/cut))
-            elif der==1:
-                decr=2/sqrt(pi)*exp(-(const*r)**2)*const
-#                decr = 0.0
-                if cut==None:
-                    return (decr - ecr/r)/r 
-                else:
-                    f=erfc(r/cut)
-                    df=-2/sqrt(pi)*exp(-(r/cut)**2)/cut
-                    return (df*ecr + f*decr - f*ecr/r)/r 
-            
-                
-### For use as a standalone calculator
+### For use as a standalone calculator, return eV/A units
 
     def get_potential_energy(self, a):
         self.calc.el.update_geometry(a)
-        self.construct_Gamma_matrix()
+        self.construct_Gamma_matrix(a)
         self.set_dq(a.get_charges())
         return self.coulomb_energy()*Hartree
 
     def get_forces(self, a):
         self.calc.el.update_geometry(a)
-        self.construct_Gamma_matrix()
+        self.construct_Gamma_matrix(a)
         self.set_dq(a.get_charges())
         return self.gamma_forces()*Hartree/Bohr
         

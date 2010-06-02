@@ -19,6 +19,8 @@ from ase.units import Hartree, Bohr
 
 from box.timing import Timer
 
+from hotbit.coulomb.baseclass import Coulomb
+
 # diag_indices_from was introduced in numpy 1.4.0
 if hasattr(np, 'diag_indices_from'):
     diag_indices_from = np.diag_indices_from
@@ -31,7 +33,7 @@ else:
 
 
 # FIXME!!! No field yet in Ewald sum
-class EwaldSum:
+class EwaldSum(Coulomb):
     def __init__(self, accuracy_goal, weight, timer=None):
         self.accuracy_goal  = accuracy_goal
         self.weight         = weight

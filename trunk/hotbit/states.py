@@ -157,7 +157,7 @@ class States:
             # work with a given set of k-points
             nk=len(kpts)
             if rs=='k':
-                k = k_to_kappa_points(kpts,self.el.atoms)
+                k = k_to_kappa_points(kpts,self.calc.el.atoms)
             else:
                 k=nu.array(kpts)
             wk=nu.ones(nk)/nk
@@ -200,7 +200,7 @@ class States:
 #        try:
         if True:
             if self.SCC:
-                self.es.construct_Gamma_matrix()
+                self.es.construct_Gamma_matrix(self.calc.el.atoms)
             self.e, self.wf = self.solver.get_states(self.calc,dq,self.H0,self.S)
             
             self.check_mulliken_charges()

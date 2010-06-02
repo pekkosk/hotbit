@@ -19,6 +19,8 @@ from scipy.special import erfc
 from hotbit.neighbors import get_neighbors
 from box.timing import Timer
 
+from hotbit.coulomb.baseclass import Coulomb
+
 # diag_indices_from was introduced in numpy 1.4.0
 if hasattr(np, 'diag_indices_from'):
     diag_indices_from = np.diag_indices_from
@@ -30,7 +32,7 @@ else:
         return tuple(i)
 
 
-class DirectCoulomb:
+class DirectCoulomb(Coulomb):
     def __init__(self, cutoff=None, timer=None):
         """
         Instantiate a new DirectCoulomb object which computes the electrostatic
@@ -78,11 +80,11 @@ class DirectCoulomb:
         """
         self.timer.start('direct_coulomb')
 
+        self.a     = a
         self.r_av  = a.get_positions().copy()
         self.q_a   = q.copy()
 
         nat  = len(a)
-        r    = a.get_positions()
 
         il, jl, dl, nl = get_neighbors(a, self.cutoff)
 
@@ -139,6 +141,35 @@ class DirectCoulomb:
             self.update(a)
 
         return self.phi_a, self.E_av
+
+
+    def get_gamma(self, a=None):
+        """
+        Return the gamma correlation matrix, i.e. phi(i) = gamma(i, j)*q(j)
+        """
+        if a is not None:
+            self.update(a)
+
+        self.timer.start('get_gamma')
+
+        nat = len(self.a)
+
+        il, jl, dl, nl = get_neighbors(self.a, self.cutoff)
+
+        if il is None:
+            G = None
+        else:
+            G = np.zeros([nat, nat], dtype=float)
+            if self.cutoff is None:
+                for i, j, d in zip(il, jl, dl):
+                    G[i, j] += 1.0/d
+            else:
+                for i, j, d in zip(il, jl, dl):
+                    G[i, j] += 1.0*erfc(d/self.cutoff)/d
+
+        self.timer.stop('get_gamma')
+
+        return G
 
 
 ### For use as a standalone calculator
