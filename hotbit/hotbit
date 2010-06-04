@@ -20,6 +20,13 @@
         is an alias for 'Repulsion' because rep is an instance 
         for Repulsion class within calc.
         
+    hotbit box.mix.
+        list functions in box.mix
+    
+    hotbit box.mix.fit2
+        print documentation for box.mix.fit2
+        
+        
         Other aliases are, at least:
             calc.rep        Repulsion (all repulsions)
             calc.rep.rep    RepulsivePotential (single repulsion)
@@ -120,7 +127,6 @@ exdir = os.path.join(pardir,'..','examples')
 if options.examples: 
     list_copy_examples(exdir,arg,options.show)
 else:
-    import hotbit
     aliases = {'Hotbit':'calc',\
                'Atoms':'calc.el.atoms',\
                'Elements':'calc.el',\
@@ -136,10 +142,20 @@ else:
          
     
     classes=[]
+    import hotbit
+    import box 
     for c in dir(hotbit):
         if c[0] in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ':
             classes.append(c)
+            
+        
     classes.sort()
+    
+    
+    
+        
+    
+    
     
     if arg==None:
         #------------------------------------
@@ -150,6 +166,30 @@ else:
                 print '%-25s (%s)' %(c,aliases[c])
             else:
                 print c
+                
+    elif arg[:3]=='box':
+        #
+        #    for box list data only for functions
+        #
+        if arg[-1]=='.':
+            mod = eval('%s' %arg[:-1])
+            for item in dir(mod):
+                if item[0]!='_': print item
+        else:
+            fct = eval('%s' %arg)
+            if options.list:
+                # list code
+                code = inspect.getsource(fct)
+                print code
+                raise SystemExit
+            else:
+                call = inspect.formatargspec(*inspect.getargspec(fct))
+                print '%s. %s' %(arg,call)
+                print fct.__doc__
+                raise SystemExit
+            
+        
+        
     else: 
         if arg.find('.')>0:
             # c should be a valid class
