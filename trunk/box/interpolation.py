@@ -49,6 +49,10 @@ class MultipleSplineFunction:
         self.labels.append(label)
         self.indices.append(index)
         self.m+=1
+
+
+    def get_number_of_functions(self):
+        return self.m
         
         
     def get_labels(self):
@@ -73,7 +77,12 @@ class MultipleSplineFunction:
             x=self.x
             qn       = 0.0 
             un       = 0.0
-    
+
+            if len(x) != len(y):
+                raise RuntimeError('x- and y-tables need to have identical '
+                                   'numbers of entries. Here x: %i, y: %i.' % \
+                                       ( len(x), len(y) ))
+
             # Solve the second derivatives
             for i in range(1,n-1):
                 sig  = (x[i]-x[i-1])/(x[i+1]-x[i-1])
