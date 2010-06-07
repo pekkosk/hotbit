@@ -86,7 +86,9 @@ def read_HS_from_skf(fileobj, symboli, symbolj):
     # Homoatomic interactions also contain element data
     if symboli == symbolj:
         # First line contains grid spacing and number of grid points
-        dx, n, dummy = fortran_readline(fileobj)
+        l = fortran_readline(fileobj)
+        dx = l[0]
+        n = l[1]
         n = int(n)
 
         # Contains self-energies, spin-polarization energies, Hubbard-U, ...
@@ -102,10 +104,18 @@ def read_HS_from_skf(fileobj, symboli, symbolj):
 
     HS = [ ]
     for i in range(n):
-        HS += [ fortran_readline(fileobj) ]
+        l = fileobj.readline()
+        if l.strip() == 'Spline':
+            if i != n-1:
+                raise RuntimeError('Spline keyword encountered reading tables '
+                                   'for %s-%s before reaching the end of the '
+                                   'HS table.' % ( symboli, symbolj ))
+        else:
+            HS += [ fortran_readline(l) ]
+            
     HS = np.array(HS)
 
-    return x, np.array(HS)
+    return x[0:HS.shape[0]], np.array(HS)
 
 
 
@@ -136,22 +146,21 @@ def read_repulsion_from_skf(fileobj, rep_x0=0.1, rep_dx=0.005):
     n, cutoff = fortran_readline(fileobj)
     n = int(n)
 
+    # Coefficients for the exponential
     c1, c2, c3 = fortran_readline(fileobj)
 
     x1, x2, splc1, splc2, splc3, splc4 = fortran_readline(fileobj)
 
     x = np.linspace(rep_x0, cutoff, int((cutoff-rep_x0)/rep_dx)+1)
-    i0 = np.searchsorted(x, x1)
+    y = c3 + np.exp(c2-c1*x)
 
-    y = np.zeros(len(x))
-    y[:i0] = c3 + np.exp(c2-c1*x[:i0])
-
+    i0 = np.searchsorted(x, x1)+1
     for j in range(n-1):
         if j > 0:
             last_x2 = x2
             x1, x2, splc1, splc2, splc3, splc4 = fortran_readline(fileobj)
             assert x1 == last_x2
-        i1 = np.searchsorted(x, x2)
+        i1 = np.searchsorted(x, x2)+1
         y[i0:i1] = \
             splc1 + \
             splc2 * (x[i0:i1]-x1) + \
@@ -164,7 +173,7 @@ def read_repulsion_from_skf(fileobj, rep_x0=0.1, rep_dx=0.005):
     x1, x2, splc1, splc2, splc3, splc4, splc5, splc6 = fortran_readline(fileobj)
     assert x1 == last_x2
 
-    i1 = np.searchsorted(x, x2)
+    i1 = np.searchsorted(x, x2)+1
     y[i0:i1] = \
         splc1 + \
         splc2 * (x[i0:i1]-x1) + \

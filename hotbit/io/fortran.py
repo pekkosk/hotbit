@@ -14,7 +14,7 @@ def fortran_readline(f, dtype=float):
         l = f
     else:
         l = f.readline()
-    s = l.replace(',', ' ').split()
+    s = l.replace('d', 'e').replace(',', ' ').split()
 
     r = [ ]
     for e in s:
