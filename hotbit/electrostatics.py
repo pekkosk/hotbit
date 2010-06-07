@@ -101,23 +101,38 @@ def get_Slater_gamma_correction(a, U, FWHM=None,
 
     if il is not None:
         for i, j, d, n in zip(il, jl, dl/Bohr, nl):
-            fi1  = 1.0/(2*(tau[i]**2-tau[j]**2)**2)
-            fj1  = -tau[i]**4*tau[j]*fi1
-            fi1 *= -tau[j]**4*tau[i]
+            if abs(tau[i] - tau[j]) < 1e-6:
+                src = 1.0/(tau[i]+tau[j])
+                fac = tau[i]*tau[j]*src
+                avg = 1.6*(fac+fac*fac*src)
+                fac = avg*d
+                fac2 = fac*fac
+                efac = exp(-fac)/(48*d)
+                h = -(48 + 33*fac + fac2*(9+fac))*efac
+                G[i, j] += \
+                    h
+                dG[i, j, :] += \
+                    (   h/d \
+                      + avg*h \
+                      + (33*avg + 18*fac*avg + 3*fac2*avg)*efac )*n
+            else:
+                fi1  = 1.0/(2*(tau[i]**2-tau[j]**2)**2)
+                fj1  = -tau[i]**4*tau[j]*fi1
+                fi1 *= -tau[j]**4*tau[i]
 
-            fi2  = 1.0/((tau[i]**2-tau[j]**2)**3)
-            fj2  = -(tau[i]**6-3*tau[i]**4*tau[j]**2)*fi2
-            fi2 *=  (tau[j]**6-3*tau[j]**4*tau[i]**2)
+                fi2  = 1.0/((tau[i]**2-tau[j]**2)**3)
+                fj2  = -(tau[i]**6-3*tau[i]**4*tau[j]**2)*fi2
+                fi2 *=  (tau[j]**6-3*tau[j]**4*tau[i]**2)
 
-            expi = exp(-tau[i]*d)
-            expj = exp(-tau[j]*d)
+                expi = exp(-tau[i]*d)
+                expj = exp(-tau[j]*d)
 
-            G[i, j]     += \
-                expi*(fi1+fi2/d) + \
-                expj*(fj1+fj2/d)
-            dG[i, j, :] += \
-                ( expi*(tau[i]*(fi1+fi2/d) + fi2/(d**2)) + \
-                  expj*(tau[j]*(fj1+fj2/d) + fj2/(d**2)) )*n
+                G[i, j] += \
+                      expi*(fi1+fi2/d) \
+                    + expj*(fj1+fj2/d)
+                dG[i, j, :] += \
+                    (   expi*(tau[i]*(fi1+fi2/d) + fi2/(d**2)) \
+                      + expj*(tau[j]*(fj1+fj2/d) + fj2/(d**2)) )*n
 
     return G, dG
 
