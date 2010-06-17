@@ -3,10 +3,12 @@ import pylab as pl
 from box import mix
 from time import time,localtime
 import datetime
-folder=os.environ.get('HOTBIT_DIR')
+folder='/home/pekkosk/workspace/hotbit' 
+datafile=folder+'/hotbit/doc/code_lines.txt' 
 
 python=0
 fortran=0
+c = 0
 for data in os.walk(folder):
     dirpath, dirnames, filenames = data
     if '.' in dirpath: continue
@@ -15,14 +17,13 @@ for data in os.walk(folder):
             python+=len( open(dirpath+'/'+file).readlines() )
         if file[-2:]=='90':
             fortran+=len( open(dirpath+'/'+file).readlines() )
-            
-  
+        if file[-1:]=='c' or file[-1:]=='h':
+            c+=len( open(dirpath+'/'+file).readlines() )
+        
 
-# append current lines into file
-datafile='%s/hotbit/doc/code_lines.txt' %folder
 o=open(datafile,'a')
 t=time()
-print>>o, t, python, fortran
+print>>o, t, python, fortran, c
 o.close()
 
 fig = pl.figure()
@@ -39,12 +40,14 @@ dates = [datetime.date(a[0],a[1],a[2]) for a in timetuples]
 #xs, ys = pl.poly_between(data[:,0],0,data[:,1])
 xs, ys = pl.poly_between(dates,0,data[:,1])
 pl.fill(xs,ys,label='python')
-xs, ys = pl.poly_between(dates,0,data[:,2])
+xs, ys = pl.poly_between(dates,data[:,1],data[:,1]+data[:,2])
 pl.fill(xs,ys,label='fortran')
+xs, ys = pl.poly_between(dates,data[:,1]+data[:,2],data[:,1]+data[:,2]+data[:,3])
+pl.fill(xs,ys,label='C')
 pl.title('lines of code in hotbit')
 pl.xlabel('Years since 14.10 2008')
 pl.ylabel('Lines of code')
-pl.legend()
+pl.legend(loc=2)
 
 from matplotlib.dates import MonthLocator, WeekdayLocator, DateFormatter
 from matplotlib.dates import MONDAY
