@@ -69,7 +69,8 @@ class Interactions:
                     raise RuntimeError('Custom parameter file "%s" for %s-%s interaction not found.' %(file,e1,e2))
                 file = path.abspath(file)
                 files[e1+e2] = file
-                files[e2+e1] = file
+                if not e2+e1 in tables:
+                    files[e2+e1] = file
 
         # set interactions from default place
         if tables==None or tables!=None and 'rest' in tables and tables['rest']=='default':
@@ -112,7 +113,7 @@ class Interactions:
         """ Return the interaction specifications """
         txt='Interactions:\n'
         for i,s1 in enumerate(self.present):
-            for s2 in self.present[i:]:
+            for s2 in self.present:
                 file = self.files[s1+s2]
                 if file==None:
                     txt+='  %s%s: None\n' %(s1,s2)
@@ -168,7 +169,7 @@ class Interactions:
                                 index=integrals[short]
                                 self.h[pair].add_function(table_ij[:,index],table,integrals[short])
                                 self.s[pair].add_function(table_ij[:,index+10],table,integrals[short])
-                                
+
         # cutoffs for atom pair indices
         N = self.calc.el.N
         self.hscut=nu.zeros((N,N),float)
@@ -176,6 +177,10 @@ class Interactions:
             for j,sj in enumerate(self.calc.el.symbols):
                 self.hscut[i,j]=self.cut[si+sj]
         self.calc.el.set_cutoffs(self.cut)
+
+    
+    def get_tables(self, si, sj):
+        return self.h[si+sj], self.s[si+sj]
                                 
 
     def plot_table(self,e1,e2,der=0):

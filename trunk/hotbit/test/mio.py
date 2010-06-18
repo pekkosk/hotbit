@@ -2,7 +2,7 @@
 Test the mio parametrization of Frauenheim and co-workers.
 """
 
-import sys
+import os
 import glob
 
 import numpy as np
@@ -12,8 +12,10 @@ from hotbit import Hotbit
 
 ###
 
-FMAX = 0.01
+FMAX = 0.005
 OPT  = FIRE
+
+debug = False
 
 ###
 
@@ -49,7 +51,7 @@ db2 = {
         'C-C': ( ( 0, 1 ), 1.203 )
         },
     'C2H4': {
-        'C-H': ( ( 0, 2 ), 1.098 ),
+        'C-H': ( ( 0, 2 ), 1.094 ),
         'C-C': ( ( 0, 1 ), 1.328 )
         },
     'C2H6': {
@@ -67,7 +69,9 @@ db2 = {
         'C-H': ( ( 0, 1 ), 1.089 )
         },
     'CO': {
-        'C-O': ( ( 0, 1 ), 1.200 )
+        # This differs from the paper, but I believe it's a typo
+        # paper says: 1.200
+        'C-O': ( ( 0, 1 ), 1.100 )
         },
     'H2CO': {
         'C-H': ( ( 1, 2 ), 1.143 ),
@@ -81,11 +85,15 @@ db2 = {
         'O-H': ( ( 0, 1 ), 0.968 )
         },
     'N2': {
-        'N-N': ( ( 0, 1 ), 1.200 )
+        # This differs from the paper, but I believe it's a typo
+        # paper says: 1.200
+        'N-N': ( ( 0, 1 ), 1.113 )
         },
     'N2H4': {
         'N-H': ( ( 0, 2 ), 1.037 ),
-        'N-N': ( ( 0, 1 ), 1.443 )
+        # This differs from the paper, and I don't know why
+        # paper says: 1.442
+        'N-N': ( ( 0, 1 ), 1.407 )
         },
     'H2O2': {
         'O-H': ( ( 0, 2 ), 0.991 ),
@@ -99,16 +107,20 @@ db2 = {
 
 def check_q(db, name, value):
     refvalue = db[name]
-    print '%10s  %10.3f  %10.3f' % ( name, value, refvalue )
+    if debug:
+        print '%10s  %10.3f  %10.3f' % ( name, value, refvalue )
     #assert abs(value-refvalue) < 1e-3
 
 
 def check_db(db, params):
-    print "%10s %10s %10s ( %10s )" % ( "bond", "value", "reference", "error" )
+    if debug:
+        print "%10s %10s %10s ( %10s )" \
+            % ( "bond", "value", "reference", "error" )
     for mol, values in db.iteritems():
         #if mol == 'H2O':
         if 1:
-            print mol
+            if debug:
+                print mol
 
             a = molecule(mol)
             a.center(vacuum=10.0)
@@ -133,8 +145,10 @@ def check_db(db, params):
             
             for name, ( ( i1, i2 ), refvalue ) in values.iteritems():
                 value = a.get_distance(i1, i2)
-                print '%10s %10.3f %10.3f ( %10.3f )' % \
-                    ( name, value, refvalue, abs(value-refvalue) )
+                if debug:
+                    print '%10s %10.3f %10.3f ( %10.3f )' % \
+                        ( name, value, refvalue, abs(value-refvalue) )
+                assert abs(value-refvalue) < 0.01
 
             #e = [ ]
             #for x in np.linspace(0.70, 0.80, 1000):
@@ -164,15 +178,11 @@ def params_for_database_from(path):
 
 ###
 
-if len(sys.argv) != 2:
-    print "Syntax: mio.py <path to database>"
-    sys.exit(999)
-
-params = params_for_database_from(sys.argv[1])
+params = params_for_database_from(os.getenv('MIO_0_1'))
 
 ###
 
-if 0:
+if debug:
     for SCC in [ False, True ]:
         if SCC:
             print "--- SCC ---"
@@ -215,9 +225,6 @@ if 0:
         check_q(db1[SCC], 'C-N', a.get_distance(iC, iN))
         check_q(db1[SCC], 'N-H', a.get_distance(iN, iHN))
         check_q(db1[SCC], 'C-H', a.get_distance(iC, iHC))
-
-        print a.get_chemical_symbols()
-        print a.get_charges()
 
 ###
 

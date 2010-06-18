@@ -100,11 +100,12 @@ def read_HS_from_skf(fileobj, symboli, symbolj):
         dx, n = fortran_readline(fileobj)
         n = int(n)
 
-    x = dx*np.arange(0, n)
+    # The n information is sometimes wrong, better count while reading
+    #x = dx*np.arange(0, n)
 
     HS = [ ]
-    for i in range(n):
-        l = fileobj.readline()
+    l = fileobj.readline()
+    while l and l.strip() != 'Spline':
         if l.strip() == 'Spline':
             if i != n-1:
                 raise RuntimeError('Spline keyword encountered reading tables '
@@ -112,10 +113,18 @@ def read_HS_from_skf(fileobj, symboli, symbolj):
                                    'HS table.' % ( symboli, symbolj ))
         else:
             HS += [ fortran_readline(l) ]
-            
-    HS = np.array(HS)
 
-    return x[0:HS.shape[0]], np.array(HS)
+        l = fileobj.readline()
+
+    if not l:
+        raise RuntimeError('Premature end-of-file: Keyword "Spline" not found '
+                           'for %s-%s.' % ( symboli, symbolj ))
+    
+    HS = np.array(HS)
+    x = dx*np.arange(0, HS.shape[0])
+
+    #return x[0:HS.shape[0]], np.array(HS)
+    return x, np.array(HS)
 
 
 

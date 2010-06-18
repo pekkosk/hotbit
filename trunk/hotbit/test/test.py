@@ -20,10 +20,15 @@ tests = [
     'mulliken.py',
     'multipole_operations.py',
     'periodicity.py',
-    'madelung_constants.py']
+    'madelung_constants.py',
+    'mio.py']
 
        
 skip = ['save_load.py','copy_calculator.py']
+add_env = {
+    'mio.py': 'MIO_0_1'
+    }
+    
 start = time()
 
 pth=os.environ.get('HOTBIT_DIR')
@@ -32,6 +37,11 @@ for test in tests:
     if test in skip:
         print 'test', test,'skipped...'
         continue 
+    if test in add_env:
+        if not add_env[test] in os.environ:
+            print 'test', test, 'requires environment variable', \
+                add_env[test], 'skipped...'
+            continue
     try:
         file = os.path.join(pth,'hotbit','test',test)
         t1 = time()
