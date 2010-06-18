@@ -46,8 +46,11 @@ def electrostatics_test(b, r=3, r0=None):
     if r0 is None:
         r0 = np.sum(b.get_positions(), axis=0)/len(a)
 
+    k1 = [ (1,1)[i] for i in b.get_pbc() ]
+    k3 = [ (1,3)[i] for i in b.get_pbc() ] 
+
     # Check multipole moments
-    mp  = MultipoleExpansion(L_MAX, r, 3, r0)
+    mp  = MultipoleExpansion(L_MAX, r, k3, r0)
     mp.update(b, b.get_charges())
 
     # Store moments and field for later
@@ -81,7 +84,7 @@ def electrostatics_test(b, r=3, r0=None):
 #    assert err < TOL_FIELD
 
     # Next neighbor shell by direct summation
-    mp  = MultipoleExpansion(L_MAX, r*r*r, 1, r0)
+    mp  = MultipoleExpansion(L_MAX, r*r*r, k1, r0)
     mp.update(b, b.get_charges())
 
     phi_dir, E_dir  = mp.get_potential_and_field(b)
