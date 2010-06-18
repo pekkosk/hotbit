@@ -18,22 +18,27 @@ else:
         return tuple(i)
 
 
-def n_from_ranges(s, n):
+def n_from_ranges(s, n, m=None):
     r = [ ]
 
-    for i1, i2 in s:
-        if i1 == 0:
-            j1 = 0
-        elif i1 == -np.Inf:
-            j1 = -n
+    if type(n) == int or type(n) == float:
+        n = [n]*3
+    if m is not None:
+        if type(m) == int or type(m) == float:
+            m = [m]*3
+    else:
+        m = [ i for i in n ]
+        n = [ -i for i in n ]
+
+    for cn, cm, ( i1, i2 ) in zip(n, m, s):
+        if i1 == -np.Inf:
+            j1 = cn
         else:
-            j1 = i1
-        if i2 == 0:
-            j2 = 1
-        elif i2 == np.Inf:
-            j2 = n+1
+            j1 = int(i1)
+        if i2 == np.Inf:
+            j2 = cm+1
         else:
-            j2 = i2+1
+            j2 = int(i2)+1
         r += [ ( j1, j2 ) ]
 
     return r
