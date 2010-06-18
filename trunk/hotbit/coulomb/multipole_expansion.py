@@ -37,6 +37,8 @@ else:
 
 
 class MultipoleExpansion(Coulomb):
+    _TOL = 1e-6
+    
     def __init__(self, l_max=8, n=3, k=5, r0=None, timer=None):
         """
         Instantiate a new MultipoleExpansion object which computes
@@ -52,15 +54,41 @@ class MultipoleExpansion(Coulomb):
                  (number of cells, typically k = 5).
         """
         if l_max < 1:
-            raise ValueError("l_max must be >= 1.")
-        if n % 2 != 1 or n < 3:
-            raise ValueError("n must be >= 3 and odd.")
-        if k < 1:
-            raise ValueError("k must be >= 1.")
+            raise ValueError('l_max must be >= 1.')
+        if np.any(np.array(n) < 1):
+            raise ValueError('n must be >= 1.')
+        if np.any(np.array(k) < 1):
+            raise ValueError('k must be >= 1.')
 
-        self.l_max  = l_max
-        self.n      = (n-1)/2
-        self.k      = k
+        self.l_max = l_max
+
+        if type(n) == int:
+            n = np.array([n]*3)
+        else:
+            n = np.array(n)
+
+        if len(n) != 3:
+            raise TypeError('n must be an integer scalar or a 3-tuple.')
+
+        # The multipole-to-multipole operation is carried out over the
+        # range [self.n1, self.n2]
+        self.n1  = -((n-1)/2)
+        self.n2  = n/2
+        #self.dx = -0.5*(self.n1 + self.n2)
+
+        # The multipole-to-local operation is carried out over cells farther
+        # away, hence the range [self.m1, self.m2]
+        n **= 2
+        self.m1  = -((n-1)/2)
+        self.m2  = n/2
+
+        if type(k) == int:
+            self.k = np.array([k]*3)
+        else:
+            self.k = np.array(k)
+
+        if len(self.k) != 3:
+            raise TypeError('k must be an integer scalar or a 3-tuple.')
 
         self.r0_v   = None
         if r0 is not None:
@@ -117,28 +145,55 @@ class MultipoleExpansion(Coulomb):
 
         self.M = [ ( T0_l.copy(), T_L.copy() ) ]
 
-        sym_ranges  = a.get_symmetry_operation_ranges()
-        n1, n2, n3  = n_from_ranges(sym_ranges, self.n)
+        sym_ranges = a.get_symmetry_operation_ranges()
+        for ( s1, s2 ), k in zip(sym_ranges, self.k):
+            if s2 != np.Inf and k != 1:
+                print sym_ranges
+                print self.k
+                raise ValueError('For non-periodic symmetries the k-value must '
+                                 'be 1.')
+        n1, n2, n3 = n_from_ranges(sym_ranges, self.n1, self.n2)
 
         # Compute telescoped multipoles
-        level = 1
-        for k in range(self.k-2):
-            M0_l  = T0_l.copy()
-            M_L   = T_L.copy()
+        level = np.ones(3, dtype=int)
+        for k in range(np.max(self.k)-2):
+            M0_l = T0_l
+            M_L  = T_L
 
-            for x1 in range(*n1):
-                for x2 in range(*n2):
-                    for x3 in range(*n3):
+            #if np.any(np.abs(self.dx) > self._TOL):
+            #    T0_l, T_L = zero_moments(self.l_max)
+            #else:
+            T0_l = M0_l.copy()
+            T_L  = M_L.copy()
+
+            if k >= self.k[0]-2:
+                _n1 = [ 0, 1 ]
+            else:
+                _n1 = n1
+
+            if k >= self.k[1]-2:
+                _n2 = [ 0, 1 ]
+            else:
+                _n2 = n2
+
+            if k >= self.k[2]-2:
+                _n3 = [ 0, 1 ]
+            else:
+                _n3 = n3
+    
+            for x1 in range(*_n1):
+                for x2 in range(*_n2):
+                    for x3 in range(*_n3):
                         # Loop over all symmetry operations and compute
                         # telescoped multipoles
                         # FIXME!!! Currently only supports continuous
                         # symmetries, think about discrete/recurrent ones.
+                        x = np.array([x1, x2, x3]) #+ self.dx
 
                         # The origin is already okay, skip it
-                        if x1 != 0 or x2 != 0 or x3 != 0:
-                            r1  = a.transform(r0_v,
-                                              [x1*level, x2*level, x3*level])
-                            T   = a.rotation([x1*level, x2*level, x3*level])
+                        if np.any(np.abs(x) > self._TOL):
+                            r1  = a.transform(r0_v, x*level)
+                            T   = a.rotation(x*level)
                             S0_L, S_l = transform_multipole(T, self.l_max,
                                                             M0_l, M_L)
                             multipole_to_multipole(r1-r0_v, self.l_max,
@@ -146,7 +201,7 @@ class MultipoleExpansion(Coulomb):
 
             self.M += [ ( T0_l.copy(), T_L.copy() ) ]
 
-            level *= 2*self.n+1
+            level *= self.n2-self.n1+1
 
         self.timer.stop('multipole_to_multipole')
 
@@ -155,34 +210,44 @@ class MultipoleExpansion(Coulomb):
         self.timer.start('multipole_to_local')
 
         # Compute the local expansion from telescoped multipoles
-        L0_l, L_L      = zero_moments(self.l_max)
-        nm1, nm2, nm3  = n_from_ranges(sym_ranges, ((2*self.n+1)**2-1)/2)
-#        print self.n
-#        print nm1, nm2, nm3
-        Mi             = len(self.M)-1
-        for k in range(self.k-1):
+        L0_l, L_L   = zero_moments(self.l_max)
+        m1, m2, m3  = n_from_ranges(sym_ranges, self.m1, self.m2)
+        Mi          = len(self.M)-1
+        for k in range(np.max(self.k)-1):
             M0_l, M_L  = self.M[Mi]
 
-            for x1 in range(*nm1):
-                for x2 in range(*nm2):
-                    for x3 in range(*nm3):
+            if k >= self.k[0]-1:
+                _m1 = [ 0, 1 ]
+            else:
+                _m1 = m1
+
+            if k >= self.k[1]-1:
+                _m2 = [ 0, 1 ]
+            else:
+                _m2 = m2
+
+            if k >= self.k[2]-1:
+                _m3 = [ 0, 1 ]
+            else:
+                _m3 = m3
+
+            for x1 in range(*_m1):
+                for x2 in range(*_m2):
+                    for x3 in range(*_m3):
                         # Loop over all symmetry operations and compute the
                         # local expansion from the telescoped multipoles
+                        x = np.array([x1, x2, x3]) #+ self.dx
 
                         # No local expansion in the inner region
-                        if abs(x1) > self.n or abs(x2) > self.n or \
-                                abs(x3) > self.n:
-#                            print x1, x2, x3
-
-                            r1  = a.transform(r0_v,
-                                             [x1*level, x2*level, x3*level])
-                            T   = a.rotation([x1*level, x2*level, x3*level])
+                        if np.any(x < self.n1) or np.any(x > self.n2):
+                            r1  = a.transform(r0_v, x*level)
+                            T   = a.rotation(x*level)
                             S0_L, S_l = transform_multipole(T, self.l_max,
                                                             M0_l, M_L)
                             multipole_to_local(-r1+r0_v, self.l_max,
                                                S0_L, S_l, L0_l, L_L)
 
-            level /= 2*self.n+1
+            level /= self.n2-self.n1+1
             Mi    -= 1
 
         self.L = ( L0_l, L_L )
@@ -218,9 +283,11 @@ class MultipoleExpansion(Coulomb):
                 for x3 in range(*n3):
                     # self-interaction needs to be treated separately
                     if x1 != 0 or x2 != 0 or x3 != 0:
+                        x = np.array([x1, x2, x3])
+
                         # construct a matrix with distances
-                        r1      = a.transform(r0_v, [x1, x2, x3])
-                        T       = a.rotation([x1, x2, x3])
+                        r1      = a.transform(r0_v, x)
+                        T       = a.rotation(x)
 
                         rT      = np.dot(r-r0_v, np.transpose(T))
 
@@ -254,10 +321,10 @@ class MultipoleExpansion(Coulomb):
         s1, s2, s3 = sym_ranges
         if s1[1] == np.Inf and s2[1] == np.Inf and s3[1] == np.Inf:
             Ml0, Mlm = self.M[0]
-
+        
             dip  = np.array([-2*Mlm[0].real, 2*Mlm[0].imag, Ml0[1]])
             dip *= 4*pi/(3*a.get_volume())
-
+ 
             self.phi_a -= np.dot(r-r0_v, dip)
             self.E_av  += dip
 

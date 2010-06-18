@@ -13,35 +13,34 @@ from hotbit.coulomb import EwaldSum, MultipoleExpansion
 ###
 
 L_MAX  = 8
-N      = 3
 K      = 5
 
 Q      = 1.0
 a0     = 1.0
 
-debug  = False
+debug  = True
 
 ###
 
 # FIXME!!! Look for more digits
 M_NaCl  = 1.747565
 M_CsCl  = 1.762675
-M_ZnS   = 1.6381
+M_ZnS   = 1.638055
 
 systems = [
-    ( "NaCl", M_NaCl, 0.5,
-       NaCl(['Na', 'Cl'],
-            latticeconstant = a0,
-            size            = [1, 1, 1]) ),
+#    ( "NaCl", M_NaCl, 0.5,
+#       NaCl(['Na', 'Cl'],
+#            latticeconstant = a0,
+#            size            = [1, 1, 1]) ),
     ( "CsCl", M_CsCl, sqrt(3.0)/2,
       CsCl(['Cs', 'Cl'],
           latticeconstant   = a0,
           size              = [1, 1, 1]) ),
-    ( "ZnS", M_ZnS, sqrt(3.0)/4,
-      ZnS(['Zn', 'S'],
-          latticeconstant   = a0,
-          size              = [1, 1, 1]) ),
-# Some extended tests, not necessary
+#    ( "ZnS", M_ZnS, sqrt(3.0)/4,
+#      ZnS(['Zn', 'S'],
+#          latticeconstant   = a0,
+#          size              = [1, 1, 1]) ),
+# Some tests with extended unit cells, not necessary
 #    ( "large NaCl", M_NaCl, 0.5,
 #       NaCl(['Na', 'Cl'],
 #            latticeconstant = a0,
@@ -57,7 +56,8 @@ systems = [
       ]
 
 solvers = [
-    MultipoleExpansion(L_MAX, N, K),
+    MultipoleExpansion(L_MAX, 3, K),
+#    MultipoleExpansion(L_MAX, 4, K),
     EwaldSum(12, 0.001)
 ]
 
