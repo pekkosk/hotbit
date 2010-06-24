@@ -1,8 +1,8 @@
-#"""
-    #Make various atomic structures into xyz-files.
+"""
+    Make various atomic structures into xyz-files.
     
-    #P. Koskinen 31.1 2008
-#"""
+    P. Koskinen 31.1 2008
+"""
 from ase import Atoms as ase_Atoms
 from ase import Atom
 from hotbit import Atoms
@@ -239,6 +239,69 @@ def nanotube_data(n,m,R=1.42):
         data['type'] = 'chiral'
     return data
     
+#    
+#def nanotube(n,m,R=1.42,chiral=True,element='C'):
+#    """
+#    Construct nanotube.
+#    
+#    @param n: chiral index n
+#    @param m: chiral index m
+#    @param R: nearest neighbor distance
+#    @param chiral: return hotbit.Atoms with container 'Chiral',
+#              using the minimum number of atoms in unit cell
+#    @param element: element symbol
+#        
+#    atoms.data will contain the dictionary for nanotube data.
+#    
+#    Reference: V. N. Popov, New J. Phys. 6, 17 (2004)
+#    """
+#    data = nanotube_data(n,m,R)
+#    T, radius, angle, Ntot = data['T'], data['radius'], data['angle'], 2*data['hexagons_per_cell']
+#    if m>n:
+#        n, m = m, n
+#    L1, L2 = n, m
+#    dp = gcd(n,m)
+#    if nu.mod(L1-L2,3*dp)!=0:
+#        d = dp
+#    else:
+#        d = 3*dp
+#        
+#    N1 = (L1+2*L2)/d          # eq. (7)
+#    N2 = -(2*L1+L2)/d         # eq. (8)
+#    Nc = N1*L2-N2*L1          # eq. (13) number of atomic pairs (=hexagons) in the unit cell 
+#    phi1 = 2*pi*N2/Nc         # eq. (9)
+#    phi2 = -2*pi*N1/Nc        # eq. (10)
+#    t1 = T*L2/Nc              # eq. (11)
+#    t2 = -T*L1/Nc             # eq. (12)
+#        
+#    atoms = Atoms()
+#    for l1 in range(N1+1):
+#        phi = l1*phi1
+#        t = l1*t1
+#        atoms += Atom( 'C',(radius*cos(phi),radius*sin(phi),t) )
+#        dphi = (phi1 + phi2)/3
+#        dt = (t1+t2)/3
+#        atoms += Atom('C',(radius*cos(phi+dphi),radius*sin(phi+dphi),t+dt))
+#            
+#    atoms = Atoms(atoms,container='Chiral')
+#    angle, height = phi2, t2
+#    if height<0:
+#        angle, height = -angle, -height
+#    
+#    atoms.set_container(angle=angle,height=height)
+#    if chiral:
+#        data['height']=height
+#        data['twist']=angle
+#    else:
+#        print 'N',T/height
+#        N = int( nu.round(T/height) )
+#        cp = atoms.extended_copy((1,1,N))
+#        atoms = Atoms( cp,cell=(10,10,N*height),pbc=(False,False,True) )
+#        data['height']=N*height
+#        data['twist']=0.0
+#    atoms.data = data
+#    return atoms
+    
     
 def nanotube(n,m,R=1.42,chiral=True,element='C'):
     """
@@ -256,7 +319,7 @@ def nanotube(n,m,R=1.42,chiral=True,element='C'):
     Reference: V. N. Popov, New J. Phys. 6, 17 (2004)
     """
     data = nanotube_data(n,m,R)
-    T, radius, angle = data['T'], data['radius'], data['angle']
+    T, radius, angle, Ntot = data['T'], data['radius'], data['angle'], 2*data['hexagons_per_cell']
     if m>n:
         n, m = m, n
     L1, L2 = n, m
@@ -268,40 +331,55 @@ def nanotube(n,m,R=1.42,chiral=True,element='C'):
         
     N1 = (L1+2*L2)/d          # eq. (7)
     N2 = -(2*L1+L2)/d         # eq. (8)
-    Nc = N1*L2-N2*L1          # eq. (13)
+    Nc = N1*L2-N2*L1          # eq. (13) number of atomic pairs (=hexagons) in the unit cell 
     phi1 = 2*pi*N2/Nc         # eq. (9)
     phi2 = -2*pi*N1/Nc        # eq. (10)
     t1 = T*L2/Nc              # eq. (11)
     t2 = -T*L1/Nc             # eq. (12)
+    
+    print T/(t1+t2),'dd'
+    
+#    print 'Nc',Nc, data['hexagons_per_cell']
+#    print T, 2*sqrt(3)*pi*radius/d, 'length'
 
     
     atoms = Atoms()
     lst = [(l,l) for l in range(m)] + [(l,m-1) for l in range(m,n)]
     for (l1,l2) in lst:
-            phi = l1*phi1 + l2*phi2
-            t   = l1*t1 + l2*t2
-            # first atom is at origin, shifted by the symmetry operation in eq. (1)
-            atoms += Atom('C',(radius*cos(phi),radius*sin(phi),t))
-            # another basis atom is one-third on of operation S1*S2
-            dphi = (phi1 + phi2)/3
-            dt = (t1+t2)/3
-            atoms += Atom('C',(radius*cos(phi+dphi),radius*sin(phi+dphi),t+dt))      
+        phi = l1*phi1 + l2*phi2
+        t   = l1*t1 + l2*t2
+        # first atom is at origin, shifted by the symmetry operation in eq. (1)
+        atoms += Atom('C',(radius*cos(phi),radius*sin(phi),t))
+        # another basis atom is one-third on of operation S1*S2
+        dphi = (phi1 + phi2)/3
+        dt = (t1+t2)/3
+        atoms += Atom('C',(radius*cos(phi+dphi),radius*sin(phi+dphi),t+dt))      
             
     atoms = Atoms(atoms,container='Chiral')
-    angle, height = abs(phi2), abs(t2)
+    angle, height = phi2, t2
+    
+    if height<0:
+        angle, height = -angle, -height
+    print 'a h ',angle, height, 2*pi/angle
+    print 'N1,N2',N1,N2, Nc
+    print 'N1*phi1+N2*phi2',N1*phi1+N2*phi2
+    print 'N1*t1+N2*t2',N1*t1+N2*t2,T
+    print 'L1*phi1+L2*phi2',L1*phi1+L2*phi2
+    print 'L1*t1+L2*t2',L1*t1+L2*t2
+     
     atoms.set_container(angle=angle,height=height)
     if chiral:
         data['height']=height
         data['twist']=angle
     else:
-        N = int( round(T/height) )
+        print 'N',T/height
+        N = int( nu.round(T/height) )
         cp = atoms.extended_copy((1,1,N))
         atoms = Atoms( cp,cell=(10,10,N*height),pbc=(False,False,True) )
         data['height']=N*height
         data['twist']=0.0
     atoms.data = data
     return atoms
-    
 
 def nanotube_old(el, a0, n, m, ncopy=1, verbose=False):
     '''
