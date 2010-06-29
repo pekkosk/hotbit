@@ -401,7 +401,7 @@ class Hotbit(Output):
         """ If atoms moved, solve electronic structure. """
         if not self.init:
             self._initialize(atoms)
-        if self.el.calculation_required(atoms,'ground state'):
+        if self.calculation_required(atoms,'ground state'):
             self.el.update_geometry(atoms)
             t0 = time()
             self.st.solve()
@@ -412,6 +412,8 @@ class Hotbit(Output):
             self.flags['bonds'] = False
             if self.verbose:
                 print >> self.get_output(), "Solved in %0.2f seconds" % (t1-t0)
+            if self.get('SCC'):
+                atoms.set_charges(-self.st.get_dq())
         else:
             pass
 

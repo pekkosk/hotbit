@@ -152,6 +152,10 @@ class Repulsion:
         return f
 
 
+    def get_repulsion(self, ela, elb):
+        return self.vrep[ela+elb]
+
+
 class RepulsivePotential:
     def __init__(self,repulsion):
         if type(repulsion)==type(''):
