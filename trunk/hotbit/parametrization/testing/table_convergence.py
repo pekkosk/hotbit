@@ -1,4 +1,4 @@
-import numpy as nu
+import numpy as np
 import pylab as pl
 from hotbit.parametrization import KSAllElectron
 from hotbit.parametrization import SlaterKosterTable
@@ -37,8 +37,8 @@ if False:
         r,table=sk.get_table()
         y.append([table[0][0,5],table[0][0,6],table[0][0,8],table[1][0,8],table[0][0,9]])
             
-    y=nu.array(y)     
-    #t=nu.array(t)
+    y=np.array(y)     
+    #t=np.array(t)
     for i in range(5): 
         #pl.scatter(x,y[:,i]-y[-1,i],s=t)        
         pl.plot(tlist,abs(y[:,i]-y[-1,i]))        
@@ -56,7 +56,7 @@ if True:
         r,table=sk.get_table()
         y.append([table[0][0,5],table[0][0,6],table[0][0,8],table[1][0,8],table[0][0,9]])
             
-    y=nu.array(y)     
+    y=np.array(y)     
     for i in range(5): 
         pl.semilogy(tlist,abs(y[:,i]-y[-1,i])+1E-9)        
     pl.axhline()    
