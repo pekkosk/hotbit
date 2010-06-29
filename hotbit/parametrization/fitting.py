@@ -741,6 +741,9 @@ class ParametrizationTest:
         Make a comparison to all trajectories with given parameter-file.
         The i_par is the index to the self.pars.
         """
+
+        import pylab as pl
+
         par = self.pars[i_par]
         self.E_free = self.get_isolated_energies(self.trajectories, par)
         temp = par.split('_')
@@ -786,6 +789,9 @@ class ParametrizationTest:
         Plot the energies of a given trajectory as a function
         of the frame number.
         """
+
+        import pylab as pl
+
         e_dft = []
         traj = PickleTrajectory(self.trajectories[i_traj])
         for image in traj:

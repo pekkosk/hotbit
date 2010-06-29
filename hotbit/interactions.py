@@ -186,15 +186,18 @@ class Interactions:
     def plot_table(self,e1,e2,der=0):
         """ Plot SlaKo table for given elements. """
         import pylab as pl
-        R=np.linspace(0,self.cut[e1+e2],100)
-        raise NotImplementedError('...h[pair]')
-        for i in range(10):
-            pl.subplot(5,2,i+1)
-            pl.plot(R,[self.h[e1+e2][i](r,der=der) for r in R],label='H')
-            pl.plot(R,[self.s[e1+e2][i](r,der=der) for r in R],label='S')
+        R=nu.linspace(0,self.cut[e1+e2],1000)
+        n=self.h[e1+e2].get_number_of_functions()
+        nx=max(n/2, 1)
+        ny=n/nx
+        for i in range(n):
+            pl.subplot(nx,ny,i+1)
+            pl.plot(R,[self.h[e1+e2](r,der=der)[i] for r in R],label='H')
+            pl.plot(R,[self.s[e1+e2](r,der=der)[i] for r in R],label='S')
             pl.xlim(0,R[-1])
             pl.ylim(-self.maxh[e1+e2],self.maxh[e1+e2])
-            pl.title('%s-%s integral %s (der=%i)' %(e1,e2,self.integrals[i],der))
+            #pl.title('%s-%s integral %s (der=%i)' %(e1,e2,self.integrals[i],der))
+            pl.title('%s-%s (der=%i)' %(e1,e2,der))
             pl.xlabel('r (Bohr)')
             pl.ylabel('H (Hartree) and S')
         pl.show()

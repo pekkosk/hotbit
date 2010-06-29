@@ -146,7 +146,7 @@ class Elements:
         for quantity in quantities:
             solved_atoms = self.solved[quantity]
             if type(solved_atoms)==type(None):
-                return True                 
+                return True 
             if solved_atoms!=atoms:
                 return True
         return False
