@@ -138,6 +138,12 @@ class Interactions:
 
         for si in self.present:
             for sj in self.present:
+                if self.files[si+sj] is None:
+                    raise RuntimeError('No parametrization specified for %s-%s '
+                                       'interaction.' % ( si, sj ))
+                if self.files[sj+si] is None:
+                    raise RuntimeError('No parametrization specified for %s-%s '
+                                       'interaction.' % ( sj, si ))
                 x_ij, table_ij = read_HS(self.files[si+sj], si, sj)
                 self.cut[si+sj] = x_ij[-1]
                 x_ji, table_ji = read_HS(self.files[sj+si], sj, si)
