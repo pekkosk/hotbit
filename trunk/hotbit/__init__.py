@@ -1,7 +1,7 @@
 # Copyright (C) 2008 NSC Jyvaskyla
 # Please see the accompanying LICENSE file for further information.
 
-from aseinterface import Hotbit
+from aseinterface import Hotbit, database_from_path
 from atoms import Atoms
 from atoms import ExtendedTrajectory
 from electrostatics import Electrostatics

@@ -6,6 +6,9 @@
     (Hybrid Open-source Tight-Binding Tool)
 
 """
+import os
+import glob
+
 import numpy as np
 from auxil import k_to_kappa_points
 from ase.units import Bohr, Hartree
@@ -988,3 +991,56 @@ class Hotbit(Output):
         """
         self.pp.add_pair_potential(i,j,v,eVA)
         
+
+
+### Helper functions
+
+def database_from_path(path):
+    if path is None:
+        path = '.'
+
+    fns = glob.glob('%s/*.elm' % path)
+
+    elements = { }
+    tables = { }
+
+    if len(fns) > 0:
+        for fn in fns:
+            i0 = fn.rfind('/')
+            i1 = fn.rfind('.')
+            el1 = fn[i0+1:i1]
+
+            elements[el1] = fn
+
+            for fn2 in fns:
+                i0 = fn.rfind('/')
+                i1 = fn.rfind('.')
+                el2 = fn2[i0+1:i1]
+
+                if os.path.exists('%s/%s_%s.par' % ( path, el1, el2 )):
+                    tables['%s%s' % ( el1, el2 )] = \
+                        '%s/%s_%s.par' % ( path, el1, el2 )
+                else:
+                    if os.path.exists('%s/%s_%s.par' % ( path, el2, el1 )):
+                        tables['%s%s' % ( el1, el2 )] = \
+                            '%s/%s_%s.par' % ( path, el2, el1 )
+
+    else:
+        fns = glob.glob('%s/*-*.skf' % path)
+
+        if len(fns) > 0:
+            for fn in fns:
+                i0 = fn.rfind('/')
+                i1 = fn.rfind('-')
+                i2 = fn.rfind('.')
+                el1 = fn[i0+1:i1]
+                el2 = fn[i1+1:i2]
+
+                if el1 == el2:
+                    elements[el1] = fn
+                tables['%s%s' % ( el1, el2 )] = fn
+        else:
+            raise RuntimeError('No Slater-Koster database found in directory '
+                               '%s.' % path)
+
+    return { 'elements': elements, 'tables': tables }
