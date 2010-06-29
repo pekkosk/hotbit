@@ -6,7 +6,7 @@
     (Hybrid Open-source Tight-Binding Tool)
 
 """
-import numpy as nu
+import numpy as np
 from auxil import k_to_kappa_points
 from ase.units import Bohr, Hartree
 from ase import Atoms
@@ -209,6 +209,52 @@ class Hotbit(Output):
         f = open(filename, 'w')
         pickle.dump(state, f)
         f.close()
+        
+        
+    def write_electronic_data(self,filename):
+        """
+        Write key electronic data into a file with *general* format.
+        
+        Hotbit is not needed to analyze the resulting data file.
+        The data will be in a dictionary with the following items:
+        
+        N         the number of atoms
+        norb      the number of orbitals
+        forces    atomic forces
+        symbols   element symbols
+        e         single-particle energies
+        occ       occupations
+        nk        number of k-points
+        k         k-point vectors
+        wk        k-point weights
+        dq        excess Mulliken populations
+        gap       energy gap
+        gap_prob  certainty of the gap determination above
+        dose      energies for density of states
+        dos       density of states
+        
+        parameters:
+        -----------
+        filename:     output file name
+        """ 
+        import pickle
+        f = open(filename, 'w')
+        data = {}
+        data['N'] = self.el.N
+        data['norb'] = self.st.norb
+        data['epot'] = self.get_potential_energy(self.el.atoms)
+        data['forces'] = self.get_forces(self.el.atoms)
+        data['symbols'] = self.el.symbols
+        data['e'] = self.st.e
+        data['occ'] = self.st.f
+        data['nk'] = self.st.nk
+        data['k'] = self.st.k
+        data['wk'] = self.st.wk
+        data['dq'] = self.st.dq
+        data['gap'], data['gap_prob'] = self.get_energy_gap()
+        data['dose'], data['dos'] = self.get_density_of_states(False)  
+        pickle.dump(data,f)
+        f.close()
 
 
     def get_data_to_save(self, state):
@@ -381,9 +427,9 @@ class Hotbit(Output):
         self.env=Environment(self)
         pbc=atoms.get_pbc()
         # FIXME: gamma_cut -stuff
-        #if self.get('SCC') and nu.any(pbc) and self.get('gamma_cut')==None:
+        #if self.get('SCC') and np.any(pbc) and self.get('gamma_cut')==None:
         #    raise NotImplementedError('SCC not implemented for periodic systems yet (see parameter gamma_cut).')
-        if nu.any(pbc) and abs(self.get('charge'))>0.0:
+        if np.any(pbc) and abs(self.get('charge'))>0.0:
             raise AssertionError('Charged system cannot be periodic.')
         self.flush()
         self.el.set_atoms(atoms)

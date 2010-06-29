@@ -6,22 +6,22 @@ def slako_transformations(rhat,dist,noi,noj,h,s,dh,ds):
     """    
     l,m,n=rhat          
     ll,mm,nn=rhat**2 
-    dl=(nu.array([1,0,0])-l*rhat)/dist
-    dm=(nu.array([0,1,0])-m*rhat)/dist
-    dn=(nu.array([0,0,1])-n*rhat)/dist
+    dl=(np.array([1,0,0])-l*rhat)/dist
+    dm=(np.array([0,1,0])-m*rhat)/dist
+    dn=(np.array([0,0,1])-n*rhat)/dist
     dll, dmm, dnn = 2*l*dl, 2*m*dm, 2*n*dn 
     
-    mat=nu.zeros((9,9,14))
-    ind=nu.zeros((9,9,14),dtype=int)
-    der=nu.zeros((9,9,14,3))
-    cnt=nu.zeros((9,9),dtype=int)+1
+    mat=np.zeros((9,9,14))
+    ind=np.zeros((9,9,14),dtype=int)
+    der=np.zeros((9,9,14,3))
+    cnt=np.zeros((9,9),dtype=int)+1
     cnt[1:,1:]=2
     cnt[4:,4:]=3
     
-    ht=nu.zeros((noi,noj))
-    st=nu.zeros((noi,noj))
-    dht=nu.zeros((noi,noj,3))
-    dst=nu.zeros((noi,noj,3))
+    ht=np.zeros((noi,noj))
+    st=np.zeros((noi,noj))
+    dht=np.zeros((noi,noj,3))
+    dst=np.zeros((noi,noj,3))
     mxorb=max(noi,noj)
     
     mat[0,0,0]=1  #ss
