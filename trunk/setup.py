@@ -52,7 +52,6 @@ s=setup(
     version      = version,
     packages     = [
         "box",
-        "box.wedgeatoms",
         "hotbit",
         "hotbit.analysis",
         "hotbit.containers",

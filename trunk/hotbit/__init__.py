@@ -39,7 +39,6 @@ from hotbit.parametrization import KSAllElectron
 from hotbit.parametrization import RepulsiveFitting
 from hotbit.parametrization import ParametrizationTest
 
-from box.wedgeatoms import *
 from os import environ, path
 
 import atexit
