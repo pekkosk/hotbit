@@ -94,7 +94,7 @@ class Interactions:
         self.files=files
         self.calc=proxy(calc)
         self.present=present
-        self.max_cut=0.0 # maximum interaction range in Bohrs
+        self.max_cut = 0.0 # maximum interaction range in Bohrs
         self.read_tables()
         self.first=True
 

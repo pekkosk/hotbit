@@ -45,6 +45,7 @@ class Hotbit(Output):
                       mixer=None,
                       coulomb_solver=None,
                       charge_density='Gaussian',
+                      vdw=False,
                       filename=None):
         """
         Hotbit -- density-functional tight-binding calculator
@@ -108,6 +109,7 @@ class Hotbit(Output):
         gamma_cut:        Range for Coulomb interaction if direct summation is
                           selected (coulomb_solver = None).
                           * only for SCC-DFTB
+        vdw               Include van der Waals interactions
         txt:              Filename for log-file.
                           * None: standard output
                           * '-': throw output to trash (/null) 
@@ -129,6 +131,7 @@ class Hotbit(Output):
                         'physical_k':physical_k,
                         'maxiter':maxiter,
                         'gamma_cut':gamma_cut,
+                        'vdw':vdw,
                         'txt':txt,
                         'verbose_SCC':verbose_SCC,
                         'mixer':mixer,
@@ -215,6 +218,7 @@ class Hotbit(Output):
         """
         Write key electronic data into a file with *general* format.
         
+        Hotbit is not needed to analyze the resulting data file.
         The data will be in a dictionary with the following items:
         
         N         the number of atoms
@@ -228,7 +232,7 @@ class Hotbit(Output):
         wk        k-point weights
         dq        excess Mulliken populations
         gap       energy gap
-        gap_prob  certainty of the energy gap above
+        gap_prob  certainty of the gap determination above
         dose      energies for density of states
         dos       density of states
         
@@ -249,7 +253,7 @@ class Hotbit(Output):
         data['nk'] = self.st.nk
         data['k'] = self.st.k
         data['wk'] = self.st.wk
-        data['dq'] = self.st.dq
+        data['dq'] = self.st.mulliken()
         data['gap'], data['gap_prob'] = self.get_energy_gap()
         data['dose'], data['dos'] = self.get_density_of_states(False)  
         pickle.dump(data,f)
@@ -423,6 +427,8 @@ class Hotbit(Output):
         self.st=States(self)
         self.rep=Repulsion(self)
         self.pp=PairPotential(self)
+        if self.get('vdw'):
+            raise NotImplementedError('van der Waals interactions are not yet implemented.')
         self.env=Environment(self)
         pbc=atoms.get_pbc()
         # FIXME: gamma_cut -stuff
