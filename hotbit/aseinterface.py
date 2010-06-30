@@ -8,7 +8,7 @@
 """
 import os
 import glob
-
+import sys
 import numpy as np
 from auxil import k_to_kappa_points
 from ase.units import Bohr, Hartree
@@ -147,6 +147,7 @@ class Hotbit(Output):
 
         self.init=False
         self.notes=[]
+        self.dry_run = '--dry-run' in sys.argv
         #self.set_text(self.txt)
         #self.timer=Timer('Hotbit',txt=self.get_output())
 
@@ -307,6 +308,7 @@ class Hotbit(Output):
         states['prev_dq'] = self.st.prev_dq
         states['count'] = self.st.count
         state['states'] = states
+        
 
 
     def load(self, filename):
@@ -422,6 +424,26 @@ class Hotbit(Output):
             return self.__dict__
         else:
             return self.__dict__[arg]
+        
+        
+    def memory_estimate(self):
+        """
+        Return an estimate for memory consumption in GB.
+        
+        If script run with --dry-run, print estimate and exit.
+        """
+        if self.st.nk>1:
+            number = 16. #complex
+        else:
+            number = 8 #real
+        M = self.st.nk*self.st.norb**2*number
+        #     H   S   dH0   dS    wf  H1  dH   rho rhoe
+        mem = M + M + 3*M + 3*M + M + M + 3*M + M + M
+        if self.dry_run:
+            print 'Memory consumption estimate %.2f GB' %(mem/1E9) 
+            raise SystemExit
+        else:
+            return mem/1E9       
 
 
     def solve_ground_state(self,atoms):
