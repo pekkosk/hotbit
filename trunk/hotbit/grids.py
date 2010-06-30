@@ -1,6 +1,6 @@
 import numpy as np
 from weakref import proxy
-from ase.units import Bohr
+from ase.units import Bohr, Hartree
 from hotbit.analysis.wavefunctions import angular
 from math import sqrt
 from scipy.special import erf
@@ -225,12 +225,54 @@ class Grids:
         Bader analysis will be inaccurate.
         
         parameters:
+        -----------
         pad:      padded edges
         """
         rho = np.zeros(tuple(self.N))
-        for k,wk in enumerate(self.calc.st.k):
+        for k,wk in enumerate(self.calc.st.wk):
             for a,f in enumerate(self.calc.st.f[k,:]):
                 if f<1E-6: break
                 rho = rho + wk*self.get_grid_wf_density(a,k,pad=True)
         return self._return_array(rho,pad)    
+    
+    
+    def get_grid_LDOS(self,bias=None,window=None,pad=True):
+        """
+        Return electron density over selected states around the Fermi-level.
+        
+        parameters:
+        -----------
+        bias:      bias voltage (eV) with respect to Fermi-level. 
+                   Negative means probing occupied states.
+        window:    2-tuple for lower and upper bounds wrt. Fermi-level 
+        pad:       padded edges
+        """
+        assert not (bias==None and window==None)
+        if bias!=None:
+            bias/=Hartree
+        else:
+            window = (window[0]/Hartree,window[1]/Hartree)
+        
+        rho = np.zeros(tuple(self.N))
+        for k,wk in enumerate(self.calc.st.wk):
+            for a,f in enumerate(self.calc.st.f[k,:]):
+                e = self.calc.st.e[k,a]
+                # select occupation weight from the applied scheme        
+                if window!=None:
+                    if window[0]<=e<=window[1]:
+                        w_occu=1.0
+                    else:
+                        w_occu=0.0
+                else:                
+                    if bias<0.0:   # probe occupied states
+                        w_occu=f/2*(1-self.calc.st.occu.fermi_function(e-bias))
+                    elif bias>0.0: # probe unoccupied states
+                        w_occu=(1-f/2)*self.calc.st.occu.fermi_function(e-bias)
+                    else:          # no bias, no current
+                        w_occu=0.0
+                weight=wk*w_occu*2
+                if weight<1E-4: 
+                    continue
+                rho = rho + weight*self.get_grid_wf_density(a,k,pad=True)
+        return self._return_array(rho,pad)
         

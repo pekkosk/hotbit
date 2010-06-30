@@ -1,1 +1,1 @@
-hotbit_version = "0.1 (svn=336:337M)"
+hotbit_version = "0.1 (svn=337:338M)"

@@ -30,6 +30,14 @@ class Occupations:
         exps = np.exp(args)
         return 2/(exps+1)        
         
+        
+    def fermi_function(self,e):
+        """
+        Return Fermi function for given energy [0,1]
+        """
+        arg = (e-self.mu)/self.width
+        return 1/(np.exp(arg)+1)  
+        
 
     def root_function(self,mu):
         """ This function is exactly zero when mu is right. """
