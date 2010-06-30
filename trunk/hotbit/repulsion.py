@@ -151,9 +151,9 @@ class Repulsion:
         self.calc.stop_timing('f_rep')
         return f
 
-
     def get_repulsion(self, ela, elb):
         return self.vrep[ela+elb]
+
 
 
 class RepulsivePotential:
