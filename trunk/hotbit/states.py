@@ -199,6 +199,8 @@ class States:
         
         # TODO: enable fixed dq-calculations in SCC (for band-structures)
         dq=self.guess_dq()
+        if self.calc.dry_run:
+            self.calc.memory_estimate()
         self.H0, self.S, self.dH0, self.dS = self.calc.ia.get_matrices()
 #        try:
         if True:
