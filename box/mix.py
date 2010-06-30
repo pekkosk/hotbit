@@ -225,7 +225,14 @@ def base_and_extension(filename):
     return filename[:i],filename[i+1:]
 
 def sec_to_time(secs):
-    """return days,hours,minutes and seconds in list [dd,hh,mm,ss]"""
+    """ 
+    return days,hours,minutes and seconds from seconds.
+    
+    return list [dd,hh,mm,ss]
+    parameters:
+    -----------
+    secs:  seconds (int or float)
+    """
     d = int(secs // 86400)
     s = secs % 86400
     h = int(s // 3600)

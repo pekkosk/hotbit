@@ -26,6 +26,7 @@ from hotbit.analysis import MullikenAnalysis
 from hotbit.analysis import MullikenBondAnalysis
 from hotbit.analysis import DensityOfStates
 from hotbit.output import Output
+from hotbit.vdw import setup_vdw
 import box.mix as mix
 from time import time
 
@@ -217,37 +218,54 @@ class Hotbit(Output):
         f.close()
         
         
-    def write_electronic_data(self,filename):
+    def write_electronic_data(self,filename,keys=None):
         """
         Write key electronic data into a file with *general* format.
         
         Hotbit is not needed to analyze the resulting data file.
         The data will be in a dictionary with the following items:
         
-        N         the number of atoms
-        norb      the number of orbitals
-        forces    atomic forces
-        symbols   element symbols
-        e         single-particle energies
-        occ       occupations
-        nk        number of k-points
-        k         k-point vectors
-        wk        k-point weights
-        dq        excess Mulliken populations
-        gap       energy gap
-        gap_prob  certainty of the gap determination above
-        dose      energies for density of states
-        dos       density of states
+        N          the number of atoms
+        norb       the number of orbitals
+        nelectrons the number of electrons
+        charge     system charge
+        epot       potential energy
+        ebs        band structure energy
+        ecoul      coulomb energy
+        erep       repulsive energy
+        forces     atomic forces
+        symbols    element symbols
+        e          single-particle energies
+        occ        occupations
+        nk         number of k-points
+        k          k-point vectors
+        wk         k-point weights
+        dq         excess Mulliken populations
+        gap        energy gap
+        gap_prob   certainty of the gap determination above
+        dose       energies for density of states (all states over k-points as well)
+                   0 = Fermi-level
+        dos        density of states (including k-point weights)
+        
+        Access to data, simply:
+        
+        data = numpy.load(filename)
+        print data['epot'] 
         
         parameters:
         -----------
         filename:     output file name
+        keys:         list of items (key names) to save. 
+                      If None, save all.
         """ 
-        import pickle
-        f = open(filename, 'w')
         data = {}
         data['N'] = self.el.N
         data['norb'] = self.st.norb
+        data['charge'] = self.get('charge')
+        data['nelectrons'] = self.el.get_number_of_electrons()
+        data['erep'] = self.rep.get_repulsive_energy()
+        data['ecoul'] = self.get_coulomb_energy(self.el.atoms)
+        data['ebs'] = self.get_band_structure_energy(self.el.atoms)
         data['epot'] = self.get_potential_energy(self.el.atoms)
         data['forces'] = self.get_forces(self.el.atoms)
         data['symbols'] = self.el.symbols
@@ -258,7 +276,13 @@ class Hotbit(Output):
         data['wk'] = self.st.wk
         data['dq'] = self.st.mulliken()
         data['gap'], data['gap_prob'] = self.get_energy_gap()
-        data['dose'], data['dos'] = self.get_density_of_states(False)  
+        data['dose'], data['dos'] = self.get_density_of_states(False)
+        
+        for key in data.keys():
+            if keys!=None and key not in keys:
+                del data[key]
+        import pickle  
+        f = open(filename, 'w')
         pickle.dump(data,f)
         f.close()
 
@@ -433,7 +457,7 @@ class Hotbit(Output):
         self.rep=Repulsion(self)
         self.pp=PairPotential(self)
         if self.get('vdw'):
-            raise NotImplementedError('van der Waals interactions are not yet implemented.')
+            setup_vdw(self)
         self.env=Environment(self)
         pbc=atoms.get_pbc()
         # FIXME: gamma_cut -stuff
