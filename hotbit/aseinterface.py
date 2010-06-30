@@ -428,9 +428,9 @@ class Hotbit(Output):
         
     def memory_estimate(self):
         """
-        Return an estimate for memory consumption in GB.
+        Print an estimate for memory consumption in GB.
         
-        If script run with --dry-run, print estimate and exit.
+        If script run with --dry-run, exit.
         """
         if self.st.nk>1:
             number = 16. #complex
@@ -439,11 +439,9 @@ class Hotbit(Output):
         M = self.st.nk*self.st.norb**2*number
         #     H   S   dH0   dS    wf  H1  dH   rho rhoe
         mem = M + M + 3*M + 3*M + M + M + 3*M + M + M
-        if self.dry_run:
-            print 'Memory consumption estimate %.2f GB' %(mem/1E9) 
+        print>>self.txt, 'Memory consumption estimate: %.2f+ GB' %(mem/1E9)
+        if self.dry_run: 
             raise SystemExit
-        else:
-            return mem/1E9       
 
 
     def solve_ground_state(self,atoms):
@@ -735,6 +733,22 @@ class Hotbit(Output):
         if self.flags['grid']==False:
             raise AssertionError('Grid needs to be set first by method "set_grid".')
         return self.gd.get_grid_density(pad)
+    
+    
+    def get_grid_LDOS(self,bias=None,window=None,pad=True):
+        """
+        Return electron density over selected states around the Fermi-level.
+        
+        parameters:
+        -----------
+        bias:      bias voltage (eV) with respect to Fermi-level. 
+                   Negative means probing occupied states.
+        window:    2-tuple for lower and upper bounds wrt. Fermi-level 
+        pad:       padded edges
+        """
+        if self.flags['grid']==False:
+            raise AssertionError('Grid needs to be set first by method "set_grid".')
+        return self.gd.get_grid_LDOS(bias,window,pad)
             
 
     #
