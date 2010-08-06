@@ -27,8 +27,10 @@ from hotbit.analysis import MullikenBondAnalysis
 from hotbit.analysis import DensityOfStates
 from hotbit.output import Output
 from hotbit.vdw import setup_vdw
+from box.mix import broaden
 import box.mix as mix
 from time import time
+hbar=0.02342178268
 
 
 class Hotbit(Output):
@@ -439,7 +441,8 @@ class Hotbit(Output):
         M = self.st.nk*self.st.norb**2*number
         #     H   S   dH0   dS    wf  H1  dH   rho rhoe
         mem = M + M + 3*M + 3*M + M + M + 3*M + M + M
-        print>>self.txt, 'Memory consumption estimate: %.2f+ GB' %(mem/1E9)
+        print>>self.txt, 'Memory consumption estimate: > %.2f GB' %(mem/1E9)
+        self.txt.flush()
         if self.dry_run: 
             raise SystemExit
 
@@ -548,6 +551,7 @@ class Hotbit(Output):
         ===========
         kpts:      list of k-points; e.g. kpts=[(0,0,0),(pi/2,0,0),(pi,0,0)]
                    k- or kappa-points, depending on parameter rs.
+                   if None, return for all k-points in the calculation
         shift:     shift zero to the Fermi-level
         rs:        use 'kappa'- or 'k'-points in reciprocal space
         '''
@@ -657,6 +661,71 @@ class Hotbit(Output):
 
     def stop_timing(self, label):
         self.timer.stop(label)
+        
+        
+    #
+    #    various analysis methods
+    #
+    def get_dielectric_function(self,width=0.05,cutoff=None,N=400):
+        """
+        Return the imaginary part of the dielectric function for non-SCC.
+        
+        Note: Uses approximation that requires that the orientation of
+              neighboring unit cells does not change much.
+              (Exact for Bravais lattice.)
+              
+        See, e.g., Marder, Condensed Matter Physics, or 
+        Popov New J. Phys 6, 17 (2004) 
+              
+        parameters:
+        -----------
+        width:     energy broadening in eV
+        cutoff:    cutoff energy in eV
+        N:         number of points in energy grid 
+        """
+        width = width/Hartree
+        otol = 0.01 # tolerance for occupations
+        if cutoff==None:
+            cutoff = 1E10
+        else:
+            cutoff = cutoff/Hartree
+        
+        st = self.st
+        nk, e, f, wk = st.nk, st.e, st.f, st.wk
+        ex, wt = [], []
+        for k in range(nk):
+            wf = st.wf[k]
+            wfc = wf.conjugate()
+            dS = st.dS[k]
+            # electron excitation ka-->kb; restrict the search:
+            amax = list(f[k]<otol).index(True)
+            bmax = list(e[k]>e[k,amax]+cutoff).index(True)
+            bmin = list(f[k]<2-otol).index(True)
+            amin = list(e[k]>e[k,bmin]-cutoff).index(True)
+            for a in xrange(amin,amax+1):
+                for b in xrange(max(a+1,bmin),bmax+1):
+                    de = e[k,b]-e[k,a]
+                    if de>cutoff:
+                        break
+                    df = f[k,a]-f[k,b]
+                    if df<otol: 
+                        continue
+                    # P = < ka | P | kb > 
+                    P = np.zeros((3),complex)
+                    for d in range(3):
+                        P[d] = 1.0j*hbar * np.dot( wfc[a],np.dot(dS[:,:,d],wf[b]) )
+                    ex.append( de )
+                    wt.append( wk[k]*df*np.abs(P)**2 )
+        
+        ex, wt = np.array(ex), np.array(wt)
+        cutoff = min( ex.max(),cutoff )
+        y = np.zeros((N,3))
+        for d in range(3):
+            # Lorenzian should be used, but long tail would bring divergence at zero energy
+            x,y[:,d] = broaden( ex,wt[:,d],width,'gaussian',N=N,a=width,b=cutoff )
+            y[:,d] = y[:,d]/x**2
+        const = (4*np.pi**2/hbar) 
+        return x*Hartree, y*const #y also in eV, Ang
         
     #
     #   grid stuff
@@ -1050,6 +1119,8 @@ class Hotbit(Output):
                 False for v in Hartree and Bohr
         """
         self.pp.add_pair_potential(i,j,v,eVA)
+        
+        
         
 
 

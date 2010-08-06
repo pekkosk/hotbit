@@ -11,7 +11,7 @@
 '''
 import numpy as np
 import time
-from math import atan,pi,cos,sin,sqrt
+from math import atan,cos,sin
 from numpy import sqrt,pi,exp
    
 class _FitFunction:
@@ -269,16 +269,6 @@ def clean_indentation(st):
             first=True    
     return new[:-1]
 
-def type_check(x,t):
-    from numpy import array
-    tx=type(x)
-    types={'float':type(1.0),'str':type(''),'list':type([]),'vector':type(array([])),'int':type(1)}
-    if types[t]!=tx:
-        error_exit('variable %s is not of type %s' %(str(x),str(tx)) )
-    
-def todo(s):
-    """ Give todo-message. """
-    mix.error_exit('The function %s is not implemented yet.')
     
 def max_norm(vecs):
     """ Return the maximum norm of given list of vectors. """
@@ -305,7 +295,8 @@ def select_vector_mode(vec,mode):
             x=x+list(vec)
         return vector(x)        
     elif not listvec and mode=='default':
-        if mod(len(vec),3)!=0: error_exit('Vector dimension not divisible by 3!')
+        if mod(len(vec),3)!=0: 
+            raise AssertionError
         N=len(vec)/3
         x=[]
         for i in range(N):
@@ -336,8 +327,9 @@ def norm(a):
     """
     Return the norm of the vector a.
     """
-    from numpy import sqrt,dot
+    from numpy import dot
     return sqrt( dot(a,a) )
+
 
 def gauss_fct(x,mean=0.,sigma=1.):
     """
@@ -346,9 +338,11 @@ def gauss_fct(x,mean=0.,sigma=1.):
     """
     return 1./sqrt(2*pi*sigma**2)*exp(-(x-mean)**2/(2*sigma**2) )
 
-def lorenzian(x,mean,width):
-    """ Return normalized Lorenzian with given mean and broadening. """
+
+def lorentzian(x,mean,width):
+    """ Return normalized Lorentzian with given mean and broadening. """
     return (width/np.pi)/((x-mean)**2+width**2)
+
 
 def broaden(x,y=None,width=0.05,function='gaussian',extend=False,N=200,a=None,b=None,xgrid=None):
     """ 
@@ -356,21 +350,18 @@ def broaden(x,y=None,width=0.05,function='gaussian',extend=False,N=200,a=None,b=
     
     parameters:
     -----------
-    x: data points (~energy axis)
-    y: heights of the peaks given with x. Default is one for all.
-    width: width parameter specific for given broadening function.
-    function: 'gaussian' or 'lorenzian'
-    extend: if True, extend xrange bit beyond min(x) and max(x) (unless [a,b] given)
-    N: number of points in output
-    a: if defined, is used as the lower limit for output
-    b: if defined, is used as the upper limit for output
-    xgrid: directly given x-grid
+    x:         data points (~energy axis)
+    y:         heights of the peaks given with x. Default is one for all.
+    width:     width parameter specific for given broadening function.
+    function:  'gaussian' or 'lorentzian'
+    extend:    if True, extend xrange bit beyond min(x) and max(x) (unless [a,b] given)
+    N:         number of points in output
+    a:         if defined, is used as the lower limit for output
+    b:         if defined, is used as the upper limit for output
+    xgrid:     directly given x-grid
     
     return: xgrid, broadened distribution
     """
-    if function=='lorenzian':
-        raise NotImplementedError('Only Gaussian works now for efficiency reasons')
-    
     if y==None:
         y=np.ones_like(x)
     dx=[0.0,4*width][extend]
@@ -387,10 +378,14 @@ def broaden(x,y=None,width=0.05,function='gaussian',extend=False,N=200,a=None,b=
         pass
     else:
         xgrid = np.linspace(mn,mx,N)
+    
     ybroad= np.zeros_like(xgrid)
     for xi,yi in zip(x,y):
-        h = yi*np.exp( -(xgrid-xi)**2/(2*width**2) ) / (np.sqrt(2*np.pi)*width)
-        ybroad = ybroad + h
+        if function=='lorentzian':
+            w = (width/np.pi)/((xgrid-xi)**2+width**2)
+        elif function=='gaussian':
+            w = np.exp( -(xgrid-xi)**2/(2*width**2) ) / (np.sqrt(2*np.pi)*width)
+        ybroad = ybroad + yi*w
     return xgrid, ybroad 
     
 
@@ -411,7 +406,8 @@ def true_false(s):
     elif( s2=='false' or s2=='f' or s2=='no' or s2=='n' ):
         return False
     else:
-        error_exit('String "'+s2+'" could not be interpreted as boolean')
+        raise RuntimeError
+        
         
 def execute(cmd,echo=True):
     from os import system
@@ -534,10 +530,11 @@ def file_safeopen(file,action='r'):
             f=open(file,action)
             opened=True
         else: 
-            error_exit('\n File '+file+' does not exist!')
+            raise RuntimeError('\n File '+file+' does not exist!')
     else:
         f=file
     return (f,opened)
+    
     
 def identify_column(col,file,commentchar='#'):
     """
@@ -552,7 +549,7 @@ def identify_column(col,file,commentchar='#'):
     columns=f.readline()
     i = columns.find(col)
     if i<0:
-        error_exit('[identify_column] column '+col+' not found in '+file)
+        raise RuntimeError('[identify_column] column '+col+' not found in '+file)
     columns=columns.translate( maketrans('#.,;:|','      ') ).split()
     if opened: f.close()
 
@@ -608,7 +605,8 @@ def read(file,commentchar='#',fmt='array'):
         elif fmt=='string':
             if line[-1]=='\n': line=line[:-1]
             r.append(line)       
-        else: error_exit('[mix.read] Invalid format.')
+        else: 
+            raise AssertionError('[mix.read] Invalid format.')
         col = cl
         start=False
     if opened: f.close()
@@ -698,7 +696,6 @@ def add_file_appendix(file,app):
         return file+'_'+app
     else:
         return file[:i]+'_'+app+file[i:]
- #-- SplineFunction(x,y) (y 1-or multidim) f(x,der=0)
 
 
 def parse_name_for_atoms(atoms):
@@ -736,7 +733,7 @@ class AnalyticFunction:
         f=eval(self.f,globals(),self.args)
         return f
    
-    def set(self,**kwagrs):
+    def set(self,**kwargs):
         self.args.update(kwargs)
         
     def info(self):
@@ -891,7 +888,6 @@ if __name__=='__main__':
     #SI.search('J')
     #SI.add_const('kk;test;3.4;XX')
     #SI.list_constants()
-    from numpy import sqrt
     m=1/SI.a_B
     C=1/SI.e
     kg=1/SI.u

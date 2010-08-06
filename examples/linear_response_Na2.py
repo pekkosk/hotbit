@@ -17,7 +17,7 @@ lr.info()
 
 #get excitation energies and oscillator strengths
 omega, F=lr.get_linear_response() 
-e,f=mix.broaden(omega,F,width=0.1)
+e,f=mix.broaden(omega,F,width=0.1,function='lorentzian')
 plot(e,f)
 savefig('lr.pdf')
 
