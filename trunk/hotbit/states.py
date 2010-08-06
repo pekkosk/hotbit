@@ -67,6 +67,7 @@ class States:
         self.norb=calc.el.get_nr_orbitals()
         self.prev_dq=[None,None]
         self.count=0
+        self.first_solve = True
         self.SCC=calc.get('SCC')
         self.rho=None
         self.rhoe0=None
@@ -199,8 +200,9 @@ class States:
         
         # TODO: enable fixed dq-calculations in SCC (for band-structures)
         dq=self.guess_dq()
-        if self.calc.dry_run:
+        if self.first_solve:
             self.calc.memory_estimate()
+            self.first_solve = False
         self.H0, self.S, self.dH0, self.dS = self.calc.ia.get_matrices()
 #        try:
         if True:

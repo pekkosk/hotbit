@@ -27,7 +27,7 @@ class Bravais:
         a13 = np.dot(cell[0],cell[2])/(d[0]*d[2])
         a23 = np.dot(cell[1],cell[2])/(d[1]*d[2])
         x='Bravais: pbc:[%i,%i,%i], ' %(pbc[0],pbc[1],pbc[2])
-        x+='cell:[%.2f,%.2f,%.2f] Ang, cosines(12,13,23):[%.2f,%.2f,%.2f]' %(d[0],d[1],d[2],a12,a13,a23) 
+        x+='cell:[%.2f,%.2f,%.2f] Ang, \n   cosines(12,13,23):[%.2f,%.2f,%.2f]' %(d[0],d[1],d[2],a12,a13,a23) 
         return x
         
     def set(self,**args):

@@ -1,16 +1,13 @@
 # Copyright (C) 2008 NSC Jyvaskyla
 # Please see the accompanying LICENSE file for further information.
 
-from repulsion import RepulsivePotential
 from box import mix
-from box.interpolation import Function
 import numpy as np
 from hotbit import auxil
-from box.mix import kronecker
 from box.interpolation import MultipleSplineFunction
 from weakref import proxy
 from copy import copy
-from os import path,environ
+from os import path
 from hotbit.io import read_HS
 
 from _hotbit import fast_slako_transformations
@@ -47,7 +44,7 @@ class Interactions:
         tables = copy(calc.get('tables'))
         present = calc.el.get_present()
         default = environ.get('HOTBIT_PARAMETERS')
-        current = path.abspath('.')
+#        current = path.abspath('.')
         self.nullpar = path.join(default,'null.par')    
         
         files={}
@@ -192,7 +189,7 @@ class Interactions:
     def plot_table(self,e1,e2,der=0):
         """ Plot SlaKo table for given elements. """
         import pylab as pl
-        R=nu.linspace(0,self.cut[e1+e2],1000)
+        R=np.linspace(0,self.cut[e1+e2],1000)
         n=self.h[e1+e2].get_number_of_functions()
         nx=max(n/2, 1)
         ny=n/nx
@@ -297,10 +294,10 @@ class Interactions:
         dH0 = np.zeros((nk,norb,norb,3),complex)
         dS  = np.zeros((nk,norb,norb,3),complex)
 
-        orbitals=[[orb['orbital'] for orb in el.orbitals(i)]
-                  for i in range(len(el))]
-        orbindex=[el.orbitals(i,indices=True)
-                  for i in range(len(el))]
+#        orbitals=[[orb['orbital'] for orb in el.orbitals(i)]
+#                  for i in range(len(el))]
+#        orbindex=[el.orbitals(i,indices=True)
+#                  for i in range(len(el))]
         h, s, dh, ds = zeros((14,)), zeros((14,)), zeros((14,3)), zeros((14,3))
         
         phases = []
@@ -358,12 +355,12 @@ class Interactions:
                     dh[indices], ds[indices] = outer(dhij,rijh), outer(dsij,rijh)
                     
                     # make the Slater-Koster transformations
-                    obsi, obsj=orbindex[i], orbindex[j]
+#                    obsi, obsj=orbindex[i], orbindex[j]
                     ht, st, dht, dst = \
                         fast_slako_transformations(rijh,dij,noi,noj,h,s,dh,ds)
                     
                     # Here we do the MEL transformation;
-                    # H'_ij = sum_k H_ik * D_kj^T
+                    # H'_ij = sum_k H_ik * D_kj^T  ( |j> = sum_k D_jk |k> )
                     DT = DTn[n]
                     ht = dot( ht,DT[0:noj,0:noj] )
                     st = dot( st,DT[0:noj,0:noj] )

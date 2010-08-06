@@ -44,8 +44,7 @@ class LinearResponse:
         self.wf = self.st.wf[0].real
         self.S = self.st.S[0].real
         self.N=len(self.el)
-        if self.calc.get('SCC')==False:
-            raise AssertionError('SCC should be True. (Otherwise, just plot DOS)')
+        self.SCC = self.calc.get('SCC')
         atoms=calc.get_atoms()
         if atoms.pbc.any():
             raise AssertionError('No linear response for extended, periodic systems!')
@@ -104,7 +103,6 @@ class LinearResponse:
         de=[] 
         df=[] 
         particle_holes=[]
-        gammafct = self.es.get_gamma()
         self.timer.start('setup ph pairs')
         for i in range(self.norb):
             for j in range(i+1,self.norb):
@@ -131,17 +129,21 @@ class LinearResponse:
         transfer_q=np.array([self.mulliken_transfer(ph[0],ph[1]) for ph in particle_holes])
         rv=np.array([dot(tq,r) for tq in transfer_q])
         
-        gamma = self.es.get_gamma().copy()        
-        gamma_tq=np.zeros((dim,self.N))
-        for k in range(dim):
-            gamma_tq[k,:]=dot(gamma,transfer_q[k,:])            
+        matrix=np.zeros((dim,dim))
+        if self.SCC:
+            gamma = self.es.get_gamma().copy()        
+            gamma_tq=np.zeros((dim,self.N))
+            for k in range(dim):
+                gamma_tq[k,:]=dot(gamma,transfer_q[k,:])       
+            for k1,ph1 in enumerate(particle_holes):
+                matrix[k1,k1]=de[k1]**2  
+                for k2,ph2 in enumerate(particle_holes):
+                    coupling=dot(transfer_q[k1,:],gamma_tq[k2,:])
+                    matrix[k1,k2]+=2*sqrt(df[k1]*de[k1]*de[k2]*df[k2])*coupling
+        else:
+            for k1,ph1 in enumerate(particle_holes):
+                matrix[k1,k1]=de[k1]**2
             
-        matrix=np.zeros((dim,dim))            
-        for k1,ph1 in enumerate(particle_holes):
-            matrix[k1,k1]=de[k1]**2  
-            for k2,ph2 in enumerate(particle_holes):
-                coupling=dot(transfer_q[k1,:],gamma_tq[k2,:])
-                matrix[k1,k2]+=2*sqrt(df[k1]*de[k1]*de[k2]*df[k2])*coupling
         self.timer.stop('setup matrix')                            
                                                                         
         print>>self.txt, 'coupling matrix constructed. ',
@@ -151,7 +153,8 @@ class LinearResponse:
         self.timer.stop('diagonalize')
         print>>self.txt, 'Matrix diagonalized.',
         self.txt.flush()
-        assert np.all(omega2>1E-16)           
+#        assert np.all(omega2>1E-16)  
+        print omega2         
         omega=sqrt(omega2)
         
         # calculate oscillator strengths
