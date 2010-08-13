@@ -681,10 +681,15 @@ class Hotbit(Output):
         -----------
         width:     energy broadening in eV
         cutoff:    cutoff energy in eV
-        N:         number of points in energy grid 
+        N:         number of points in energy grid
+        
+        return:
+        -------
+        e[:], d[:,0:2]
         """
+        self.start_timing('dielectric function')
         width = width/Hartree
-        otol = 0.01 # tolerance for occupations
+        otol = 0.05 # tolerance for occupations
         if cutoff==None:
             cutoff = 1E10
         else:
@@ -696,26 +701,25 @@ class Hotbit(Output):
         for k in range(nk):
             wf = st.wf[k]
             wfc = wf.conjugate()
-            dS = st.dS[k]
+            dS = st.dS[k].transpose((0,2,1))
+            ek = e[k]
+            fk = f[k]
+            kweight = wk[k]
             # electron excitation ka-->kb; restrict the search:
-            amax = list(f[k]<otol).index(True)
-            bmax = list(e[k]>e[k,amax]+cutoff).index(True)
-            bmin = list(f[k]<2-otol).index(True)
-            amin = list(e[k]>e[k,bmin]-cutoff).index(True)
+            bmin = list(fk<2-otol).index(True)
+            amin = list(ek>ek[bmin]-cutoff).index(True)
+            amax = list(fk<otol).index(True)
             for a in xrange(amin,amax+1):
-                for b in xrange(max(a+1,bmin),bmax+1):
-                    de = e[k,b]-e[k,a]
-                    if de>cutoff:
-                        break
-                    df = f[k,a]-f[k,b]
+                bmax = list(ek>ek[a]+cutoff).index(True)
+                for b in range(max(a+1,bmin),bmax+1):
+                    de = ek[b]-ek[a]
+                    df = fk[a]-fk[b]
                     if df<otol: 
                         continue
                     # P = < ka | P | kb > 
-                    P = np.zeros((3),complex)
-                    for d in range(3):
-                        P[d] = 1.0j*hbar * np.dot( wfc[a],np.dot(dS[:,:,d],wf[b]) )
+                    P = 1j*hbar*np.dot(wfc[a],np.dot(dS,wf[b]))
                     ex.append( de )
-                    wt.append( wk[k]*df*np.abs(P)**2 )
+                    wt.append( kweight*df*np.abs(P)**2 )
         
         ex, wt = np.array(ex), np.array(wt)
         cutoff = min( ex.max(),cutoff )
@@ -725,6 +729,7 @@ class Hotbit(Output):
             x,y[:,d] = broaden( ex,wt[:,d],width,'gaussian',N=N,a=width,b=cutoff )
             y[:,d] = y[:,d]/x**2
         const = (4*np.pi**2/hbar) 
+        self.stop_timing('dielectric function')
         return x*Hartree, y*const #y also in eV, Ang
         
     #
