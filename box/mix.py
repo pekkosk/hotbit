@@ -42,7 +42,7 @@ def fit(f,p,xlist,ylist,fct=False):
     def chi2(p,x,y):
         err = y-f(x,p)
         return sum(err**2)
-    res = fmin(chi2,p,args=(np.array(xlist),np.array(ylist)))
+    res = fmin(chi2,p,args=(np.array(xlist),np.array(ylist)),disp=False)
     if fct:
         return res,_FitFunction(f,res)
     else:
@@ -82,7 +82,7 @@ def fit2(p,xlist,ylist,fct=False):
     parameters:
     ===========
     p:        initial guesses for a,b and c. 
-              Use None for reasonable initial guesses
+              Use None for reasonable initial guesses (with upward curvature!)
     xlist:    x-data to fit
     ylist:    y-data to fit
     fct:      additionally return the function with fitted parameters
@@ -104,6 +104,41 @@ def fit2(p,xlist,ylist,fct=False):
         return res,_FitFunction(f,res)
     else:
         return res  
+    
+
+def get_peak_positions(x,y,fact=0.01):
+    """
+    Return the peaks of y(x)
+    
+    parameters:
+    ===========
+    x:    x-grid (equally spaced)
+    y:    y-grid, same length as x
+    fact:  find peaks that are higher than fact times
+      the highest y-peak
+    
+    return:
+    =======
+    peaks [x1,x2,...], [y1,y2,...]
+    """
+    ymax = max(y)
+    N=len(x)
+    X, Y = [], []
+    if y[1]<y[0] and y[0]>fact*ymax:
+        X.append(x[0])
+        Y.append(y[0])
+    if y[-2]<y[-1] and y[-1]>fact*ymax:
+        X.append(x[-1])
+        Y.append(y[-1])
+    
+    for i in range(1,N-1):
+        if y[i-1]<y[i]>y[i+1]:
+            a,b,c = fit2(None,x[i-1:i+2],-np.array(y[i-1:i+2]))
+            assert b>0
+            if -a>fact*ymax:
+                X.append(c)
+                Y.append(-a)
+    return np.array(X),np.array(Y)
         
 
 def divisors(x):
