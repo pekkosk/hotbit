@@ -1135,7 +1135,12 @@ def database_from_path(path):
     if path is None:
         path = '.'
 
-    fns = glob.glob('%s/*.elm' % path)
+    if not type(path) == list:
+        path = [ path ]
+
+    fns = [ ]
+    for p in path:
+        fns += glob.glob('%s/*.elm' % p)
 
     elements = { }
     tables = { }
@@ -1153,13 +1158,14 @@ def database_from_path(path):
                 i1 = fn.rfind('.')
                 el2 = fn2[i0+1:i1]
 
-                if os.path.exists('%s/%s_%s.par' % ( path, el1, el2 )):
-                    tables['%s%s' % ( el1, el2 )] = \
-                        '%s/%s_%s.par' % ( path, el1, el2 )
-                else:
-                    if os.path.exists('%s/%s_%s.par' % ( path, el2, el1 )):
+                for p in path:
+                    if os.path.exists('%s/%s_%s.par' % ( p, el1, el2 )):
                         tables['%s%s' % ( el1, el2 )] = \
-                            '%s/%s_%s.par' % ( path, el2, el1 )
+                                      '%s/%s_%s.par' % ( p, el1, el2 )
+                    else:
+                        if os.path.exists('%s/%s_%s.par' % ( p, el2, el1 )):
+                            tables['%s%s' % ( el1, el2 )] = \
+                                          '%s/%s_%s.par' % ( p, el2, el1 )
 
     else:
         fns = glob.glob('%s/*-*.skf' % path)
