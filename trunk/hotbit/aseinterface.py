@@ -1168,7 +1168,9 @@ def database_from_path(path):
                                           '%s/%s_%s.par' % ( p, el2, el1 )
 
     else:
-        fns = glob.glob('%s/*-*.skf' % path)
+        fns = [ ]
+        for p in path:
+            fns = glob.glob('%s/*-*.skf' % p)
 
         if len(fns) > 0:
             for fn in fns:
