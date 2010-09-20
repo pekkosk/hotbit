@@ -361,7 +361,7 @@ class Hotbit(Output):
     def greetings(self):
         """ Simple greetings text """
         from time import asctime
-        from os import uname, popen
+        from os import uname
         from os.path import abspath, curdir
         from os import environ
 
@@ -603,9 +603,27 @@ class Hotbit(Output):
             elif 0.0<e<ehi:
                 ehi = e
                 fhi = f
-        return ehi-elo, (flo-fhi)/2      
-
-
+        return ehi-elo, (flo-fhi)/2    
+    
+    
+    def get_state_indices(self, state):
+        """
+        Return the k-point index and band index of given state.
+        
+        parameters:
+        -----------
+        state:    'HOMO', or 'LUMO'
+        
+                  HOMO is the first state below Fermi-level.
+                  LUMO is the first state above Fermi-level.
+        """
+        eigs = (self.get_eigenvalues() - self.get_fermi_level()).flatten()
+        if state=='HOMO':
+            k,a = np.unravel_index(np.ma.masked_array(eigs,eigs>0.0).argmax(),(self.st.nk,self.st.norb))
+        if state=='LUMO':
+            k,a = np.unravel_index(np.ma.masked_array(eigs,eigs<0.0).argmin(),(self.st.nk,self.st.norb))
+        return k,a      
+        
 
     def get_occupations(self):
         #self.solve_ground_state(atoms)

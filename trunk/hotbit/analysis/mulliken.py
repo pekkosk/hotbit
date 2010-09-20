@@ -1,7 +1,6 @@
 from ase import Hartree
 import numpy as np
 from weakref import proxy
-from box.mix import gauss_fct
 from box import mix
 
 def get_angular_momenta(l):

@@ -2,9 +2,7 @@ from hotbit import Element
 from hotbit import Hotbit
 import numpy as np
 from ase.units import Bohr,Hartree
-from box import mix
-from box import Atoms
-from box.interpolation import Function
+from hotbit import Atoms
 from ase import read, PickleTrajectory
 from box import NullCalculator
 from copy import copy

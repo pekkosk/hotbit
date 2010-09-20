@@ -16,7 +16,7 @@ class Element:
         """
         i=element.rfind('.')+1
         
-        if i>=0:
+        if i>0:
             # element is full file name; get symbol
             filename=element
             j=element.rfind('/')

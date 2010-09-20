@@ -1,6 +1,5 @@
 from ase import Atoms as ase_Atoms
 import numpy as np
-from box import mix
 from copy import copy 
 from hotbit.containers import *
 from ase import PickleTrajectory
