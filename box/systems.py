@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
     Make various atomic structures into xyz-files.
     
@@ -5,13 +6,12 @@
 """
 from ase import Atoms as ase_Atoms
 from ase import Atom
-from hotbit import Atoms
 import numpy as np
-from numpy import pi
-from math import sqrt, pi, atan, cos, sin
+from math import sqrt, atan, cos, sin
 from box.mix import gcd
 vec=np.array
 dot=np.dot
+pi = np.pi
 
 
     
@@ -27,6 +27,7 @@ def graphene(n1,n2,R,height=5.0):
      X----->        
       a1            
     """
+    from hotbit import Atoms
     a1=vec([R*np.cos(pi/6)*2,0.,0.])
     a2=0.5*a1 + vec([0.,1.5*R,0.])
     #assert n2%2==0
@@ -55,6 +56,7 @@ def ZGNR(n,units=1,pbc='z',R=1.42):
     pbc:    periodic direction, 'x' or 'z'
     R:      bond length 
     """
+    from hotbit import Atoms
     a0 = R*np.sqrt(3)
     atoms = ase_Atoms()
     for i in range(n):
@@ -96,6 +98,7 @@ def AGNR(n,units=1,pbc='z',R=1.42):
     pbc:    periodic direction, 'x' or 'z'
     R:      bond length 
     """
+    from hotbit import Atoms
     a = R*np.sqrt(3)
     atoms = ase_Atoms()
     for i in range(n):
@@ -135,6 +138,7 @@ def armchair_ribbon(n1,n2,R,pbc='z'):
     R:     bond distance
     pbc:   periodic direction ('z' or 'x')
     """
+    from hotbit import Atoms
     a1=vec([3*R,0,0])
     a2=vec([0,2*R*np.cos(pi/6),0])
     atoms=ase_Atoms()
@@ -176,6 +180,7 @@ def zigzag_ribbon(n1,n2,R,pbc='z'):
     """
     Make ribbon out of graphene with zigzag edges.
     """
+    from hotbit import Atoms
     a1=vec([2*R*np.cos(pi/6),0,0])
     a2=vec([0,3*R,0])
     r=[]
@@ -215,6 +220,7 @@ def nanotube_data(n,m,R=1.42):
     """
     Return a dictionary if miscellaneous nanotube data 
     """
+    from hotbit import Atoms
     a=sqrt(3.0)*R
     data={}
     data['a'] = a
@@ -257,6 +263,7 @@ def chiral_nanotube(n,m,R=1.42,element='C'):
     R:       bond length
     element: element type 
     """
+    from hotbit import Atoms
     a = np.sqrt(3)*R
     a1 = np.array([a,0,0])
     a2 = np.array([0.5*a,-1.5*R,0])
@@ -310,6 +317,7 @@ def nanotube(n,m,R=1.42,length=1,element='C'):
     length: number of unit cells
     element: element symbol
     '''
+    from hotbit import Atoms
     at = Atoms( pbc = ( False, False, True ) )
 
     sq3 = sqrt(3.0)

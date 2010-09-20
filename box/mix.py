@@ -112,10 +112,10 @@ def get_peak_positions(x,y,fact=0.01):
     
     parameters:
     ===========
-    x:    x-grid (equally spaced)
-    y:    y-grid, same length as x
+    x:     x-grid (equally spaced)
+    y:     y-grid, same length as x
     fact:  find peaks that are higher than fact times
-      the highest y-peak
+           the highest y-peak
     
     return:
     =======
@@ -131,13 +131,16 @@ def get_peak_positions(x,y,fact=0.01):
         X.append(x[-1])
         Y.append(y[-1])
     
-    for i in range(1,N-1):
-        if y[i-1]<y[i]>y[i+1]:
-            a,b,c = fit2(None,x[i-1:i+2],-np.array(y[i-1:i+2]))
-            assert b>0
-            if -a>fact*ymax:
-                X.append(c)
-                Y.append(-a)
+    aux = xrange(1,N)
+    d = y[1:]-y[:-1]
+    peaks = np.extract( (d[:-1]>0)*(d[1:]<0),aux )
+    for i in peaks:
+        a,b,c = fit2(None,x[i-1:i+2],-np.array(y[i-1:i+2]))
+        assert b>0
+        if -a>fact*ymax:
+            X.append(c)
+            Y.append(-a)
+        
     return np.array(X),np.array(Y)
         
 
