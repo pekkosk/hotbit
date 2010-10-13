@@ -158,7 +158,7 @@ def check_db(db, params):
 
 ###
 
-params = database_from_path(os.getenv('MIO_0_1'))
+params = database_from_path(os.getenv('PBC_0_2'))
 
 ###
 
