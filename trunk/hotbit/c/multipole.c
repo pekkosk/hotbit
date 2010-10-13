@@ -47,67 +47,84 @@ void multipole_to_multipole(double *dr,                      /* shape [3] */
     int j, l, m, lambda, mu, sign;
 
 
-    cartesian_to_spherical(dr, &x, &costh, &phi);
+    if (dr[0] == 0.0 && dr[1] == 0.0 && dr[2] == 0.0) {
 
-    solid_harmonic_R(x, costh, phi, l_max, Rl0, Rlm);
-
-    j = 0;
-    for (l = 0; l <= l_max; ++l) {
-
-        /*
-         * m = 0
-         */
-
-        for (lambda = 0; lambda <= l; ++lambda) {
-            Ml0[l] = Ml0[l]
-                + Ml0_of_child[l-lambda]*Rl0[lambda];
-
-            sign = 1;
-            for(mu = 1; mu <= min(lambda, -lambda+l); ++mu) {
-                sign = sign*(-1);
-
-                Ml0[l] = Ml0[l]
-                    + 2*sign*creal(Mlm_of_child[lm2index(l-lambda, mu)]*Rlm[lm2index(lambda, mu)]);
-            }
+        for (l = 0; l <= l_max; ++l) {
+            Ml0[l] += Ml0_of_child[l];
         }
 
-        /*
-         * m != 0
-         */
-
-        for (m = 1; m <= l; ++m) {
-            for (lambda = 0; lambda <= l; ++lambda) {
-                for (mu = max(-lambda, lambda-l+m); mu <= min(lambda, -lambda+l+m); ++mu) {
-
-                    if (m-mu < 0) {
-                        cur_M = pow(-1, mu-m) * conj(Mlm_of_child[lm2index(l-lambda, mu-m)]);
-                    }
-                    else if (m-mu == 0) {
-                        cur_M = Ml0_of_child[l-lambda];
-                    }
-                    else {
-                        cur_M = Mlm_of_child[lm2index(l-lambda, m-mu)];
-                    }
-
-                    if (mu < 0) {
-                        cur_R = pow(-1, -mu) * conj(Rlm[lm2index(lambda, -mu)]);
-                    }
-                    else if (mu == 0) {
-                        cur_R = Rl0[lambda];
-                    }
-                    else {
-                        cur_R = Rlm[lm2index(lambda, mu)];
-                    }
-
-                    Mlm[j] = Mlm[j] + cur_M*conj(cur_R);
-
-                }
-            }
-
-            j = j + 1;
+        for (l = 0; l <= lm2index(l_max, l_max); ++l) {
+            Mlm[l] += Mlm_of_child[l];
         }
 
-    }
+    } else {
+
+		cartesian_to_spherical(dr, &x, &costh, &phi);
+
+		solid_harmonic_R(x, costh, phi, l_max, Rl0, Rlm);
+
+		j = 0;
+		for (l = 0; l <= l_max; ++l) {
+
+			/*
+			 * m = 0
+			 */
+
+			for (lambda = 0; lambda <= l; ++lambda) {
+				Ml0[l] = Ml0[l]
+					+ Ml0_of_child[l-lambda]*Rl0[lambda];
+
+				sign = 1;
+				for(mu = 1; mu <= min(lambda, -lambda+l); ++mu) {
+					sign = sign*(-1);
+
+					Ml0[l] = Ml0[l]
+						+ 2*sign*creal(Mlm_of_child[lm2index(l-lambda, mu)]*Rlm[lm2index(lambda, mu)]);
+				}
+			}
+
+			/*
+			 * m != 0
+			 */
+
+			for (m = 1; m <= l; ++m) {
+				for (lambda = 0; lambda <= l; ++lambda) {
+					for (mu = max(-lambda, lambda-l+m);
+						 mu <= min(lambda, -lambda+l+m); ++mu) {
+
+						if (m-mu < 0) {
+							cur_M = pow(-1, mu-m)
+								* conj(Mlm_of_child[lm2index(l-lambda, mu-m)]);
+						}
+						else if (m-mu == 0) {
+							cur_M = Ml0_of_child[l-lambda];
+						}
+						else {
+							cur_M = Mlm_of_child[lm2index(l-lambda, m-mu)];
+						}
+
+						if (mu < 0) {
+							cur_R = pow(-1, -mu) 
+								* conj(Rlm[lm2index(lambda, -mu)]);
+						}
+						else if (mu == 0) {
+							cur_R = Rl0[lambda];
+						}
+						else {
+							cur_R = Rlm[lm2index(lambda, mu)];
+						}
+
+						Mlm[j] = Mlm[j] + cur_M*conj(cur_R);
+
+					}
+				}
+
+				j = j + 1;
+			}
+	
+		}
+
+    } /* dr == 0.0 */
 
 }
 
@@ -698,8 +715,8 @@ PyObject *py_multipole_to_local(PyObject *self, PyObject *args)
         return NULL;
 
     multipole_to_local(PyArray_DATA(dr), l_max,
-                           PyArray_DATA(Ml0), PyArray_DATA(Mlm),
-                           PyArray_DATA(Ll0), PyArray_DATA(Llm));
+		       PyArray_DATA(Ml0), PyArray_DATA(Mlm),
+		       PyArray_DATA(Ll0), PyArray_DATA(Llm));
 
     /* New tuple, SET_ITEM does not increase reference count */
     ret = PyTuple_New(2);
