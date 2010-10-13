@@ -143,7 +143,8 @@ class MultipoleExpansion(Coulomb):
 
         T0_l, T_L = get_moments(r, q, self.l_max, r0_v)
 
-        self.M = [ ( T0_l.copy(), T_L.copy() ) ]
+        self.M   = [ ( T0_l.copy(), T_L.copy() ) ]
+        self.r0  = [ r0_v ]
 
         sym_ranges = a.get_symmetry_operation_ranges()
         for ( s1, s2 ), k in zip(sym_ranges, self.k):
@@ -157,14 +158,11 @@ class MultipoleExpansion(Coulomb):
         # Compute telescoped multipoles
         level = np.ones(3, dtype=int)
         for k in range(np.max(self.k)-2):
-            M0_l = T0_l
-            M_L  = T_L
+            M0_l  = T0_l
+            M_L   = T_L
 
-            #if np.any(np.abs(self.dx) > self._TOL):
-            #    T0_l, T_L = zero_moments(self.l_max)
-            #else:
-            T0_l = M0_l.copy()
-            T_L  = M_L.copy()
+            T0_l  = np.zeros_like(M0_l)
+            T_L   = np.zeros_like(M_L)
 
             if k >= self.k[0]-2:
                 _n1 = [ 0, 1 ]
@@ -180,7 +178,21 @@ class MultipoleExpansion(Coulomb):
                 _n3 = [ 0, 1 ]
             else:
                 _n3 = n3
-    
+
+            r0_v  = np.zeros(3, dtype=float)
+            n     = 0
+            # Determine center of gravity
+            for x1 in range(*_n1):
+                for x2 in range(*_n2):
+                    for x3 in range(*_n3):
+                        x     = np.array([x1, x2, x3])
+                        r0_v += a.transform(self.r0[k], x*level)
+                        n    += 1
+            r0_v /= n
+            self.r0 += [ r0_v ]
+            #self.r0 += [ self.r0[0] ]
+
+            # Transform multipoles
             for x1 in range(*_n1):
                 for x2 in range(*_n2):
                     for x3 in range(*_n3):
@@ -191,13 +203,13 @@ class MultipoleExpansion(Coulomb):
                         x = np.array([x1, x2, x3]) #+ self.dx
 
                         # The origin is already okay, skip it
-                        if np.any(np.abs(x) > self._TOL):
-                            r1  = a.transform(r0_v, x*level)
-                            T   = a.rotation(x*level)
-                            S0_L, S_l = transform_multipole(T, self.l_max,
-                                                            M0_l, M_L)
-                            multipole_to_multipole(r1-r0_v, self.l_max,
-                                                   S0_L, S_l, T0_l, T_L)
+                        #if np.any(np.abs(x) > self._TOL):
+                        r1  = a.transform(self.r0[k], x*level)
+                        T   = a.rotation(x*level)
+                        S0_l, S_L = transform_multipole(T, self.l_max,
+                                                        M0_l, M_L)
+                        multipole_to_multipole(r1-self.r0[k], self.l_max,
+                                               S0_l, S_L, T0_l, T_L)
 
             self.M += [ ( T0_l.copy(), T_L.copy() ) ]
 
@@ -240,12 +252,12 @@ class MultipoleExpansion(Coulomb):
 
                         # No local expansion in the inner region
                         if np.any(x < self.n1) or np.any(x > self.n2):
-                            r1  = a.transform(r0_v, x*level)
+                            r1  = a.transform(self.r0[Mi], x*level)
                             T   = a.rotation(x*level)
-                            S0_L, S_l = transform_multipole(T, self.l_max,
+                            S0_l, S_L = transform_multipole(T, self.l_max,
                                                             M0_l, M_L)
-                            multipole_to_local(-r1+r0_v, self.l_max,
-                                               S0_L, S_l, L0_l, L_L)
+                            multipole_to_local(-r1+self.r0[Mi], self.l_max,
+                                               S0_l, S_L, L0_l, L_L)
 
             level /= self.n2-self.n1+1
             Mi    -= 1
@@ -264,7 +276,7 @@ class MultipoleExpansion(Coulomb):
         self.timer.start('local_to_local')
 
         for i in a:
-            loc0_l, loc_L          = local_to_local(i.get_position()-r0_v,
+            loc0_l, loc_L          = local_to_local(i.get_position()-self.r0[0],
                                                    self.l_max, L0_l, L_L, 1)
             self.phi_a[i.index]    = loc0_l[0]
             self.E_av[i.index, :]  = [ -loc_L[0].real,
@@ -286,10 +298,10 @@ class MultipoleExpansion(Coulomb):
                         x = np.array([x1, x2, x3])
 
                         # construct a matrix with distances
-                        r1      = a.transform(r0_v, x)
+                        r1      = a.transform(self.r0[0], x)
                         T       = a.rotation(x)
 
-                        rT      = np.dot(r-r0_v, np.transpose(T))
+                        rT      = np.dot(r-self.r0[0], np.transpose(T))
 
                         dr      = r.reshape(nat, 1, 3) - \
                             (r1+rT).reshape(1, nat, 3)
@@ -325,7 +337,7 @@ class MultipoleExpansion(Coulomb):
             dip  = np.array([-2*Mlm[0].real, 2*Mlm[0].imag, Ml0[1]])
             dip *= 4*pi/(3*a.get_volume())
  
-            self.phi_a -= np.dot(r-r0_v, dip)
+            self.phi_a -= np.dot(r-self.r0[0], dip)
             self.E_av  += dip
 
         self.timer.stop('near_field')

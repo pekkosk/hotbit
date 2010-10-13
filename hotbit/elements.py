@@ -362,7 +362,9 @@ class Elements:
         self.elements={}
         for symb in self.present:
             if symb not in self.files:
-                raise KeyError('Element file for %s was not defined.' %symb)
+                raise KeyError('Element file for %s was not defined.' % symb)
+            if self.files[symb] is None:
+                raise KeyError('Element file for %s was not defined.' % symb)
             if type(self.files[symb])==type(''):
                 self.elements[symb]=Element(self.files[symb])
             else:
