@@ -85,7 +85,7 @@ def get_neighbors(a, cutoff=None):
     if cutoff is None:
         n1, n2, n3  = n_from_ranges(sym_ranges, np.Inf)
     else:
-        n1, n2, n3  = n_from_ranges(sym_ranges, 25)
+        n1, n2, n3  = n_from_ranges(sym_ranges, 5)
 
     nat = len(a)
     r = a.get_positions()
