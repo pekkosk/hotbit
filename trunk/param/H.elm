@@ -2,6 +2,8 @@ symbol=H
 epsilon_1s=-0.2330 
 U=      0.420
 FWHM=   3.16
+p=      0.05735
+R0=     1.482
 comment=
 Standard H-atom
 

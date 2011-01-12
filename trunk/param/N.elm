@@ -3,7 +3,11 @@ epsilon_2s=-0.6758
 epsilon_2p=-0.2663
 U=      0.53
 FWHM=   2.5
-
+# Note: p value is for NPI2, see
+# see Miller, JACS 112, 8533 (1990) 
+# for a list of hybrids
+p=      0.1615
+R0=     2.011
 
 
 u_2s=
