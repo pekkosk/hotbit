@@ -3,7 +3,11 @@ epsilon_2s=-0.8709
 epsilon_2p=-0.3384
 U=      0.447
 FWHM=   2.97
-
+# Note: p value is for OTR4, see
+# see Miller, JACS 112, 8533 (1990) 
+# for a list of hybrids
+p=      0.08432
+R0=     2.011
 
 
 

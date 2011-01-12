@@ -4,6 +4,11 @@ epsilon_2p = -0.1974
 U=      0.365  
 FWHM=   3.64   
 vib=    2290  
+# Note: p value is for CTE, see
+# see Miller, JACS 112, 8533 (1990)
+# for a list of hybrids
+p=      0.1572
+R0=     2.011
 comment:
 Standard C-atom
 
