@@ -124,8 +124,20 @@ class Element:
    
     def get_Z(self):
         return self.data['Z']
-      
-      
+
+
+    def get_C6(self):
+        return self.data['C6']
+
+
+    def get_p(self):
+        return self.data['p']
+
+
+    def get_R0(self):
+        return self.data['R0']
+
+
     def get_file(self):
         """ Return file name where data was read. """
         return self.data['file']
