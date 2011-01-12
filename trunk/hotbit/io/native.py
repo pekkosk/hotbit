@@ -54,9 +54,9 @@ def read_element_from_elm(fileobj, symbol):
     data['valence_energies'] = np.array(energies, dtype=float)
 
     # vdW correction
-    data['C6'] = mix.find_value(fileobj, 'C6', default=None)
-    data['p']  = mix.find_value(fileobj, 'p',  default=None)
-    data['R0'] = mix.find_value(fileobj, 'R0', default=None)
+    data['C6'] = mix.find_value(fileobj, 'C6', default=-1.0)
+    data['p']  = mix.find_value(fileobj, 'p',  default=-1.0)
+    data['R0'] = mix.find_value(fileobj, 'R0', default=-1.0)
 
     return data, functions
 
