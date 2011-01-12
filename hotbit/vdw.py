@@ -60,7 +60,7 @@ class vdWPairCorrection:
         if r is None:
             return Rmax
 
-        h2 = self.d*/(self.R0**self.N)
+        h2 = self.d/(self.R0**self.N)
         h1 = np.exp(-h2*r**self.N)
         f  = (1.0-h1)**self.M
         h3 = self.C6/(r**6)
