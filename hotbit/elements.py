@@ -568,3 +568,6 @@ class Elements:
         return e
     
     
+    def update_vdw(self, vdw_parameters):
+        for s, par in vdw_parameters.iteritems():
+            self.elements[s].update_vdw(*par)

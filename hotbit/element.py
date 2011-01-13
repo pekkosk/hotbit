@@ -193,8 +193,14 @@ class Element:
         f=open(file,'w')
         for item in self.data:
             print>>f, item,'=',self.data[item]
-        f.close()        
-        
+        f.close()
+
+
+    def update_vdw(self,p,R0):
+        self.data['p'] = p
+        self.data['R0'] = R0
+        self.data['C6'] = None
+
         
 if __name__=='__main__':
     elm=Element('H.elm')
