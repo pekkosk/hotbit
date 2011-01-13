@@ -52,6 +52,7 @@ class Hotbit(Output):
                       coulomb_solver=None,
                       charge_density='Gaussian',
                       vdw=False,
+                      vdw_parameters=None,
                       filename=None):
         """
         Hotbit -- density-functional tight-binding calculator
@@ -115,7 +116,13 @@ class Hotbit(Output):
         gamma_cut:        Range for Coulomb interaction if direct summation is
                           selected (coulomb_solver = None).
                           * only for SCC-DFTB
-        vdw               Include van der Waals interactions
+        vdw:              Include van der Waals interactions
+        vdw_parameters:   Dictionary containing the parameters for the van-der-Waals
+                          interaction for each element.
+                          i.e. { el: ( p, R0 ), ... }
+                          where *el* is the element name, *p* the polarizability and
+                          *R0* the radius where the van-der-Waals interaction starts.
+                          Will override whatever read from .elm files.
         txt:              Filename for log-file.
                           * None: standard output
                           * '-': throw output to trash (/null) 
@@ -138,6 +145,7 @@ class Hotbit(Output):
                         'maxiter':maxiter,
                         'gamma_cut':gamma_cut,
                         'vdw':vdw,
+                        'vdw_parameters':vdw_parameters,
                         'txt':txt,
                         'verbose_SCC':verbose_SCC,
                         'mixer':mixer,
@@ -480,6 +488,8 @@ class Hotbit(Output):
         self.rep=Repulsion(self)
         self.pp=PairPotential(self)
         if self.get('vdw'):
+            if self.get('vdw_parameters') is not None:
+                self.el.update_vdw(self.get('vdw_parameters'))
             setup_vdw(self)
         self.env=Environment(self)
         pbc=atoms.get_pbc()
