@@ -21,9 +21,10 @@ def p_from_C6(C6, nvel):
 class vdWPairCorrection:
 
     def __init__(self, C6a, pa, nvela, R0a, C6b=None, pb=None, nvelb=None, R0b=None, d=3.0, N=7, M=4, Rmax=10.0):
-        self.C6a = C6a
-        self.pa  = pa
-        self.R0a = R0a
+        self.C6a   = C6a
+        self.pa    = pa
+        self.nvela = nvela
+        self.R0a   = R0a
         if C6b is None and pb is None and nvelb is None:
             self.C6b   = C6a
             self.pb    = pa
@@ -58,23 +59,23 @@ class vdWPairCorrection:
 
     def __call__(self, r, der=0):
         if r is None:
-            return Rmax
+            return self.Rmax
 
-        h2 = self.d/(self.R0**self.N)
+        h2 = self.d/(self.R0ab**self.N)
         h1 = np.exp(-h2*r**self.N)
         f  = (1.0-h1)**self.M
-        h3 = self.C6/(r**6)
+        h3 = self.C6ab/(r**6)
 
         if der == 0:
             return -f * h3
         elif der == 1:
             df = self.M*(1.0-h1)**(self.M-1) * h2*self.N*r**(self.N-1)*h1
-            return ( f / r - df ) * h3
+            return ( 6 * f / r - df ) * h3
 
 
 def setup_vdw(calc):
-    if calc.get('vdw'):
-        raise NotImplementedError('van der Waals interactions are not yet implemented.')
+    #if calc.get('vdw'):
+    #    raise NotImplementedError('van der Waals interactions are not yet implemented.')
     
     elms = len(calc.el.present)
     for i,s1 in enumerate(calc.el.present):
@@ -85,7 +86,12 @@ def setup_vdw(calc):
             #
             e1 = calc.el.elements[s1]
             e2 = calc.el.elements[s2]
-            vdW = vdWPairCorrection(e1.get_C6(), e1.get_p(), e1.get_R0(),
-                                    e2.get_C6(), e2.get_p(), e2.get_R0())
-            calc.pp.add_pair_potential(s1,s2,vdW,eVA=True)
-    
+            vdW = vdWPairCorrection(e1.get_C6(), e1.get_p(), e1.get_valence_number(), e1.get_R0(),
+                                    e2.get_C6(), e2.get_p(), e2.get_valence_number(), e2.get_R0())
+            calc.pp.add_pair_potential(s1,s2,vdW,eVA=False)
+
+            # debug
+            #x, y, dy = calc.pp.get_table(s1, s2)
+            #import finite_differences as fd
+            #dyn = fd.dx(x, y)
+            #np.savetxt('pp_%s_%s.out' % ( s1, s2 ), np.transpose([x, y, dy, dyn]))
