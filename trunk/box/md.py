@@ -2,8 +2,8 @@ import ase
 import numpy as np
 from box import mix
 from box.data import data
-from ase import VelocityVerlet
-from ase import PickleTrajectory
+from ase.md import VelocityVerlet
+from ase.io import PickleTrajectory
 from ase.units import fs, Hartree
 
 
