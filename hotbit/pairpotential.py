@@ -163,3 +163,28 @@ class PairPotential:
                         f[i,:] = f[i,:] + V(dijn,der=1)*rijn/dijn
         self.calc.stop_timing('f_pp')
         return f
+
+
+    def get_table(self, i, j, n=1000):
+        """
+        Tabulate the pair potential and return the table
+
+
+        parameters:
+        ===========
+        i,j:    * atom indices, if integers (0,1,2,...)
+                * elements, if strings ('C','H',...)
+        n:      Number of grid points
+        """
+        if isinstance(i,int):
+            pp = self.atomv[ij2s(i,j)]
+        else:
+            pp = self.elemv[i+j]
+
+        Rmax = pp(None)
+
+        x   = np.linspace(0.0, Rmax, n)
+        y   = pp(x, der=0)
+        dy  = pp(x, der=1)
+
+        return x, y, dy
