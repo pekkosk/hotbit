@@ -16,37 +16,48 @@ class Chiral:
         More documentation for the methods can be found from hotbit.Atoms -class. 
         '''
         self.type='Chiral'
-        assert type==self.type
+        assert type == self.type
         self.atoms = proxy(atoms)
-        self.angle = None 
-        self.height = atoms.get_cell()[2,2]
-        self._set_table()
+        self.par = {'height':(1,0),'angle':(2,0)}
+        self.atoms.set_pbc( (False,False,True) )
         
-    def _set_table(self): 
-        self.table = [{'M':1},{'M':1},{'M':np.Inf}]
+        
+    def get_table(self): 
+        return [{'M':1},{'M':1},{'M':np.Inf}]
         
     def __repr__(self):
-        if self.angle==None:
+        angle = self.get('angle')
+        height = self.get('height')
+        if angle==None:
             raise AssertionError('Chiral angle was not set yet.')
-        if self.angle<1E-14:
-            x='Chiral: angle=0.0, height=%.4f Ang' %self.height
+        if angle<1E-14:
+            x='Chiral: angle=0.0, height=%.4f Ang' %(angle,height)
         else:
-            x='Chiral: angle=%.4f (2*pi/%.2f), height=%.4f Ang' %(self.angle,2*np.pi/self.angle,self.height)
+            x='Chiral: angle=%.4f (2*pi/%.2f), height=%.4f Ang' %(angle,2*np.pi/angle,height)
         return x
     
     
     def get(self,key):
         """
-        Return current angle or height
+        Return container parameters.
+        
+        parameters:
+        ===========
+        key:    'angle','height'
         """
         if key not in ['angle','height']:
             raise AssertionError('Invalid keyword %s' %key)
         if key=='angle':
-            return self.angle
+            return self.atoms.get_cell()[self.par['angle']]
         elif key=='height':
-            return self.height             
-    
-
+            return self.atoms.get_cell()[self.par['height']]             
+ 
+    def _set(self,**kwargs):
+        for key in kwargs:
+            cell = self.atoms.get_cell()
+            cell[self.par[key]] = kwargs[key]
+            self.atoms.set_cell(cell)
+ 
         
     def set(self,angle=None,height=None,scale_atoms=False,container=None):
         """
@@ -58,23 +69,21 @@ class Chiral:
         if container!=None:
             # copy container
             assert angle==None and height==None and scale_atoms==False
-            self.set(angle=container.angle,height=container.height)
+            self.set( angle=container.get('angle'),height=container.get('height') )
         else:
             if not scale_atoms:
-                if angle!=None: self.angle = angle
-                if height!=None: self.height = height
+                if angle!=None: self._set(angle=angle)
+                if height!=None: self._set(height=height)
             else:
                 if angle is None:
                     da = 0.0
                 else:
-                    if self.angle==None:
-                        raise AssertionError('Positions cannot be scaled; initial angle was not given.')
-                    da = angle - self.angle
-                    self.angle = angle
+                    da = angle - self.get('angle')
+                    self._set(angle=angle)
                     
-                old_height = self.height
+                old_height = self.get('height')
                 if height != None:
-                    self.height = height
+                    self._set(height=height)
                     
                 newr = []
                 for r in self.atoms.get_positions():
@@ -83,41 +92,24 @@ class Chiral:
                     frac = r[2]/old_height
                     # twist atoms z/h * da (more)
                     newphi = phival(x,y) + frac * da
-                    newr.append( [rad*np.cos(newphi),rad*np.sin(newphi),frac*self.height] )
-                self.atoms.set_positions(newr)     
-        
-        self.atoms.set_pbc((False,False,True))
-        self.atoms.set_cell(self.get_ase_cell())
-        
+                    newr.append( [rad*np.cos(newphi),rad*np.sin(newphi),frac*self.get('height')] )
+                self.atoms.set_positions(newr)
+                
     def __eq__(self,other):
-        if isinstance(other,Chiral) and abs(self.angle-other.angle)<1E-12 \
-           and abs(self.height-other.height)<1E-12:
-            return True
-        else:
-            return False
-    
-    def get_ase_cell(self):
-        """ cell used for visualization """
-        if self.angle==None:
-            raise AssertionError('Chiral angle is not set yet.')
-        l = max(self.atoms.get_positions()[:,0])*1.5
-        cell = np.array( [[l,0,0],[l*cos(self.angle),l*sin(self.angle),0],[0,0,self.height]] )
-        return cell
+        return self.atoms == other.atoms
         
     def get_symmetry_operation_ranges(self):
         """ Return ranges for symmetry operations. """
-        if self.angle==None or self.height==None:
-            raise RuntimeError("Chiral's angle or height is not set yet.")
         return np.array( [[0,0],[0,0],[-np.Inf,np.Inf]] )
     
     def transform(self,r,n):
         """ Rotate r by n2*angle + translate (in z) by n2*height."""
         R = self.rotation(n)
-        return np.dot(R,r) + (0,0,n[2]*self.height)
+        return np.dot(R,r) + (0,0,n[2]*self.get('height'))
     
     def rotation(self,n):
         """ Return the (active) rotation matrix for symmetry operation n. """
-        angle = n[2]*self.angle
+        angle = n[2]*self.get('angle')
         R = np.array([[cos(angle),-sin(angle),0],[sin(angle),cos(angle),0],[0,0,1]])
         return R 
     

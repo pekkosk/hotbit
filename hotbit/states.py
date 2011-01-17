@@ -92,7 +92,7 @@ class States:
             
         M = self.calc.el.get_number_of_transformations()
         if isinstance(kpts,tuple):
-            table = self.calc.el.atoms.container.table
+            table = self.calc.el.atoms.container.get_table()
             # set up equal-weighted and spaced k-point mesh
             if 0 in kpts:
                 raise AssertionError('Each direction must have at least one k-point! (Gamma-point)')

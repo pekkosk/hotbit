@@ -26,7 +26,7 @@ class Saddle:
         self.n2 = np.array([1,0,0])
         self.R = None
         self.M = 50
-        raise NotImplementedError('Saddle container does not work properly')
+        #raise NotImplementedError('Saddle container does not work properly')
         
     def __repr__(self):
         x='Saddle: angle1=%.4f, angle2=%.4f, R=%.4f' %(self.angle1,self.angle2,self.R)                                                                                        

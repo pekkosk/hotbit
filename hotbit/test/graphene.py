@@ -24,6 +24,6 @@ assert abs(-9.626283-coh)<1E-6
 atoms[0].z+=0.1
 calc=Hotbit(SCC=False,txt='graphene.cal',kpts=(3,3,1),**default_param) 
 atoms.set_calculator(calc)
-assert check_energy_conservation(atoms,dt=0.5*fs,steps=30,tol=1E-2,plot=False)
+assert check_energy_conservation(atoms,dt=0.5*units.fs,steps=30,tol=1E-2,plot=False)
 
 

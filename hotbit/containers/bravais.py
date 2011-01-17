@@ -14,7 +14,6 @@ class Bravais:
         self.type = 'Bravais'
         assert type==self.type
         self.atoms = proxy(atoms)
-        self._set_table() 
         
     def __repr__(self):
         pbc=self.atoms.get_pbc()
@@ -37,11 +36,7 @@ class Bravais:
     def get_pbc(self):
         """ Return atoms's pbc as normal."""
         return self.atoms.get_pbc()
-    
-    def get_ase_cell(self):
-        """ cell used for visualization """
-        return self.atoms.get_cell()
-    
+       
     def __eq__(self,other):
         if isinstance(other,Bravais) and np.all(self.get_pbc()==other.get_pbc()) \
            and self.get_cell()==other.get_cell():
@@ -49,21 +44,20 @@ class Bravais:
         else:
             return False        
         
-        
-    def _set_table(self):
-        """ Setup group multiplication-like table. """
-        self.table = []
+    def get_table(self):
+        table = []
         for i,p in enumerate(self.atoms.get_pbc()):
             if p:
                 M=np.Inf
             else:
                 M=0
-            self.table.append({'M':M}) 
-        
+            table.append({'M':M})
+        return table
+            
         
     def get_symmetry_operation_ranges(self):
         """ Return ranges for symmetry operations. """
-        self._set_table()
+        #self._set_table()
         ranges = []
         pbc = self.atoms.get_pbc()
         for i in range(3):
