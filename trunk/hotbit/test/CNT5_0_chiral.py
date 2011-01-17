@@ -1,5 +1,6 @@
 from ase import *
 from hotbit import *
+from math import pi
 from hotbit.atoms import Atoms
 from box.systems import nanotube
 from box.md import check_energy_conservation

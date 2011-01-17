@@ -138,7 +138,8 @@ class Sphere:
                 R = np.dot(R2,R)
             return R
         elif self.mode==4:
-            axis = n[0]*self.n1 + n[1]*self.n2
+            #axis = n[0]*self.n1 + n[1]*self.n2
+            axis = self.angle1*n[0]*self.n1 + self.angle2*n[1]*self.n2
             a1,a2 = self.angle1*n[0], self.angle2*n[1]
             angle = np.sqrt( a1**2 + a2**2 + 2*a1*a2*np.dot(self.n1,self.n2) )
             return rotation_matrix( axis,angle )

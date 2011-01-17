@@ -17,7 +17,7 @@ e2 = whole.get_potential_energy()
 assert abs(M*e1-e2)<1E-10
 
 
-assert check_energy_conservation(atoms,dt=2.5*fs,steps=50,tol=0.01,plot=False)
+assert check_energy_conservation(atoms,dt=2.5*units.fs,steps=50,tol=0.01,plot=False)
 
 #dyn = VelocityVerlet(atoms,2.5*fs)
 #traj = PickleTrajectory('koe.traj','w',atoms)

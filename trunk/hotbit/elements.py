@@ -9,8 +9,9 @@ from ase.units import Hartree,Bohr
 from os import environ,path
 from weakref import proxy
 from copy import copy, deepcopy
-
-
+from hotbit.atoms import container_magic
+        
+    
 
 class Elements:
     def __init__(self,calc,atoms,charge=None):
@@ -166,8 +167,10 @@ class Elements:
         if hasattr(atoms,'container'):
             self.atoms = atoms.copy()
         else:
-            bravais = Atoms(atoms=atoms,container='Bravais')
-            self.atoms = bravais.copy()
+            container = container_magic(atoms)
+            #print 'cc',container
+            atoms_cont = Atoms(atoms=atoms,container=container)
+            self.atoms = atoms_cont.copy()            
 
 
     def update_geometry(self,atoms):
@@ -471,10 +474,6 @@ class Elements:
     def get_symbols(self):
         return self.symbols
     
-    def get_N(self):
-        """ Return the number of atoms. """
-        return self.N
-
     def symbol(self,i):
         return self.symbols[i]
 

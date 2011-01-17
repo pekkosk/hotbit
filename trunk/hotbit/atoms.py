@@ -2,12 +2,34 @@ from ase import Atoms as ase_Atoms
 import numpy as np
 from copy import copy 
 from hotbit.containers import *
-from ase import PickleTrajectory
+from ase.io import PickleTrajectory
 
 
-class Atoms(ase_Atoms):
-    
-    
+
+def container_magic(atoms,container=None):
+    """
+    Set or get container 
+    (according to the element [0,0])
+    """
+    lst = ['Wedge','Chiral','DoubleChiral','Sphere','Slab']
+    magic = -0.0123454321
+    cell = atoms.get_cell()
+    if container==None:
+        x = cell[0,0]/magic
+        if np.abs(x)>1E-10 and np.abs(round(x)-x)<1E-10:
+            i = int(x-1)
+            return lst[i]
+        else:
+            return 'Bravais'
+    else:
+        if container!='Bravais':
+            i = lst.index(container)+1
+            cell[0,0] = i*magic
+            atoms.set_cell(cell)
+
+
+
+class Atoms(ase_Atoms):   
     def __init__(self, symbols=None,
                  positions=None, numbers=None,
                  tags=None, momenta=None, masses=None,
@@ -51,7 +73,8 @@ class Atoms(ase_Atoms):
         # create the container instance
         assert 'type' in dict
         exec( 'self.container_class = %s' %dict['type'] )
-        self.container = self.container_class(self,**dict)
+        self.container = self.container_class(atoms=self,type=dict['type'])
+        container_magic(self,container=dict['type'])
         dict.pop('type')
         if dict!={}:
             self.container.set(**dict)
@@ -70,7 +93,6 @@ class Atoms(ase_Atoms):
         if 'type' in cont:
             if cont['type']!=self.container.type: 
                 raise AssertionError('Container type cannot be changed.')
-        assert 'type' not in cont
         self.container.set(**cont)        
         
         
@@ -199,43 +221,48 @@ class Atoms(ase_Atoms):
 
 
     def __eq__(self,other):
+        return ase_Atoms.__eq__(self,other)
         #print self._cell
         #print other._cell
         #print ase_Atoms.__eq__(self,other)
-        if ase_Atoms.__eq__(self,other):
-            # for Bravais ase's Atoms.__eq__ is enough
-            if self.container.type == 'Bravais':
-                return True
-            else:
-                if hasattr(other,'container'):
-                    return self.same_container(other)
-                else:
-                    raise AssertionError('Comparing Bravais and non-Bravais containers should not happen. Check the code.')
-        else:
-            return False    
+        #=======================================================================
+        # if ase_Atoms.__eq__(self,other):
+        #    # for Bravais ase's Atoms.__eq__ is enough
+        #    if self.container.type == 'Bravais':
+        #        return True
+        #    else:
+        #        if hasattr(other,'container'):
+        #            return self.same_container(other)
+        #        else:
+        #            raise AssertionError('Comparing Bravais and non-Bravais containers should not happen. Check the code.')
+        # else:
+        #    return False    
+        #=======================================================================
         
     def same_container(self,other):
         """ Check if atoms has the same container. """
         return self.container==other.container
         
+        
     def copy(self):    
         """Return a copy."""
-        cp = Atoms(container=self.container.type)
-        cp += self
+        cp = Atoms(atoms=self,container=self.container.type)
+        #cp += self
         # set cell and pbc for initialization
-        cp.set_pbc( self.get_pbc() )
-        cp.set_cell( self.get_cell() )
-        if self.container.type!='Bravais':
-            cp.set_container(container=self.container)
+        #cp.set_pbc( self.get_pbc() )
+        #cp.set_cell( self.get_cell() )
+        #if self.container.type!='Bravais':
+        #    cp.set_container(container=self.container)
         # reset cell (for ase and visualization use) exactly the same
         # (ase cell in set_container is taken from present atom positions,
         # even though originally it might have been set earlier)
-        assert np.all( self.get_pbc()==cp.get_pbc() ) 
-        cp.set_cell( self.get_cell() )
+        #assert np.all( self.get_pbc()==cp.get_pbc() ) 
+        #cp.set_cell( self.get_cell() )
         return cp
         
     def __imul__(self, m):
         raise NotImplementedError('*= not implemented yet, use extended_copy.')
+
 
 
 class ExtendedTrajectory:
