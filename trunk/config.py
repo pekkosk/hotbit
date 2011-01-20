@@ -8,6 +8,7 @@ import os
 import sys
 from glob import glob
 from os.path import join
+from socket import gethostname 
 
 # Always import numpy
 import numpy
@@ -50,7 +51,9 @@ def get_system_config(include_dirs, libraries, library_dirs,
                                   'iomp5', 'guide', 'mkl_def']#, 'mkl_def']
                     library_dirs += libs
                     msg +=  ['* Using MKL library: %s' % library_dirs[-1]]
-                    
+        elif gethostname() in ['c551','c552','c553','c554']:
+            libraries += ['acml']
+            msg +=  ['* Using acml on murska']                      
         else:
             # Look for ACML libraries:
             acml = glob('/opt/acml*/g*64/lib')
