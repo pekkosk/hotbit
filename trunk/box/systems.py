@@ -28,6 +28,8 @@ def graphene(n1,n2,R,height=5.0):
       a1            
     """
     from hotbit import Atoms
+    
+    if not isinstance(R,float): R=R[0]
     a1=vec([R*np.cos(pi/6)*2,0.,0.])
     a2=0.5*a1 + vec([0.,1.5*R,0.])
     #assert n2%2==0

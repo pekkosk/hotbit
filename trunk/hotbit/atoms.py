@@ -38,7 +38,7 @@ class Atoms(ase_Atoms):
                  cell=None, pbc=None,
                  constraint=None,
                  calculator=None,
-                 container='Bravais',
+                 container=None,
                  atoms=None):
         """ 
         Modified atoms class for hotbit.
@@ -64,8 +64,10 @@ class Atoms(ase_Atoms):
             self += atoms
             self.set_pbc( atoms.get_pbc() )
             self.set_cell( atoms.get_cell() )
-                        
-        if type(container)==type(''):
+                       
+        if container==None:
+            dict = {'type':container_magic(self)}
+        elif type(container)==type(''):
             dict = {'type':container}
         else:
             dict = container.copy()
