@@ -33,7 +33,7 @@ class Chiral:
         if angle==None:
             raise AssertionError('Chiral angle was not set yet.')
         if angle<1E-14:
-            x='Chiral: angle=0.0, height=%.4f Ang' %(angle,height)
+            x='Chiral: angle=0.0, height=%.4f Ang' %(height)
         else:
             x='Chiral: angle=%.4f (2*pi/%.2f), height=%.4f Ang' %(angle,2*np.pi/angle,height)
         return x
