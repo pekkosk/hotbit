@@ -52,6 +52,8 @@ class DoubleChiral:
             st = 'DoubleChiral: angle=%.4f (2*pi/%.2f), height=%.4f Ang, x=%.4f' %(angle,2*np.pi/angle,height,x)
         return st
     
+    def get_type(self):
+        return self.type
     
     def get_table(self):
         if abs(self.get('x'))>1E-12:

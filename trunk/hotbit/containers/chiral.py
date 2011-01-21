@@ -21,6 +21,8 @@ class Chiral:
         self.par = {'height':(1,0),'angle':(2,0)}
         self.atoms.set_pbc( (False,False,True) )
         
+    def get_type(self):
+        return self.type
         
     def get_table(self): 
         return [{'M':1},{'M':1},{'M':np.Inf}]

@@ -32,7 +32,9 @@ class Wedge:
         #self.pbcz = False
         self.atoms.set_pbc((True,False,atoms.get_pbc()[2]))
         #self._set_table()
-        
+      
+    def get_type(self):
+        return self.type  
         
     def __repr__(self):
         angle, height, pbcz, physical = self.get('angle'), self.get('height'), self.get('pbcz'), self.get('physical')
