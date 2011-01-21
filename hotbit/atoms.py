@@ -85,6 +85,17 @@ class Atoms(ase_Atoms):
         self._transform = self.container.transform
         self._rotation = self.container.rotation
                 
+    def get_container_type(self):
+        """
+        Return container type (string, such as 'Chiral')
+        """
+        return self.container.get_type()
+                
+    def get_container(self,key):
+        """
+        Return container parameter
+        """
+        return self.container.get(key)
         
     def set_container(self,**cont):
         '''

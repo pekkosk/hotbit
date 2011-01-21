@@ -38,6 +38,9 @@ class Sphere:
         
     def _set_table(self): 
         self.table = [{'M':np.Inf},{'M':np.Inf},{'M':1}]
+     
+    def get_type(self):
+        return self.type
         
     def __repr__(self):
         x='Sphere: angle1=%.4f, angle2=%.4f, cos1=(%.2f,%.2f,%.2f), cos2=(%.2f,%.2f,%.2f)' %(self.angle1,self.angle2,self.n1[0],self.n1[1],self.n1[2],self.n2[0],self.n2[1],self.n2[2])                                                                                        

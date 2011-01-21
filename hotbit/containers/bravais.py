@@ -15,6 +15,9 @@ class Bravais:
         assert type==self.type
         self.atoms = proxy(atoms)
         
+    def get_type(self):
+        return self.type
+        
     def __repr__(self):
         pbc=self.atoms.get_pbc()
         cell=self.atoms.get_cell()
