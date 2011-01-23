@@ -31,6 +31,11 @@ class GridData:
         self.ztol=0.001
         self.dataip=TrilinearInterpolation(self.data,grids=self.grids)
         
+    def __call__(self,r):
+        """
+        Return the value of the data at r
+        """    
+        return self.dataip(vec([r[0],r[1],r[2]]))
         
     def get_grids(self):
         """ Return the grids points in x-,y-, and z-directions. """
