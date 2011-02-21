@@ -53,7 +53,7 @@ def get_system_config(include_dirs, libraries, library_dirs,
                     msg +=  ['* Using MKL library: %s' % library_dirs[-1]]
         elif gethostname() in ['c551','c552','c553','c554','vuori1.csc.fi','vuori2.csc.fi']:
             libraries += ['acml']
-            msg +=  ['* Using acml on murska']                      
+            msg +=  ['* Using acml.']                      
         else:
             # Look for ACML libraries:
             acml = glob('/opt/acml*/g*64/lib')

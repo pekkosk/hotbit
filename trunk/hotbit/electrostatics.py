@@ -163,7 +163,10 @@ class Electrostatics:
         self.gamma_correction = _gamma_correction_dict[charge_density]
 
         if solver is None:
-            self.solver = DirectCoulomb(self.calc.get('gamma_cut'))
+            cut = self.calc.get('gamma_cut')
+            if self.SCC and cut==None and any(self.calc.el.atoms.get_pbc()):
+                raise AssertionError('gamma_cut must be provided for periodic calculations and with DirectCoulomb')
+            self.solver = DirectCoulomb(cut)
         else:
             self.solver = solver
 

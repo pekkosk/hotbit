@@ -168,7 +168,6 @@ class DirectCoulomb(Coulomb):
                     G[i, j] += 1.0*erfc(d/self.cutoff)/d
 
         self.timer.stop('get_gamma')
-
         return G
 
 
