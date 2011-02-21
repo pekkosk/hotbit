@@ -277,6 +277,7 @@ class Interactions:
         states = self.calc.st
         start = self.calc.start_timing
         stop = self.calc.stop_timing
+        seps = self.calc.get('sepsilon')
         start('matrix construction')
         orbs=el.orbitals()
         norb=len(orbs)   
@@ -319,7 +320,7 @@ class Interactions:
             for orb in el.orbitals(i):
                 ind=orb['index']
                 H0[:,ind,ind] = orb['energy']
-                S[:,ind,ind]  = 1.0
+                S[:,ind,ind]  = 1.0 + seps
             for j,sj,noj,o1j in lst[i:]:
                 c, d = o1j, o1j+noj
                 htable = self.h[si+sj]

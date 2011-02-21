@@ -2,10 +2,12 @@
 # Please see the accompanying LICENSE file for further information.
 
 from scipy.linalg import eig
+from scipy.linalg import eigh
 import numpy as np
 from numpy.linalg import solve
 from box.buildmixer import BuildMixer
 from weakref import proxy
+from random import randint
 
 # Wrapper for the LAPACK dsygvd, zhegvd solvers
 from _hotbit import geig
@@ -99,20 +101,35 @@ class Solver:
             # via C wrapper
             self.calc.start_timing('LAPACK eigensolver')
             e, wf = geig(H,S)
-            #wf = wf*(1.0+0.0j)
             self.calc.stop_timing('LAPACK eigensolver')
             wf = wf.transpose()
+            
+            # if S happened not to be positive definite, LAPACK
+            # results in wrong norm. 
+            self.calc.start_timing('Check norm (remove?)')
+            norms = ( np.dot(wf.conj(),S)*wf ).sum(axis=1)
+            maxdev = np.abs(norms-1).max() 
+            if maxdev>1E-6:
+                eval,efunc = eigh(S)
+                evmin =  eval.min()
+                if evmin<0:
+                    raise AssertionError('Eigenfunction norm from LAPACK %.4f. Minimum eigenvalue of S is %.4f - overlap matrix is not positive definite.' %(maxdev,evmin))
+                else:
+                    raise AssertionError('Eigenfunction norm from LAPACK %.4f, but overlap matrix still appears positive definite.' %(maxdev))
+            self.calc.stop_timing('Check norm (remove?)')
+            
+                
         if False:
-            raise NotImplementedError('Not checked for complex stuff')
+            #raise NotImplementedError('Not checked for complex stuff')
             # using numpy lapack_lite
-            e,wf=eig(self.H,self.S)
-            e=e.real
-            order=e.argsort()
-            e=e[order]
+            e, wf = eig(H,S)
+            e = e.real
+            order = e.argsort()
+            e = e[order]
             for i in range(self.norb):
-                wf[i,:]=wf[i,order]
+                wf[:,i]=wf[order,i]
             for i in range(self.norb): #normalize properly
-                wf[:,i]=wf[:,i]/np.sqrt( np.dot(wf[:,i],np.dot(self.S0,wf[:,i])) )
+                wf[i]=wf[i]/np.sqrt( np.abs(np.dot(wf[i],np.dot(S,wf[:].conj()))) )
         
         return e,wf
 

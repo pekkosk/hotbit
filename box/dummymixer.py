@@ -25,6 +25,7 @@ class DummyMixer:
     def echo(self, out):
         """ Say something about the progress of iteration. """
         print >> out, "%s: iter %i  fmax %0.12f" %  (self.name, self.it, self.fmax[-1])
+        out.flush()
 
 
     def final_echo(self, out):

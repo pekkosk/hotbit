@@ -53,6 +53,7 @@ class Hotbit(Output):
                       charge_density='Gaussian',
                       vdw=False,
                       vdw_parameters=None,
+                      sepsilon=0.0,
                       filename=None):
         """
         Hotbit -- density-functional tight-binding calculator
@@ -123,6 +124,9 @@ class Hotbit(Output):
                           where *el* is the element name, *p* the polarizability and
                           *R0* the radius where the van-der-Waals interaction starts.
                           Will override whatever read from .elm files.
+        sepsilon:         Number added to the diagonal of S-matrix, if S is not positive
+                          definite, e.g. 1E-3. The origin for the problem is physical,
+                          and there is no perfect cure; this treatment is quick'n dirty. 
         txt:              Filename for log-file.
                           * None: standard output
                           * '-': throw output to trash (/null) 
@@ -146,6 +150,7 @@ class Hotbit(Output):
                         'gamma_cut':gamma_cut,
                         'vdw':vdw,
                         'vdw_parameters':vdw_parameters,
+                        'sepsilon':sepsilon,
                         'txt':txt,
                         'verbose_SCC':verbose_SCC,
                         'mixer':mixer,
@@ -188,6 +193,7 @@ class Hotbit(Output):
                           'parameters',
                           'txt',
                           'verbose_SCC',
+                          'sepsilon',
                           'kpts',
                           'rs',
                           'coulomb_solver']
@@ -309,7 +315,7 @@ class Hotbit(Output):
 
         calc = {}
         params = ['parameters','mixer','elements','SCC','rs',
-                  'maxiter','tables','gamma_cut','charge','width']
+                  'maxiter','tables','gamma_cut','charge','width','sepsilon']
         for key in params:
             calc[key] = self.__dict__[key]
         state['calc'] = calc

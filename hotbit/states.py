@@ -24,7 +24,7 @@ def compute_rho(wf, occ):
     assert n == m
     assert n == k
     assert nk == nk2
-
+  
     rho = np.zeros(wf.shape, dtype=wf.dtype)
     for k in range(nk):
         rho[k,:,:] = np.dot(
@@ -104,14 +104,12 @@ class States:
                     spacing = 2*pi/kpts[i]
                     kl.append( np.linspace(-pi+spacing/2,pi-spacing/2,kpts[i]) )
                 else:
-                    
                     # TODO: choose the closest number of k-points if
                     # sampling should be physical
                     # first calculate possible numer of k-points, then
                     # select the ones closest to the desired one
                     # nks = M/divisors(M) 
                     # nk1 = nks[abs(nks-nk).argmin()]                  
-                    
                     # discrete, well-defined sampling; any k-point is not allowed 
                     if kpts[i] not in mix.divisors(M[i]) and physical:
                         print 'Allowed k-points for direction',i,'are',mix.divisors(M[i])
@@ -119,8 +117,6 @@ class States:
                     else:
                         kl.append( np.linspace(0,2*pi-2*pi/kpts[i],kpts[i]) )
                         
-                        
-                
             k=[]    
             wk=[]
             nk0 = np.prod(kpts)
@@ -136,13 +132,7 @@ class States:
                                 one_equivalent = True
                                 n = table[i]['equivalent'] # symmetry op i is equivalent to tuple n
                                 assert n[i]==0
-                                #for j in range(3):
-                                #    if n[j]!=0: break
-                                #assert i!=j
-                                #assert abs(n[j])>0
-                                #newk[i] = newk[i] + 1.0*n[j]/M[i]*newk[j]
-                                newk[i] = newk[i] + 1.0*np.dot(n,newk)/M[i] #n[j]/M[i]*newk[j]
-                                
+                                newk[i] = newk[i] + 1.0*np.dot(n,newk)/M[i]
                                 
                         inv_exists = False
                         # if newk's inverse exists, increase its weight by default
@@ -151,7 +141,7 @@ class States:
                                 inv_exists = True
                                 wk[ik]+=1.0/nk0
                         # newk's inverse does not exist; make new k-point
-                        if not inv_exists:
+                        if not inv_exists:                        
                             k.append( newk )
                             wk.append( 1.0/nk0 ) 
             nk=len(k)            
@@ -167,8 +157,7 @@ class States:
             wk=np.ones(nk)/nk
             kl=None
             
-            
-        # now sampling is set up. Check the consistency.
+        # now sampling is set up. Check consistency.
         pbc = self.calc.el.get_pbc()
         for i in range(3):
             for kp in k:
@@ -204,20 +193,16 @@ class States:
             self.calc.memory_estimate()
             self.first_solve = False
         self.H0, self.S, self.dH0, self.dS = self.calc.ia.get_matrices()
-#        try:
-        if True:
-            if self.SCC:
-                self.es.construct_Gamma_matrix(self.calc.el.atoms)
-            self.e, self.wf = self.solver.get_states(self.calc,dq,self.H0,self.S)
-            
-            self.check_mulliken_charges()
-            self.large_update()
-            self.count+=1
-            self.calc.stop_timing('solve')
-            
-#        except Exception, ex:
-#            self.calc.stop_timing('solve')
-#            raise Exception(ex)
+
+        if self.SCC:
+            self.es.construct_Gamma_matrix(self.calc.el.atoms)
+        self.e, self.wf = self.solver.get_states(self.calc,dq,self.H0,self.S)
+        
+        self.check_mulliken_charges()
+        self.large_update()
+        self.count+=1
+        self.calc.stop_timing('solve')
+        
 
 
     def check_mulliken_charges(self):
@@ -242,6 +227,7 @@ class States:
         self.f=self.occu.occupy(e)
         self.calc.start_timing('rho')
         self.rho = compute_rho(self.wf,self.f)
+                
         self.calc.stop_timing('rho')
         if self.SCC:
             self.dq = self.mulliken()
@@ -282,7 +268,6 @@ class States:
         """
         H0, S, dH0, dS = self.calc.ia.get_matrices(kpts)
         e, wf = self.solver.get_eigenvalues_and_wavefunctions(H0, S)
-
         return e
 
 
@@ -323,12 +308,17 @@ class States:
         '''
         diag = np.zeros((self.norb))
         for ik in xrange(self.nk):
-            diag_k = ( self.rho[ik]*self.S[ik].transpose() ).sum(axis=1).real
+            diag_k = ( self.rho[ik]*self.S[ik].transpose() ).sum(axis=1).real            
             diag = diag + self.wk[ik] * diag_k
         q=[]
         for o1, no in self.calc.el.get_property_lists(['o1','no']):
             q.append( diag[o1:o1+no].sum() )
-        return np.array(q)-self.calc.el.get_valences()
+            
+        dq = np.array(q)-self.calc.el.get_valences()
+        q,c = sum(-dq),self.calc.get('charge') 
+        if np.abs(q-c)>1E-5:
+            raise RuntimeError('Mulliken charges (%.4f) do not add up to total charge (%.4f)!' %(q,c))
+        return dq
 
 
     def get_band_structure_energy(self):
