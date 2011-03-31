@@ -119,11 +119,13 @@ class States:
                         
             k=[]    
             wk=[]
+            kpt_indices = []
             nk0 = np.prod(kpts)
             for a in range(kpts[0]):
                 for b in range(kpts[1]):
                     for c in range(kpts[2]):
                         newk = np.array([kl[0][a], kl[1][b], kl[2][c]])
+                        newind = (a,b,c)
                         one_equivalent = False
                         for i in range(3):
                             if 'equivalent' in table[i]:
@@ -133,6 +135,7 @@ class States:
                                 n = table[i]['equivalent'] # symmetry op i is equivalent to tuple n
                                 assert n[i]==0
                                 newk[i] = newk[i] + 1.0*np.dot(n,newk)/M[i]
+                                
                                 
                         inv_exists = False
                         # if newk's inverse exists, increase its weight by default
@@ -144,6 +147,7 @@ class States:
                         if not inv_exists:                        
                             k.append( newk )
                             wk.append( 1.0/nk0 ) 
+                            kpt_indices.append( newind )
             nk=len(k)            
             k=np.array(k)
             wk=np.array(wk)
@@ -159,6 +163,7 @@ class States:
             
         # now sampling is set up. Check consistency.
         pbc = self.calc.el.get_pbc()
+        self.kpt_indices = np.array(kpt_indices)
         for i in range(3):
             for kp in k:
                 if kp[i]>1E-10 and not pbc[i]:

@@ -597,6 +597,10 @@ class Hotbit(Output):
 
 
     def get_eigenvalues(self):
+        """ Return eigenvalues without shifts.
+        
+        For alternative, look at method get_band_energies.
+        """
         return self.st.get_eigenvalues()*Hartree
     
     
