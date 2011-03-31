@@ -164,7 +164,7 @@ class Electrostatics:
 
         if solver is None:
             cut = self.calc.get('gamma_cut')
-            if self.SCC and cut==None and any(self.calc.el.atoms.get_pbc()):
+            if self.SCC and cut==None and np.any(self.calc.el.atoms.get_pbc()):
                 raise AssertionError('gamma_cut must be provided for periodic calculations and with DirectCoulomb')
             self.solver = DirectCoulomb(cut)
         else:
