@@ -31,13 +31,11 @@ def even_cpu_load(N,ncpu,power=3):
     output: cpuN[cpu] gives the list of Ns appointed to given cpu.
     """
     size = ncpu
-    
     N2 = np.array(N[::-1],int)
     times = N2**power
     n = len(N2)
-    ind = np.arange(n)[::-1]
-    if n<size:
-        raise AssertionError('Decrease the number of cpus; ncpu=%i, parallelizable to %i' %(size,n))
+    #if n<size:
+    #    raise AssertionError('Decrease the number of cpus; ncpu=%i, parallelizable to %i' %(size,n))
     time_per_cpu = float(times.sum())/size
     j = 0
     cput = np.zeros(size,int)    
