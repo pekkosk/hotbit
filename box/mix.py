@@ -28,9 +28,7 @@ def even_cpu_load(N,ncpu,power=3):
     power:  scaling with system size. For systems with N=[5,6,7]
             the scaling goes as 5**power etc. 
             
-    output: cpuN[0:ncpu,0:2], where for all cpu #i is given
-            the systems from N[a] to N[b], where
-            a = cpuN[i,0] and b = cpuN[i,1]
+    output: cpuN[cpu] gives the list of Ns appointed to given cpu.
     """
     size = ncpu
     
@@ -42,14 +40,14 @@ def even_cpu_load(N,ncpu,power=3):
         raise AssertionError('Decrease the number of cpus; ncpu=%i, parallelizable to %i' %(size,n))
     time_per_cpu = float(times.sum())/size
     j = 0
-    cput = np.zeros(size,int)
-    cpuN = np.zeros((size,2),int)
+    cput = np.zeros(size,int)    
+    cpuN = [[] for x in range(size)] 
     for cpu in range(size):
         for i in range(j,n):
             cput[cpu] += times[i]
+            cpuN[cpu].append(N2[i])
             if cput[cpu]>time_per_cpu:                
                 break
-        cpuN[cpu] = (ind[i],ind[j])
         j = i+1
         if j==n:
             break   
