@@ -31,7 +31,7 @@ def setup_bending(atoms,angle,radius,rotation=0.0,physical=True):
     if not pbc[2] or pbc[0]:
         raise AssertionError('Should be periodic in z-direction and not periodic in x-direction')
     r = a.get_positions()    
-    if np.any( r[:,1]<0 ):
+    if np.any( r[:,1]<0 ): # index 1 is correct here 
         raise AssertionError('For bending, all atoms should be above xy-plane')
     
     # move and adjust
