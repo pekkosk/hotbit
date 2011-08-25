@@ -451,7 +451,7 @@ class Hotbit(Output):
         if self.st.nk>1:
             number = 16. #complex
         else:
-            number = 8 #real
+            number = 8. #real
         M = self.st.nk*self.st.norb**2*number
         #     H   S   dH0   dS    wf  H1  dH   rho rhoe
         mem = M + M + 3*M + 3*M + M + M + 3*M + M + M
