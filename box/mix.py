@@ -13,6 +13,53 @@ import numpy as np
 import time
 from math import atan,cos,sin
 from numpy import sqrt,pi,exp
+import warnings
+
+def even_cpu_load(N,ncpu,power=3):
+    """
+    For a given list of system sizes N, divide load evenly to cpus.
+    
+    This is for dummy (ideal) parallellization. 
+    
+    parameters:
+    ===========
+    N:      list of system sizes, e.g. [5,6,7]
+    ncpu:   number of cpus
+    power:  scaling with system size. For systems with N=[5,6,7]
+            the scaling goes as 5**power etc. 
+            
+    output: cpuN[0:ncpu,0:2], where for all cpu #i is given
+            the systems from N[a] to N[b], where
+            a = cpuN[i,0] and b = cpuN[i,1]
+    """
+    size = ncpu
+    
+    N2 = np.array(N[::-1],int)
+    times = N2**power
+    n = len(N2)
+    ind = np.arange(n)[::-1]
+    if n<size:
+        raise AssertionError('Decrease the number of cpus; ncpu=%i, parallelizable to %i' %(size,n))
+    time_per_cpu = float(times.sum())/size
+    j = 0
+    cput = np.zeros(size,int)
+    cpuN = np.zeros((size,2),int)
+    for cpu in range(size):
+        for i in range(j,n):
+            cput[cpu] += times[i]
+            if cput[cpu]>time_per_cpu:                
+                break
+        cpuN[cpu] = (ind[i],ind[j])
+        j = i+1
+        if j==n:
+            break   
+        
+    if any(cput==0):
+        m = sum(cput==0)
+        warnings.warn('Trying to divide load evenly to %i cpus left %i cpus idle.' %(size,m))
+    return cpuN
+        
+
    
 class _FitFunction:
     def __init__(self,f,p):
