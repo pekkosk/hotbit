@@ -15,7 +15,7 @@ from math import atan,cos,sin
 from numpy import sqrt,pi,exp
 import warnings
 
-def even_cpu_load(N,ncpu,power=3):
+def even_cpu_load(N,ncpu,power=3,indices=False):
     """
     For a given list of system sizes N, divide load evenly to cpus.
     
@@ -26,9 +26,15 @@ def even_cpu_load(N,ncpu,power=3):
     N:      list of system sizes, e.g. [5,6,7]
     ncpu:   number of cpus
     power:  scaling with system size. For systems with N=[5,6,7]
-            the scaling goes as 5**power etc. 
+            the scaling goes as 5**power etc.
+    indices:instead of returning N for given cpu, return indices
+            (i such that N equals N[i]) 
             
-    output: cpuN[cpu] gives the list of Ns appointed to given cpu.
+    output: cpuN[:] 
+            * where cpuN[cpu] gives the list of Ns appointed to given cpu.
+            * if indices==True, return indices only
+              (cpuN[cpu] gives the list of indices such that 'cpu' is given
+               system sizes N[cpuN[cpu]])
     """
     size = ncpu
     N2 = np.array(N[::-1],int)
@@ -43,7 +49,10 @@ def even_cpu_load(N,ncpu,power=3):
     for cpu in range(size):
         for i in range(j,n):
             cput[cpu] += times[i]
-            cpuN[cpu].append(N2[i])
+            if indices:
+                cpuN[cpu].append(n-1-i)
+            else:
+                cpuN[cpu].append(N2[i])
             if cput[cpu]>time_per_cpu:                
                 break
         j = i+1
