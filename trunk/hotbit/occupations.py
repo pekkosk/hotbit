@@ -56,21 +56,29 @@ class Occupations:
         @param width: The Fermi-broadening
         '''
         self.e=e
-        ef = np.sort( e.flatten() )
+        eflat = e.flatten()
+        ind = np.argsort( eflat )
+        e_sorted = eflat[ind]
+        n_sorted = (self.wk*np.ones_like(e).transpose()*2).transpose().flatten()[ind]
+        sum = n_sorted.cumsum() 
+        ifermi = np.searchsorted(sum,self.nel)
+        
         xtol = 1E-13
         
         try:
             # make the first guess (simple guess, assuming equal k-point weights)
-            guess = self.ef[int(round(self.nk*self.nel/2.0))]
-            dmu = self.width*5
+            elo = e_sorted[ifermi-1]
+            ehi = e_sorted[ifermi-1]
+            guess = e_sorted(ifermi)
+            dmu = np.max((self.width,guess-elo,ehi-guess))
             mu  = brentq(self.root_function,guess-dmu,guess+dmu,xtol=xtol)
         except:
             # probably a bad guess        
             dmu = self.width 
-            mu = brentq(self.root_function,ef[0]-dmu,ef[-1]+dmu,xtol=xtol)
+            mu = brentq(self.root_function,e_sorted[0]-dmu,e_sorted[-1]+dmu,xtol=xtol)
         
         if np.abs( self.root_function(mu) )>1E-10:
-            raise RuntimeError('Fermi level could not be assigned reliably')
+            raise RuntimeError('Fermi level could not be assigned reliably. Has the system fragmented?')
             
         f = self.fermi(mu)
         self.mu, self.f = mu, f

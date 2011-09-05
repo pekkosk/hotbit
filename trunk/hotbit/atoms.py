@@ -177,7 +177,6 @@ class Atoms(ase_Atoms):
         self._check_symmetry_operation(n)
         return self._rotation(n)
                 
-                
     def extended_copy(self,n):
         """ Get copies of atoms for all listed symmetry operations n.
         
@@ -228,10 +227,13 @@ class Atoms(ase_Atoms):
                 atoms2 += atomsn
             except:
                 atoms2 = atomsn
+                
         atoms2.set_pbc(False)
         atoms2.set_cell((1,1,1))
         return atoms2       
 
+    def repeat(self,n):
+        return self.extended_copy(n)
 
     def __eq__(self,other):
         return ase_Atoms.__eq__(self,other)
