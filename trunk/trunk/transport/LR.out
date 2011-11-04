@@ -1,0 +1,41 @@
+
+
+
+
+
+
+ _           _    _     _ _
+| |__   ___ | |_ | |__ |_| |_
+|  _ \ / _ \|  _||  _ \| |  _|
+| | | | ( ) | |_ | ( ) | | |_
+|_| |_|\___/ \__|\____/|_|\__|  ver. 0.1 (svn=375)
+Distributed under GNU GPL; see /opt/hotbit/lib/python/LICENSE
+Date: Fri Nov  4 15:00:38 2011
+Nodename: jcorrea-GA-890XA-UD3
+Arch: x86_64
+Dir: /home/jcorrea/hotbit2/transport
+System: C80
+       Charge= 0.0
+       Container Bravais: pbc:[0,0,0], cell:[1.00,1.00,1.00] Ang, 
+   cosines(12,13,23):[0.00,0.00,0.00]
+Symmetry operations (if any):
+       0: pbc= False , physical_k-points=1, M=1
+       1: pbc= False , physical_k-points=1, M=1
+       2: pbc= False , physical_k-points=1, M=1
+Electronic temperature: 0.01 eV
+Mixer: Anderson with memory = 3 , mixing constant = 0.2
+80 atoms, 320 states, 320.0 electrons (160.0 filled states)
+Initial n ranges:[0,0] [0,0] [0,0] 
+Element C in /opt/hotbit/param/C.elm
+    *no comment
+
+Interactions:
+  CC in /opt/hotbit/param/C_C.par
+    *(r/r0)**2, r0=1.85*r_cov, standard CC
+
+Repulsions:
+  CC in /opt/hotbit/param/C_C.par
+    *no repulsion doc
+
+Memory consumption estimate: > 0.01 GB
+Hamiltonian ~67.977 % filled.
