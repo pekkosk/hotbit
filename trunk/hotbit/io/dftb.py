@@ -50,7 +50,7 @@ def read_element_from_skf(fileobj, symbol):
 
     # Apparently, only the last U is used
     data['U'] = U[2]
-    data['FWHM'] = sqrt(8*log(2.0)/pi)/U[2]
+    data['FWHM'] = sqrt(8*log(2.0)/pi)/data['U']
 
     energies=[]            
     for orbital in data['valence_orbitals']:            
@@ -92,8 +92,6 @@ def read_HS_from_skf(fileobj, symboli, symbolj):
         n = int(n)
 
         # Contains self-energies, spin-polarization energies, Hubbard-U, ...
-        l = fileobj.readline()
-        # Mass, and something where I don't know what this is for
         l = fileobj.readline()
     else:
         # First line contains grid spacing and number of grid points
