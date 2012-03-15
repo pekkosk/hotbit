@@ -1,4 +1,4 @@
-from ase import Hartree
+from ase.units import Hartree
 import numpy as np
 from weakref import proxy
 from box import mix

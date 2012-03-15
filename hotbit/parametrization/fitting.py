@@ -3,7 +3,8 @@ from hotbit import Hotbit
 import numpy as np
 from ase.units import Bohr,Hartree
 from hotbit import Atoms
-from ase import read, PickleTrajectory
+from ase.io import read
+from ase.io.trajectory import PickleTrajectory
 from box import NullCalculator
 from copy import copy
 from sys import stdout
