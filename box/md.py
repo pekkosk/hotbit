@@ -85,7 +85,7 @@ def canonical(atoms,dt=1.0,steps=1000,output=10,name=None,verbose=False):
     """
     if name==None:
         try:
-            name=atoms.get_name()
+            name=atoms.get_chemical_formula(mode="hill")
         except:
             name='microcanonical'
     name+='.trj'        
@@ -114,7 +114,7 @@ def microcanonical(atoms,dt=1.0,steps=100,output=1,name=None,verbose=False):
     """
     if name==None:
         try:
-            name=atoms.get_name()
+            name=atoms.get_chemical_formula(mode="hill")
         except:
             name='microcanonical'
     name+='.trj'        
@@ -247,7 +247,7 @@ def quench(atoms,name=None,fmax=0.05,method='QN'):
     """ Quench given Atoms object with given attached calculator. """
     if name==None:
         try:
-            name=atoms.get_name()
+            name=atoms.get_chemical_formula(mode="hill")
         except:
             raise ValueError('name not specified')
     traj=ase.PickleTrajectory(name+'_quenching.trj','w',atoms)

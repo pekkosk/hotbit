@@ -4,7 +4,8 @@ from math import sqrt
 
 import numpy as np
 
-from ase import Atoms, write
+from ase import Atoms
+from ase.io import write
 from ase.lattice.compounds import CsCl, NaCl, ZnS
 
 from hotbit.atoms import Atoms as HotbitAtoms
