@@ -17,25 +17,25 @@ def check_forces(atoms, dx=1e-6):
     ffd  = f0.copy()
 
     for a in atoms:
-        r0  = a.get_position().copy()
+        r0  = a.position.copy()
 
-        a.set_x(r0[0]-dx)
+        a.x = r0[0]-dx
         ex1  = atoms.get_potential_energy()
-        a.set_x(r0[0]+dx)
+        a.x = r0[0]+dx
         ex2  = atoms.get_potential_energy()
-        a.set_x(r0[0])
+        a.x = r0[0]
 
-        a.set_y(r0[1]-dx)
+        a.y = r0[1]-dx
         ey1  = atoms.get_potential_energy()
-        a.set_y(r0[1]+dx)
+        a.y = r0[1]+dx
         ey2  = atoms.get_potential_energy()
-        a.set_y(r0[1])
+        a.y = r0[1]
 
-        a.set_z(r0[2]-dx)
+        a.z = r0[2]-dx
         ez1  = atoms.get_potential_energy()
-        a.set_z(r0[2]+dx)
+        a.z = r0[2]+dx
         ez2  = atoms.get_potential_energy()
-        a.set_z(r0[2])
+        a.z = r0[2]
 
         ffd[a.index, 0]  = -(ex2-ex1)/(2*dx)
         ffd[a.index, 1]  = -(ey2-ey1)/(2*dx)
@@ -57,7 +57,7 @@ def check_field(atoms, calc, dx=1e-6):
     Efd  = E0.copy()
 
     for a in atoms:
-        r0  = a.get_position().copy()
+        r0  = a.position.copy()
 
         a.set_x(r0[0]-dx)
         px1  = calc.get_potential(atoms)[a.index]

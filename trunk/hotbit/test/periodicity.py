@@ -4,7 +4,8 @@ from math import pi
 
 import numpy as np
 
-from ase import Atoms, write
+from ase import Atoms
+from ase.io import  write
 from hotbit.atoms import Atoms as HotbitAtoms
 from hotbit.coulomb import MultipoleExpansion
 from hotbit.coulomb.multipole import get_moments
