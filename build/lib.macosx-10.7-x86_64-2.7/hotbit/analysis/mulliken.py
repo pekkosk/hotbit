@@ -114,15 +114,13 @@ class MullikenAnalysis:
                
         parameters:
         ===========
-        I:      atom index (if None, return an array for all atoms)
+        I:      atom index
         k:      k-vector index
         a:      eigenstate index
         wk:     embed k-point weight in population
         """
         w = 1.0
         if wk: w = self.wk[k]
-        if I==None:
-            return np.array( [self.get_atom_wf_mulliken(i,k,a,wk) for i in range(self.N)] )
         orbs = self.calc.el.orbitals(I,indices=True)
         return w*self.aux[k,a,orbs].sum()
 
