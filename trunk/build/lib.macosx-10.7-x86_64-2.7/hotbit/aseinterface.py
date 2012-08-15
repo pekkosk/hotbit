@@ -916,7 +916,7 @@ class Hotbit(Output):
         
         parameters:
         ===========
-        I:      atom index (if None, return an array for all atoms)
+        I:      atom index
         k:      k-vector index
         a:      eigenstate index
         wk:     embed k-point weight in population
