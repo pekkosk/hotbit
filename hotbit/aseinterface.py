@@ -909,7 +909,22 @@ class Hotbit(Output):
         self._init_mulliken()
         return self.MA.get_basis_mulliken(mu)
     
-    
+
+    def get_basis_wf_mulliken(self,mu,k,a,wk=True):
+        """
+        Return Mulliken population for given basis state and wavefunction.
+
+        parameters:
+        ===========
+        mu:     basis state index
+        k:      k-vector index
+        a:      eigenstate index
+        wk:     include k-point weight in the population?
+        """    
+        self._init_mulliken()
+        return self.MA.get_basis_wf_mulliken(mu,k,a,wk)
+
+
     def get_atom_wf_mulliken(self,I,k,a,wk=True):
         """
         Return Mulliken population for given atom and wavefunction.

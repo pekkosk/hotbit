@@ -108,6 +108,22 @@ class MullikenAnalysis:
         return pop 
 
 
+    def get_basis_wf_mulliken(self,mu,k,a,wk=True):
+        """
+        Return Mulliken population for given basis state and wavefunction.
+
+        parameters:
+        ===========
+        mu:     basis state index
+        k:      k-vector index
+        a:      eigenstate index
+        wk:     include k-point weight in the population?
+        """
+        w = 1.0
+        if wk: w = self.wk[k]
+        return w*self.aux[k,a,mu]
+
+
     def get_atom_wf_mulliken(self,I,k,a,wk=True):
         """
         Return Mulliken population for given atom and wavefunction.
