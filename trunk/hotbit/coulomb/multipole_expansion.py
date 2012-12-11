@@ -276,7 +276,7 @@ class MultipoleExpansion(Coulomb):
         self.timer.start('local_to_local')
 
         for i in a:
-            loc0_l, loc_L          = local_to_local(i.get_position()-self.r0[0],
+            loc0_l, loc_L          = local_to_local(i.position-self.r0[0],
                                                    self.l_max, L0_l, L_L, 1)
             self.phi_a[i.index]    = loc0_l[0]
             self.E_av[i.index, :]  = [ -loc_L[0].real,

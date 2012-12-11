@@ -117,9 +117,9 @@ for run in range(NRUNS):
     phi = 0.0
     E   = np.zeros(3)
     for i in b:
-        dr = i.get_position() - r0tar
-        phi += i.get_charge()/sqrt(np.dot(dr, dr))
-        E   -= i.get_charge()*dr/(np.dot(dr, dr)**(3./2))
+        dr = i.position - r0tar
+        phi += i.charge/sqrt(np.dot(dr, dr))
+        E   -= i.charge*dr/(np.dot(dr, dr)**(3./2))
 
     err_phi1 = abs(phi - L0_l[0])
     err_phi2 = np.max(np.abs(E - np.array([ -L_L[0].real,
@@ -141,9 +141,9 @@ for run in range(NRUNS):
     phi = 0.0
     E   = np.zeros(3)
     for i in b:
-        dr = i.get_position() - r0tar2
-        phi += i.get_charge()/sqrt(np.dot(dr, dr))
-        E   -= i.get_charge()*dr/(np.dot(dr, dr)**(3./2))
+        dr = i.position - r0tar2
+        phi += i.charge/sqrt(np.dot(dr, dr))
+        E   -= i.charge*dr/(np.dot(dr, dr)**(3./2))
 
     err_phi3 = abs(phi - L0_l2[0])
     err_phi4 = np.max(np.abs(E - np.array([ -L_L2[0].real,
@@ -178,7 +178,7 @@ for run in range(NRUNS):
     R = np.dot(np.dot(Rz1, Ry), Rz2)
 
     for i in b:
-        i.set_position(r0c + np.dot(R, i.get_position() - r0c))
+        i.position = r0c + np.dot(R, i.position - r0c)
 
     Me0_l, Me_L = get_moments(b.get_positions(), b.get_charges(), L_MAX, r0c)
     Mf0_l, Mf_L = transform_multipole(R, L_MAX, Md0_l, Md_L)
