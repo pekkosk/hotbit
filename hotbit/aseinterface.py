@@ -588,7 +588,9 @@ class Hotbit(Output):
 
     def get_stress(self,atoms):
         self.solve_ground_state(atoms)
-        return None
+        # TODO: ASE needs an array from this method, would it be proper to
+        # somehow inform that the stresses are not calculated?
+        return np.zeros((6,))
 
 
     def get_charge(self):
