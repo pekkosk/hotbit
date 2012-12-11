@@ -53,8 +53,7 @@ class Hotbit(Output):
                       charge_density='Gaussian',
                       vdw=False,
                       vdw_parameters=None,
-                      sepsilon=0.0,
-                      filename=None):
+                      sepsilon=0.0):
         """
         Hotbit -- density-functional tight-binding calculator
                   for atomic simulation environment (ASE).
@@ -136,6 +135,7 @@ class Hotbit(Output):
         import os
 
         if gamma_cut!=None: gamma_cut=gamma_cut/Bohr
+
         self.__dict__={ 'parameters':parameters,
                         'elements':elements,
                         'tables':tables,
@@ -166,45 +166,6 @@ class Hotbit(Output):
         #self.set_text(self.txt)
         #self.timer=Timer('Hotbit',txt=self.get_output())
 
-        if filename is not None:
-            self.load(filename)
-
-    def copy(self):
-        return self.__copy__()
-
-    def __copy__(self):
-        """
-        Returns an uninitialized calculator.
-        """
-        import sys
-        from os.path import sameopenfile
-        if self.init == True:
-            raise NotImplementedError('Calculator has been initialized and it cannot be copied. Please create a new calculator.')
-
-        params_to_copy = ['SCC',
-                          'mixer',
-                          'width',
-                          'tables',
-                          'charge',
-                          'verbose',
-                          'maxiter',
-                          'elements',
-                          'gamma_cut',
-                          'parameters',
-                          'txt',
-                          'verbose_SCC',
-                          'sepsilon',
-                          'kpts',
-                          'rs',
-                          'coulomb_solver']
-
-        ret = Hotbit()
-        # TODO: if output file already opened (unless /null or stdout)
-        # open a file with another name
-        for key in params_to_copy:
-            ret.__dict__[key] = self.__dict__[key]
-        return ret
-
 
     def __del__(self):
         """ Delete calculator -> timing summary. """
@@ -223,18 +184,6 @@ class Hotbit(Output):
             Output.__del__(self)
 
 
-    def write(self, filename='restart.hb'):
-        """ Write data from calculation to a file. """
-        if self.init == False:
-            raise RuntimeError('The calculator is not initialized.')
-        state = {}
-        self.get_data_to_save(state)
-        import pickle
-        f = open(filename, 'w')
-        pickle.dump(state, f)
-        f.close()
-        
-        
     def write_electronic_data(self,filename,keys=None):
         """
         Write key electronic data into a file with *general* format.
@@ -302,53 +251,6 @@ class Hotbit(Output):
         f = open(filename, 'w')
         pickle.dump(data,f)
         f.close()
-
-
-    def get_data_to_save(self, state):
-        """ Gather data from different objects. """
-        atoms = {}
-        atoms['positions'] = self.el.atoms.get_positions()
-        atoms['numbers'] = self.el.atoms.get_atomic_numbers()
-        atoms['pbc'] = self.el.atoms.get_pbc()
-        atoms['cell'] = self.el.atoms.get_cell()
-        state['atoms'] = atoms
-
-        calc = {}
-        params = ['parameters','mixer','elements','SCC','rs',
-                  'maxiter','tables','gamma_cut','charge','width','sepsilon']
-        for key in params:
-            calc[key] = self.__dict__[key]
-        state['calc'] = calc
-
-        states = {}
-        states['prev_dq'] = self.st.prev_dq
-        states['count'] = self.st.count
-        state['states'] = states
-        
-
-
-    def load(self, filename):
-        """ Load saved state and initialize calculator using that state."""
-        import pickle
-        f = open(filename)
-        state = pickle.load(f)
-        f.close()
-
-        atoms = state['atoms']
-        pos = atoms['positions']
-        num = atoms['numbers']
-        pbc = atoms['pbc']
-        cell = atoms['cell']
-        atoms = Atoms(positions=pos, numbers=num, pbc=pbc, cell=cell)
-
-        calc = state['calc']
-        for key in calc:
-            self.__dict__[key] = calc[key]
-        self._initialize(atoms)
-
-        states = state['states']
-        self.st.prev_dq = states['prev_dq']
-        self.st.count = states['count']
 
 
     def set(self,key,value):
