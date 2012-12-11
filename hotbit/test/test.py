@@ -15,8 +15,6 @@ tests = [
     'C6H6_wedge.py',
     'linear_response.py',
     'C6H6_cell_game.py',
-    'save_load.py',
-    'copy_calculator.py',
     'mulliken.py',
     'multipole_operations.py',
     'periodicity.py',
@@ -24,7 +22,7 @@ tests = [
     'mio.py']
 
        
-skip = ['save_load.py','copy_calculator.py']
+skip = []
 add_env = {
     'mio.py': 'MIO_0_1'
     }
