@@ -29,7 +29,12 @@ class Solver:
         return self.iterations
 
     def get_iteration_info(self):
-        avg, mx, mn=np.mean(self.iter_history), min(self.iter_history), max(self.iter_history)
+        if len(self.iter_history) == 0:
+            return 'Solved zero times.'
+        elif len(self.iter_history) == 1:
+            return 'Solved one time; Iterations: %i' % self.iter_history[0]
+        iter_history = np.array(self.iter_history)
+        avg, mx, mn=np.mean(iter_history), np.min(iter_history), np.max(iter_history)
         return 'Solved %i times; Iterations: avg %.1f, max %i, min %i' %(len(self.iter_history),avg,mx,mn)
 
 
