@@ -30,9 +30,9 @@ class Occupations:
         Occupations are 0...2; without k-point weights
         """
         args = (self.e-mu)/self.width
-        # Some np.exp will return np.inf with some values, better to do
-        # it without RuntimeWarning
-        args = np.where(args < MAX_EXP_ARGUMENT, args, MAX_EXP_ARGUMENT)
+        # np.exp will return np.inf with RuntimeWarning if the input value
+        # is too large, better to feed it nu.inf in the beginning
+        args = np.where(args < MAX_EXP_ARGUMENT, args, np.inf)
         exps = np.exp(args)
         return 2/(exps+1)        
         
