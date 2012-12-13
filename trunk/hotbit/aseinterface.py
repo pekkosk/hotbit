@@ -265,7 +265,7 @@ class Hotbit(Output):
     def get_atoms(self):
         """ Return the current atoms object. """
         atoms = self.el.atoms.copy()
-        atoms.calc = self
+        atoms.set_calculator(self)
         return atoms
 
 
@@ -386,35 +386,37 @@ class Hotbit(Output):
 
     def _initialize(self,atoms):
         """ Initialization of hotbit. """
-        self.init=True
-        self.set_text(self.txt)
-        self.timer=Timer('Hotbit',txt=self.get_output())
-        self.start_timing('initialization')
-        self.el=Elements(self,atoms)
-        self.ia=Interactions(self)
-        self.st=States(self)
-        self.rep=Repulsion(self)
-        self.pp=PairPotential(self)
-        if self.get('vdw'):
-            if self.get('vdw_parameters') is not None:
-                self.el.update_vdw(self.get('vdw_parameters'))
-            setup_vdw(self)
-        self.env=Environment(self)
-        pbc=atoms.get_pbc()
-        # FIXME: gamma_cut -stuff
-        #if self.get('SCC') and np.any(pbc) and self.get('gamma_cut')==None:
-        #    raise NotImplementedError('SCC not implemented for periodic systems yet (see parameter gamma_cut).')
-        if np.any(pbc) and abs(self.get('charge'))>0.0:
-            raise AssertionError('Charged system cannot be periodic.')
-        self.flush()
+        if not self.init:
+            self.set_text(self.txt)
+            self.timer=Timer('Hotbit',txt=self.get_output())
+            self.start_timing('initialization')
+            self.el=Elements(self,atoms)
+            self.ia=Interactions(self)
+            self.st=States(self)
+            self.rep=Repulsion(self)
+            self.pp=PairPotential(self)
+            if self.get('vdw'):
+                if self.get('vdw_parameters') is not None:
+                    self.el.update_vdw(self.get('vdw_parameters'))
+                setup_vdw(self)
+            self.env=Environment(self)
+            pbc=atoms.get_pbc()
+            # FIXME: gamma_cut -stuff
+            #if self.get('SCC') and np.any(pbc) and self.get('gamma_cut')==None:
+            #    raise NotImplementedError('SCC not implemented for periodic systems yet (see parameter gamma_cut).')
+            if np.any(pbc) and abs(self.get('charge'))>0.0:
+                raise AssertionError('Charged system cannot be periodic.')
+            self.flush()
+            self.flags = {}
+            self.flags['Mulliken'] = False
+            self.flags['DOS'] = False
+            self.flags['bonds'] = False
+            self.flags['grid'] = False
+            self.stop_timing('initialization')
         self.el.set_atoms(atoms)
-        self.greetings()
-        self.flags = {}
-        self.flags['Mulliken'] = False
-        self.flags['DOS'] = False
-        self.flags['bonds'] = False
-        self.flags['grid'] = False
-        self.stop_timing('initialization')
+        if not self.init:
+            self.init=True
+            self.greetings()
         
         
     def calculation_required(self,atoms,quantities):
