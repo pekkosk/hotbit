@@ -1,8 +1,7 @@
 import numpy as np
 from scipy.optimize import brentq
 import sys
-MAX_FLOAT = sys.float_info[0]
-MAX_EXP_ARGUMENT = np.log(MAX_FLOAT)
+MAX_EXP_ARGUMENT = np.log(sys.float_info.max)
 
 class Occupations:
     def __init__(self,nel,width,wk):
