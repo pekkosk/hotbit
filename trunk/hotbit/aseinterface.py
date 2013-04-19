@@ -404,7 +404,7 @@ class Hotbit(Output):
             # FIXME: gamma_cut -stuff
             #if self.get('SCC') and np.any(pbc) and self.get('gamma_cut')==None:
             #    raise NotImplementedError('SCC not implemented for periodic systems yet (see parameter gamma_cut).')
-            if np.any(pbc) and abs(self.get('charge'))>0.0:
+            if np.any(pbc) and abs(self.get('charge'))>0.0 and self.get('SCC'):
                 raise AssertionError('Charged system cannot be periodic.')
             self.flush()
             self.flags = {}
