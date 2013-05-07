@@ -463,7 +463,7 @@ class Hotbit(Output):
         return self.f.copy()
     
 
-    def get_band_energies(self, kpts=None, shift=True, rs='kappa'):
+    def get_band_energies(self, kpts=None, shift=True, rs='kappa', h1=False):
         '''
         Return band energies for explicitly given list of k-points.
         
@@ -474,6 +474,7 @@ class Hotbit(Output):
                    if None, return for all k-points in the calculation
         shift:     shift zero to the Fermi-level
         rs:        use 'kappa'- or 'k'-points in reciprocal space
+        h1:        Add Coulomb part to hamiltonian matrix. Required for consistent use of SCC.
         '''
         if kpts==None:
             e = self.st.e * Hartree
@@ -482,7 +483,7 @@ class Hotbit(Output):
                 klist = k_to_kappa_points(kpts,self.el.atoms)
             elif rs=='kappa':
                 klist = kpts
-            e = self.st.get_band_energies(klist)*Hartree
+            e = self.st.get_band_energies(klist,h1)*Hartree
         
         if shift:
             return e-self.get_fermi_level()

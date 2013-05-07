@@ -35,7 +35,7 @@ if phase==2:
     
     # calculate Slater-Koster tables and output
     table = SlaterKosterTable(A,B)
-    min, rmax, dr = 1,10,0.1
+    rmin, rmax, dr = 1,10,0.1
     N = int( (rmax-rmin)/dr )
     print N,'points in the table'
     table.run(rmin,rmax,N)

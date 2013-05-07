@@ -2,6 +2,7 @@ from hotbit.parametrization import KSAllElectron
 import numpy as np
 from box import mix
 from box.interpolation import Function
+from hotbit.io.fortran import fortran_readline
 
 integrals =['dds','ddp','ddd','pds','pdp','pps','ppp','sds','sps','sss']
 
@@ -63,6 +64,7 @@ def plot_table(parfile,screen=False,s1=None,s2=None,der=0):
 def compare_tables(parfile1,parfile2,s1=None,s2=None,screen=False):
     """ Plot table. """
     import pylab as pl
+    pl.rcParams.update({'legend.fontsize': 5,'legend.linewidth': 0})
     if s1==None or s2==None:
         s1,s2=parfile1.split('.')[0].split('_')
     if s1==s2:
@@ -85,11 +87,11 @@ def compare_tables(parfile1,parfile2,s1=None,s2=None,screen=False):
             if p==1: s='--'
             else: s='-'
             # first table
-            pl.plot(rgrid1,tables1[p][:,i],lw=5,c='r',alpha=0.3,ls=s,label='%s%s: H' %(e1,e2))
+            pl.plot(rgrid1,tables1[p][:,i],lw=5,c='r',alpha=0.3,ls=s,label='%s%s: H (%s)' %(e1,e2,parfile1))
             pl.plot(rgrid1,tables1[p][:,i+10],lw=5,alpha=0.3,c='b',ls=s,label='%s%s: S' %(e1,e2))
 
             # second table
-            pl.plot(rgrid2,tables2[p][:,i],lw=2,c='r',ls=s,label='%s%s: H' %(e1,e2))
+            pl.plot(rgrid2,tables2[p][:,i],lw=2,c='r',ls=s,label='%s%s: H (%s)' %(e1,e2,parfile2))
             pl.plot(rgrid2,tables2[p][:,i+10],lw=2,c='b',ls=s,label='%s%s: S' %(e1,e2))
             pl.axhline(c='k',ls='--')
             pl.title(name,position=(0.9,0.8))
@@ -99,9 +101,10 @@ def compare_tables(parfile1,parfile2,s1=None,s2=None,screen=False):
                 pl.xticks([],[])
             if not ax.is_first_col():
                 pl.yticks([],[])
+            if ax.is_first_col() and ax.is_first_row():
+                pl.legend()
             pl.ylim(-mx,mx)
             pl.xlim(0)
-            #pl.legend(loc='upper left')
     if screen:
         pl.show()
     else:
@@ -114,16 +117,43 @@ def read_table(parfile,s1,s2):
     
     return list of tables [s1_s2_table,s2_s1_table] (or only other if s1==s2)
     """
-    f=open(parfile)
-    nel=[1,2][s1==s2]
-    tab=mix.find_value(parfile,'%s_%s_table' %(s1,s2),fmt='matrix')
-    rgrid=tab[:,0]
-    table=[tab[:,1:]]
-    if s1!=s2:
-        tab=mix.find_value(parfile,'%s_%s_table' %(s2,s1),fmt='matrix')
-        table.append(tab[:,1:])
-    f.close()
+    if parfile.find('.skf')>0:
+        if not parfile!='%s%s.skf':
+            raise NotImplementedError('Comparison assumes filename of type symbol1symbol2.skf.')
+        rgrid, table12 = read_skf_table('%s%s.skf' %(s1,s2),s1,s2)
+        rgrid, table21 = read_skf_table('%s%s.skf' %(s2,s1),s2,s1)
+        table = [table12]
+        if s1!=s2:
+            table.append(table21)
+    else:
+        f=open(parfile)   
+        nel=[1,2][s1==s2]
+        tab=mix.find_value(parfile,'%s_%s_table' %(s1,s2),fmt='matrix')
+        rgrid=tab[:,0]
+        table=[tab[:,1:]]
+        if s1!=s2:
+            tab=mix.find_value(parfile,'%s_%s_table' %(s2,s1),fmt='matrix')
+            table.append(tab[:,1:])
+            f.close()
+    print rgrid.shape,table[0].shape
     return rgrid, table
+
+
+def read_skf_table(parfile,s1,s2):
+    """ Read SlaKo tables from .skf parameter file for elements with symbols s1,s2."""
+    f=open(parfile)
+    dx,n = fortran_readline(f)
+    dx,n = float(dx), int(n)
+    f.readline()
+    if s1==s2: #additional line in homonuclear table
+        f.readline()
+    table = []
+    for i in range(n):
+        line = fortran_readline( f.readline() )
+        if len(line)>0:
+            table += [line]
+    print table
+    return dx*np.arange(0,n-1), np.array(table)
 
 
 def tail_smoothening(x,y):

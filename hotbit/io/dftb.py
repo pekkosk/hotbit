@@ -114,9 +114,10 @@ def read_HS_from_skf(fileobj, symboli, symbolj):
 
         l = fileobj.readline()
 
-    if not l:
-        raise RuntimeError('Premature end-of-file: Keyword "Spline" not found '
-                           'for %s-%s.' % ( symboli, symbolj ))
+    # don't care if not spline...
+    #if not l:
+    #    raise RuntimeError('Premature end-of-file: Keyword "Spline" not found '
+    #                       'for %s-%s.' % ( symboli, symbolj ))
     
     HS = np.array(HS)
     x = dx*np.arange(0, HS.shape[0])
@@ -147,46 +148,60 @@ def read_repulsion_from_skf(fileobj, rep_x0=0.1, rep_dx=0.005):
         l = fileobj.readline()
 
     if not l:
-        raise RuntimeError('Could not find "Spline" keyword when reading '
-                           'repulsion.')
+        # no spline
+        fileobj.seek(0)
+        dx, n = fortran_readline(fileobj) #ignore
+        items = fortran_readline(fileobj)
+        if len(items)<20: # in homonuclear tables one element info came before repulsion
+            items = fortran_readline(fileobj) 
+        cutoff = items[9]
+        c = [0,0] + items[1:9]         
+        x = np.linspace(rep_x0, cutoff, int((cutoff-rep_x0)/rep_dx)+1)
+        y = np.zeros_like(x)
+        for i in range(2,10):
+            y = y + c[i]*(cutoff-x)**i
+        
+        #raise RuntimeError('Could not find "Spline" keyword when reading '
+        #                   'repulsion.')
 
-    n, cutoff = fortran_readline(fileobj)
-    n = int(n)
-
-    # Coefficients for the exponential
-    c1, c2, c3 = fortran_readline(fileobj)
-
-    x1, x2, splc1, splc2, splc3, splc4 = fortran_readline(fileobj)
-
-    x = np.linspace(rep_x0, cutoff, int((cutoff-rep_x0)/rep_dx)+1)
-    y = c3 + np.exp(c2-c1*x)
-
-    i0 = np.searchsorted(x, x1)+1
-    for j in range(n-1):
-        if j > 0:
-            last_x2 = x2
-            x1, x2, splc1, splc2, splc3, splc4 = fortran_readline(fileobj)
-            assert x1 == last_x2
+    else:
+        n, cutoff = fortran_readline(fileobj)
+        n = int(n)
+    
+        # Coefficients for the exponential
+        c1, c2, c3 = fortran_readline(fileobj)
+    
+        x1, x2, splc1, splc2, splc3, splc4 = fortran_readline(fileobj)
+    
+        x = np.linspace(rep_x0, cutoff, int((cutoff-rep_x0)/rep_dx)+1)
+        y = c3 + np.exp(c2-c1*x)
+    
+        i0 = np.searchsorted(x, x1)+1
+        for j in range(n-1):
+            if j > 0:
+                last_x2 = x2
+                x1, x2, splc1, splc2, splc3, splc4 = fortran_readline(fileobj)
+                assert x1 == last_x2
+            i1 = np.searchsorted(x, x2)+1
+            y[i0:i1] = \
+                splc1 + \
+                splc2 * (x[i0:i1]-x1) + \
+                splc3 * (x[i0:i1]-x1)**2 + \
+                splc4 * (x[i0:i1]-x1)**3
+            i0 = i1
+    
+        # The last entry is a fifth-order polynomial
+        last_x2 = x2
+        x1, x2, splc1, splc2, splc3, splc4, splc5, splc6 = fortran_readline(fileobj)
+        assert x1 == last_x2
+    
         i1 = np.searchsorted(x, x2)+1
         y[i0:i1] = \
             splc1 + \
             splc2 * (x[i0:i1]-x1) + \
             splc3 * (x[i0:i1]-x1)**2 + \
-            splc4 * (x[i0:i1]-x1)**3
-        i0 = i1
-
-    # The last entry is a fifth-order polynomial
-    last_x2 = x2
-    x1, x2, splc1, splc2, splc3, splc4, splc5, splc6 = fortran_readline(fileobj)
-    assert x1 == last_x2
-
-    i1 = np.searchsorted(x, x2)+1
-    y[i0:i1] = \
-        splc1 + \
-        splc2 * (x[i0:i1]-x1) + \
-        splc3 * (x[i0:i1]-x1)**2 + \
-        splc4 * (x[i0:i1]-x1)**3 + \
-        splc5 * (x[i0:i1]-x1)**4 + \
-        splc6 * (x[i0:i1]-x1)**5
+            splc4 * (x[i0:i1]-x1)**3 + \
+            splc5 * (x[i0:i1]-x1)**4 + \
+            splc6 * (x[i0:i1]-x1)**5
 
     return x, y

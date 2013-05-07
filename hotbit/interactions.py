@@ -69,6 +69,7 @@ class Interactions:
                 if not e2+e1 in tables:
                     files[e2+e1] = file
 
+        
         # set interactions from default place
         if tables==None or tables!=None and 'rest' in tables and tables['rest']=='default':
             for e1 in present:
