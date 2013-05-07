@@ -26,14 +26,14 @@ data['Ne']={'Z':10,'symbol':'Ne'}
 data['Na']={'Z':11,'symbol':'Na','name':'sodium',   'mass':22.9898,  'R_cov':1.66,'R_vdw':2.27,'IE':5.136, 'EA':0.547}           
 data['Mg']={'Z':12,'symbol':'Mg','name':'magnesium','mass':24.3050,  'R_cov':1.41,'R_vdw':1.73,'IE':7.642, 'EA':0.000}                        
 data['Si']={'Z':14,'symbol':'Si','name':'silicon',  'mass':28.0855}
-data['S'] ={'Z':16, 'symbol':'S', 'name':'sulfur',  'mass':32.065,   'R_cov':1.02,'R_vdw':1.80,'IE':999.6, 'EA':200} #FIXME these are kJ/mol, what are the others?
+data['S'] ={'Z':16, 'symbol':'S', 'name':'sulfur',  'mass':32.065,   'R_cov':1.05,'R_vdw':1.80,'IE':10.356, 'EA':2.072}
 data['Cl']={'Z':17,'symbol':'Cl','name':'chlorine', 'mass':35.4530,  'R_cov':1.02,'R_vdw':1.75,'IE':12.962,'EA':3.615}            
 data['Ar']={'Z':18,'symbol':'Ar'}
 data['K'] ={'Z':19,'symbol':'K', 'name':'potassium','mass':39.0983,  'R_cov':2.03,'R_vdw':2.75,'IE':4.338, 'EA':0.501}             
 data['Ti']={'Z':22,'symbol':'Ti','name':'titanium', 'mass':47.8760,  'R_cov':1.60,'R_vdw':2.15,'IE':6.825, 'EA':0.078}            
 data['Kr']={'Z':36,'symbol':'Kr'}
 data['Sr']={'Z':38,'symbol':'Sr','name':'strontium','mass':87.62,    'R_cov':1.95,'R_vdw':2.49, 'IE':5.69,'EA':0.052}
-data['Mo']={'Z':42,'symbol':'Mo','name':'molybdenum','mass':95.94}
+data['Mo']={'Z':42,'symbol':'Mo','name':'molybdenum','mass':95.94,   'R_cov':1.57,'R_vdw':2.10, 'IE':7.08,'EA':0.744}
 data['Pd']={'Z':46,'symbol':'Pd'}
 data['Sn']={'Z':50, 'symbol':'Sn', 'R_cov':1.39}
 data['Xe']={'Z':54,'symbol':'Xe'}
@@ -99,7 +99,7 @@ aux=[ ['H', '',{'1s':1}],\
       ['Kr','Ar',{'3d':10,'4s':2,'4p':6}],\
       # fifth row
       ['Sr','Kr',{'5s':2,'4d':0,'5p':0}],
-      ['Mo','Kr',{'4d':5,'5s':1,'5p':0}]
+      ['Mo','Kr',{'4d':5,'5s':1,'5p':0}],
       ['Sn','Kr',{'4d':10,'5s':2,'5p':2}],
       ['Pd','Kr',{'4d':10,'5s':0,'5p':0}],
       ['Xe','Kr',{'4d':10,'5s':2,'5p':6}],      

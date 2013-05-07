@@ -11,7 +11,7 @@ def container_magic(atoms,container=None):
     Set or get container 
     (according to the element [0,0])
     """
-    lst = ['Wedge','Chiral','DoubleChiral','Sphere','Slab']
+    lst = ['Wedge','Chiral','DoubleChiral','Sphere','Slab','ChiralWedge']
     magic = -0.0123454321
     cell = atoms.get_cell()
     if container==None:

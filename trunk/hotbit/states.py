@@ -267,12 +267,15 @@ class States:
         return self.e.copy()
 
 
-    def get_band_energies(self, kpts):
+    def get_band_energies(self, kpts, h1=False):
         """
         Return the eigenvalue spectrum for a set of explicitly given k-points.
         """
         H0, S, dH0, dS = self.calc.ia.get_matrices(kpts)
-        e, wf = self.solver.get_eigenvalues_and_wavefunctions(H0, S)
+        H1 = None
+        if h1:
+            H1 = self.es.get_h1()
+        e, wf = self.solver.get_eigenvalues_and_wavefunctions(H0, S, H1=H1)
         return e
 
 

@@ -7,3 +7,4 @@ from sphere import Sphere
 from saddle import Saddle
 from gaussian import Gaussian
 from slab import Slab
+from chiralwedge import ChiralWedge

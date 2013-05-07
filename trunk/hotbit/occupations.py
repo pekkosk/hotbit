@@ -1,7 +1,11 @@
 import numpy as np
 from scipy.optimize import brentq
 import sys
-MAX_EXP_ARGUMENT = np.log(sys.float_info.max)
+if sys.version_info < (2,6):
+    MAX_EXP_ARGUMENT = np.log(1E90)
+else:
+    MAX_EXP_ARGUMENT = np.log(sys.float_info.max)
+
 
 class Occupations:
     def __init__(self,nel,width,wk):
