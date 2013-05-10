@@ -87,7 +87,7 @@ class States:
                      allow interpolation of this k-sampling.
         rs:          use 'kappa'- or 'k'-point sampling
         '''
-        if kpts!=(1,1,1) and self.calc.get('width')<1E-10:
+        if (len(kpts)==1 or isinstance(kpts,tuple) and kpts!=(1,1,1)) and self.calc.get('width')<1E-10:
             raise AssertionError('With k-point sampling width must be>0!')
             
         M = self.calc.el.get_number_of_transformations()
@@ -160,6 +160,7 @@ class States:
                 k=np.array(kpts)
             wk=np.ones(nk)/nk
             kl=None
+            kpt_indices=[]
             
         # now sampling is set up. Check consistency.
         pbc = self.calc.el.get_pbc()

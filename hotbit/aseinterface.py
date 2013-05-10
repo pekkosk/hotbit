@@ -301,7 +301,7 @@ class Hotbit(Output):
         rs = self.get('rs')
         kpts = self.get('kpts')
         if not isinstance(kpts,tuple):
-            kpts = (NaN,NaN,NaN)
+            kpts = (np.NaN,np.NaN,np.NaN)
         M = self.el.get_number_of_transformations()
         for i in range(3):
             print>>self.txt, '       %i: pbc=' %i, self.el.atoms.get_pbc()[i],
@@ -338,6 +338,11 @@ class Hotbit(Output):
 
 
     def get(self,arg=None):
+        """
+        Get calculator input parameters.
+        
+        arg: 'kpts','width',...
+        """
         if arg==None:
             return self.__dict__
         else:
