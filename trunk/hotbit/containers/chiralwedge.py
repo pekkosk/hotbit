@@ -33,7 +33,7 @@ class ChiralWedge:
         else:
             x+='not physical), '
         x+='height=%.4f Ang ' %height
-        x+='twist angle%.4f' %twist
+        x+='twist angle %.4f' %twist
         return x
     
     def get_table(self):
@@ -87,16 +87,16 @@ class ChiralWedge:
                 assert isinstance(M,int)
                 self._set(angle=2*np.pi/M)
             elif angle != None:
-                M = int( round(2*np.pi/angle) )
+                M = np.abs(int( round(2*np.pi/angle) ))
                 self._set(angle=angle)
                 
             # check parameters
             self._set( physical=float(physical) )
-            if self.get('angle')<1E-6:
+            if np.abs(self.get('angle'))<1E-6:
                 raise Warning('Too small angle (%f) may bring numerical problems.' %self.get('angle'))
             if self.get('angle')>np.pi:
                 raise AssertionError('angle>pi')
-            if np.abs(M-2*np.pi/self.get('angle'))>1E-12 and self.get('physical'): 
+            if np.abs(M-2*np.pi/np.abs(self.get('angle')))>1E-12 and self.get('physical'): 
                 raise AssertionError('angle not physical: angle != 2*pi/M')
             if not self.get('physical') and M<20:
                 warnings.warn('Quite large, non-physical angle 2*pi/%.4f.' %(2*np.pi/self.get('angle')) )
@@ -133,7 +133,7 @@ class ChiralWedge:
         
     def get_symmetry_operation_ranges(self):
         """ Return ranges for symmetry operations. """
-        M = int( round(2*np.pi/self.get('angle')) )
+        M = int( round(2*np.pi/np.abs(self.get('angle'))) )
         i = M/2
         zi = 0
         if np.mod(M,2)==1:
