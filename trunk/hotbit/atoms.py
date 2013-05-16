@@ -237,23 +237,7 @@ class Atoms(ase_Atoms):
 
     def __eq__(self,other):
         return ase_Atoms.__eq__(self,other)
-        #print self._cell
-        #print other._cell
-        #print ase_Atoms.__eq__(self,other)
-        #=======================================================================
-        # if ase_Atoms.__eq__(self,other):
-        #    # for Bravais ase's Atoms.__eq__ is enough
-        #    if self.container.type == 'Bravais':
-        #        return True
-        #    else:
-        #        if hasattr(other,'container'):
-        #            return self.same_container(other)
-        #        else:
-        #            raise AssertionError('Comparing Bravais and non-Bravais containers should not happen. Check the code.')
-        # else:
-        #    return False    
-        #=======================================================================
-        
+
     def same_container(self,other):
         """ Check if atoms has the same container. """
         return self.container==other.container
@@ -262,17 +246,6 @@ class Atoms(ase_Atoms):
     def copy(self):    
         """Return a copy."""
         cp = Atoms(atoms=self,container=self.container.type)
-        #cp += self
-        # set cell and pbc for initialization
-        #cp.set_pbc( self.get_pbc() )
-        #cp.set_cell( self.get_cell() )
-        #if self.container.type!='Bravais':
-        #    cp.set_container(container=self.container)
-        # reset cell (for ase and visualization use) exactly the same
-        # (ase cell in set_container is taken from present atom positions,
-        # even though originally it might have been set earlier)
-        #assert np.all( self.get_pbc()==cp.get_pbc() ) 
-        #cp.set_cell( self.get_cell() )
         return cp
         
     def __imul__(self, m):
