@@ -16,6 +16,7 @@ tests = [
     'linear_response.py',
     'C6H6_cell_game.py',
     'mulliken.py',
+    'd-orbital_rotation_yaxis.py',
     'multipole_operations.py',
     'periodicity.py',
     'madelung_constants.py',
