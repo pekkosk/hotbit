@@ -11,7 +11,7 @@ def container_magic(atoms,container=None):
     Set or get container 
     (according to the element [0,0])
     """
-    lst = ['Wedge','Chiral','DoubleChiral','Sphere','Slab','ChiralWedge']
+    lst = ['Wedge','Chiral','DoubleChiral','Sphere','Slab','ChiralWedge','WedgeYAxis']
     magic = -0.0123454321
     cell = atoms.get_cell()
     if container==None:
@@ -173,9 +173,12 @@ class Atoms(ase_Atoms):
         self._check_symmetry_operation(n)
         return self._rotation_of_axes(n)
     
-    def rotation(self,n):
+    def rotation(self,n,angles=False):
         self._check_symmetry_operation(n)
-        return self._rotation(n)
+        if angles:
+            return self._rotation(n,angles)
+        else:
+            return self._rotation(n)
                 
     def extended_copy(self,n):
         """ Get copies of atoms for all listed symmetry operations n.
