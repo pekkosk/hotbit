@@ -110,7 +110,7 @@ class Slab:
             rn[2] = -rn[2]
         return rn
     
-    def rotation(self,n):
+    def rotation(self,n,angles=False):
         """ No rotation in translations. """
         R = np.eye(3)
         if n[2]==0:

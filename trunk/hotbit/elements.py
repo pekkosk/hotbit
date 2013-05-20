@@ -284,13 +284,14 @@ class Elements:
         return self.atoms.rotation_of_axes(n)
     
     
-    def rotation(self,n):
+    def rotation(self,n,angles=False):
         '''
         Return the quantization axis rotation matrix for given symmetry operation.
          
         @param n: 3-tuple for transformation 
+        @param angles: return angles instead (theta, phi (rotation direction), and angle for rotation angle)
         '''
-        return self.atoms.rotation(n)
+        return self.atoms.rotation(n,angles)
         
     
     def nvector(self,r,ntuple=(0,0,0),r0=np.array([0,0,0]),lst='vec'):

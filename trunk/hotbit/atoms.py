@@ -245,7 +245,7 @@ class Atoms(ase_Atoms):
         
     def copy(self):    
         """Return a copy."""
-        cp = Atoms(atoms=self,container=self.container.type)
+        cp = Atoms(atoms=self,container=self.container.type) ###
         return cp
         
     def __imul__(self, m):

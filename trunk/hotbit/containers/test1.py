@@ -78,7 +78,7 @@ class ContainerTest1:
         return rn
         
     
-    def rotation(self,n):
+    def rotation(self,n,angles=False):
         """ No rotation in translations. """
         R = np.eye(3)
         if n[1]==1:

@@ -79,7 +79,7 @@ class Bravais:
             rn = rn + n[a]*cell[a,:]
         return rn
     
-    def rotation(self,n):
+    def rotation(self,n,angles=False):
         """ No rotation in translations. """
         return np.eye(3)
     

@@ -1,37 +1,24 @@
+from ase import *
+from hotbit import *
+from ase import io
+
 import numpy as np
 from box.mix import phival
 from math import sin,cos 
 from weakref import proxy
 import warnings
 
-class Wedge:
+class CustomContainer:
     
-    def __init__(self,atoms,type):
-        '''
-        Class for wedge boundary conditions.
-        
-           ^ y-axis
-           |    /
-           |   /
-           |  /  
-           | /  angle 
-           +----------> x-axis
-        
-        @param: atoms    hotbit.Atoms instance
-        @param: type     Should equal to "Wedge"
-        
-        More documentation for the methods can be found from hotbit.Atoms -class. 
-        '''
-        self.type='Wedge'
-        assert type==self.type
+    def __init__(self,atoms):
         self.atoms = proxy(atoms)
         self.par = {'height':(1,0),'angle':(2,0),'pbcz':(0,1),'physical':(1,1)}
         self.atoms.set_pbc((True,False,atoms.get_pbc()[2]))
-        #self._set_table()
+
       
-    def get_type(self):
-        return self.type  
-        
+    def copy(self,atoms):
+        return CustomContainer(atoms)    
+    
     def __repr__(self):
         angle, height, pbcz, physical = self.get('angle'), self.get('height'), self.get('pbcz'), self.get('physical')
         x='Wedge: angle=%.4f (2*pi/%.2f, ' %(angle,2*np.pi/angle)
@@ -180,3 +167,15 @@ class Wedge:
             R = np.array([[cos(angle),-sin(angle),0],[sin(angle),cos(angle),0],[0,0,1]])
             return R
 
+
+
+M=7
+
+atoms = Atoms('Au2',[(5,0,0),(5,2.5,0.3)],container=CustomContainer)
+
+
+atoms.set_container(M=M,height=5.0)
+calc=Hotbit(SCC=False,txt='-',kpts=(M,1,1))
+atoms.set_calculator(calc)
+
+e1 = atoms.get_potential_energy()

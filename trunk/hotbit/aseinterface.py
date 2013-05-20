@@ -163,6 +163,10 @@ class Hotbit(Output):
         self.init=False
         self.notes=[]
         self.dry_run = '--dry-run' in sys.argv
+        self.set('tol_imaginary_e', 1E-13 )     # tolerance for imaginary band energy 
+        self.set('tol_mulliken', 1E-5 )         # tolerance for mulliken charge sum deviation from integer
+        self.set('tol_eigenvector_norm', 1E-6)  # tolerance for eigenvector norm for eigensolver
+        self.set('symop_range', 5)              # range for the number of symmetry operations in all symmetries
         #self.set_text(self.txt)
         #self.timer=Timer('Hotbit',txt=self.get_output())
 
@@ -256,7 +260,7 @@ class Hotbit(Output):
     def set(self,key,value):
         if key == 'txt':
             self.set_text(value)
-        elif self.init==True or key not in ['charge']:
+        elif self.init==True and key not in ['charge']:
             raise AssertionError('Parameters cannot be set after initialization.')
         else:
             self.__dict__[key]=value
