@@ -114,13 +114,13 @@ class Solver:
             self.calc.start_timing('Check norm (remove?)')
             norms = ( np.dot(wf.conj(),S)*wf ).sum(axis=1)
             maxdev = np.abs(norms-1).max() 
-            if maxdev>1E-6:
+            if maxdev>self.calc.get('tol_eigenvector_norm'):
                 eval,efunc = eigh(S)
                 evmin =  eval.min()
                 if evmin<0:
-                    raise AssertionError('Eigenfunction norm from LAPACK %.4f. Minimum eigenvalue of S is %.4f - overlap matrix is not positive definite.' %(maxdev,evmin))
+                    raise AssertionError('Eigenfunction norm deviations from LAPACK %.8f. Minimum eigenvalue of S is %.4f - overlap matrix is not positive definite.' %(maxdev,evmin))
                 else:
-                    raise AssertionError('Eigenfunction norm from LAPACK %.4f, but overlap matrix still appears positive definite.' %(maxdev))
+                    raise AssertionError('Eigenfunction norm deviations from LAPACK %.8f, but overlap matrix still appears positive definite.' %(maxdev))
             self.calc.stop_timing('Check norm (remove?)')
             
                 

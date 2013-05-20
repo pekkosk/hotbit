@@ -325,7 +325,7 @@ class States:
             
         dq = np.array(q)-self.calc.el.get_valences()
         q,c = sum(-dq),self.calc.get('charge') 
-        if np.abs(q-c)>1E-5:
+        if np.abs(q-c) > self.calc.get('tol_mulliken'):
             raise RuntimeError('Mulliken charges (%.4f) do not add up to total charge (%.4f)!' %(q,c))
         return dq
 
@@ -342,7 +342,7 @@ class States:
         for ik in xrange(self.nk):
             diagonal = ( self.rho[ik]*self.H0[ik].transpose() ).sum(axis=1)
             ebs += self.wk[ik] * diagonal.sum()
-        assert ebs.imag<1E-13
+        assert ebs.imag<self.calc.get('tol_imaginary_e')
         self.calc.stop_timing('e_bs')
         return ebs.real 
 

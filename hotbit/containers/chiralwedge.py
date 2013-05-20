@@ -150,7 +150,7 @@ class ChiralWedge:
         trans = n[2]*np.array([0,0,self.get('height')])
         return np.dot(R,r) + np.array(trans)
     
-    def rotation(self,n):
+    def rotation(self,n,angles=False):
         """ Active rotation matrix of given angle wrt. z-axis."""
         angle = n[0]*self.get('angle') + n[2]*self.get('twist')
         R = np.array([[cos(angle),-sin(angle),0],[sin(angle),cos(angle),0],[0,0,1]])

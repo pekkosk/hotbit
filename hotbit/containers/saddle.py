@@ -88,7 +88,7 @@ class Saddle:
             rp = A + np.dot( rot2,rp-A )
         return rp        
         
-    def rotation(self,n):
+    def rotation(self,n,angles=False):
         """ Rotate around two axes, ordering depending on mode. """
         if n[0]==n[1]==0:
             return np.eye(3)

@@ -9,6 +9,7 @@ from weakref import proxy
 from copy import copy
 from os import path
 from hotbit.io import read_HS
+from math import cos, sin, sqrt
 
 from _hotbit import fast_slako_transformations
 
@@ -211,56 +212,58 @@ class Interactions:
         '''
         Return the transpose of 9x9 rotation transformation matrix for given symmetry operation.
         
+        For example, below transformation for a rotation around z-axis:
+        
             | 1   0   0   0    0    0    0   0   0 |   s  } s-orbital 
-            | 0  ca -sa   0    0    0    0   0   0 |   px
-            | 0  sa  ca   0    0    0    0   0   0 |   py } p-orbitals         ca = cos(a)
+            | 0  ca  sa   0    0    0    0   0   0 |   px
+            | 0 -sa  ca   0    0    0    0   0   0 |   py } p-orbitals         ca = cos(a)
             | 0   0   0   1    0    0    0   0   0 |   pz                      sa = sin(a)
-         D= | 0   0   0   0   c2a   0    0 s2a   0 |   dxy                     c2a = cos(2a)
-            | 0   0   0   0    0   ca   sa   0   0 |   dyz                     s2a = sin(2a)
-            | 0   0   0   0    0  -sa   ca   0   0 |   dzx } d-orbitals
-            | 0   0   0   0 -s2a    0    0 c2a   0 |   dx2-y2
+         D= | 0   0   0   0   c2a   0    0 -s2a  0 |   dxy                     c2a = cos(2a)
+            | 0   0   0   0    0   ca   -sa  0   0 |   dyz                     s2a = sin(2a)
+            | 0   0   0   0    0   sa   ca   0   0 |   dzx } d-orbitals
+            | 0   0   0   0  s2a    0    0 c2a   0 |   dx2-y2
             | 0   0   0   0    0    0    0   0   1 |   d3z2-r2
         
         @param n: 3-tuple of symmetry transformation
         '''
         R = self.calc.el.rotation(n)
+
+        if np.all(abs(R.diagonal()-1)<1E-12): 
+            #no rotation
+            return np.eye(9)
         
-        if np.any(np.array(self.calc.el.get_property_lists(['no']))>4) and abs(R[2,2]-1)>1E-12:
+        elif np.any(np.array(self.calc.el.get_property_lists(['no']))>4) and abs(R[2,2]-1)>1E-12:
+            # These are more complex transformations for d-orbitals. Use only if needed, for they
+            # may take more time.
             if abs(R[2,2]+1)<1E-12:
-                # only xy-plane reflection FIXME!! (this was sheer lazyness; implement the general rotation!)
+                # only xy-plane reflection (orbitals antisymm. wrt z-axis change sign)
                 D = np.eye(9)
                 D[3,3] = -1
                 D[5,5] = -1
                 D[6,6] = -1
                 return D
             else:
-                raise NotImplementedError('General non-z-axis rotation not implemented for d-orbitals')
-        
-        if np.all(abs(R.diagonal()-1)<1E-12): #no rotation 
-            return np.eye(9)
-        
-        ca, sa = R[0,0], -R[0,1] 
-        c2a, s2a = 2*ca**2-1, 2*sa*ca
-        
-        D = np.diag((1.0,ca,ca,1.0,c2a,ca,ca,c2a,1.0))
-                    
-        #D[1,2] = -sa
-        #D[2,1] = sa
-        #D[5,6] = sa
-        #D[6,5] = -sa
-        #D[4,7] = s2a
-        #D[7,4] = -s2a
-        
-        D[1,2] = sa
-        D[2,1] = -sa
-        D[5,6] = -sa
-        D[6,5] = sa
-        D[4,7] = -s2a
-        D[7,4] = s2a
-        
-        #print R
-        D[1:4,1:4] = R[:,:].transpose()
-        return D.transpose()
+                # This is the general transformation with full expressions:
+                rot = self.calc.el.rotation(n,angles=True)
+                theta,phi,angle = rot
+                D = orbital_transformations_from_angles((theta,phi,angle))
+                return D.transpose()
+                                
+        else:
+            # rotation around z-axis, bit more simple transformations than the general case  
+            ca, sa = R[0,0], -R[0,1] 
+            c2a, s2a = 2*ca**2-1, 2*sa*ca
+            D = np.diag((1.0,ca,ca,1.0,c2a,ca,ca,c2a,1.0))
+    
+            D[1,2] = sa
+            D[2,1] = -sa
+            D[5,6] = -sa
+            D[6,5] = sa
+            D[4,7] = -s2a
+            D[7,4] = s2a
+            
+            D[1:4,1:4] = R[:,:].transpose()
+            return D.transpose()
     
     
     def get_phases(self):
@@ -420,6 +423,64 @@ class Interactions:
         """ Maximum cutoff. """
         return self.max_cut
 
+
+
+
+def orbital_transformations_from_angles(angles):
+    """
+    Return the unitary transformation matrix, given rotation angles
+    
+    theta, phi, angle = angles, where theta, phi is the direction of rotation axis, and angle
+    is the rotated angle
+    
+    Transformation equations are direct output from SAGE calculation (20.5 2013)
+    """
+    theta, phi, angle = angles
+    D = np.zeros((9,9))
+    # s-orbital
+    D[0,0] = 1.0
+    pi = np.pi
+    ca, sa, ct, st, cp, sp = cos(angle), sin(angle), cos(theta), sin(theta), cos(phi), sin(phi) 
+    ca2, sa2, ct2, st2, cp2, sp2 = ca**2, sa**2, ct**2, st**2, cp**2, sp**2
+    ca1 = 1-ca
+    # p-orbitals (transforms the same as rotation matrix itself) 
+    D[1,1] = (ca1*st2*cp2 + ca)
+    D[1,2] = (ca1*sp*st2*cp + sa*ct)
+    D[1,3] = (ca1*cp*ct - sa*sp)*st
+    D[2,1] = (ca1*sp*st2*cp - sa*ct)
+    D[2,2] = (ca1*sp2*st2 + ca)
+    D[2,3] = (ca1*sp*ct + sa*cp)*st
+    D[3,1] = (ca1*cp*ct + sa*sp)*st
+    D[3,2] = (ca1*sp*ct - sa*cp)*st
+    D[3,3] = (ca1*ct2 + ca)
+
+    # d-orbitals
+    D[4,4] = (2*(pi + pi*ca2 - 2*pi*ca)*sp2*st**4*cp2 - pi*sa2*ct2 - ((pi*ca2 - pi*ca)*sp2 + (pi*ca2 - pi*ca)*cp2)*st2 + pi*ca2)/pi
+    D[4,5] = -(((pi - pi*ca)*sa*sp**3 - (pi - pi*ca)*sa*sp*cp2 - 2*(pi + pi*ca2 - 2*pi*ca)*sp2*cp*ct)*st**3 - ((pi - pi*ca)*sa*sp*ct2 - pi*sa*sp*ca + (pi*sa2 - pi*ca2 + pi*ca)*cp*ct)*st)/pi
+    D[4,6] = -(((pi - pi*ca)*sa*sp2*cp - (pi - pi*ca)*sa*cp**3 - 2*(pi + pi*ca2 - 2*pi*ca)*sp*cp2*ct)*st**3 + ((pi - pi*ca)*sa*cp*ct2 - pi*sa*ca*cp - (pi*sa2 - pi*ca2 + pi*ca)*sp*ct)*st)/pi
+    D[4,7] = -(((pi + pi*ca2 - 2*pi*ca)*sp**3*cp - (pi + pi*ca2 - 2*pi*ca)*sp*cp**3)*st**4 + ((pi - pi*ca)*sa*sp2 + (pi - pi*ca)*sa*cp2)*st2*ct + 2*pi*sa*ca*ct)/pi
+    D[4,8] = -1./3*(((pi + pi*ca2 - 2*pi*ca)*sp**3*cp + (pi + pi*ca2 - 2*pi*ca)*sp*cp**3)*st**4 - (2*(pi + pi*ca2 - 2*pi*ca)*sp*cp*ct2 - 2*(pi*sa2 - pi*ca2 + pi*ca)*sp*cp - 3*((pi - pi*ca)*sa*sp2 - (pi - pi*ca)*sa*cp2)*ct)*st2)*sqrt(3)/pi
+    D[5,4] = (((pi - pi*ca)*sa*sp**3 - (pi - pi*ca)*sa*sp*cp2 + 2*(pi + pi*ca2 - 2*pi*ca)*sp2*cp*ct)*st**3 - ((pi - pi*ca)*sa*sp*ct2 - pi*sa*sp*ca - (pi*sa2 - pi*ca2 + pi*ca)*cp*ct)*st)/pi
+    D[5,5] = -((pi*ca2 - pi*ca)*ct2 - (2*(pi + pi*ca2 - 2*pi*ca)*sp2*ct2 - pi*sa2*cp2 - (pi*ca2 - pi*ca)*sp2)*st2 - pi*ca2)/pi
+    D[5,6] = -((pi - pi*ca)*sa*ct**3 + pi*sa*ca*ct - (2*(pi + pi*ca2 - 2*pi*ca)*sp*cp*ct2 + (pi*sa2 - pi*ca2 + pi*ca)*sp*cp + ((pi - pi*ca)*sa*sp2 + (pi - pi*ca)*sa*cp2)*ct)*st2)/pi
+    D[5,7] = ((2*(pi - pi*ca)*sa*sp2*cp - ((pi + pi*ca2 - 2*pi*ca)*sp**3 - (pi + pi*ca2 - 2*pi*ca)*sp*cp2)*ct)*st**3 - ((pi - pi*ca)*sa*cp*ct2 - pi*sa*ca*cp + (pi*sa2 - pi*ca2 + pi*ca)*sp*ct)*st)/pi
+    D[5,8] = -1./3*(((pi + pi*ca2 - 2*pi*ca)*sp**3 + (pi + pi*ca2 - 2*pi*ca)*sp*cp2)*st**3*ct - (3*(pi - pi*ca)*sa*cp*ct2 + 2*(pi + pi*ca2 - 2*pi*ca)*sp*ct**3 + 3*pi*sa*ca*cp + (pi*sa2 - pi*ca2 + pi*ca)*sp*ct)*st)*sqrt(3)/pi
+    D[6,4] = (((pi - pi*ca)*sa*sp2*cp - (pi - pi*ca)*sa*cp**3 + 2*(pi + pi*ca2 - 2*pi*ca)*sp*cp2*ct)*st**3 + ((pi - pi*ca)*sa*cp*ct2 - pi*sa*ca*cp + (pi*sa2 - pi*ca2 + pi*ca)*sp*ct)*st)/pi
+    D[6,5] = ((pi - pi*ca)*sa*ct**3 + pi*sa*ca*ct + (2*(pi + pi*ca2 - 2*pi*ca)*sp*cp*ct2 + (pi*sa2 - pi*ca2 + pi*ca)*sp*cp - ((pi - pi*ca)*sa*sp2 + (pi - pi*ca)*sa*cp2)*ct)*st2)/pi
+    D[6,6] = -((pi*ca2 - pi*ca)*ct2 - (2*(pi + pi*ca2 - 2*pi*ca)*cp2*ct2 - pi*sa2*sp2 - (pi*ca2 - pi*ca)*cp2)*st2 - pi*ca2)/pi
+    D[6,7] = ((2*(pi - pi*ca)*sa*sp*cp2 - ((pi + pi*ca2 - 2*pi*ca)*sp2*cp - (pi + pi*ca2 - 2*pi*ca)*cp**3)*ct)*st**3 - ((pi - pi*ca)*sa*sp*ct2 - pi*sa*sp*ca - (pi*sa2 - pi*ca2 + pi*ca)*cp*ct)*st)/pi
+    D[6,8] = -1./3*(((pi + pi*ca2 - 2*pi*ca)*sp2*cp + (pi + pi*ca2 - 2*pi*ca)*cp**3)*st**3*ct + (3*(pi - pi*ca)*sa*sp*ct2 - 2*(pi + pi*ca2 - 2*pi*ca)*cp*ct**3 + 3*pi*sa*sp*ca - (pi*sa2 - pi*ca2 + pi*ca)*cp*ct)*st)*sqrt(3)/pi
+    D[7,4] = -(((pi + pi*ca2 - 2*pi*ca)*sp**3*cp - (pi + pi*ca2 - 2*pi*ca)*sp*cp**3)*st**4 - ((pi - pi*ca)*sa*sp2 + (pi - pi*ca)*sa*cp2)*st2*ct - 2*pi*sa*ca*ct)/pi
+    D[7,5] = -((2*(pi - pi*ca)*sa*sp2*cp + ((pi + pi*ca2 - 2*pi*ca)*sp**3 - (pi + pi*ca2 - 2*pi*ca)*sp*cp2)*ct)*st**3 - ((pi - pi*ca)*sa*cp*ct2 - pi*sa*ca*cp - (pi*sa2 - pi*ca2 + pi*ca)*sp*ct)*st)/pi
+    D[7,6] = -((2*(pi - pi*ca)*sa*sp*cp2 + ((pi + pi*ca2 - 2*pi*ca)*sp2*cp - (pi + pi*ca2 - 2*pi*ca)*cp**3)*ct)*st**3 - ((pi - pi*ca)*sa*sp*ct2 - pi*sa*sp*ca + (pi*sa2 - pi*ca2 + pi*ca)*cp*ct)*st)/pi
+    D[7,7] = 1./2*(((pi + pi*ca2 - 2*pi*ca)*sp**4 - 2*(pi + pi*ca2 - 2*pi*ca)*sp2*cp2 + (pi + pi*ca2 - 2*pi*ca)*cp**4)*st**4 - 2*pi*sa2*ct2 - 2*((pi*ca2 - pi*ca)*sp2 + (pi*ca2 - pi*ca)*cp2)*st2 + 2*pi*ca2)/pi
+    D[7,8] = 1./6*(((pi + pi*ca2 - 2*pi*ca)*sp**4 - (pi + pi*ca2 - 2*pi*ca)*cp**4)*st**4 - 2*(6*(pi - pi*ca)*sa*sp*cp*ct + ((pi + pi*ca2 - 2*pi*ca)*sp2 - (pi + pi*ca2 - 2*pi*ca)*cp2)*ct2 - (pi*sa2 - pi*ca2 + pi*ca)*sp2 + (pi*sa2 - pi*ca2 + pi*ca)*cp2)*st2)*sqrt(3)/pi
+    D[8,4] = -1./3*(((pi + pi*ca2 - 2*pi*ca)*sp**3*cp + (pi + pi*ca2 - 2*pi*ca)*sp*cp**3)*st**4 - (2*(pi + pi*ca2 - 2*pi*ca)*sp*cp*ct2 - 2*(pi*sa2 - pi*ca2 + pi*ca)*sp*cp + 3*((pi - pi*ca)*sa*sp2 - (pi - pi*ca)*sa*cp2)*ct)*st2)*sqrt(3)/pi
+    D[8,5] = -1./3*(((pi + pi*ca2 - 2*pi*ca)*sp**3 + (pi + pi*ca2 - 2*pi*ca)*sp*cp2)*st**3*ct + (3*(pi - pi*ca)*sa*cp*ct2 - 2*(pi + pi*ca2 - 2*pi*ca)*sp*ct**3 + 3*pi*sa*ca*cp - (pi*sa2 - pi*ca2 + pi*ca)*sp*ct)*st)*sqrt(3)/pi
+    D[8,6] = -1./3*(((pi + pi*ca2 - 2*pi*ca)*sp2*cp + (pi + pi*ca2 - 2*pi*ca)*cp**3)*st**3*ct - (3*(pi - pi*ca)*sa*sp*ct2 + 2*(pi + pi*ca2 - 2*pi*ca)*cp*ct**3 + 3*pi*sa*sp*ca + (pi*sa2 - pi*ca2 + pi*ca)*cp*ct)*st)*sqrt(3)/pi
+    D[8,7] = 1./6*(((pi + pi*ca2 - 2*pi*ca)*sp**4 - (pi + pi*ca2 - 2*pi*ca)*cp**4)*st**4 + 2*(6*(pi - pi*ca)*sa*sp*cp*ct - ((pi + pi*ca2 - 2*pi*ca)*sp2 - (pi + pi*ca2 - 2*pi*ca)*cp2)*ct2 + (pi*sa2 - pi*ca2 + pi*ca)*sp2 - (pi*sa2 - pi*ca2 + pi*ca)*cp2)*st2)*sqrt(3)/pi
+    D[8,8] = 1./6*(((pi + pi*ca2 - 2*pi*ca)*sp**4 + 2*(pi + pi*ca2 - 2*pi*ca)*sp2*cp2 + (pi + pi*ca2 - 2*pi*ca)*cp**4)*st**4 + 4*(pi + pi*ca2 - 2*pi*ca)*ct**4 + 2*(pi*sa2 - 4*pi*ca2 + 4*pi*ca)*ct2 - 2*(2*((pi + pi*ca2 - 2*pi*ca)*sp2 + (pi + pi*ca2 - 2*pi*ca)*cp2)*ct2 + (2*pi*sa2 + pi*ca2 - pi*ca)*sp2 + (2*pi*sa2 + pi*ca2 - pi*ca)*cp2)*st2 + 6*pi*ca2)/pi
+    return D
 
 def simple_table_notation(table):
     a,b,i=table[2:].split('-')

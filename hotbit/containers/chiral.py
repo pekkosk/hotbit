@@ -109,7 +109,7 @@ class Chiral:
         R = self.rotation(n)
         return np.dot(R,r) + (0,0,n[2]*self.get('height'))
     
-    def rotation(self,n):
+    def rotation(self,n,angles=False):
         """ Return the (active) rotation matrix for symmetry operation n. """
         angle = n[2]*self.get('angle')
         R = np.array([[cos(angle),-sin(angle),0],[sin(angle),cos(angle),0],[0,0,1]])

@@ -146,11 +146,13 @@ class Sphere:
         """ Symmetry transformation n for position r. """
         return np.dot( self.rotation(n),r )
 
-    def rotation(self,n):
+    def rotation(self,n,angles=False):
         """ Rotate around two axes, ordering depending on mode. """
         if n[0]==n[1]==0:
             return np.eye(3)
         angle1, angle2, n1, n2, mode = [self.get(k) for k in ['angle1','angle2','n1','n2','mode']]
+        if angles and mode!=4:
+            raise NotImplementedError('Sphere rotation implemented only for mode 4 so far.')
         if self.mode==1 or self.mode==2:
             R1n = rotation_matrix( n1,n[0]*angle1 )
             R2n = rotation_matrix( n2,n[1]*angle2 )
@@ -177,8 +179,11 @@ class Sphere:
                 R = np.dot(R2,R)
             return R
         elif self.mode==4:
-            #axis = n[0]*self.n1 + n[1]*self.n2
             axis = angle1*n[0]*n1 + angle2*n[1]*n2
             a1,a2 = angle1*n[0], angle2*n[1]
             angle = np.sqrt( a1**2 + a2**2 + 2*a1*a2*np.dot(n1,n2) )
-            return rotation_matrix( axis,angle )
+            if angles:
+                axis = axis/np.linalg.norm(axis)
+                return np.pi/2.,np.arctan2(axis[1],axis[0]),angle
+            else:
+                return rotation_matrix( axis,angle )
