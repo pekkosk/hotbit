@@ -135,7 +135,6 @@ def read_table(parfile,s1,s2):
             tab=mix.find_value(parfile,'%s_%s_table' %(s2,s1),fmt='matrix')
             table.append(tab[:,1:])
             f.close()
-    print rgrid.shape,table[0].shape
     return rgrid, table
 
 
@@ -152,7 +151,6 @@ def read_skf_table(parfile,s1,s2):
         line = fortran_readline( f.readline() )
         if len(line)>0:
             table += [line]
-    print table
     return dx*np.arange(0,n-1), np.array(table)
 
 
