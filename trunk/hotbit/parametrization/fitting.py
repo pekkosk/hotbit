@@ -104,6 +104,14 @@ class RepulsiveFitting:
             raise AssertionError('Repulsion is not yet fitted')
         return self.v(r,der=der)
 
+    def get_range(self):
+        """
+        Return rmin,rmax for fitting points.
+        """
+        r = np.array([s[0] for s in self.deriv])
+        return r.min(), r.max()
+        
+        self.deriv
 
     def plot(self, filename=None):
         """ 
@@ -353,6 +361,7 @@ class RepulsiveFitting:
         self.deriv.append([R,dvrep,weight,color,label])
         if comment!='_nolegend_':
             self.add_comment(comment)
+        return R,dvrep,weight
 
 
     def append_scalable_system(self,weight,calc,atoms,comment=None,label=None,color=None):
@@ -457,6 +466,54 @@ class RepulsiveFitting:
         if os.path.isfile(tmpfile+'.bak'):
             os.remove(tmpfile+'.bak')
             
+    def append_energy_slope(self,weight,p,dEdp,p0,calc,traj,comment=None,label=None,color=None):
+        """
+        Calculates the V'rep(r) at one point using trajectory over parameters p.
+        
+        Trajectory is calculated using parameters p, giving E(p), where E is the total energy
+        without Vrep(r). The pair distance R=R(p). At p=p0, we set dE/dp|p=p0=dEdp, from which
+        we can set V'rep(R(p)) as
+        
+                    dEdp - dE/dp(p0)
+        V'rep(r) = -------------------
+                      N * dR/dp
+        
+        parameters:
+        ===========        
+        weight:              fitting weight
+        p:                   parameter list
+        dEdp:                slope of energy at p0
+        p0:                  the point where energy slope is set
+        calc:                Hotbit calculator (remember charge and k-points)
+        traj:                filename for ASE trajectory, or PickleTrajectory
+                             object
+        comment:             fitting comment for par-file (replaced by comment if None)       
+        label:               plotting label (replaced by comment if None)
+        color:               plotting color
+        """
+        raise NotImplementedError('This method was never tested properly.')
+        from box.interpolation import SplineFunction
+        R, E, N = [], [], []
+        for atoms in traj:
+            a, c = self._set_calc(atoms,calc)
+            e = a.get_potential_energy()
+            r, n = self._get_repulsion_distances(c)
+            if n>0 and r<self.r_cut:
+                E.append( atoms.get_potential_energy() )
+                R.append(r)
+                N.append(n)
+        
+        R,E,N = np.array(R), np.array(E), np.array(N)
+        if np.any(N[0]!=N):
+            raise NotImplementedError('The number of bonds changes during trajectory; check implementation.')
+        
+        Ef = SplineFunction(p,E)
+        Rf = SplineFunction(p,R)
+        
+        color = self._get_color(color)
+        comment += ';w=%.1f;N=%i' %(weight,N[0])
+        return self.append_point(weight,Rf(p0),(dEdp-Ef(p0,der=1))/(N[0]*Rf(p0,der=1)),comment,label,color)
+        
         
     def append_energy_curve(self,weight,calc,traj,comment=None,label=None,color=None):
         """
@@ -641,12 +698,17 @@ class RepulsiveFitting:
         return R,N  
     
 
-    def write_fitting_data(self, filename):
-        import pickle
+    def write_fitting_data(self, filename, pickle=True):
         f = open(filename,'w')
-        pickle.dump(self.deriv, f)
-        pickle.dump(self.structures, f)
-        pickle.dump(self.comments, f)
+        if pickle:
+            import pickle
+            pickle.dump(self.deriv, f)
+            pickle.dump(self.structures, f)
+            pickle.dump(self.comments, f)
+        else:
+            print>>f, self.deriv
+            print>>f, self.structures
+            print>>f, self.comments
         f.close()
 
 
