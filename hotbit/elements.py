@@ -111,7 +111,7 @@ class Elements:
             
         # determine ranges if they go to infinity
         r = self.atoms.get_symmetry_operation_ranges()
-        Mlarge = 5 # TODO: chek Mlarge to be large enough
+        Mlarge = self.calc.get('symop_range') # TODO: chek Mlarge to be large enough
         self.ranges = []
         s = 'Initial n ranges:'
         for i in range(3):
