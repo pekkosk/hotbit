@@ -352,7 +352,7 @@ class RepulsiveFitting:
         ===========
         weight:    fitting weight 
         R:         radius (Angstroms)
-        vdrep:     V_rep'(R) (eV/Angstroms)
+        dvrep:     V_rep'(R) (eV/Angstroms)
         comment:   fitting comment for par file (replaced by label if None)
         label:     plotting label (replaced by comment if None)
         """

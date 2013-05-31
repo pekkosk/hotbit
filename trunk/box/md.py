@@ -18,7 +18,8 @@ class NullCalculator:
         return np.zeros_like(atoms.get_positions())
     
     def get_stress(self,atoms):
-        return None
+        """ Voigt order. """
+        return  np.array([0.,0.,0.,0.,0.,0.])
     
     def get_potential_energy(self,atoms=None):
         return 0.0
