@@ -457,6 +457,7 @@ class RepulsiveFitting:
         traj2 = PickleTrajectory(tmpfile,'w',atoms2)
         for atoms1 in traj1:
             atoms2.set_positions(atoms1.get_positions())
+            atoms2.set_cell( atoms1.get_cell() )
             atoms2.get_potential_energy()
             traj2.write()
         traj2.close()
