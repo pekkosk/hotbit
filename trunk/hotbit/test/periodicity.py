@@ -52,7 +52,7 @@ def electrostatics_test(b, r=3, r0=None):
 
     # Check multipole moments
     mp  = MultipoleExpansion(L_MAX, r, k3, r0)
-    mp.update(b, b.get_charges())
+    mp.update(b, b.get_initial_charges())
 
     # Store moments and field for later
     moments          = mp.get_moments()
@@ -86,7 +86,7 @@ def electrostatics_test(b, r=3, r0=None):
 
     # Next neighbor shell by direct summation
     mp  = MultipoleExpansion(L_MAX, r*r*r, k1, r0)
-    mp.update(b, b.get_charges())
+    mp.update(b, b.get_initial_charges())
 
     phi_dir, E_dir  = mp.get_potential_and_field(b)
 
@@ -98,7 +98,7 @@ def electrostatics_test(b, r=3, r0=None):
     rep  = [ ((0,0),(-(r-1)/2, (r-1)/2))[i] for i in b.get_pbc() ]
     c    = b.extended_copy(tuple(rep))
 
-    M0_l, M_L  = get_moments(c.get_positions(), c.get_charges(), L_MAX, r0)
+    M0_l, M_L  = get_moments(c.get_positions(), c.get_initial_charges(), L_MAX, r0)
 
     #print M_L
     #print M_L_mp

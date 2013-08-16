@@ -75,7 +75,7 @@ for sol in solvers:
         
         #a.set_charges([ (Q if sym == syms[0] else -Q) for sym in syms ])
         # to work with older versions
-        a.set_charges([ (-Q,Q)[sym==syms[0]] for sym in syms ])
+        a.set_initial_charges([ (-Q,Q)[sym==syms[0]] for sym in syms ])
 
         a.translate([0.25*a0,0.25*a0,0.25*a0])
         if debug:
@@ -83,10 +83,10 @@ for sol in solvers:
 
         ha = HotbitAtoms(a, container='Bravais')
 
-        sol.update(ha, ha.get_charges())
+        sol.update(ha, ha.get_initial_charges())
 
         phi  = sol.get_potential()
-        e    = np.sum(a.get_charges()*phi)/2
+        e    = np.sum(a.get_initial_charges()*phi)/2
         M    = -2*e*a0*nnd/(len(a))
         err  = abs(M-target_M)
 

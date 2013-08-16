@@ -375,8 +375,11 @@ class Hotbit(Output):
     def solve_ground_state(self,atoms):
         """ If atoms moved, solve electronic structure. """
         if not self.init:
+            assert type(atoms)!=type(None)
             self._initialize(atoms)
-        if self.calculation_required(atoms,'ground state'):
+        if type(atoms)==type(None):
+            pass
+        elif self.calculation_required(atoms,'ground state'):
             self.el.update_geometry(atoms)
             t0 = time()
             self.st.solve()
@@ -387,8 +390,8 @@ class Hotbit(Output):
             self.flags['bonds'] = False
             if self.verbose:
                 print >> self.get_output(), "Solved in %0.2f seconds" % (t1-t0)
-            if self.get('SCC'):
-                atoms.set_charges(-self.st.get_dq())
+            #if self.get('SCC'):
+            #    atoms.set_charges(-self.st.get_dq())
         else:
             pass
 
@@ -790,14 +793,20 @@ class Hotbit(Output):
             self.MA = MullikenAnalysis(self)
             self.flags['Mulliken']=True
         
-    def get_dq(self):
+    def get_dq(self,atoms=None):
         """ Return atoms' excess Mulliken populations.
         
         The total populations subtracted by
         the numbers of valence electrons.
         
         """
+        self.solve_ground_state(atoms)
         return self.st.get_dq()
+    
+    def get_charges(self,atoms=None):
+        """ Return atoms' electric charges (Mulliken). """
+        return -self.get_dq(atoms)
+        
         
     def get_atom_mulliken(self,I):
         """

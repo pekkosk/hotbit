@@ -58,7 +58,7 @@ class DirectCoulomb(Coulomb):
 
     def update(self, a, q=None):
         if q is None:
-            q = a.get_charges()
+            q = a.get_initial_charges()
 
         r = a.get_positions()
         # FIXME!!! Check for change in cell, symmetries
