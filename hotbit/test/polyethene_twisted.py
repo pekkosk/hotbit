@@ -59,7 +59,7 @@ for calc in [ calc2, calc3 ]:
     atoms.rattle(0.1)
 
     # Check electrostatics only
-#    atoms.set_charges([1.0,1.0,1.0,1.0,-1.0,-1.0,-1.0,-1.0])
+#    atoms.set_initial_charges([1.0,1.0,1.0,1.0,-1.0,-1.0,-1.0,-1.0])
 #    atoms.set_calculator(calc.st.es)
 
     # Check forces from finite differences

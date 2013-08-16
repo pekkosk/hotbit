@@ -37,4 +37,5 @@ class Coulomb:
         Return forces.
         """
         raise NotImplementedError()
-
+    
+    

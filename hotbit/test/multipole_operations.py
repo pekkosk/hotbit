@@ -71,7 +71,7 @@ for run in range(NRUNS):
     # Compute moments
     M = [ ]
     for i in range(8):
-        M += [ get_moments(a[i].get_positions(), a[i].get_charges(), L_MAX, r0) ]
+        M += [ get_moments(a[i].get_positions(), a[i].get_initial_charges(), L_MAX, r0) ]
 
     # Construct a composite atoms object
     # and compute the corresponding multipole
@@ -93,7 +93,7 @@ for run in range(NRUNS):
         multipole_to_multipole(dr, L_MAX, M0_l, M_L, Mc0_l, Mc_L)
 
     # Compute the multipole moment directly
-    Md0_l, Md_L = get_moments(b.get_positions(), b.get_charges(), L_MAX, r0c)
+    Md0_l, Md_L = get_moments(b.get_positions(), b.get_initial_charges(), L_MAX, r0c)
 
     err_mom1 = np.max(np.abs(Mc0_l-Md0_l))
     err_mom2 = np.max(np.abs(Mc_L-Md_L))
@@ -158,7 +158,7 @@ for run in range(NRUNS):
     assert err_phi4 < TOL_PHI2
 
     # Compute the multipole moment directly
-    Md0_l, Md_L = get_moments(b.get_positions(), b.get_charges(), L_MAX, r0c)
+    Md0_l, Md_L = get_moments(b.get_positions(), b.get_initial_charges(), L_MAX, r0c)
 
     # Now rotate the atoms, recompute the multipole expansion and compare the result
     # to the rotated expansion
@@ -180,7 +180,7 @@ for run in range(NRUNS):
     for i in b:
         i.position = r0c + np.dot(R, i.position - r0c)
 
-    Me0_l, Me_L = get_moments(b.get_positions(), b.get_charges(), L_MAX, r0c)
+    Me0_l, Me_L = get_moments(b.get_positions(), b.get_initial_charges(), L_MAX, r0c)
     Mf0_l, Mf_L = transform_multipole(R, L_MAX, Md0_l, Md_L)
 
     err_mom3 = np.max(np.abs(Me0_l-Mf0_l))
