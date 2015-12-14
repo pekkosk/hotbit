@@ -312,7 +312,7 @@ class Hotbit(Output):
             print>>self.txt, ', %s-points=%i, M=%.f' %(rs,kpts[i],M[i])
         print>>self.txt,  'Electronic temperature:', self.width*Hartree,'eV'
         mixer = self.st.solver.mixer
-        print>>self.txt,  'Mixer:', mixer.get('name'), 'with memory =', mixer.get('memory'), ', mixing constant =', mixer.get('beta')
+        print>>self.txt,  'Mixer:', mixer.get('name'), 'with memory =', mixer.get('memory'), ', mixing parameter =', mixer.get('beta')
         print>>self.txt, self.el.greetings()
         print>>self.txt, self.ia.greetings()
         print>>self.txt, self.rep.greetings()
