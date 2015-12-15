@@ -23,7 +23,7 @@ Hotbit aims to provide
 
 If you find hotbit useful in your work, please cite ([pdf](http://users.jyu.fi/~pekkosk/resources/pdf/koskinen_CMS_09.pdf)):
 ```
-    @article{koskinen_,
+    @article{koskinen_CMS_09,
       Author = {P. Koskinen, V. Mäkinen},
       Journal = {Computational Material Science},
       Title = {Density-functional tight-binding for beginners},
