@@ -1,8 +1,7 @@
-# hotbit
-ASE density-functional tight-binding calculator
+<img src="https://github.com/pekkosk/hotbit/blob/master/hotbit/doc/hotbit_logo_small.png" alt="logo" width="100">
 
-
-Hotbit aims to provide
+# Hotbit 
+Hotbit is an ASE density-functional tight-binding calculator that aims to provide
 * an open-source DFTB code
 * a handy companion for DFT (for easy & fast electronic structure analysis, for quick access to dynamical properties for testing, and for playing around)
 * a compact and accessible code for everyone to inspect and modify (avoiding parallelization implies that the code is less suitable for large systems)
