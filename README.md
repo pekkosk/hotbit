@@ -1,20 +1,13 @@
 # hotbit
 ASE density-functional tight-binding calculator
 
-## Philosophy behind Hotbit 
 
 Hotbit aims to provide
 * an open-source DFTB code
-* a companion for DFT,
-  - for easy & fast electronic structure analysis
-  - to access to dynamical properties
-  - to investigate systems of same size
-  - for testing, playing around 
-* a compact and accessible code for everyone to inspect and modify
-  - trying to avoid parallelization, which implies that the code is less suitable for large systems
-* an intuitive user interface
-  - ideal for learning and teaching realistic electronic structure simulations 
-  
+* a handy companion for DFT (for easy & fast electronic structure analysis, for quick access to dynamical properties for testing, and for playing around)
+* a compact and accessible code for everyone to inspect and modify (avoiding parallelization implies that the code is less suitable for large systems)
+* an intuitive user interface (ideal for learning and teaching realistic electronic structure simulations)
+
   
 ## Take a closer look:
 
@@ -29,6 +22,7 @@ Hotbit aims to provide
 
 
 If you find hotbit useful in your work, please cite ([pdf](http://users.jyu.fi/~pekkosk/resources/pdf/koskinen_CMS_09.pdf)):
+```
     @article{koskinen_,
       Author = {P. Koskinen, V. Mäkinen},
       Journal = {Computational Material Science},
@@ -37,4 +31,4 @@ If you find hotbit useful in your work, please cite ([pdf](http://users.jyu.fi/~
       Pages = {237},
       Year = {2009}
     }
-
+```
