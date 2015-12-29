@@ -775,6 +775,11 @@ class ConfinementPotential:
             self.r0=kwargs['r0']
             self.f=self.quadratic #lambda r:(r/self.r0)**2
             self.comment='quadratic r0=%.3f' %self.r0
+        elif mode=='general':
+            self.r0=kwargs['r0']
+            self.s=kwargs['s']
+            self.f=self.general #lambda r:(r/self.r0)**s
+            self.comment='general r0=%.3f s=%.3f' %self.r0, self.s
         else:
             raise NotImplementedError('implement new confinements')
 
@@ -786,6 +791,9 @@ class ConfinementPotential:
 
     def quadratic(self,r):
         return (r/self.r0)**2
+
+    def general(self,r):
+        return (r/self.r0)**self.s
 
     def __call__(self,r):
         return self.f(r)
