@@ -38,6 +38,22 @@ get_system_config(inc_dirs,  libs, lib_dirs,
                   extra_link, extra_compile,
                   msgs)
 
+# check for user provided customizations
+customize = None
+for i, arg in enumerate(sys.argv):
+   if arg.startswith('--customize'):
+      arg = sys.argv.pop(i)
+      try:
+         customize = arg.split('=')[1]
+      except IndexError:
+         customize = 'customize.py'
+      break
+if os.path.isfile(customize):
+   exec(open(customize).read())
+   msgs.append('* Using custom system configuration from %s' %customize)
+elif customize is not None:
+   msgs.append('* No custom system configuration in %s' %customize)
+
 # this is probably silly way of doing this:
 version = '0.1'
 revision=os.popen('svnversion .').readline()[:-1]
@@ -46,7 +62,7 @@ f=open('./hotbit/version.py','w').write('hotbit_version = "%s (svn=%s)"\n' %(ver
 
 s=setup(
     name         = "hotbit",
-    url          = "https://trac.cc.jyu.fi/projects/hotbit",
+    url          = "https://github.com/pekkosk/hotbit",
     description  = "Density-functional tight-binding calculator for ASE",
     author_email = "pekka.koskinen@iki.fi",
     version      = version,
