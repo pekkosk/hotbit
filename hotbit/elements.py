@@ -74,7 +74,7 @@ class Elements:
                     self.files[key] = file 
         
         self._elements_initialization()
-        self.solved={'ground state':None,'energy':None,'forces':None,'stress':None,'ebs':None,'ecoul':None,'magmoms':None}
+        self.solved={'ground state':None,'energy':None,'forces':None,'stress':None,'ebs':None,'ecoul':None,'magmoms':None,'dipole':None,'charges':None,'magmom':None}
 
     def __len__(self):
         return len(self.symbols)

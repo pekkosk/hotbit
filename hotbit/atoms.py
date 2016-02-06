@@ -11,7 +11,7 @@ def container_magic(atoms,container=None):
     Set or get container 
     (according to the element [0,0])
     """
-    lst = ['Wedge','Chiral','DoubleChiral','Sphere','Slab','ChiralWedge','WedgeYAxis']
+    lst = ['Wedge','Chiral','DoubleChiral','Sphere','Slab','ChiralWedge','WedgeYAxis','TwistAndTurn']
     magic = -0.0123454321
     cell = atoms.get_cell()
     if container==None:
@@ -225,7 +225,7 @@ class Atoms(ase_Atoms):
             self._check_symmetry_operation(n)
             atomsn = ase_Atoms()
             atomsn += self
-            atomsn.set_positions( [self.transform(r,n) for r in self.get_positions()] )
+            atomsn.set_positions( np.array([self.transform(r,n) for r in self.get_positions()]) )
             try:
                 atoms2 += atomsn
             except:
