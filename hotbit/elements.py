@@ -10,8 +10,8 @@ from os import environ,path
 from weakref import proxy
 from copy import copy, deepcopy
 from hotbit.atoms import container_magic
-        
-    
+
+
 
 class Elements:
     def __init__(self,calc,atoms,charge=None):
@@ -45,11 +45,11 @@ class Elements:
 
         # default input files if defined. Override them by the custom
         # input files, if specified.
-        
+
         self.files={}
-        for key in self.symbols: 
+        for key in self.symbols:
             self.files[key]=None
-            
+
         # set customized files
         current = path.abspath('.')
         default = environ.get('HOTBIT_PARAMETERS')
@@ -62,7 +62,7 @@ class Elements:
                 else:
                     file = path.abspath(file)
                     self.files[key] = file
-        
+
         # find element data from default place
         if elements==None or elements!=None and 'rest' in elements and elements['rest']=='default':
             for key in self.symbols:
@@ -71,8 +71,8 @@ class Elements:
                 if not path.isfile(file):
                     raise RuntimeError('Default element file "%s" for %s not found.' %(file,key))
                 else:
-                    self.files[key] = file 
-        
+                    self.files[key] = file
+
         self._elements_initialization()
         self.solved={'ground state':None,'energy':None,'forces':None,'stress':None,'ebs':None,'ecoul':None,'magmoms':None,'dipole':None,'charges':None,'magmom':None}
 
@@ -81,10 +81,10 @@ class Elements:
 
     def __del__(self):
         pass
-    
+
     def get_N(self):
         """ Return the number of atoms. """
-        return self.N    
+        return self.N
 
     def greetings(self):
         """ Return documentation for elements from .elm files. """
@@ -103,12 +103,12 @@ class Elements:
                     txt+='    *'+line.lstrip()+'\n'
         if txt=='':
             txt='No comments for elements.'
-        return txt    
-    
+        return txt
+
     def set_atoms(self,atoms):
         """ Set the atoms object ready for calculations. """
         self._update_atoms(atoms)
-            
+
         # determine ranges if they go to infinity
         r = self.atoms.get_symmetry_operation_ranges()
         Mlarge = self.calc.get('symop_range') # TODO: chek Mlarge to be large enough
@@ -147,7 +147,7 @@ class Elements:
         for quantity in quantities:
             solved_atoms = self.solved[quantity]
             if type(solved_atoms)==type(None):
-                return True 
+                return True
             if solved_atoms!=atoms:
                 return True
         return False
@@ -159,44 +159,44 @@ class Elements:
             quantities=[quantities]
         for quantity in quantities:
             self.solved[quantity]=self.atoms.copy()
-            
+
 
     def _update_atoms(self,atoms):
         """ Update atoms-object, whether it is ase.Atoms or hotbit.Atoms. """
-        
+
         if hasattr(atoms,'container'):
             self.atoms = atoms.copy()
         else:
             container = container_magic(atoms)
             #print 'cc',container
             atoms_cont = Atoms(atoms=atoms,container=container)
-            self.atoms = atoms_cont.copy()            
+            self.atoms = atoms_cont.copy()
 
 
     def update_geometry(self,atoms):
         '''
         Update all properties related to geometry (calculate once/geometry)
         '''
-        self.calc.start_timing('geometry')    
-        self._update_atoms(atoms) 
+        self.calc.start_timing('geometry')
+        self._update_atoms(atoms)
         # select the symmetry operations n where atoms still interact chemically
         nmax = len(self.ranges[0])*len(self.ranges[1])*len(self.ranges[2])
         ijn = np.zeros( (self.N,self.N,nmax),int )
         ijnn = np.zeros( (self.N,self.N),int )
-        
+
         # add the n=(0,0,0) first (separately)
         self.Rn = [[self.nvector(r=i,ntuple=(0,0,0)) for i in xrange(self.N)]]
         self.Rot = [ self.rotation((0,0,0)) ]
         self.ntuples = [(0,0,0)]
-                
+
         for i in xrange(self.N):
             for j in xrange(self.N):
                 dij = np.linalg.norm( self.Rn[0][i]-self.Rn[0][j] )
                 if dij < self.calc.ia.hscut[i,j]:
                     ijn[i,j,ijnn[i,j]] = 0
-                    ijnn[i,j] += 1 
-        
-        
+                    ijnn[i,j] += 1
+
+
         # calculate the distances from unit cell 0 to ALL other possible; select chemically interacting
         self.calc.start_timing('operations')
         # FIXME!!! This does not consider 'gamma_cut'!
@@ -218,7 +218,7 @@ class Elements:
                     dRt = rn[:, 2].reshape(1,-1)-R[:, 2].reshape(-1,1)
                     dR += dRt*dRt
                     addn = np.any(dR <= cut2)
-                    
+
                     if addn:
                         n += 1
                         self.ntuples.append(nt)
@@ -230,7 +230,7 @@ class Elements:
         self.Rn = np.array(self.Rn)
         self.Rot = np.array(self.Rot)
         self.calc.stop_timing('operations')
-        
+
         self.calc.start_timing('displacements')
         rijn = np.zeros((len(self.ntuples),self.N,self.N,3))
         dijn = np.zeros((len(self.ntuples),self.N,self.N))
@@ -242,10 +242,10 @@ class Elements:
         self.rijn = rijn
         self.dijn = dijn
         self.calc.stop_timing('displacements')
-                        
-        
+
+
 #===============================================================================
-#        # TODO                
+#        # TODO
 #        def check_too_close_distances(self):
 #        # FIXME: move this to elements--it's their business; and call in geometry update
 #        """ If some element pair doesn't have repulsive potential,
@@ -258,12 +258,12 @@ class Elements:
 #                        raise AssertionError("Atoms with no repulsive potential are too close to each other: %s and %s" % (si, sj))
 #===============================================================================
 
-        
+
         # TODO: calc.ia should also know the smallest allowed distances between elements
         # (maybe because of lacking repulsion or SlaKo tables), this should be checked here!
 
         self.calc.stop_timing('geometry')
-        
+
     def get_pbc(self):
         return self.atoms.get_pbc()
 
@@ -274,30 +274,30 @@ class Elements:
         # FIXME!!! Update distances first?
         return self.rijn, self.dijn
 
-       
+
     def rotation_of_axes(self,n):
         '''
         Return the quantization axis rotation matrix for given symmetry operation.
-         
-        @param n: 3-tuple for transformation 
+
+        @param n: 3-tuple for transformation
         '''
         return self.atoms.rotation_of_axes(n)
-    
-    
+
+
     def rotation(self,n,angles=False):
         '''
         Return the quantization axis rotation matrix for given symmetry operation.
-         
-        @param n: 3-tuple for transformation 
+
+        @param n: 3-tuple for transformation
         @param angles: return angles instead (theta, phi (rotation direction), and angle for rotation angle)
         '''
         return self.atoms.rotation(n,angles)
-        
-    
+
+
     def nvector(self,r,ntuple=(0,0,0),r0=np.array([0,0,0]),lst='vec'):
         '''
         Return position vector rn-r0, when r is operated by S(n)r=rn.
-        
+
         Positions should be in atomic units.
         @param r:   position (array) or atom index (integer) which is operated
         @param ntuple:   operate on r with S(n)
@@ -307,32 +307,32 @@ class Elements:
         if not isinstance(lst,(list,tuple)):
             lst=[lst]
         assert not( np.all(r0!=np.array([0,0,0])) and 'tensor' in lst )
-        if isinstance(r,int):  
-            r=self.atoms.positions[r] 
+        if isinstance(r,int):
+            r=self.atoms.positions[r]
         else:
             r=r*Bohr
-        if isinstance(r0,int): 
-            r0=self.atoms.positions[r0] 
+        if isinstance(r0,int):
+            r0=self.atoms.positions[r0]
         else:
             r0=r0*Bohr
         vec=(self.atoms.transform(r,ntuple)-r0)/Bohr
-        
+
         ret=[]
         for l in lst:
-            if l=='vec': 
+            if l=='vec':
                 ret.append(vec)
             elif l=='hat':
                 norm = np.linalg.norm(vec)
                 if norm<1E-6: raise AssertionError('Suspiciously short vector')
                 ret.append( vec/norm )
-            elif l=='norm': 
+            elif l=='norm':
                 ret.append( np.linalg.norm(vec) )
             else:
                 raise AssertionError('Keyword %s not defined' %l)
-        
-        if len(ret)==1: 
+
+        if len(ret)==1:
             return ret[0]
-        else: 
+        else:
             return ret
 
     def set_cutoffs(self,cutoffs):
@@ -348,7 +348,7 @@ class Elements:
         if self.name == None:
             self.name = mix.parse_name_for_atoms(self.atoms)
         return self.name
-    
+
     def container_info(self):
         return repr(self.atoms.container)
 
@@ -359,9 +359,9 @@ class Elements:
     def _elements_initialization(self):
         '''
         Initialize element objects, orbital tables etc.
-        
+
         This initialization is done only once for given set of element info.
-        Initialization of any geometrical properties is done elsewhere. 
+        Initialization of any geometrical properties is done elsewhere.
         '''
         self.elements={}
         for symb in self.present:
@@ -404,7 +404,7 @@ class Elements:
                       'index': self.norb-1,
                       'energy': e,
                       'atomindex': k }
-                
+
                 if el.has_Rnl_functions():
                     Rnl = el.get_Rnl_function(ao)
                     d['Rnl'] = Rnl
@@ -444,7 +444,7 @@ class Elements:
             else:
                 n.append( int(round(r[i,1]-r[i,0]+1)) )
         return n
-    
+
     def get_valences(self):
         """ Number of valence electrons for atoms. """
         return self.nr_of_valences
@@ -474,19 +474,19 @@ class Elements:
 
     def get_symbols(self):
         return self.symbols
-    
+
     def symbol(self,i):
         return self.symbols[i]
 
     def get_element(self,i):
         '''
         Return the element object of given atom.
-        
+
         @param i: atom index or element symbol
         '''
         if isinstance(i,int):
             return self.elements[self.symbols[i]]
-        else: 
+        else:
             return self.elements[i]
 
 
@@ -520,13 +520,13 @@ class Elements:
     def get_nr_orbitals(self):
         """ Total number of orbitals. """
         return self.norb
-   
-    
+
+
     def get_property_lists(self,lst=['i']):
         '''
         Return lists of atoms' given properties.
-        
-        @param lst: 'i'=index; 's'=symbol; 'no'=number of orbitals; 'o1'= first orbital 
+
+        @param lst: 'i'=index; 's'=symbol; 'no'=number of orbitals; 'o1'= first orbital
         '''
         def get_list(p):
             if p=='i':      return range(self.N)
@@ -537,8 +537,8 @@ class Elements:
                 raise NotImplementedError('Property not defined')
         l = [ get_list(item) for item in lst ]
         return zip(*l)
-            
-            
+
+
     def get_cube(self):
         """ Return the (orthorhombic) unit cell cube dimensions. """
         cell=abs(self.atoms.get_cell())
@@ -546,7 +546,7 @@ class Elements:
         if cell[0,1]>e or cell[0,2]>e or cell[1,2]>e:
             raise AssertionError('For cube the unit cell has to be orthorombic')
         return self.atoms.get_cell().diagonal()/Bohr
-        
+
 
     def get_free_population(self, m):
         """ Return the population of the basis state m when the atom
@@ -556,18 +556,18 @@ class Elements:
         n_el = self.get_valences()[i_element]
         atomindex = orb['atomindex'] # atomindex states before this
         return max(0, min(2, n_el - 2*atomindex))
-    
-    
+
+
     def get_free_atoms_energy(self):
         '''
-        Return the total of free atom energies for the system. 
+        Return the total of free atom energies for the system.
         '''
         e = 0.0
         for s in self.symbols:
             e += self.elements[s].get_free_atom_energy()
         return e
-    
-    
+
+
     def update_vdw(self, vdw_parameters):
         for s, par in vdw_parameters.iteritems():
             self.elements[s].update_vdw(*par)

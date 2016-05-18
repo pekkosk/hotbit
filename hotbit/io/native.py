@@ -42,13 +42,13 @@ def read_element_from_elm(fileobj, symbol):
 
     functions = _read_functions(fileobj, data['valence_orbitals'])
 
-    energies=[]            
-    for orbital in data['valence_orbitals']:            
+    energies=[]
+    for orbital in data['valence_orbitals']:
         eps = data['epsilon'][orbital]
         if   's' in orbital: n=1
         elif 'p' in orbital: n=3
         elif 'd' in orbital: n=5
-        energies.extend( [eps]*n )                
+        energies.extend( [eps]*n )
     data['onsite_energies'] = energies
     data['nr_basis_orbitals'] = len(energies)
     data['valence_energies'] = np.array(energies, dtype=float)
@@ -63,12 +63,12 @@ def read_element_from_elm(fileobj, symbol):
 
 
 def _read_functions(fileobj, valence_orbitals):
-    """ 
-    Read radial wave functions (R=u/r), self-consistent potentials, 
-    confinements, etc. from given file. 
+    """
+    Read radial wave functions (R=u/r), self-consistent potentials,
+    confinements, etc. from given file.
     """
 
-    default = np.array([[0,0],[1,0],[2,0],[3,0]])
+    default = np.array([[1,0],[2,0],[3,0],[4,0]])
     functions = {
         'unl': {},
         'Rnl': {}
@@ -80,10 +80,10 @@ def _read_functions(fileobj, valence_orbitals):
         functions['Rnl'][nl]=Function('spline', m[:,0], m[:,1]/m[:,0])
 
     m = mix.find_value(fileobj, 'effective_potential',
-                        fmt='matrix', default=default)  
+                        fmt='matrix', default=default)
     functions['effective_potential'] = Function('spline', m[:,0], m[:,1])
     m = mix.find_value(fileobj, 'confinement_potential',
-                       fmt='matrix', default=default)  
+                       fmt='matrix', default=default)
     functions['confinement_potential'] = Function('spline', m[:,0], m[:,1])
 
     return functions
@@ -109,7 +109,7 @@ def read_HS_from_par(fileobj, symboli, symbolj):
         table = mix.find_value(fileobj,
                                '%s_%s_table' % ( symboli, symbolj ),
                                fmt='matrix')
-    
+
     return table[:, 0], table[:, 1:]
 
 
@@ -127,5 +127,5 @@ def read_repulsion_from_par(fileobj):
         v = mix.find_value(fileobj, 'repulsion', fmt='matrix')
     except:
         v = np.array([[0,0],[1,0],[2,0],[3,0]])
-    
+
     return v[:, 0], v[:, 1]

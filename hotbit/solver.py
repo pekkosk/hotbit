@@ -108,22 +108,26 @@ class Solver:
             e, wf = geig(H,S)
             self.calc.stop_timing('LAPACK eigensolver')
             wf = wf.transpose()
-            
+
             # if S happened not to be positive definite, LAPACK
-            # results in wrong norm. 
+            # results in wrong norm.
             self.calc.start_timing('Check norm (remove?)')
             norms = ( np.dot(wf.conj(),S)*wf ).sum(axis=1)
-            maxdev = np.abs(norms-1).max() 
+            maxdev = np.abs(norms-1).max()
             if maxdev>self.calc.get('tol_eigenvector_norm'):
                 eval,efunc = eigh(S)
                 evmin =  eval.min()
                 if evmin<0:
                     raise AssertionError('Eigenfunction norm deviations from LAPACK %.8f. Minimum eigenvalue of S is %.4f - overlap matrix is not positive definite.' %(maxdev,evmin))
                 else:
-                    raise AssertionError('Eigenfunction norm deviations from LAPACK %.8f, but overlap matrix still appears positive definite.' %(maxdev))
+                    print 'diag(H)=',H.diagonal()
+                    #print 'H=',H
+                    print 'diag(S)=',S.diagonal()
+                    #print 'S=',S
+                    raise AssertionError('LAPACK: Eigenfunctions norm deviates from one by %.8f, but overlap matrix is still positive definite?' %(maxdev))
             self.calc.stop_timing('Check norm (remove?)')
-            
-                
+
+
         if False:
             #raise NotImplementedError('Not checked for complex stuff')
             # using numpy lapack_lite
@@ -135,7 +139,7 @@ class Solver:
                 wf[:,i]=wf[order,i]
             for i in range(self.norb): #normalize properly
                 wf[i]=wf[i]/np.sqrt( np.abs(np.dot(wf[i],np.dot(S,wf[:].conj()))) )
-        
+
         return e,wf
 
 ###

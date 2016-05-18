@@ -1,15 +1,17 @@
 import numpy as np
 from math import sin,cos
 from weakref import proxy
-from box.mix import rotation_matrix
+from box.mix import rotation_matrix, rotation_from_matrix, phival
 
 class TwistAndTurn:
     def __init__(self,atoms,type):
         '''
         Class for bent chiral boundary conditions.
 
-        @param: atoms    hotbit.Atoms -instance
-        @param: type     Should equal to "TwistAndTurn"
+        atoms:    hotbit.Atoms -instance
+        type:     Should equal to "TwistAndTurn"
+
+        Periodic direction is the third symmetry operation.
 
         More documentation for the methods can be
         found from hotbit.Atoms -class.
@@ -19,7 +21,6 @@ class TwistAndTurn:
         self.atoms = proxy(atoms)
         self.R = None
         self.baxis = np.array([0,0,1]) # bending axis
-        self.taxis = np.array([0,1,0]) # (primary) twisting axis
         self.par = {'bend_angle':(0,1),'twist_angle':(0,2),'R':(1,2)}
         self._set_table()
         self.atoms.set_pbc( (False,False,True) )
@@ -47,8 +48,14 @@ class TwistAndTurn:
         key:    'bend_angle','twist_angle','R'
         """
         cell = self.atoms.get_cell()
-        if key in ['bend_angle','twist_angle','R']:
+        if key in ['bend_angle','twist_angle']:
             x = cell[self.par[key]]
+        elif key=='R':
+            x = cell[self.par[key]]
+            # adapt R to atoms' mean radius
+            if np.abs(x)<1E-16:
+                r = self.atoms.get_positions()
+                x = np.sqrt(r[:,0]**2+r[:,1]**2).mean()
         return x
 
     def _set(self,**kwargs):
@@ -147,16 +154,35 @@ class TwistAndTurn:
         bend, twist = [self.get(k) for k in ['bend_angle','twist_angle']]
         return self.transform_arbitrary(r,n[2]*bend,n[2]*twist)
 
-    def rotation(self,n):
+    def rotation(self,n,angles=False):
         """
         Rotate around two axes:
         first around 'unit cell axis' for chirality
         and then around 'torus axis' for twisting..
         Returns the rotation matrix.
+
+        If angles==True, return (theta,phi,angle), where (theta,phi)
+        gives the rotation axis and 'angle' the rotation angle.
+
+        Approximate tangential vector by a mean tangential vector
+        (-sin(angle/2),cos(angle/2),0)
         """
         if n[2]==0:
             return np.eye(3)
         bend,twist = [self.get(k) for k in ['bend_angle','twist_angle']]
         rot1 = rotation_matrix(self.baxis,n[2]*bend)
-        rot2 = rotation_matrix(self.taxis,n[2]*twist)
-        return np.dot(rot2,rot1)
+        a = self.get('bend_angle')
+        taxis = np.array([-sin(a/2),cos(a/2),0])
+        rot2 = rotation_matrix(taxis,n[2]*twist)
+        R = np.dot(rot2,rot1)
+        if angles:
+            angle, dir = rotation_from_matrix(R)
+            theta = np.arccos(dir[2])
+            if np.abs(theta)<1E-12 or np.abs(theta-np.pi)<1E-12:
+                phi = 0.
+            else:
+                cosp, sinp = dir[0]/np.sin(theta), dir[1]/np.sin(theta)
+                phi = phival(cosp,sinp)
+            return (theta,phi,angle)
+        else:
+            return R

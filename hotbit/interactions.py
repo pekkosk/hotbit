@@ -41,18 +41,18 @@ class Interactions:
         """
         from os import environ
         from os.path import isfile
-        
+
         tables = copy(calc.get('tables'))
         present = calc.el.get_present()
         default = environ.get('HOTBIT_PARAMETERS')
 #        current = path.abspath('.')
-        self.nullpar = path.join(default,'null.par')    
-        
+        self.nullpar = path.join(default,'null.par')
+
         files={}
         for k1 in present:
             for k2 in present:
                 files[k1+k2] = None
-                
+
         # set customized files
         if tables!=None:
             for key in tables:
@@ -70,16 +70,16 @@ class Interactions:
                 if not e2+e1 in tables:
                     files[e2+e1] = file
 
-        
+
         # set interactions from default place
         if tables==None or tables!=None and 'rest' in tables and tables['rest']=='default':
             for e1 in present:
                 for e2 in present:
-                    if files[e1+e2]!=None: 
+                    if files[e1+e2]!=None:
                         continue
                     def12 = path.join(default,'%s_%s.par' %(e1,e2))
                     def21 = path.join(default,'%s_%s.par' %(e2,e1))
-                    
+
                     if isfile(def12):
                         file = def12
                     elif isfile(def21):
@@ -89,7 +89,7 @@ class Interactions:
                     file = path.abspath(file)
                     files[e1+e2] = file
                     files[e2+e1] = file
-               
+
         self.files=files
         self.calc=proxy(calc)
         self.present=present
@@ -183,10 +183,10 @@ class Interactions:
                 self.hscut[i,j]=self.cut[si+sj]
         self.calc.el.set_cutoffs(self.cut)
 
-    
+
     def get_tables(self, si, sj):
         return self.h[si+sj], self.s[si+sj]
-                                
+
 
     def plot_table(self,e1,e2,der=0):
         """ Plot SlaKo table for given elements. """
@@ -206,15 +206,15 @@ class Interactions:
             pl.xlabel('r (Bohr)')
             pl.ylabel('H (Hartree) and S')
         pl.show()
-        
-        
+
+
     def rotation_transformation(self,n):
         '''
         Return the transpose of 9x9 rotation transformation matrix for given symmetry operation.
-        
+
         For example, below transformation for a rotation around z-axis:
-        
-            | 1   0   0   0    0    0    0   0   0 |   s  } s-orbital 
+
+            | 1   0   0   0    0    0    0   0   0 |   s  } s-orbital
             | 0  ca  sa   0    0    0    0   0   0 |   px
             | 0 -sa  ca   0    0    0    0   0   0 |   py } p-orbitals         ca = cos(a)
             | 0   0   0   1    0    0    0   0   0 |   pz                      sa = sin(a)
@@ -223,15 +223,15 @@ class Interactions:
             | 0   0   0   0    0   sa   ca   0   0 |   dzx } d-orbitals
             | 0   0   0   0  s2a    0    0 c2a   0 |   dx2-y2
             | 0   0   0   0    0    0    0   0   1 |   d3z2-r2
-        
+
         @param n: 3-tuple of symmetry transformation
         '''
         R = self.calc.el.rotation(n)
 
-        if np.all(abs(R.diagonal()-1)<1E-12): 
+        if np.all(abs(R.diagonal()-1)<1E-12):
             #no rotation
             return np.eye(9)
-        
+
         elif np.any(np.array(self.calc.el.get_property_lists(['no']))>4) and abs(R[2,2]-1)>1E-12:
             # These are more complex transformations for d-orbitals. Use only if needed, for they
             # may take more time.
@@ -248,28 +248,28 @@ class Interactions:
                 theta,phi,angle = rot
                 D = orbital_transformations_from_angles((theta,phi,angle))
                 return D.transpose()
-                                
+
         else:
-            # rotation around z-axis, bit more simple transformations than the general case  
-            ca, sa = R[0,0], -R[0,1] 
+            # rotation around z-axis, bit more simple transformations than the general case
+            ca, sa = R[0,0], -R[0,1]
             c2a, s2a = 2*ca**2-1, 2*sa*ca
             D = np.diag((1.0,ca,ca,1.0,c2a,ca,ca,c2a,1.0))
-    
+
             D[1,2] = sa
             D[2,1] = -sa
             D[5,6] = -sa
             D[6,5] = sa
             D[4,7] = -s2a
             D[7,4] = s2a
-            
+
             D[1:4,1:4] = R[:,:].transpose()
             return D.transpose()
-    
-    
+
+
     def get_phases(self):
         """ Return phases for symmetry operations and k-points.
-        
-        phases[n,k] 
+
+        phases[n,k]
         """
         return np.array(self.phases)
 
@@ -284,7 +284,7 @@ class Interactions:
         seps = self.calc.get('sepsilon')
         start('matrix construction')
         orbs=el.orbitals()
-        norb=len(orbs)   
+        norb=len(orbs)
 
         if kpts is None:
             nk = states.nk
@@ -304,12 +304,12 @@ class Interactions:
 #        orbindex=[el.orbitals(i,indices=True)
 #                  for i in range(len(el))]
         h, s, dh, ds = zeros((14,)), zeros((14,)), zeros((14,3)), zeros((14,3))
-        
+
         phases = []
         DTn = []
         Rot = []
         for n in range(len(el.ntuples)):
-            nt = el.ntuples[n]  
+            nt = el.ntuples[n]
             phases.append( np.array([np.exp(1j*np.dot(nt,k))
                                      for k in ks]) )
             DTn.append( self.rotation_transformation(nt) )
@@ -331,10 +331,10 @@ class Interactions:
                 stable = self.s[si+sj]
                 ij_interact = False
                 r1, r2= htable.get_range()
-                                    
+
                 for n, (rij,dij) in enumerate(zip(Rijn[:,i,j],dijn[:,i,j])):
-                    if i==j and n==0: 
-                        continue    
+                    if i==j and n==0:
+                        continue
                     nt = el.ntuples[n]
                     h.fill(0)
                     s.fill(0)
@@ -346,24 +346,24 @@ class Interactions:
                         print nt
                         raise AssertionError('Distance between atoms %i and %i is only %.4f Bohr' %(i,j,dij) )
                     assert dij>0.1
-                    if not r1<=dij<=r2: 
+                    if not r1<=dij<=r2:
                         continue
                     ij_interact = True
-                    
+
                     # interpolate Slater-Koster tables and derivatives
                     if timing: start('splint+SlaKo+DH')
                     hij, dhij = htable(dij)
                     sij, dsij = stable(dij)
-                    
+
                     indices = htable.get_indices()
                     h[indices], s[indices] = hij, sij
                     dh[indices], ds[indices] = outer(dhij,rijh), outer(dsij,rijh)
-                    
+
                     # make the Slater-Koster transformations
 #                    obsi, obsj=orbindex[i], orbindex[j]
                     ht, st, dht, dst = \
                         fast_slako_transformations(rijh,dij,noi,noj,h,s,dh,ds)
-                    
+
                     # Here we do the MEL transformation;
                     # H'_ij = sum_k H_ik * D_kj^T  ( |j> = sum_k D_jk |k> )
                     DT = DTn[n]
@@ -372,47 +372,47 @@ class Interactions:
                     dht = dot( dht.transpose((2,0,1)),DT[0:noj,0:noj] ).transpose((1,2,0))
                     dst = dot( dst.transpose((2,0,1)),DT[0:noj,0:noj] ).transpose((1,2,0))
                     if timing: stop('splint+SlaKo+DH')
-                    
+
                     if timing: start('k-points')
-                    phase = phases[n] 
+                    phase = phases[n]
                     hblock  = outer(phase,ht.flatten()).reshape(nk,noi,noj)
                     sblock  = outer(phase,st.flatten()).reshape(nk,noi,noj)
                     dhblock = outer(phase,-dht.flatten()).reshape(nk,noi,noj,3)
                     dsblock = outer(phase,-dst.flatten()).reshape(nk,noi,noj,3)
-                    
-                    H0[ :,a:b,c:d]   += hblock 
+
+                    H0[ :,a:b,c:d]   += hblock
                     S[  :,a:b,c:d]   += sblock
                     dH0[:,a:b,c:d,:] += dhblock
                     dS[ :,a:b,c:d,:] += dsblock
                     if timing: stop('k-points')
-                     
+
                     if i!=j and ij_interact:
                         # construct the other derivatives wrt. atom j.
                         Rot = self.calc.el.Rot[n]
                         dht2 = dot( dht,Rot )
-                        dst2 = dot( dst,Rot ) 
+                        dst2 = dot( dst,Rot )
                         dh2block = outer(phase,dht2.flatten()).reshape(nk,noi,noj,3)
-                        ds2block = outer(phase,dst2.flatten()).reshape(nk,noi,noj,3)                        
+                        ds2block = outer(phase,dst2.flatten()).reshape(nk,noi,noj,3)
                         dH0[:,c:d,a:b,:] += dh2block.transpose((0,2,1,3)).conjugate()
                         dS[ :,c:d,a:b,:] += ds2block.transpose((0,2,1,3)).conjugate()
-                        
+
                 if i!=j and ij_interact:
                     if timing: start('symm')
                     # Hermitian (and anti-Hermitian) conjugates;
-                    # only if matrix block non-zero        
+                    # only if matrix block non-zero
                     # ( H(k) and S(k) can be (anti)symmetrized as a whole )
                     # TODO: symmetrization should be done afterwards
                     H0[ :,c:d,a:b]   =  H0[ :,a:b,c:d].transpose((0,2,1)).conjugate()
-                    S[  :,c:d,a:b]   =  S[  :,a:b,c:d].transpose((0,2,1)).conjugate()                    
-                    if timing: stop('symm') 
+                    S[  :,c:d,a:b]   =  S[  :,a:b,c:d].transpose((0,2,1)).conjugate()
+                    if timing: stop('symm')
 
         if kpts is None:
-            self.H0, self.S, self.dH0, self.dS = H0, S, dH0, dS       
-                        
+            self.H0, self.S, self.dH0, self.dS = H0, S, dH0, dS
+
         if self.first:
             nonzero = sum( abs(S[0].flatten())>1E-15 )
             self.calc.out('Hamiltonian ~%.3f %% filled.' %(nonzero*100.0/norb**2) )
-            self.first=False            
+            self.first=False
 
         stop('matrix construction')
 
@@ -429,10 +429,10 @@ class Interactions:
 def orbital_transformations_from_angles(angles):
     """
     Return the unitary transformation matrix, given rotation angles
-    
+
     theta, phi, angle = angles, where theta, phi is the direction of rotation axis, and angle
     is the rotated angle
-    
+
     Transformation equations are direct output from SAGE calculation (20.5 2013)
     """
     theta, phi, angle = angles
@@ -440,10 +440,10 @@ def orbital_transformations_from_angles(angles):
     # s-orbital
     D[0,0] = 1.0
     pi = np.pi
-    ca, sa, ct, st, cp, sp = cos(angle), sin(angle), cos(theta), sin(theta), cos(phi), sin(phi) 
+    ca, sa, ct, st, cp, sp = cos(angle), sin(angle), cos(theta), sin(theta), cos(phi), sin(phi)
     ca2, sa2, ct2, st2, cp2, sp2 = ca**2, sa**2, ct**2, st**2, cp**2, sp**2
     ca1 = 1-ca
-    # p-orbitals (transforms the same as rotation matrix itself) 
+    # p-orbitals (transforms the same as rotation matrix itself)
     D[1,1] = (ca1*st2*cp2 + ca)
     D[1,2] = (ca1*sp*st2*cp + sa*ct)
     D[1,3] = (ca1*cp*ct - sa*sp)*st
@@ -766,5 +766,3 @@ def slako_transformations(rhat,dist,noi,noj,h,s,dh,ds):
                 dht[i,j,a]=sum( [mat[i,j,k]*dh[ind[i,j,k],a]+der[i,j,k,a]*h[ind[i,j,k]] for k in range(cnt[i,j])] )
                 dst[i,j,a]=sum( [mat[i,j,k]*ds[ind[i,j,k],a]+der[i,j,k,a]*s[ind[i,j,k]] for k in range(cnt[i,j])] )
     return ht, st, dht, dst
-
-

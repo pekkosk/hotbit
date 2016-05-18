@@ -22,7 +22,7 @@ from wfpropagation import WFPropagation
 from hotbit.analysis import LinearResponse
 from hotbit.analysis import MullikenAnalysis
 from hotbit.analysis import MullikenBondAnalysis
-from hotbit.analysis import DensityOfStates 
+from hotbit.analysis import DensityOfStates
 
 from hotbit.containers import DoubleChiral
 from hotbit.containers import Bravais
@@ -33,6 +33,8 @@ from hotbit.containers import Saddle
 from hotbit.containers import Gaussian
 from hotbit.containers import Slab
 from hotbit.containers import ContainerTest1
+from hotbit.containers import TwistAndTurn
+
 
 from hotbit.parametrization import SlaterKosterTable
 from hotbit.parametrization import KSAllElectron
@@ -54,4 +56,3 @@ testpar = path.join(environ.get('HOTBIT_PARAMETERS'),'inofficial')
 #
 atexit.register(_hotbit.free_geig_workspace)
 from hotbit.version import hotbit_version
-

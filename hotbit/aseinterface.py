@@ -53,23 +53,23 @@ class Hotbit(Output):
                       charge_density='Gaussian',
                       vdw=False,
                       vdw_parameters=None,
-                      sepsilon=0.0):
+                      internal={}):
         """
         Hotbit -- density-functional tight-binding calculator
                   for atomic simulation environment (ASE).
-        
-        
+
+
 
         Parameters:
         -----------
-        parameters:       The directory for parametrization files. 
-                          * If parameters==None, use HOTBIT_PARAMETERS environment variable. 
-                          * Parametrizations given by 'elements' and 'tables' keywords 
+        parameters:       The directory for parametrization files.
+                          * If parameters==None, use HOTBIT_PARAMETERS environment variable.
+                          * Parametrizations given by 'elements' and 'tables' keywords
                             override parametrizations in this directory.
 
-        elements:         Files for element data (*.elm). 
+        elements:         Files for element data (*.elm).
                           example: {'H':'H_custom.elm','C':'/../C.elm'}
-                          * If extension '.elm' is omitted, it is assumed. 
+                          * If extension '.elm' is omitted, it is assumed.
                           * Items can also be elements directly: {'H':H} (H is type Element)
                           * If elements==None, use element info from default directory.
                           * If elements['rest']=='default', use default parameters for all other
@@ -82,10 +82,10 @@ class Hotbit(Output):
                           * If tables==None, use default interactions.
                           * If tables['rest']='default', use default parameters for all other
                             interactions, e.g. {'CH':'C_H.par','rest':'default'}
-                          * If tables['AB']==None, ignore interactions for A and B 
+                          * If tables['AB']==None, ignore interactions for A and B
                             (both chemical and repulsive)
 
-        mixer:            Density mixer. 
+        mixer:            Density mixer.
                           example: {'name':'Anderson','mixing_constant':0.2, 'memory':5}.
         charge:           Total charge for system (-1 means an additional electron)
         width:            Width of Fermi occupation (eV)
@@ -96,12 +96,12 @@ class Hotbit(Output):
                             given by the cell vectors.
                           * For general symmetries, you need to look at the info
                             from the container used
-        rs:               * 'kappa': use kappa-points 
+        rs:               * 'kappa': use kappa-points
                           * 'k': use normal k-points. Only for Bravais lattices.
         physical_k        Use physical (realistic) k-points for generally periodic systems.
                           * Ignored with normal translational symmetry
                           * True for physically allowed k-points in periodic symmetries.
-        maxiter:          Maximum number of self-consistent iterations 
+        maxiter:          Maximum number of self-consistent iterations
                           * only for SCC-DFTB
         coulomb_solver:   The Coulomb solver object. If None, a DirectCoulomb
                           object will the automatically instantiated.
@@ -123,13 +123,15 @@ class Hotbit(Output):
                           where *el* is the element name, *p* the polarizability and
                           *R0* the radius where the van-der-Waals interaction starts.
                           Will override whatever read from .elm files.
-        sepsilon:         Number added to the diagonal of S-matrix, if S is not positive
-                          definite, e.g. 1E-3. The origin for the problem is physical,
-                          and there is no perfect cure; this treatment is quick'n dirty. 
         txt:              Filename for log-file.
                           * None: standard output
-                          * '-': throw output to trash (/null) 
+                          * '-': throw output to trash (/null)
         verbose_SCC:      Increase verbosity in SCC iterations.
+        internal:         Dictionary for internal variables, some of which are set for
+                          stability purposes, some for quick and dirty bug fixes.
+                          Use these with caution! (For this reason, for the description
+                          of these variables you are forced to look at the source code.)
+
         """
         from copy import copy
         import os
@@ -150,12 +152,12 @@ class Hotbit(Output):
                         'gamma_cut':gamma_cut,
                         'vdw':vdw,
                         'vdw_parameters':vdw_parameters,
-                        'sepsilon':sepsilon,
                         'txt':txt,
                         'verbose_SCC':verbose_SCC,
                         'mixer':mixer,
                         'coulomb_solver':coulomb_solver,
-                        'charge_density':charge_density}
+                        'charge_density':charge_density,
+                        'internal':internal}
 
         if parameters!=None:
             os.environ.data['HOTBIT_PARAMETERS']=parameters
@@ -163,10 +165,14 @@ class Hotbit(Output):
         self.init=False
         self.notes=[]
         self.dry_run = '--dry-run' in sys.argv
-        self.set('tol_imaginary_e', 1E-13 )     # tolerance for imaginary band energy 
-        self.set('tol_mulliken', 1E-5 )         # tolerance for mulliken charge sum deviation from integer
-        self.set('tol_eigenvector_norm', 1E-6)  # tolerance for eigenvector norm for eigensolver
-        self.set('symop_range', 5)              # range for the number of symmetry operations in all symmetries
+        internal0 = {'sepsilon':0.,                # add this to the diagonal of S to avoid LAPACK error in diagonalization
+                     'tol_imaginary_e': 1E-13,     # tolerance for imaginary band energy
+                     'tol_mulliken':1E-5,          # tolerance for mulliken charge sum deviation from integer
+                     'tol_eigenvector_norm':1E-6, # tolerance for eigenvector norm for eigensolver
+                     'symop_range':5}              # range for the number of symmetry operations in all symmetries
+        internal0.update(internal)
+        for key in internal0:
+            self.set(key,internal0[key])
         #self.set_text(self.txt)
         #self.timer=Timer('Hotbit',txt=self.get_output())
 
@@ -191,10 +197,10 @@ class Hotbit(Output):
     def write_electronic_data(self,filename,keys=None):
         """
         Write key electronic data into a file with *general* format.
-        
+
         Hotbit is not needed to analyze the resulting data file.
         The data will be in a dictionary with the following items:
-        
+
         N          the number of atoms
         norb       the number of orbitals
         nelectrons the number of electrons
@@ -216,18 +222,18 @@ class Hotbit(Output):
         dose       energies for density of states (all states over k-points as well)
                    0 = Fermi-level
         dos        density of states (including k-point weights)
-        
+
         Access to data, simply:
-        
+
         data = numpy.load(filename)
-        print data['epot'] 
-        
+        print data['epot']
+
         parameters:
         -----------
         filename:     output file name
-        keys:         list of items (key names) to save. 
+        keys:         list of items (key names) to save.
                       If None, save all.
-        """ 
+        """
         data = {}
         data['N'] = self.el.N
         data['norb'] = self.st.norb
@@ -247,11 +253,11 @@ class Hotbit(Output):
         data['dq'] = self.st.mulliken()
         data['gap'], data['gap_prob'] = self.get_energy_gap()
         data['dose'], data['dos'] = self.get_density_of_states(False)
-        
+
         for key in data.keys():
             if keys!=None and key not in keys:
                 del data[key]
-        import pickle  
+        import pickle
         f = open(filename, 'w')
         pickle.dump(data,f)
         f.close()
@@ -298,18 +304,19 @@ class Hotbit(Output):
         print>>self.txt,  'Nodename:',dat[1]
         print>>self.txt,  'Arch:',dat[4]
         print>>self.txt,  'Dir:',abspath(curdir)
-        print>>self.txt,  'System:',self.el.get_name()        
+        print>>self.txt,  'System:',self.el.get_name()
         print>>self.txt,  '       Charge=%4.1f' % self.charge
         print>>self.txt,  '       Container', self.el.container_info()
         print>>self.txt,  'Symmetry operations (if any):'
         rs = self.get('rs')
         kpts = self.get('kpts')
-        if not isinstance(kpts,tuple):
-            kpts = (np.NaN,np.NaN,np.NaN)
         M = self.el.get_number_of_transformations()
         for i in range(3):
             print>>self.txt, '       %i: pbc=' %i, self.el.atoms.get_pbc()[i],
-            print>>self.txt, ', %s-points=%i, M=%.f' %(rs,kpts[i],M[i])
+            if type(kpts)==type([]):
+                print>>self.txt, ', %s-points=%i, M=%.f' %(rs,len(kpts),M[i])
+            else:
+                print>>self.txt, ', %s-points=%i, M=%.f' %(rs,kpts[i],M[i])
         print>>self.txt,  'Electronic temperature:', self.width*Hartree,'eV'
         mixer = self.st.solver.mixer
         print>>self.txt,  'Mixer:', mixer.get('name'), 'with memory =', mixer.get('memory'), ', mixing parameter =', mixer.get('beta')
@@ -344,19 +351,19 @@ class Hotbit(Output):
     def get(self,arg=None):
         """
         Get calculator input parameters.
-        
+
         arg: 'kpts','width',...
         """
         if arg==None:
             return self.__dict__
         else:
             return self.__dict__[arg]
-        
-        
+
+
     def memory_estimate(self):
         """
         Print an estimate for memory consumption in GB.
-        
+
         If script run with --dry-run, exit.
         """
         if self.st.nk>1:
@@ -368,7 +375,7 @@ class Hotbit(Output):
         mem = M + M + 3*M + 3*M + M + M + 3*M + M + M
         print>>self.txt, 'Memory consumption estimate: > %.2f GB' %(mem/1E9)
         self.txt.flush()
-        if self.dry_run: 
+        if self.dry_run:
             raise SystemExit
 
 
@@ -429,8 +436,8 @@ class Hotbit(Output):
         if not self.init:
             self.init=True
             self.greetings()
-        
-        
+
+
     def calculation_required(self,atoms,quantities):
         """ Check if a calculation is required.
 
@@ -457,9 +464,9 @@ class Hotbit(Output):
 
 
     def get_forces(self,atoms):
-        """ 
+        """
         Return forces (in eV/Angstrom)
-        
+
         Ftot = F(band structure) + F(coulomb) + F(repulsion).
         """
         if self.calculation_required(atoms,['forces']):
@@ -473,12 +480,12 @@ class Hotbit(Output):
             self.f = (fbs+frep+fcoul+fpp)*(Hartree/Bohr)
             self.el.set_solved('forces')
         return self.f.copy()
-    
+
 
     def get_band_energies(self, kpts=None, shift=True, rs='kappa', h1=False):
         '''
         Return band energies for explicitly given list of k-points.
-        
+
         parameters:
         ===========
         kpts:      list of k-points; e.g. kpts=[(0,0,0),(pi/2,0,0),(pi,0,0)]
@@ -496,11 +503,11 @@ class Hotbit(Output):
             elif rs=='kappa':
                 klist = kpts
             e = self.st.get_band_energies(klist,h1)*Hartree
-        
+
         if shift:
             return e-self.get_fermi_level()
         else:
-            return e 
+            return e
 
 
     def get_stress(self,atoms):
@@ -517,16 +524,16 @@ class Hotbit(Output):
 
     def get_eigenvalues(self):
         """ Return eigenvalues without shifts.
-        
+
         For alternative, look at method get_band_energies.
         """
         return self.st.get_eigenvalues()*Hartree
-    
-    
+
+
     def get_energy_gap(self):
         """
         Return the energy gap. (in eV)
-        
+
         Gap is the energy difference between the first states
         above and below Fermi-level. Return also the probability
         of having returned the gap; it is the difference
@@ -542,17 +549,17 @@ class Hotbit(Output):
             elif 0.0<e<ehi:
                 ehi = e
                 fhi = f
-        return ehi-elo, (flo-fhi)/2    
-    
-    
+        return ehi-elo, (flo-fhi)/2
+
+
     def get_state_indices(self, state):
         """
         Return the k-point index and band index of given state.
-        
+
         parameters:
         -----------
         state:    'HOMO', or 'LUMO'
-        
+
                   HOMO is the first state below Fermi-level.
                   LUMO is the first state above Fermi-level.
         """
@@ -561,8 +568,8 @@ class Hotbit(Output):
             k,a = np.unravel_index(np.ma.masked_array(eigs,eigs>0.0).argmax(),(self.st.nk,self.st.norb))
         if state=='LUMO':
             k,a = np.unravel_index(np.ma.masked_array(eigs,eigs<0.0).argmin(),(self.st.nk,self.st.norb))
-        return k,a      
-        
+        return k,a
+
 
     def get_occupations(self):
         #self.solve_ground_state(atoms)
@@ -574,13 +581,13 @@ class Hotbit(Output):
             self.solve_ground_state(atoms)
             self.ebs = self.st.get_band_structure_energy()*Hartree
             self.el.set_solved('ebs')
-        return self.ebs 
+        return self.ebs
 
 
     def get_coulomb_energy(self,atoms):
         if self.calculation_required(atoms,['ecoul']):
             self.solve_ground_state(atoms)
-            self.ecoul = self.st.es.coulomb_energy()*Hartree 
+            self.ecoul = self.st.es.coulomb_energy()*Hartree
             self.st
         return self.ecoul
 
@@ -605,7 +612,7 @@ class Hotbit(Output):
     def get_occupation_numbers(self,kpt=0):
         """ Return occupation numbers for given k-point index. """
         return self.st.f[kpt].copy()
-    
+
 
     def get_number_of_bands(self):
         """ Return the total number of orbitals. """
@@ -618,28 +625,28 @@ class Hotbit(Output):
 
     def stop_timing(self, label):
         self.timer.stop(label)
-        
-        
+
+
     #
     #    various analysis methods
     #
     def get_dielectric_function(self,width=0.05,cutoff=None,N=400):
         """
         Return the imaginary part of the dielectric function for non-SCC.
-        
+
         Note: Uses approximation that requires that the orientation of
               neighboring unit cells does not change much.
               (Exact for Bravais lattice.)
-              
-        See, e.g., Marder, Condensed Matter Physics, or 
-        Popov New J. Phys 6, 17 (2004) 
-              
+
+        See, e.g., Marder, Condensed Matter Physics, or
+        Popov New J. Phys 6, 17 (2004)
+
         parameters:
         -----------
         width:     energy broadening in eV
         cutoff:    cutoff energy in eV
         N:         number of points in energy grid
-        
+
         return:
         -------
         e[:], d[:,0:2]
@@ -651,7 +658,7 @@ class Hotbit(Output):
             cutoff = 1E10
         else:
             cutoff = cutoff/Hartree
-        
+
         st = self.st
         nk, e, f, wk = st.nk, st.e, st.f, st.wk
         ex, wt = [], []
@@ -671,13 +678,13 @@ class Hotbit(Output):
                 for b in range(max(a+1,bmin),bmax+1):
                     de = ek[b]-ek[a]
                     df = fk[a]-fk[b]
-                    if df<otol: 
+                    if df<otol:
                         continue
-                    # P = < ka | P | kb > 
+                    # P = < ka | P | kb >
                     P = 1j*hbar*np.dot(wfc[a],np.dot(dS,wf[b]))
                     ex.append( de )
                     wt.append( kweight*df*np.abs(P)**2 )
-        
+
         ex, wt = np.array(ex), np.array(wt)
         cutoff = min( ex.max(),cutoff )
         y = np.zeros((N,3))
@@ -685,10 +692,10 @@ class Hotbit(Output):
             # Lorenzian should be used, but long tail would bring divergence at zero energy
             x,y[:,d] = broaden( ex,wt[:,d],width,'gaussian',N=N,a=width,b=cutoff )
             y[:,d] = y[:,d]/x**2
-        const = (4*np.pi**2/hbar) 
+        const = (4*np.pi**2/hbar)
         self.stop_timing('dielectric function')
         return x*Hartree, y*const #y also in eV, Ang
-        
+
     #
     #   grid stuff
     #
@@ -698,12 +705,12 @@ class Hotbit(Output):
         if self.flags['grid']==False:
             self.gd = Grids(self,h,cutoff)
             self.flags['grid']=True
-        
-        
+
+
     def get_grid_basis_orbital(self,I,otype,k=0,pad=True):
         """
         Return basis orbital on grid.
-        
+
         parameters:
         ===========
         I:     atom index
@@ -718,27 +725,27 @@ class Hotbit(Output):
 
 
     def get_grid_wf(self,a,k=0,pad=True):
-        """ 
+        """
         Return eigenfunction on a grid.
-        
+
         parameters:
         ===========
         a:     state (band) index
         k:     k-vector index
-        pad:   padded edges 
+        pad:   padded edges
         """
         if self.flags['grid']==False:
             raise AssertionError('Grid needs to be set first by method "set_grid".')
         return self.gd.get_grid_wf(a,k,pad)
-    
-    
+
+
     def get_grid_wf_density(self,a,k=0,pad=True):
         """
         Return eigenfunction density.
-        
+
         Density is not normalized; accurate quantitative analysis
         on this density are best avoided.
-        
+
         parameters:
         ===========
         a:     state (band) index
@@ -748,92 +755,92 @@ class Hotbit(Output):
         if self.flags['grid']==False:
             raise AssertionError('Grid needs to be set first by method "set_grid".')
         return self.gd.get_grid_wf_density(a,k,pad)
-    
-    
+
+
     def get_grid_density(self,pad=True):
-        """ 
+        """
         Return electron density on grid.
-        
+
         Do not perform accurate analysis on this density.
         Integrated density differs from the total number of electrons.
         Bader analysis inaccurate.
-        
+
         parameters:
         pad:      padded edges
         """
         if self.flags['grid']==False:
             raise AssertionError('Grid needs to be set first by method "set_grid".')
         return self.gd.get_grid_density(pad)
-    
-    
+
+
     def get_grid_LDOS(self,bias=None,window=None,pad=True):
         """
         Return electron density over selected states around the Fermi-level.
-        
+
         parameters:
         -----------
-        bias:      bias voltage (eV) with respect to Fermi-level. 
+        bias:      bias voltage (eV) with respect to Fermi-level.
                    Negative means probing occupied states.
-        window:    2-tuple for lower and upper bounds wrt. Fermi-level 
+        window:    2-tuple for lower and upper bounds wrt. Fermi-level
         pad:       padded edges
         """
         if self.flags['grid']==False:
             raise AssertionError('Grid needs to be set first by method "set_grid".')
         return self.gd.get_grid_LDOS(bias,window,pad)
-            
+
 
     #
     # Mulliken population analysis tools
     #
     def _init_mulliken(self):
-        """ Initialize Mulliken analysis. """ 
+        """ Initialize Mulliken analysis. """
         if self.calculation_required(self.el.atoms,['energy']):
             raise AssertionError('Electronic structure is not solved yet!')
         if self.flags['Mulliken']==False:
             self.MA = MullikenAnalysis(self)
             self.flags['Mulliken']=True
-        
+
     def get_dq(self,atoms=None):
         """ Return atoms' excess Mulliken populations.
-        
+
         The total populations subtracted by
         the numbers of valence electrons.
-        
+
         """
         self.solve_ground_state(atoms)
         return self.st.get_dq()
-    
+
     def get_charges(self,atoms=None):
         """ Return atoms' electric charges (Mulliken). """
         return -self.get_dq(atoms)
-        
-        
+
+
     def get_atom_mulliken(self,I):
         """
         Return Mulliken population for atom I.
-        
+
         This is the total population, without the number
         of valence electrons subtracted.
-        
+
         parameters:
         ===========
         I:        atom index
         """
         self._init_mulliken()
         return self.MA.get_atom_mulliken(I)
-        
-        
+
+
     def get_basis_mulliken(self,mu):
         """
         Return Mulliken population of given basis state.
-        
+
         parameters:
         ===========
         mu:     orbital index (see Elements' methods for indices)
-        """ 
+        """
         self._init_mulliken()
         return self.MA.get_basis_mulliken(mu)
-    
+
 
     def get_basis_wf_mulliken(self,mu,k,a,wk=True):
         """
@@ -845,7 +852,7 @@ class Hotbit(Output):
         k:      k-vector index
         a:      eigenstate index
         wk:     include k-point weight in the population?
-        """    
+        """
         self._init_mulliken()
         return self.MA.get_basis_wf_mulliken(mu,k,a,wk)
 
@@ -853,7 +860,7 @@ class Hotbit(Output):
     def get_atom_wf_mulliken(self,I,k,a,wk=True):
         """
         Return Mulliken population for given atom and wavefunction.
-        
+
         parameters:
         ===========
         I:      atom index (if None, return an array for all atoms)
@@ -863,39 +870,39 @@ class Hotbit(Output):
         """
         self._init_mulliken()
         return self.MA.get_atom_wf_mulliken(I,k,a,wk)
-        
-    
+
+
     def get_atom_wf_all_orbital_mulliken(self,I,k,a):
         """
         Return orbitals' Mulliken populations for given atom and wavefunction.
-        
+
         parameters:
         ===========
         I:      atom index (returned array size = number of orbitals on I)
-        k:      k-vector index 
+        k:      k-vector index
         a:      eigenstate index
         """
         self._init_mulliken()
         return self.MA.get_atom_wf_all_orbital_mulliken(I,k,a)
-        
-    
+
+
     def get_atom_wf_all_angmom_mulliken(self,I,k,a,wk=True):
-        """ 
+        """
         Return atom's Mulliken populations for all angmom for given wavefunction.
-        
+
         parameters:
         ===========
         I:        atom index
         k:        k-vector index
         a:        eigenstate index
         wk:       embed k-point weight into population
-        
-        return: array (length 3) containing s,p and d-populations      
+
+        return: array (length 3) containing s,p and d-populations
         """
         self._init_mulliken()
         return self.MA.get_atom_wf_all_angmom_mulliken(I,k,a,wk)
 
-        
+
     #
     #  Densities of states methods
     #
@@ -906,60 +913,60 @@ class Hotbit(Output):
         if self.flags['DOS']==False:
             self.DOS = DensityOfStates(self)
             self.flags['DOS']=True
-            
-            
+
+
     def get_local_density_of_states(self,projected=False,width=0.05,window=None,npts=501):
         """
         Return state density for all atoms as a function of energy.
-        
+
         parameters:
         ===========
-        projected: return local density of states projected for 
-                   angular momenta 0,1 and 2 (s,p and d) 
+        projected: return local density of states projected for
+                   angular momenta 0,1 and 2 (s,p and d)
         width:     energy broadening (in eV)
         window:    energy window around Fermi-energy; 2-tuple (eV)
         npts:      number of grid points for energy
-        
+
         return:    projected==False:
                         energy grid, ldos[atom,grid]
                    projected==True:
-                        energy grid, 
+                        energy grid,
                         ldos[atom, grid],
                         pldos[atom, angmom, grid]
         """
         self._init_DOS()
         return self.DOS.get_local_density_of_states(projected,width,window,npts)
-    
-        
+
+
     def get_density_of_states(self,broaden=False,projected=False,occu=False,width=0.05,window=None,npts=501):
         """
         Return the full density of states.
-        
+
         Sum of states over k-points. Zero is the Fermi-level.
         Spin-degeneracy is NOT counted.
-        
+
         parameters:
         ===========
         broaden:     * If True, return broadened DOS in regular grid
-                       in given energy window. 
+                       in given energy window.
                      * If False, return energies of all states, followed
                        by their k-point weights.
-        projected:   project DOS for angular momenta 
+        projected:   project DOS for angular momenta
         occu:        for not broadened case, return also state occupations
         width:       Gaussian broadening (eV)
         window:      energy window around Fermi-energy; 2-tuple (eV)
         npts:        number of data points in output
-        
+
         return:      * if projected: e[:],dos[:],pdos[l,:] (angmom l=0,1,2)
                      * if not projected: e[:],dos[:]
                        * if broaden: e[:] is on regular grid, otherwise e[:] are
                          eigenvalues and dos[...] corresponding weights
-                     * if occu: e[:],dos[:],occu[:] 
-                          
+                     * if occu: e[:],dos[:],occu[:]
+
         """
         self._init_DOS()
         return self.DOS.get_density_of_states(broaden,projected,occu,width,window,npts)
-    
+
 
 
     # Bonding analysis
@@ -970,15 +977,15 @@ class Hotbit(Output):
         if self.flags['bonds']==False:
             self.bonds = MullikenBondAnalysis(self)
             self.flags['bonds']=True
-            
-            
+
+
     def get_atom_energy(self,I=None):
-        """ 
+        """
         Return the energy of atom I (in eV).
-        
+
         Warning: bonding & atom energy analysis less clear for
         systems where orbitals overlap with own periodic images.
-        
+
         parameters:
         ===========
         I:         atom index. If None, return all atoms' energies
@@ -992,10 +999,10 @@ class Hotbit(Output):
     def get_mayer_bond_order(self,i,j):
         """
         Return Mayer bond-order between two atoms.
-        
+
         Warning: bonding & atom energy analysis less clear for
         systems where orbitals overlap with own periodic images.
-        
+
         parameters:
         ===========
         I:        first atom index
@@ -1006,12 +1013,12 @@ class Hotbit(Output):
 
 
     def get_promotion_energy(self,I=None):
-        """ 
-        Return atom's promotion energy (in eV). 
-        
+        """
+        Return atom's promotion energy (in eV).
+
         Defined as:
             E_prom,I = sum_(mu in I) [q_(mu) - q_(mu)^0] epsilon_mu
-        
+
         parameters:
         ===========
         I:         atom index. If None, return all atoms' energies
@@ -1022,24 +1029,24 @@ class Hotbit(Output):
 
 
     def get_bond_energy(self,i,j):
-        """ 
-        Return the absolute bond energy between atoms (in eV). 
-        
+        """
+        Return the absolute bond energy between atoms (in eV).
+
         Warning: bonding & atom energy analysis less clear for
         systems where orbitals overlap with own periodic images.
-        
+
         parameters:
         ===========
         i,j:     atom indices
         """
         self._init_bonds()
         return self.bonds.get_bond_energy(i,j)
-        
-    
+
+
     def get_atom_and_bond_energy(self,i=None):
         """
         Return given atom's contribution to cohesion.
-        
+
         parameters:
         ===========
         i:    atom index. If None, return all atoms' energies
@@ -1047,18 +1054,18 @@ class Hotbit(Output):
         """
         self._init_bonds()
         return self.bonds.get_atom_and_bond_energy(i)
-        
-        
+
+
     def get_covalent_energy(self,mode='default',i=None,j=None,width=None,window=None,npts=501):
         """
         Return covalent bond energies in different modes. (eV)
-        
-        ecov is described in 
+
+        ecov is described in
         Bornsen, Meyer, Grotheer, Fahnle, J. Phys.:Condens. Matter 11, L287 (1999) and
         Koskinen, Makinen Comput. Mat. Sci. 47, 237 (2009)
-        
-        
-        
+
+
+
         parameters:
         ===========
         mode:    'default' total covalent energy
@@ -1067,44 +1074,44 @@ class Hotbit(Output):
                  'angmom' covalent energy for angular momentum components
         i,j:     atom or orbital indices, or angular momentum pairs
         width:   * energy broadening (in eV) for ecov
-                 * if None, return energy eigenvalues and corresponding 
+                 * if None, return energy eigenvalues and corresponding
                    covalent energies in arrays, directly
         window:  energy window (in eV wrt Fermi-level) for broadened ecov
-        npts:    number of points in energy grid (only with broadening) 
-    
+        npts:    number of points in energy grid (only with broadening)
+
         return:
         =======
         x,y:     * if width==None, x is list of energy eigenvalues (including k-points)
                    and y covalent energies of those eigenstates
                  * if width!=None, x is energy grid for ecov.
                  * energies (both energy grid and ecov) are in eV.
-         
-        Note: energies are always shifted so that Fermi-level is at zero. 
+
+        Note: energies are always shifted so that Fermi-level is at zero.
               Occupations are not otherwise take into account (while k-point weights are)
         """
         self._init_bonds()
         return self.bonds.get_covalent_energy(mode,i,j,width,window,npts)
-    
- 
+
+
     def add_pair_potential(self,i,j,v,eVA=True):
         """
         Add pair interaction potential function for elements or atoms
-        
+
         parameters:
         ===========
         i,j:    * atom indices, if integers (0,1,2,...)
                 * elements, if strings ('C','H',...)
-        v:      Pair potential function. 
-                Only one potential per element and atom pair allowed. 
+        v:      Pair potential function.
+                Only one potential per element and atom pair allowed.
                 Syntax:  v(r,der=0), v(r=None) returning the
                 interaction range in Bohr or Angstrom.
         eVA:    True for v in eV and Angstrom
                 False for v in Hartree and Bohr
         """
         self.pp.add_pair_potential(i,j,v,eVA)
-        
-        
-        
+
+
+
 
 
 ### Helper functions

@@ -18,9 +18,9 @@ import warnings
 def even_cpu_load(N,ncpu,power=3,indices=False):
     """
     For a given list of system sizes N, divide load evenly to cpus.
-    
-    This is for dummy (ideal) parallellization. 
-    
+
+    This is for dummy (ideal) parallellization.
+
     parameters:
     ===========
     N:      list of system sizes, e.g. [5,6,7]
@@ -28,9 +28,9 @@ def even_cpu_load(N,ncpu,power=3,indices=False):
     power:  scaling with system size. For systems with N=[5,6,7]
             the scaling goes as 5**power etc.
     indices:instead of returning N for given cpu, return indices
-            (i such that N equals N[i]) 
-            
-    output: cpuN[:] 
+            (i such that N equals N[i])
+
+    output: cpuN[:]
             * where cpuN[cpu] gives the list of Ns appointed to given cpu.
             * if indices==True, return indices only
               (cpuN[cpu] gives the list of indices such that 'cpu' is given
@@ -44,8 +44,8 @@ def even_cpu_load(N,ncpu,power=3,indices=False):
         raise AssertionError('Decrease the number of cpus; ncpu=%i, parallelizable to %i' %(size,n))
     time_per_cpu = float(times.sum())/size
     j = 0
-    cput = np.zeros(size,int)    
-    cpuN = [[] for x in range(size)] 
+    cput = np.zeros(size,int)
+    cpuN = [[] for x in range(size)]
     for cpu in range(size):
         for i in range(j,n):
             cput[cpu] += times[i]
@@ -53,19 +53,19 @@ def even_cpu_load(N,ncpu,power=3,indices=False):
                 cpuN[cpu].append(n-1-i)
             else:
                 cpuN[cpu].append(N2[i])
-            if cput[cpu]>time_per_cpu:                
+            if cput[cpu]>time_per_cpu:
                 break
         j = i+1
         if j==n:
-            break   
-        
+            break
+
     if any(cput==0):
         m = sum(cput==0)
         warnings.warn('Trying to divide load evenly to %i cpus left %i cpus idle.' %(size,m))
     return cpuN
-        
 
-   
+
+
 class _FitFunction:
     def __init__(self,f,p):
         self.p=p
@@ -75,13 +75,13 @@ class _FitFunction:
             return self.f(x,self.p)
         else:
             return self.f(x,self.p,der)
-            
-                
+
+
 
 def fit(f,p,xlist,ylist,fct=False):
     '''
     Fit function f(x) with parameters p to given data.
-    
+
     parameters:
     ===========
     f:        function to fit; usage f(x,p)
@@ -98,13 +98,13 @@ def fit(f,p,xlist,ylist,fct=False):
     if fct:
         return res,_FitFunction(f,res)
     else:
-        return res 
+        return res
 
 
 def fit1(p,xlist,ylist,fct=False):
     '''
     Fit y=a+b*x to given data.
-    
+
     parameters:
     ===========
     p:        initial guesses for a and b
@@ -114,7 +114,7 @@ def fit1(p,xlist,ylist,fct=False):
     '''
     assert len(p)==2
     def f(x,p,der=0):
-        if der==0: 
+        if der==0:
             return p[0]+p[1]*x
         elif der==1:
             return p[1]
@@ -124,16 +124,16 @@ def fit1(p,xlist,ylist,fct=False):
     if fct:
         return res,_FitFunction(f,res)
     else:
-        return res 
+        return res
 
 
 def fit2(p,xlist,ylist,fct=False):
     '''
     Fit y=a+0.5*b*(x-c)**2 to given data.
-    
+
     parameters:
     ===========
-    p:        initial guesses for a,b and c. 
+    p:        initial guesses for a,b and c.
               Use None for reasonable initial guesses (with upward curvature!)
     xlist:    x-data to fit
     ylist:    y-data to fit
@@ -144,31 +144,31 @@ def fit2(p,xlist,ylist,fct=False):
         p = [min(ylist),5*(max(ylist)-min(ylist))/(xlist[-1]-xlist[0])**2,xlist[imin]]
     assert len(p)==3
     def f(x,p,der=0):
-        if der==0: 
+        if der==0:
             return p[0]+0.5*p[1]*(x-p[2])**2
         elif der==1:
             return p[1]*(x-p[2])
         elif der==2:
             return p[1]
-        
+
     res = fit(f,p,np.array(xlist),np.array(ylist))
     if fct:
         return res,_FitFunction(f,res)
     else:
-        return res  
-    
+        return res
+
 
 def get_peak_positions(x,y,fact=0.01):
     """
     Return the peaks of y(x)
-    
+
     parameters:
     ===========
     x:     x-grid (equally spaced)
     y:     y-grid, same length as x
     fact:  find peaks that are higher than fact times
            the highest y-peak
-    
+
     return:
     =======
     peaks [x1,x2,...], [y1,y2,...]
@@ -182,7 +182,7 @@ def get_peak_positions(x,y,fact=0.01):
     if y[-2]<y[-1] and y[-1]>fact*ymax:
         X.append(x[-1])
         Y.append(y[-1])
-    
+
     aux = xrange(1,N)
     d = y[1:]-y[:-1]
     peaks = np.extract( (d[:-1]>0)*(d[1:]<0),aux )
@@ -192,20 +192,20 @@ def get_peak_positions(x,y,fact=0.01):
         if -a>fact*ymax:
             X.append(c)
             Y.append(-a)
-        
+
     return np.array(X),np.array(Y)
-        
+
 
 def divisors(x):
     '''
     Return all divisors of x.
-    
+
     @param x: integer
     '''
     assert isinstance(x,int)
     lst=[x]
     for i in range(x/2,0,-1):
-        if np.mod(x,i)==0: lst.append(i)        
+        if np.mod(x,i)==0: lst.append(i)
     return np.array(lst)
 
 def gcd(a,b):
@@ -225,7 +225,32 @@ def rotation_matrix(axis,angle):
          [n1*n2*cc + n3*s, n2**2*cc + c,    n2*n3*cc - n1*s],
          [n1*n3*cc - n2*s, n2*n3*cc + n1*s, n3**2*cc + c   ]]
     return np.array(R)
-    
+
+
+def rotation_from_matrix(R):
+    """
+    Return rotation angle and axis from 3x3 rotation matrix.
+    """
+    norm = np.linalg.norm
+    assert np.abs(np.linalg.det(R)-1.0)<1E-14 # make sure it's valid
+    # direction: unit eigenvector of R corresponding to eigenvalue of 1
+    w, W = np.linalg.eig(R)
+    i = (abs(w.real-1.0)).argsort()[0]
+    if np.abs(w[i]-1)>1E-8:
+        raise ValueError("No unit eigenvector corresponding to eigenvalue 1")
+
+    t = (W[:,i]/norm(W[:,i])).real
+    #choose another, perpendicular vector a1 that rotates -->a2 and b1-->b2
+    # b = t x a (right-handed system). Use normalized vectors.
+    a1 = np.cross(t,np.random.rand(3))
+    a1 = a1 / norm(a1)
+    b1 = np.cross(t,a1)
+    a2 = np.dot(R,a1)
+    b2 = np.dot(R,b1)
+    cosa, sina = np.dot(a1,a2), np.dot(a2,b1)
+    angle = phival(cosa,sina)
+    return angle, t
+
 
 def phival(x,y):
     """ Return azimuthal angle for ALL x,y. """
@@ -258,7 +283,7 @@ def kronecker(i,j):
         return 1
     else:
         return 0
-    
+
 def matrix_pprint(m,fmt='%.4f'):
     """ pretty-pring matrix. """
     assert len(m.shape)==2
@@ -269,17 +294,17 @@ class Timer:
     def __init__(self):
         self.t0=time.time()
         self.t=time.time()
-        
+
     def __call__(self):
         t=time.time()
         dt=t-self.t
         self.t=t
-        print 'dt',dt     
-        
+        print 'dt',dt
+
     def __del__(self):
         t=time.time()
-        print 'total time',t-self.t0        
-    
+        print 'total time',t-self.t0
+
 
 def print_timing(func):
     def wrapper(*arg):
@@ -298,15 +323,15 @@ def random_direction(vector=False):
         return phi,theta
     else:
         return np.array([np.sin(theta)*np.cos(phi),np.sin(theta)*np.sin(phi),np.cos(theta)])
-    
+
 def spherical_to_cartesian(theta,phi,r=1.0):
     """ Transform spherical coordinates to cartesian ones. """
     return np.array([r*np.sin(theta)*np.cos(phi),r*np.sin(theta)*np.sin(phi),r*np.cos(theta)])
-    
-def cosd(x): 
+
+def cosd(x):
     return cos(x*2*pi/360.0)
 
-def sind(x): 
+def sind(x):
     return sin(x*2*pi/360.0)
 
 def base_and_extension(filename):
@@ -315,9 +340,9 @@ def base_and_extension(filename):
     return filename[:i],filename[i+1:]
 
 def sec_to_time(secs):
-    """ 
+    """
     return days,hours,minutes and seconds from seconds.
-    
+
     return list [dd,hh,mm,ss]
     parameters:
     -----------
@@ -333,8 +358,8 @@ def sec_to_time(secs):
     return [d,h,m,s]
 
 def clean_indentation(st):
-    """ 
-    Return multiple-line string into lowest indentation equal to zero. 
+    """
+    Return multiple-line string into lowest indentation equal to zero.
     Remove initial and trailing empty line.
     """
     lines=st.splitlines()
@@ -350,16 +375,16 @@ def clean_indentation(st):
         mn=min(ns,mn)
     new=''
     for line in lines:
-        new+=line[mn:]+'\n' 
+        new+=line[mn:]+'\n'
     first=False
     for c in new:
         if c=='\n' and not first:
             new=new[1:]
         else:
-            first=True    
+            first=True
     return new[:-1]
 
-    
+
 def max_norm(vecs):
     """ Return the maximum norm of given list of vectors. """
     mx=0.0
@@ -383,16 +408,16 @@ def select_vector_mode(vec,mode):
         x=list(vec[0])
         for vec in vec[1:]:
             x=x+list(vec)
-        return vector(x)        
+        return vector(x)
     elif not listvec and mode=='default':
-        if mod(len(vec),3)!=0: 
+        if mod(len(vec),3)!=0:
             raise AssertionError
         N=len(vec)/3
         x=[]
         for i in range(N):
             x.append( vector(vec[i*3:i*3+3]) )
-        return x    
-    
+        return x
+
 
 def eof(file,tol=3):
     """ Test enf of file within given byte tolerance. """
@@ -403,15 +428,15 @@ def eof(file,tol=3):
     if end-now<=tol:
         return True
     else:
-        return False  
-    
+        return False
+
 def a2s(a,fmt='%.14g',end=''):
     """ Transforms vector array into a string with given format."""
     st=''
     for i in range( len(a) ):
         st=st+str(fmt%a[i]+'\t'  )
     return st+end
-    
+
 
 def norm(a):
     """
@@ -435,9 +460,9 @@ def lorentzian(x,mean,width):
 
 
 def broaden(x,y=None,width=0.05,function='gaussian',extend=False,N=200,a=None,b=None,xgrid=None):
-    """ 
+    """
     Broaden a peaked distribution (DOS,optical spectra,...).
-    
+
     parameters:
     -----------
     x:         data points (~energy axis)
@@ -449,7 +474,7 @@ def broaden(x,y=None,width=0.05,function='gaussian',extend=False,N=200,a=None,b=
     a:         if defined, is used as the lower limit for output
     b:         if defined, is used as the upper limit for output
     xgrid:     directly given x-grid
-    
+
     return: xgrid, broadened distribution
     """
     if y==None:
@@ -463,12 +488,12 @@ def broaden(x,y=None,width=0.05,function='gaussian',extend=False,N=200,a=None,b=
         mx=max(x)+dx
     else:
         mx=b
-        
+
     if xgrid!=None:
         pass
     else:
         xgrid = np.linspace(mn,mx,N)
-    
+
     ybroad= np.zeros_like(xgrid)
     for xi,yi in zip(x,y):
         if function=='lorentzian':
@@ -476,11 +501,11 @@ def broaden(x,y=None,width=0.05,function='gaussian',extend=False,N=200,a=None,b=
         elif function=='gaussian':
             w = np.exp( -(xgrid-xi)**2/(2*width**2) ) / (np.sqrt(2*np.pi)*width)
         ybroad = ybroad + yi*w
-    return xgrid, ybroad 
-    
+    return xgrid, ybroad
+
 
 def grid(min,max,N):
-    """ 
+    """
     Returns a grid with min and max as end-points and (N-1) divisions.
     """
     from numpy import arange
@@ -497,8 +522,8 @@ def true_false(s):
         return False
     else:
         raise RuntimeError
-        
-        
+
+
 def execute(cmd,echo=True):
     from os import system
     from sys import exit
@@ -511,15 +536,15 @@ def execute(cmd,echo=True):
             print '       ...',s[-1],'...'
         else: print 'Executing:',s,'...'
         system(cmd)
-    
-    
+
+
 def find_value(inp,key,fmt='default',default=None,position='start'):
     '''
     Find value for key from file.
-    
+
     Usage: value_string=find_key(f,key)
            value_string_list=find_key(f,key,fmt='default')
-    
+
     Parameters:
     -----------
       inp - file object or file name
@@ -541,10 +566,10 @@ def find_value(inp,key,fmt='default',default=None,position='start'):
              mat = find_value(f,'m','matrix')
     '''
     f,opened=file_safeopen(inp)
-    if position=='start': 
+    if position=='start':
         f.seek(0)
     else:
-        pass       
+        pass
     empty=0
     ret=None
     while 1:
@@ -553,12 +578,12 @@ def find_value(inp,key,fmt='default',default=None,position='start'):
         if(empty>1000): break
         i=line.find('=')
         hlp=line.split('=')
-        if hlp[0].strip()==key.strip() and i>=0: 
-            if fmt=='test':    ret=True 
+        if hlp[0].strip()==key.strip() and i>=0:
+            if fmt=='test':    ret=True
             if fmt=='bool':    ret=true_false(hlp[1])
-            if fmt=='matrix':  ret=read(f) 
+            if fmt=='matrix':  ret=read(f)
             if fmt=='strings': ret=read(f,fmt='string')
-            if len(hlp)>1: value=hlp[1].split() 
+            if len(hlp)>1: value=hlp[1].split()
             if fmt=='default': ret=value[0]
             if fmt=='onestr':  ret=hlp[1][:-1]
             elif fmt=='all':   ret=value[0:]
@@ -606,11 +631,11 @@ def read_file(file,mode='all',commentchar='#'):
             if line[0]==commentchar and mode=='comments':   ret.append(line)
             if line[0]!=commentchar and mode=='nocomments': ret.append(line)
         return ret
-    if opened: f.close()   
-     
+    if opened: f.close()
+
 def file_safeopen(file,action='r'):
     """
-    Return file if file is a file-object, otherwise return the opened file 
+    Return file if file is a file-object, otherwise return the opened file
     object and True/False if the file was opened or not. Action 'r','w','rw'.
     """
     from os.path import isfile
@@ -619,13 +644,13 @@ def file_safeopen(file,action='r'):
         if isfile(file):
             f=open(file,action)
             opened=True
-        else: 
+        else:
             raise RuntimeError('\n File '+file+' does not exist!')
     else:
         f=file
     return (f,opened)
-    
-    
+
+
 def identify_column(col,file,commentchar='#'):
     """
     Return the column index (starting from 0), identified by col.
@@ -659,16 +684,16 @@ def read_column(col,file,commentchar='#'):
     dat = read(f)
     if opened: f.close()
     return dat[:,identify_column(col,file)]
-    
-    
+
+
 def read(file,commentchar='#',fmt='array'):
-    """ 
+    """
     Read a data set from given file.
-    
+
     * file -- file name of file object (for object the "next" set is read)
     * commentchar -- character for comments, which are not read
     * fmt -- format for output:
-        
+
         - 'array' -- return two-dimensional numpy array
         - 'string' -- return the set as a list of strings
         - 'lines' -- return following non-empty lines as one string
@@ -679,7 +704,7 @@ def read(file,commentchar='#',fmt='array'):
     r=[]
     col=-1
     start=True
-    while 1:        
+    while 1:
         line = f.readline()
         if not line: break              #end of file
         line = line.lstrip().strip()
@@ -688,26 +713,26 @@ def read(file,commentchar='#',fmt='array'):
             elif start==False: break    # next blank line stops the data set
         if line[0]=="#": continue       # ignore comment line
         cl   = len(line.split())
-        #if col!=-1 and cl!=col: 
+        #if col!=-1 and cl!=col:
             #break # different amount of columns->stop
         if fmt=='array':
             r.append([float(x) for x in line.split()])
         elif fmt=='string':
             if line[-1]=='\n': line=line[:-1]
-            r.append(line)       
-        else: 
+            r.append(line)
+        else:
             raise AssertionError('[mix.read] Invalid format.')
         col = cl
         start=False
     if opened: f.close()
     if r==[]: return None
-    if fmt=='array': 
+    if fmt=='array':
         return array(r)
     elif fmt=='lines':
         return '\n'.join(r)
-    else: 
+    else:
         return r
-    
+
 
 def write(file,a,fmt='%g'):
     """
@@ -717,7 +742,7 @@ def write(file,a,fmt='%g'):
     Example:
       write('data.out',array,'%14.2f')
       write(f,r)
-    
+
     """
     try:
         f=open(file,'w')
@@ -728,22 +753,22 @@ def write(file,a,fmt='%g'):
             f.write(fmt %a[i,j]+'\t')
         f.write('\n')
     f.flush()
-               
+
 def abs_sum(a):
     """ Return the sum of all elements (absolute values) in array. """
     return abs(a).sum()
-      
-      
+
+
 def gplot(string,file=None,delete=False,view=False):
     """Make a gnuplot file and call gnuplot to make an image from string.
        If delete=True, remove the intermediate .gp -files
     """
     from os import system
     from os import environ
-    
+
     if file==None:
         for line in string.splitlines():
-            if line.find('set output')>=0: 
+            if line.find('set output')>=0:
                 psfile=line.split("'")[1]
         file=psfile.split('.')[0]+'.gp'
     f=open(file,'w')
@@ -760,8 +785,8 @@ def gplot(string,file=None,delete=False,view=False):
     else:
         psfile=file[:i]+'.ps'
     if view: execute('%s %s&' %(psviewer,psfile) )
-    
-    
+
+
 def add_to_file(s,file):
     """Add string to a file."""
     f=open(file,'r')
@@ -775,11 +800,11 @@ def add_to_file(s,file):
 
 def add_file_appendix(file,app):
     """
-    Adds appendix to file name, preserving the file type. 
-    Examples: 
+    Adds appendix to file name, preserving the file type.
+    Examples:
         'result.out' + '1' --> 'result_1.out'
         'result' '1' --> 'result_1'
-        'result.out.xyz' '1' --> 'result.out_1.xyz'        
+        'result.out.xyz' '1' --> 'result.out_1.xyz'
     """
     i = file.rfind('.')
     if i<0:
@@ -809,32 +834,32 @@ def parse_name_for_atoms(atoms):
 
 class AnalyticFunction:
     """ Class for defining analytic functions with strings."""
-    
+
     def __init__(self,expr,variable='x',**kwargs):
         """ e.g. f=AnalyticFunction('a*x**2+b*x',a=1,b=2). free=independent variable """
         self.f=expr
         self.args=kwargs
         self.args['variable']=variable
-        
+
     def __call__(self,variable,**kwargs):
         """ variable is the independent variable """
         self.args.update(kwargs)
         self.args.update({self.args['variable']:variable})
         f=eval(self.f,globals(),self.args)
         return f
-   
+
     def set(self,**kwargs):
         self.args.update(kwargs)
-        
+
     def info(self):
         print 'function:',self.f
         print 'current arguments:',self.args
-        
+
     def plot(self,a=None,b=None,N=200,out='screen'):
         import pylab as pl
         if a==b==None:
             a,b=(-10,10)
-        
+
         x=np.linspace(a,b,N)
         f=[self(tx) for tx in x]
         pl.plot(x,f)
@@ -842,46 +867,46 @@ class AnalyticFunction:
             pl.show()
         else:
             pl.savefig(out)
-                    
-    
+
+
 class IFunction:
-    """Simple class for interpolating functions on a grid."""    
+    """Simple class for interpolating functions on a grid."""
     def __init__(self,x,y,s=0):
         """ x is the grid and y the corresponding values.
             s is the "smoothness", default s=0 (f(x_i)=y_i exactly)
-        """        
-        from scipy.interpolate import splrep 
+        """
+        from scipy.interpolate import splrep
         from scipy.interpolate import splev
         from scipy.interpolate import splint
         self.splrep = splrep
         self.splev  = splev
         self.splint = splint
         self.tck    = self.splrep(x,y,s=s)
-    
+
     def __call__(self,x,der=0):
         """Evaluate function or its derivatives (der=1,2) at x."""
         return self.splev(x,self.tck,der=der)
-        
+
     def integrate(self,x1,x2):
         """Integrate the function from x1 to x2."""
-        return self.splint(x1,x2,self.tck)  
-    
-    
+        return self.splint(x1,x2,self.tck)
+
+
 class Const:
-    """ Simple class for constants. 
-    
+    """ Simple class for constants.
+
         Example:
             const=Const()
             E=const.kB*T
             const.list_constants() -> list of available constants
             const.search('Boltzmann')
-    """   
+    """
     def __init__(self,lst):
         self.constants=[]
         const=lst.splitlines()
         for c in const:
             self.add_const(c)
-    
+
     def add_const(self,st):
         """ Add constant (given as string) to list. """
         div=st.split(';')
@@ -890,11 +915,11 @@ class Const:
         div[2]=float(div[2])
         self.constants.append(div)
         exec('self.%s=%20.15g' %(div[1],div[2]) )
-           
+
     def list_constants(self):
         """ List all the constants in this object. """
         for c in self.constants: print c
-        
+
     def info(self,const):
         """ Print info for the given constant. """
         for c in self.constants:
@@ -902,19 +927,19 @@ class Const:
                 print c
                 return
         print 'Constant',const,'was not found.'
-        
+
     def search(self,st):
         """ Search a part of string from the constant database. """
         for c in self.constants:
             hlp=[c[0],c[1],c[3]]
             for part in hlp:
-                if part.find(st.strip())>=0:  
+                if part.find(st.strip())>=0:
                     print c
                     exit
-       
-                    
+
+
 SI_const="""
-speed of light in a vacuum;     c;  2.99792458E+08;                 m/s 
+speed of light in a vacuum;     c;  2.99792458E+08;                 m/s
 elementary charge (of proton);  e;  1.60217733E-19;                 C
 gravitational constant;         G;  6.67259E-11;                    m^3/(kg*s^2)
 gravitational acceleration;     g;  9.80665;                        m/s^2
@@ -934,7 +959,7 @@ Bohr magneton (e*hbar/(2*me));  mu_B;   9.2740154E-24;              J/T
 nuclear magneton (e*hbar/(2*mp));   mu_N;   5.0507866E-27;          J/T
 electric constant (1/(4*pi*epsilon_0)); Cc; 8987551787.37;          V*m/(A*s)
 molar gas constant;             Rc; 8.314510;                       J/(mol*K)
-permeability of a vacuum (4*pi*10E-7);  mu0;    1.25663706144E-7;   V*s/(A*m)   
+permeability of a vacuum (4*pi*10E-7);  mu0;    1.25663706144E-7;   V*s/(A*m)
 permittivity of a vacuum;   epsilon_0;   8.85418781762E-12;          A*s/(V*m)
 fine structure constant (e^2/(2*epsilon_0*h*c));    alpha;  7.29735308E-3; 1 """
 
@@ -959,15 +984,15 @@ Boltzmann constant (R*Na);      kB; 3.1668297361e-06;               E/K
 Stefan-Boltzman constant;       sigma;  3.76147527217e-26;          E/(T*L^2*K^4)
 Bohr magneton (e*hbar/(2*me));  mu_B;   2.12719063966e-06;          E/Tesla
 nuclear magneton (e*hbar/(2*mp));   mu_N;   1.15850422013e-09;      E/Tesla
-permeability of a vacuum (4*pi*10E-7);  mu0;    3.67096691757e-08;   V*s/(A*m)   
+permeability of a vacuum (4*pi*10E-7);  mu0;    3.67096691757e-08;   V*s/(A*m)
 permittivity of a vacuum;   epsilon_0;   0.0795774702667;           A*s/(V*m)
 fine structure constant (e^2/(2*epsilon_0*h*c));    alpha;  7.29735308E-3; 1 """
 
 
 SI=Const(SI_const)
 AU=Const(AU_const)
-         
-        
+
+
 if __name__=='__main__':
     pass
     #
@@ -984,7 +1009,7 @@ if __name__=='__main__':
     J=1/( SI.me*SI.e**4/(8*SI.h**2*SI.epsilon_0**2)*2 )
     s=sqrt( kg*m**2/J )
     A=C/s
-    
+
     print 'Basic quantities'
     print 'm',m
     print 'C',C
@@ -992,11 +1017,11 @@ if __name__=='__main__':
     print 'J',J
     print 's',s
     print 'A',A
-    
+
     t_0     =1/s
     c       =SI.c*m/s
     G       =SI.G*m**3/(kg*s**2)
-    g       =SI.g*m/s**2    
+    g       =SI.g*m/s**2
     me      =SI.me*kg
     mp      =SI.mp*kg
     mn      =SI.mn*kg
@@ -1012,8 +1037,8 @@ if __name__=='__main__':
     Cc      =SI.Cc *J*m/(C*A*s)
     mu0     =SI.mu0 *J*s/(A*m*C)
     epsilon_0=SI.epsilon_0 *A*s*C/(m*J)
-    # C*V=J => V=J/C  
-    
+    # C*V=J => V=J/C
+
     print '\nConstants'
     print 't_0',t_0
     print 'c',c
@@ -1034,17 +1059,11 @@ if __name__=='__main__':
     print 'Cc',Cc
     print 'mu0',mu0
     print 'epsilon_0',epsilon_0
-    
+
     a=[1.0,2.0,3.22]
     print a2s(a)
-       
-       
+
+
     f=AnalyticFunction('x**2+a',a=2,b=5)
     f.info()
     print f(5,n=3,a=1)
-    
-              
- 
-        
-        
-        
