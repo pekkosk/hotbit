@@ -1,6 +1,6 @@
 from hotbit import Element
 from hotbit import Hotbit
-import numpy as
+import numpy as np
 from ase.units import Bohr,Hartree
 from hotbit import Atoms
 from ase.io import read
