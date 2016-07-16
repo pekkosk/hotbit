@@ -66,7 +66,7 @@ def get_system_config(include_dirs, libraries, library_dirs,
                 msg += ['* Using ACML library']
             else:
                 atlas = False
-                for dir in ['/usr/lib', '/usr/local/lib']:
+                for dir in ['/usr/lib', '/usr/local/lib', '/opt/lib', '/opt/local/lib']:
                     if glob(join(dir, 'libatlas.a')) != []:
                         atlas = True
                         break
