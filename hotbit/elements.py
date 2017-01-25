@@ -22,7 +22,7 @@ class Elements:
         If atoms is ASE.atoms object, convert it into box.Atoms object
         """
         elements = calc.get('elements')
-        if elements!=None:
+        if elements is not None:
             elements=elements.copy()
 
         if not isinstance(atoms, ase_Atoms):
@@ -35,7 +35,7 @@ class Elements:
         self.N=len(atoms)
         self.name = None
         self.positions=None
-        if charge == None:
+        if charge is None:
             self.charge = calc.get_charge()
 
         self.present=[]
@@ -53,7 +53,7 @@ class Elements:
         # set customized files
         current = path.abspath('.')
         default = environ.get('HOTBIT_PARAMETERS')
-        if elements!=None:
+        if elements is not None:
             for key in elements:
                 if key=='rest': continue
                 file = elements[key]
@@ -64,9 +64,9 @@ class Elements:
                     self.files[key] = file
 
         # find element data from default place
-        if elements==None or elements!=None and 'rest' in elements and elements['rest']=='default':
+        if elements is None or elements is not None and 'rest' in elements and elements['rest']=='default':
             for key in self.symbols:
-                if self.files[key]!=None: continue
+                if self.files[key] is not None: continue
                 file = path.join(default,'%s.elm' %key)
                 if not path.isfile(file):
                     raise RuntimeError('Default element file "%s" for %s not found.' %(file,key))
@@ -502,9 +502,9 @@ class Elements:
         indices: return orbital indices for atom i.
         number: return number of orbitals for atom i.
         """
-        if i==None:
+        if i is None:
             return self.orb
-        elif i!=None:
+        elif i is not None:
             if atom:
                 return self.orbital_atoms[i]
             elif indices:

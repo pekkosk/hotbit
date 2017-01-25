@@ -38,7 +38,7 @@ class Repulsion:
         for i,s1 in enumerate(self.calc.el.present):
             for s2 in self.calc.el.present[i:]:
                 file = self.files[s1+s2]
-                if file==None:
+                if file is None:
                     txt+='  %s%s: None\n' %(s1,s2)
                 else:
                     txt+='  %s%s in %s\n' %(s1,s2,file)

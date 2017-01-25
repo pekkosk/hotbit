@@ -37,17 +37,17 @@ class Gaussian:
         TODO: doc 
         n1 and n2 should be in xy-plane
         """
-        if container!=None:
-            assert angle1==None and angle2==None and R1==None and R2==None
+        if container is not None:
+            assert angle1 is None and angle2 is None and R1 is None and R2 is None
             self.set(angle1=container.angle1, angle2=container.angle2, R1=container.R1, R2=container.R2)
             
-        if angle1!=None:
+        if angle1 is not None:
             self.angle1=angle1
-        if angle2!=None:
+        if angle2 is not None:
             self.angle2=angle2
-        if R1!=None:
+        if R1 is not None:
             self.R1 = R1
-        if R2!=None:
+        if R2 is not None:
             self.R2 = R2    
     
         self.atoms.set_pbc((True,True,False))

@@ -36,19 +36,19 @@ class Atoms(ase_Atoms):
         
     def set_calculator(self,calc=None):
         ase_Atoms.set_calculator(self,calc)
-        if calc!=None:
+        if calc is not None:
             self._update()
                     
     def set_positions(self,r):
         """ If calc is set, system should be reasonable for updating. """
         ase_Atoms.set_positions(self,r)
-        if self.calc!=None:
+        if self.calc is not None:
             self._update()
         
     def set_cell(self,cell,**kwargs):
         """ If calc is set, system should be reasonable for updating. """
         ase_Atoms.set_cell(self,cell,**kwargs)
-        if self.calc!=None:
+        if self.calc is not None:
             self._update()        
         
     def set_data(self):
@@ -139,14 +139,14 @@ class Atoms(ase_Atoms):
             Ri=R[ri].copy()
         else:
             Ri=ri.copy()
-        if rj==None:
+        if rj is None:
             Rj=None
         elif type(rj)==type(1):
             Rj=R[rj].copy()
         else:
             Rj=rj                                    
             
-        if Rj==None:
+        if Rj is None:
             rij=Ri
         else:
             rij=Rj-Ri
@@ -161,7 +161,7 @@ class Atoms(ase_Atoms):
         """
         Return the length of |ri| or |rj-ri|, normally within the minimum image convention.
         """
-        if rj==None:
+        if rj is None:
             return mix.norm(self.vector(ri,mic))
         else:
             return mix.norm(self.vector(ri,rj,mic))
@@ -264,7 +264,7 @@ class Atoms(ase_Atoms):
         
     def atom_distribution_wrt_point(self,point=None):
         assert NotImplementedError()
-        #of point==None, point=center_of_mass
+        #of point is None, point=center_of_mass
                 
     def spatial_extrema(self):
         assert NotImplementedError()
@@ -310,7 +310,7 @@ class Atoms(ase_Atoms):
             
     def pair_distribution_function(self,rmin=0.0,rmax=10,sigma=0.7):
         """ Return Gaussian-broadened pair distribution function (or RDF). """
-        if rmax==None:
+        if rmax is None:
             rmax=max(min(self.get_cell_axes())/2,5)
         rij=self.pair_distribution_list()
         rij.sort()
@@ -375,7 +375,7 @@ class Atoms(ase_Atoms):
         
     def write_vtk(self,file=None):
         """ vtk output of atoms (all scalar and vector properties) """
-        if file==None:
+        if file is None:
             file=self.get_name()+'.vtk'
         N=len(self)
         f=open(file,'w')
@@ -385,7 +385,7 @@ class Atoms(ase_Atoms):
         fmt='%20.14f' #output format for floats
         
         # Point data (atom coordinates) and cell data (bonds)
-        if self.get('nbonds')==None: 
+        if self.get('nbonds') is None: 
             self.construct_bonds()
         nb=self.get('nbonds')
         bonds=self.get('bonds')

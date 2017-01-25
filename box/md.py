@@ -59,9 +59,9 @@ def dimer_curve(atoms,r1=None,r2=None,N=100):
     rc=[]
     for s in atoms.get_chemical_symbols():
         rc.append(data[s]['R_cov'])
-    if r1==None:
+    if r1 is None:
         r1=(rc[0]+rc[1])*0.5
-    if r2==None:
+    if r2 is None:
         r2=(rc[0]+rc[1])*2.5              
     e=[]
     rl=np.linspace(r1,r2,N)
@@ -84,7 +84,7 @@ def canonical(atoms,dt=1.0,steps=1000,output=10,name=None,verbose=False):
     name: TrajectoryRecording name
     verbose: increase verbosity    
     """
-    if name==None:
+    if name is None:
         try:
             name=atoms.get_chemical_formula(mode="hill")
         except:
@@ -113,7 +113,7 @@ def microcanonical(atoms,dt=1.0,steps=100,output=1,name=None,verbose=False):
     
     Return TrajectoryRecording object for further analysis.
     """
-    if name==None:
+    if name is None:
         try:
             name=atoms.get_chemical_formula(mode="hill")
         except:
@@ -228,7 +228,7 @@ class TrajectoryWriter:
     def __init__(self,images,name=None):
         """ images is the list of Atoms objects; you can supply also the name. """
         
-        if name==None:
+        if name is None:
             self.name='path'
         else:
             self.name=name
@@ -246,7 +246,7 @@ class TrajectoryWriter:
             
 def quench(atoms,name=None,fmax=0.05,method='QN'):
     """ Quench given Atoms object with given attached calculator. """
-    if name==None:
+    if name is None:
         try:
             name=atoms.get_chemical_formula(mode="hill")
         except:
@@ -275,14 +275,14 @@ def transition_barrier(calc,quench,guess,cell=None,pbc=None,constraints=None,\
         path=method(images)
     else:
         if type(guess)==type(''):
-            assert guess.split('.')[-1]=='trj' and M==None 
+            assert guess.split('.')[-1]=='trj' and M is None 
             # for some reason copying has to be done...
             images=[]
             for image in ase.PickleTrajectory(guess):
                 images.append(image.copy())
             path=method(images)
         else:
-            assert type(guess)==type([]) and M!=None
+            assert type(guess)==type([]) and M is not None
             images=[]
             first=ase.read(guess[0])
             images.append(first)
@@ -294,11 +294,11 @@ def transition_barrier(calc,quench,guess,cell=None,pbc=None,constraints=None,\
             path.interpolate()  
               
         # now coordinates are set; set other properties
-        assert cell!=None and pbc!=None 
+        assert cell is not None and pbc is not None 
         for image in images:
             image.set_pbc(pbc)
             image.set_cell(cell,fix=True)
-            if constraints!=None:
+            if constraints is not None:
                 image.set_constraint(constraints)
                 
     # attach calculators
@@ -340,7 +340,7 @@ def merge_atoms(atoms1,atoms2,box_from=None,R=0.3):
     print type(atoms)
 
     # set box from the first atoms or box_from
-    if box_from!=None:
+    if box_from is not None:
         bx=box_from
     else:
         bx=atoms1 

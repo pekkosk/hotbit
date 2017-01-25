@@ -64,7 +64,7 @@ def angle(atoms, a, b, c, unit='deg'):
 def optimize(atoms, fmax=0.01):
     atoms.center(vacuum=6)
     atoms.rattle()
-    if atoms.get_calculator() == None:
+    if atoms.get_calculator() is None:
         atoms.set_calculator(Hotbit())
     dyn = QuasiNewton(atoms, maxstep=0.01)
     dyn.run(fmax=fmax)

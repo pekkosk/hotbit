@@ -247,8 +247,8 @@ class Grids:
         window:    2-tuple for lower and upper bounds wrt. Fermi-level 
         pad:       padded edges
         """
-        assert not (bias==None and window==None)
-        if bias!=None:
+        assert not ((bias is None) and (window is None))
+        if bias is not None:
             bias/=Hartree
         else:
             window = (window[0]/Hartree,window[1]/Hartree)
@@ -258,7 +258,7 @@ class Grids:
             for a,f in enumerate(self.calc.st.f[k,:]):
                 e = self.calc.st.e[k,a]
                 # select occupation weight from the applied scheme        
-                if window!=None:
+                if window is not None:
                     if window[0]<=e<=window[1]:
                         w_occu=1.0
                     else:

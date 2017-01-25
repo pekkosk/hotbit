@@ -142,7 +142,7 @@ class MultipleSplineFunction:
             self._initialize()
 
         #if x<self.x[0] or x>=self.x[-1]:
-        #    if der==None:
+        #    if der is None:
         #        return np.zeros((self.m,)),np.zeros((self.m))
         #    else:
         #        return np.zeros((self.m,))
@@ -169,7 +169,7 @@ class MultipleSplineFunction:
         y=a*ylo + b*yhi + ((a**3-a)*dlo+(b**3-b)*dhi)*(h**2)/6
         dy=(yhi-ylo)/h - (3*a**2-1)/6*h*dlo + (3*b**2-1)/6*h*dhi
 
-        if der==None:
+        if der is None:
             return y,dy
         elif der==0:
             return y
@@ -313,8 +313,8 @@ class SplineFunction:
 
     def solve(self,y,a=None,b=None):
         """ Solve x for f(x)=y, where x in [a,b]. """
-        if a==None: a=self.x[0]
-        if b==None: b=self.x[-1]
+        if a is None: a=self.x[0]
+        if b is None: b=self.x[-1]
         assert a<b
         return brentq(lambda x:self(x)-y,a=a,b=b)
 
@@ -340,7 +340,7 @@ class SplineFunction:
         p.plot(X,[f1(x,der=der) for x in X])
         if return_pylab:
             return p
-        elif filename!=None:
+        elif filename is not None:
             p.savefig(filename)
         else:
             p.show()
@@ -401,7 +401,7 @@ class Function:
         pl.plot(X,Y)
         if return_pylab:
             return pl
-        elif filename!=None:
+        elif filename is not None:
             pl.savefig(filename)
         else:
             pl.show()
@@ -434,7 +434,7 @@ class Function:
         #pl.plot(X,Y)
         #if return_pylab:
             #return pl
-        #elif filename!=None:
+        #elif filename is not None:
             #pl.savefig(filename)
         #else:
             #pl.show()
@@ -505,9 +505,9 @@ class VectorSplineFunction:
         self.w[0]=1E6
         self.w[-1]=1E6
 
-        if self.s==None:
+        if self.s is None:
             self.s=self.M-np.sqrt(2.0*self.M)
-        if self.u!=None:
+        if self.u is not None:
             self.u=u.copy()
 
         self.tck,self.u=splprep(self.r.transpose(),u=self.u,k=self.k,s=self.s,w=self.w)
@@ -521,7 +521,7 @@ class VectorSplineFunction:
 
         if self.k!=1:
             self.linear=VectorSplineFunction(self.r,k=1,s=0,u=self.u)
-        if force!=None:
+        if force is not None:
             self.force=VectorSplineFunction(r=force,k=self.k,s=self.s,u=self.u)
 
 
@@ -588,15 +588,15 @@ class VectorSplineFunction:
         spline routine is always called using internal u-parameter. Take special
         care to return initial or end-points if parameter==0 or 1.
         """
-        assert t!=None and u==None or t==None and u!=None
-        if t!=None:
+        assert t is not None and u is None or t is None and u is not None
+        if t is not None:
             u=self.u_of_t(t)
-        elif u!=None:
+        elif u is not None:
             pass
 
-        if der==1 and t!=None:
+        if der==1 and t is not None:
             return vec( splev(u,self.tck,der=1) )*self.u_of_t(t,der=1)
-        elif der==2 and t!=None:
+        elif der==2 and t is not None:
             return vec(splev(u,self.tck,der=2))*self.u_of_t(t,der=1)**2 + \
                    vec(splev(u,self.tck,der=1))*self.u_of_t(t,der=2)
         else:
@@ -641,7 +641,7 @@ class VectorSplineFunction:
 
     def tangents(self,t=None):
         """ Return tangents at t (list). Nodes by default. """
-        if t==None:
+        if t is None:
             t=self.t
         return [self.tangent(tx) for tx in t]
 
@@ -667,14 +667,14 @@ class VectorSplineFunction:
 
     def closest_parameters(self,r=None):
         """ Return the parameters t (in [0,1]) minimizing |f(t)-r| for all r. """
-        if r==None:
+        if r is None:
             r=self.r
         t=[self.closest_parameter(rx) for rx in r]
         return t
 
     def homogenize(self,div=None):
         """ Return set of r that have equal distances in between. """
-        if div==None:
+        if div is None:
             div=self.M
         t=grid(div)
         return vec([self(t=tx) for tx in t])
@@ -720,9 +720,9 @@ class BilinearInterpolation:
         self.ny=a.shape[1]
         self.xgrid=xgrid
         self.ygrid=ygrid
-        if self.xgrid==None:
+        if self.xgrid is None:
             self.xgrid=np.arange(self.nx)
-        if self.ygrid==None:
+        if self.ygrid is None:
             self.ygrid=np.arange(self.ny)
         self.dx=self.xgrid[1]-self.xgrid[0]
         self.dy=self.ygrid[1]-self.ygrid[0]
@@ -767,7 +767,7 @@ class TrilinearInterpolation:
         self.a=a
         self.n=a.shape
         self.grids=grids
-        if self.grids==None:
+        if self.grids is None:
             self.grids=vec([np.arange(self.n[i]) for i in range(3)])*1.0
         self.dg=vec([self.grids[i][1]-self.grids[i][0] for i in range(3)])*1.0
 
@@ -801,7 +801,7 @@ class TrilinearInterpolation:
         gpts - number of grid points to all directions. Default
                is the number of DFT grid points.
         """
-        if gpts==None:
+        if gpts is None:
             gpts=self.n
         R=[np.linspace(0,self.grids[i][-1],gpts[i]) for i in range(3)]
         nx,ny,nz=(gpts[0],gpts[1],gpts[2])

@@ -63,7 +63,7 @@ class Hotbit(Output):
         Parameters:
         -----------
         parameters:       The directory for parametrization files.
-                          * If parameters==None, use HOTBIT_PARAMETERS environment variable.
+                          * If parameters is None, use HOTBIT_PARAMETERS environment variable.
                           * Parametrizations given by 'elements' and 'tables' keywords
                             override parametrizations in this directory.
 
@@ -71,7 +71,7 @@ class Hotbit(Output):
                           example: {'H':'H_custom.elm','C':'/../C.elm'}
                           * If extension '.elm' is omitted, it is assumed.
                           * Items can also be elements directly: {'H':H} (H is type Element)
-                          * If elements==None, use element info from default directory.
+                          * If elements is None, use element info from default directory.
                           * If elements['rest']=='default', use default parameters for all other
                             elements than the ones specified. E.g. {'H':'H.elm','rest':'default'}
                             (otherwise all elements present have to be specified explicitly).
@@ -79,10 +79,10 @@ class Hotbit(Output):
         tables:           Files for Slater-Koster tables.
                           example: {'CH':'C_H.par','CC':'C_C.par'}
                           * If extension '.par' is omitted, it is assumed.
-                          * If tables==None, use default interactions.
+                          * If tables is None, use default interactions.
                           * If tables['rest']='default', use default parameters for all other
                             interactions, e.g. {'CH':'C_H.par','rest':'default'}
-                          * If tables['AB']==None, ignore interactions for A and B
+                          * If tables['AB'] is None, ignore interactions for A and B
                             (both chemical and repulsive)
 
         mixer:            Density mixer.
@@ -136,7 +136,7 @@ class Hotbit(Output):
         from copy import copy
         import os
 
-        if gamma_cut!=None: gamma_cut=gamma_cut/Bohr
+        if gamma_cut is not None: gamma_cut=gamma_cut/Bohr
 
         self.__dict__={ 'parameters':parameters,
                         'elements':elements,
@@ -159,7 +159,7 @@ class Hotbit(Output):
                         'charge_density':charge_density,
                         'internal':internal}
 
-        if parameters!=None:
+        if parameters is not None:
             os.environ.data['HOTBIT_PARAMETERS']=parameters
 
         self.init=False
@@ -255,7 +255,7 @@ class Hotbit(Output):
         data['dose'], data['dos'] = self.get_density_of_states(False)
 
         for key in data.keys():
-            if keys!=None and key not in keys:
+            if keys is not None and key not in keys:
                 del data[key]
         import pickle
         f = open(filename, 'w')
@@ -354,7 +354,7 @@ class Hotbit(Output):
 
         arg: 'kpts','width',...
         """
-        if arg==None:
+        if arg is None:
             return self.__dict__
         else:
             return self.__dict__[arg]
@@ -421,7 +421,7 @@ class Hotbit(Output):
             self.env=Environment(self)
             pbc=atoms.get_pbc()
             # FIXME: gamma_cut -stuff
-            #if self.get('SCC') and np.any(pbc) and self.get('gamma_cut')==None:
+            #if self.get('SCC') and np.any(pbc) and self.get('gamma_cut') is None:
             #    raise NotImplementedError('SCC not implemented for periodic systems yet (see parameter gamma_cut).')
             if np.any(pbc) and abs(self.get('charge'))>0.0 and self.get('SCC'):
                 raise AssertionError('Charged system cannot be periodic.')
@@ -495,7 +495,7 @@ class Hotbit(Output):
         rs:        use 'kappa'- or 'k'-points in reciprocal space
         h1:        Add Coulomb part to hamiltonian matrix. Required for consistent use of SCC.
         '''
-        if kpts==None:
+        if kpts is None:
             e = self.st.e * Hartree
         else:
             if rs=='k':
@@ -654,7 +654,7 @@ class Hotbit(Output):
         self.start_timing('dielectric function')
         width = width/Hartree
         otol = 0.05 # tolerance for occupations
-        if cutoff==None:
+        if cutoff is None:
             cutoff = 1E10
         else:
             cutoff = cutoff/Hartree
@@ -1081,9 +1081,9 @@ class Hotbit(Output):
 
         return:
         =======
-        x,y:     * if width==None, x is list of energy eigenvalues (including k-points)
+        x,y:     * if width is None, x is list of energy eigenvalues (including k-points)
                    and y covalent energies of those eigenstates
-                 * if width!=None, x is energy grid for ecov.
+                 * if width is not None, x is energy grid for ecov.
                  * energies (both energy grid and ecov) are in eV.
 
         Note: energies are always shifted so that Fermi-level is at zero.

@@ -1,1 +1,1 @@
-hotbit_version = "0.1 (svn=386M)"
+hotbit_version = "0.1 (svn=Unversioned directory)"

@@ -35,7 +35,7 @@ class Interactions:
         """
         Set up the input files for interactions.
 
-        If tables==None, use default tables.
+        If tables is None, use default tables.
         If tables['rest']=='default' use default interactions for the ones not given in tables.
 
         """
@@ -54,12 +54,12 @@ class Interactions:
                 files[k1+k2] = None
 
         # set customized files
-        if tables!=None:
+        if tables is not None:
             for key in tables:
                 if key=='rest': continue
                 e1,e2 = auxil.separate_symbols(key)
                 file = tables[key]
-                if file==None:
+                if file is None:
                     file = self.nullpar
                 #if file[-4:]!='.par':
                 #    file+='.par'
@@ -72,10 +72,10 @@ class Interactions:
 
 
         # set interactions from default place
-        if tables==None or tables!=None and 'rest' in tables and tables['rest']=='default':
+        if tables is None or tables is not None and 'rest' in tables and tables['rest']=='default':
             for e1 in present:
                 for e2 in present:
-                    if files[e1+e2]!=None:
+                    if files[e1+e2] is not None:
                         continue
                     def12 = path.join(default,'%s_%s.par' %(e1,e2))
                     def21 = path.join(default,'%s_%s.par' %(e2,e1))
@@ -114,7 +114,7 @@ class Interactions:
         for i,s1 in enumerate(self.present):
             for s2 in self.present:
                 file = self.files[s1+s2]
-                if file==None:
+                if file is None:
                     txt+='  %s%s: None\n' %(s1,s2)
                 else:
                     txt+='  %s%s in %s\n' %(s1,s2,file)

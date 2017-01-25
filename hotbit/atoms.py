@@ -14,7 +14,7 @@ def container_magic(atoms,container=None):
     lst = ['Wedge','Chiral','DoubleChiral','Sphere','Slab','ChiralWedge','WedgeYAxis','TwistAndTurn']
     magic = -0.0123454321
     cell = atoms.get_cell()
-    if container==None:
+    if container is None:
         x = cell[0,0]/magic
         if np.abs(x)>1E-10 and np.abs(round(x)-x)<1E-10:
             i = int(x-1)
@@ -65,7 +65,7 @@ class Atoms(ase_Atoms):
             self.set_pbc( atoms.get_pbc() )
             self.set_cell( atoms.get_cell() )
 
-        if container==None:
+        if container is None:
             dict = {'type':container_magic(self)}
         elif type(container)==type(''):
             dict = {'type':container}

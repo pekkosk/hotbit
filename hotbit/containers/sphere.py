@@ -83,31 +83,31 @@ class Sphere:
         Rotate angle1 around axis n1, rotate angle2 around axis n1 (wrt origin).
         n1 and n2 should be in xy-plane
         """
-        if container!=None:
-            assert angle1==None and angle2==None and n1==None and n2==None and mode==None
+        if container is not None:
+            assert angle1 is None and angle2 is None and n1 is None and n2 is None and mode is None
             self.set(angle1=container.angle1, angle2=container.angle2,
                      n1=container.n1, n2=container.n2, mode=container.mode)
             
-        if angle1!=None:
+        if angle1 is not None:
             self._set(angle1=angle1)
-        if angle2!=None:
+        if angle2 is not None:
             self._set(angle2=angle2)
-        if n1!=None:
+        if n1 is not None:
             assert abs(n1[2])<1E-10
-            if self.n1!=None: 
+            if self.n1 is not None: 
                 raise AssertionError('Rotation axis n1 cannot be changed.')
             self._set(n1 = n1)
-        if n2!=None:
+        if n2 is not None:
             assert abs(n2[2])<1E-10
-            if self.n2!=None: 
+            if self.n2 is not None: 
                 raise AssertionError('Rotation axis n2 cannot be changed.')
             self._set(n2 = n2)
-        if mode!=None:
+        if mode is not None:
             self._set(mode = mode)
     
-        if self.n1!=None:
+        if self.n1 is not None:
             self._set(n1 = self.n1/np.linalg.norm(self.n1))
-        if self.n2!=None:
+        if self.n2 is not None:
             self._seT(n2 = self.n2/np.linalg.norm(self.n2))
         self.atoms.set_pbc((True,True,False))
         #self.atoms.set_cell(self.get_ase_cell())  

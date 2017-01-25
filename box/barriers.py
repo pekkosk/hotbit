@@ -111,16 +111,16 @@ class LEPS_Calculator:
         pl.contourf(X,Y,Z,100)
         pl.hot()
         
-        if scatter!=None:
+        if scatter is not None:
             pl.scatter(scatter[0,:],scatter[1,:],color='b')
-        #if plot!=None:
+        #if plot is not None:
             #pl.plot(plot[0,:],plot[1,:],color='y')
             #pl.scatter(plot[0,:],plot[1,:],color='y')
             
         if screen==True:
             pl.show()
         else:
-            assert out!=None
+            assert out is not None
             pl.savefig(out)
             pl.clf()
         self.it+=1
@@ -189,7 +189,7 @@ class MEP:
             n1 = n2
             
     def get_lambda_guess(self):
-        #if self.lambdas==None:
+        #if self.lambdas is None:
         self.it+=1
         R=self.get_positions()
         #R.shape=(self.M,self.N,3)
@@ -202,7 +202,7 @@ class MEP:
         
         self.calc.plot(scatter=vec([R[:,0],R[:,1]]),screen=False,out=out)
         
-        if self.lambdas==None:
+        if self.lambdas is None:
             return [0.]*(self.M-1)
         else:
             return self.lambdas      

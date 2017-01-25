@@ -186,7 +186,7 @@ class States:
 
 
     def solve(self):
-        if self.nk==None:
+        if self.nk is None:
             physical = self.calc.get('physical_k')
             self.nk, self.k, self.kl, self.wk = self.setup_k_sampling( self.calc.get('kpts'),physical=physical,rs=self.calc.get('rs') )
             width=self.calc.get('width')

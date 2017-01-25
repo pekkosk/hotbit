@@ -79,17 +79,17 @@ class TwistAndTurn:
                              (if R==0, use R based on mean distance of atoms)
         @param: scale_atoms  scale atoms according to container modifications
         """
-        if container!=None:
+        if container is not None:
             # copy container
-            assert bend_angle==None
-            assert twist_angle==None
-            assert R==None
-            assert mode == None
+            assert bend_angle is None
+            assert twist_angle is None
+            assert R is None
+            assert mode is None
             self.set( angle1=container.bend_angle,
                       angle2=container.twist_angle,
                       R=container.R,
                       mode=container.mode)
-        if bend_angle!=None:
+        if bend_angle is not None:
             if scale_atoms:
                 ratio = bend_angle/self.get('bend_angle')
                 r = self.atoms.get_positions()
@@ -99,7 +99,7 @@ class TwistAndTurn:
                 r2 = np.array( [R0*np.cos(angle2),R0*np.sin(angle2),r[:,2]] ).transpose()
                 self.atoms.set_positions(r2)
             self._set(bend_angle = bend_angle)
-        if twist_angle!=None:
+        if twist_angle is not None:
             if scale_atoms:
                 da = twist_angle - self.get('twist_angle')
                 r = self.atoms.get_positions()
@@ -108,7 +108,7 @@ class TwistAndTurn:
                 r2 = np.array( [self.transform_arbitrary(r[i],0,da*x[i]) for i in range(len(self.atoms))] )
                 self.atoms.set_positions(r2)
             self._set(twist_angle = twist_angle)
-        if R!=None:
+        if R is not None:
             if scale_atoms:
                 dR = R-self.get('R')
                 r = self.atoms.get_positions()
@@ -118,7 +118,7 @@ class TwistAndTurn:
                 r[:,1] = (R0+dR)*np.sin(angle)
                 self.atoms.set_positions(r)
             self._set(R = R)
-        if mode!=None:
+        if mode is not None:
             self._set(mode = mode)
 
         self.atoms.set_pbc((False,False,True))

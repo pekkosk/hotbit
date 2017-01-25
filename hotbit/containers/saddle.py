@@ -38,15 +38,15 @@ class Saddle:
         TODO: doc 
         n1 and n2 should be in xy-plane
         """
-        if container!=None:
-            assert angle1==None and angle2==None and R==None
+        if container is not None:
+            assert angle1 is None and angle2 is None and R is None
             self.set(angle1=container.angle1, angle2=container.angle2, R=container.R)
             
-        if angle1!=None:
+        if angle1 is not None:
             self.angle1=angle1
-        if angle2!=None:
+        if angle2 is not None:
             self.angle2=angle2
-        if R!=None:
+        if R is not None:
             self.R = R
     
         self.atoms.set_pbc((True,True,False))

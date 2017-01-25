@@ -51,7 +51,7 @@ class PairPotential:
         # construct a function that works in atomic units
         if eVA:
             def v2(r,der=0):
-                if r==None:
+                if r is None:
                     return v(None)/Bohr
                 if der==0:
                     return v(r/Bohr,der)/Hartree

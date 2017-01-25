@@ -259,7 +259,7 @@ class JelliumAnalysis:
             calc = atoms.get_calculator()
             self.R_0 = R_0 / Bohr
             self.finished = False
-            if origin == None:
+            if origin is None:
                 self.origin = calc.el.get_center_of_mass()
             else:
                 self.origin = np.array(origin)/Bohr
@@ -391,7 +391,7 @@ class JelliumAnalysis:
             orbital_type = orbital['orbital']
             symbol = orbital['symbol']
             wf_range = self.calc.el.elements[symbol].get_wf_range(orbital_type)
-            if wf_range == None:
+            if wf_range is None:
                 raise Exception('No radial function %s found for %s (maybe the element file does not contain it?).' % (orbital_type, symbol))
             R = positions[atom]
             if np.linalg.norm(R - self.origin) < self.R_0 + wf_range:
@@ -592,7 +592,7 @@ def make_plot(file, width=0.1, xlimits=None, ylimits=None, out=None):
 
     weights = data["c_nl"].transpose()
     e = (data["e"][0] - data["fermi_level"]) * Hartree
-    if xlimits == None:
+    if xlimits is None:
         e_min, e_max = min(e), max(e)
         empty = 0.1*(e_max - e_min)
     else:
@@ -606,7 +606,7 @@ def make_plot(file, width=0.1, xlimits=None, ylimits=None, out=None):
     pylab.title("Angular momentum analysis")
     pylab.legend()
     pylab.ylim(ylimits)
-    if out == None:
+    if out is None:
         pylab.show()
     else:
         pylab.savefig(out)
