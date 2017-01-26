@@ -1,5 +1,6 @@
 from ase import *
 from ase import Atoms as ase_Atoms
+from ase.units import fs
 from hotbit import *
 from hotbit.atoms import Atoms
 from box.md import check_energy_conservation
@@ -35,5 +36,5 @@ calc = Hotbit(SCC=SCC,txt='tmp.cal',kpts=(6,1,1),gamma_cut=cut,**default_param)
 atoms.set_calculator(calc)
 
 atoms.rattle(0.1)
-assert check_energy_conservation(atoms,dt=0.2*units.fs,steps=30,tol=0.01,plot=False)
+assert check_energy_conservation(atoms,dt=0.2*fs,steps=30,tol=0.01,plot=False)
 
