@@ -2,7 +2,7 @@ from ase import Atoms as ase_Atoms
 import numpy as np
 from copy import copy
 from hotbit.containers import *
-from ase.io import PickleTrajectory
+from ase.io import Trajectory
 
 
 
@@ -273,7 +273,7 @@ class ExtendedTrajectory:
         self.atoms = atoms
         self.n = n
         self.ext = self.atoms.extended_copy(n)
-        self.traj = PickleTrajectory(filename,mode,self.ext) #,properties=['energy'])
+        self.traj = Trajectory(filename,mode,self.ext) #,properties=['energy'])
         self.fixrcm = fixrcm
 
     def set_atoms(self,atoms):

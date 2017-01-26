@@ -1,11 +1,12 @@
 from ase import *
+from ase.io import Trajectory
 from hotbit import *
 from numpy import *
 from box.systems import nanotube
 
 atoms = nanotube(9,0)
 angle = atoms.container.get('angle')
-traj = PickleTrajectory('twisting.traj','w',atoms)
+traj = Trajectory('twisting.traj','w',atoms)
 
 # twist without scaling
 for twist in linspace(0,pi/10,100):
@@ -20,7 +21,7 @@ for twist in linspace(0,pi/10,100):
     
 # twist with scaling + view copies
 cp = atoms.extended_copy((1,1,10))
-traj = PickleTrajectory('twisting_extended.traj','w',cp)
+traj = Trajectory('twisting_extended.traj','w',cp)
 
 atoms.set_container(angle=angle,scale_atoms=True)
 for twist in linspace(0,pi/10,100):

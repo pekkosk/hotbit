@@ -3,7 +3,7 @@ import numpy as np
 from box import mix
 from box.data import data
 from ase.md import VelocityVerlet
-from ase.io import PickleTrajectory
+from ase.io import Trajectory
 from ase.units import fs, Hartree
 
 
@@ -90,7 +90,7 @@ def canonical(atoms,dt=1.0,steps=1000,output=10,name=None,verbose=False):
         except:
             name='microcanonical'
     name+='.trj'        
-    traj=PickleTrajectory(name,'w',atoms)
+    traj=Trajectory(name,'w',atoms)
     rec=TrajectoryRecording(atoms,verbose)
     md=VelocityVerlet(atoms,dt*fs)
     md.attach(rec,interval=output)  
@@ -119,7 +119,7 @@ def microcanonical(atoms,dt=1.0,steps=100,output=1,name=None,verbose=False):
         except:
             name='microcanonical'
     name+='.trj'        
-    traj=PickleTrajectory(name,'w',atoms)
+    traj=Trajectory(name,'w',atoms)
     rec=TrajectoryRecording(atoms,verbose)
     md=VelocityVerlet(atoms,dt*fs)
     md.attach(rec,interval=output)
@@ -237,8 +237,7 @@ class TrajectoryWriter:
         
     def __call__(self):
         """ Writes trajectory file for current atoms list. """
-        from ase import PickleTrajectory
-        traj = PickleTrajectory('%s_it%i.trj' %(self.name,self.i), 'w')
+        traj = Trajectory('%s_it%i.trj' %(self.name,self.i), 'w')
         for image in self.images:
             traj.write(image)
         self.i+=1 
@@ -251,7 +250,7 @@ def quench(atoms,name=None,fmax=0.05,method='QN'):
             name=atoms.get_chemical_formula(mode="hill")
         except:
             raise ValueError('name not specified')
-    traj=ase.PickleTrajectory(name+'_quenching.trj','w',atoms)
+    traj=Trajectory(name+'_quenching.trj','w',atoms)
     
     if method=='QN':
         qn=ase.QuasiNewton(atoms)
@@ -278,7 +277,7 @@ def transition_barrier(calc,quench,guess,cell=None,pbc=None,constraints=None,\
             assert guess.split('.')[-1]=='trj' and M is None 
             # for some reason copying has to be done...
             images=[]
-            for image in ase.PickleTrajectory(guess):
+            for image in Trajectory(guess):
                 images.append(image.copy())
             path=method(images)
         else:
@@ -325,7 +324,7 @@ def transition_barrier(calc,quench,guess,cell=None,pbc=None,constraints=None,\
     minimizer.run(fmax=fmax,steps=steps)
     
     # output of the final path
-    traj = ase.PickleTrajectory('%s_converged.trj' %name, 'w')
+    traj = Trajectory('%s_converged.trj' %name, 'w')
     path.write(traj)
     return images
        
