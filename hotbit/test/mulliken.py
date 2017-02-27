@@ -11,7 +11,7 @@ from numpy import *
 from box.systems import graphene
 from ase.build import molecule
 
-eps = 1E-6
+eps = 1E-5
 
 if True:
     atoms = graphene(2,2,1.42)
