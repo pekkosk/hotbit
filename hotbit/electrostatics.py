@@ -216,7 +216,7 @@ class Electrostatics:
     def construct_h1(self,dq=None):
         """ Make the electrostatic part of the Hamiltonian. """
         self.calc.start_timing('h1')
-        if dq!=None:
+        if dq is not None:
             self.set_dq(dq)
                           
         lst = self.calc.el.get_property_lists(['i','o1','no'])

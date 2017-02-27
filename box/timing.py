@@ -151,12 +151,12 @@ class Timer:
             txt_sub+=txt2
             dt_sub+=dt2
             subs=True
-        sub_covered=dt_sub/dt*100
+        sub_covered=dt_sub/dt*100 if dt > 0.0 else 100
         
-        procent1=dt/total*100.0
+        procent1=dt/total*100.0 if total > 0.0 else 100
         x=int(np.round(procent1*0.3))
         bar='|'+str(self.level)*x+'|'
-        procent2=dt/partial*100.0
+        procent2=dt/partial*100.0 if partial > 0.0 else 100
         txt='../'*self.level+'%-20s' %(self.label) 
         if subs:
             txt+=' '*(10-3*self.level)+'%12.3f %9i (%5.1f %%,%5.1f %%) %5.1f %% %s\n' %(dt,calls,procent2,sub_covered,procent1,bar)

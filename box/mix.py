@@ -9,6 +9,8 @@
 
 
 '''
+from __future__ import division, print_function
+
 import numpy as np
 import time
 from math import atan,cos,sin
@@ -204,7 +206,7 @@ def divisors(x):
     '''
     assert isinstance(x,int)
     lst=[x]
-    for i in range(x/2,0,-1):
+    for i in range(x//2,0,-1):
         if np.mod(x,i)==0: lst.append(i)
     return np.array(lst)
 
@@ -489,7 +491,7 @@ def broaden(x,y=None,width=0.05,function='gaussian',extend=False,N=200,a=None,b=
     else:
         mx=b
 
-    if xgrid!=None:
+    if xgrid is not None:
         pass
     else:
         xgrid = np.linspace(mn,mx,N)
@@ -591,11 +593,11 @@ def find_value(inp,key,fmt='default',default=None,position='start'):
     if opened: f.close()
     if fmt=='test' and ret==None:
         return False
-    elif ret!=None:
+    elif ret is not None:
         if fmt=='strings' and type(ret)!=type([]):
             ret=[ret]
         return ret
-    elif default!=None:
+    elif default is not None:
         return default
     else:
         raise RuntimeError('key '+key+' not found from file '+f.name)
