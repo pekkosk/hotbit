@@ -33,11 +33,11 @@ for height in concatenate( (linspace(2,4,50),linspace(4,2,50)) ):
     traj.write()
 
     
-for M in concatenate( (range(100,3,-1),range(4,101)) ):
+for M in concatenate( (list(range(100,3,-1)),list(range(4,101))) ):
     atoms.set_container(M=M,scale_atoms=True)
     traj.write()
     
-for height,M in zip( concatenate( (linspace(2,4,50),linspace(4,2,50)) ),concatenate( (range(50,3,-1),range(4,50)) )):
+for height,M in zip( concatenate( (linspace(2,4,50),linspace(4,2,50)) ),concatenate( (list(range(50,3,-1)),list(range(4,50))) )):
     atoms.set_container(height=height,M=M,scale_atoms=True)
     traj.write()
     

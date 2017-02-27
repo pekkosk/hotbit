@@ -9,6 +9,7 @@ from box.timing import Timer
 from time import asctime
 import math
 import pickle
+import collections
 
 try:
     import pylab as pl
@@ -127,20 +128,20 @@ class KSAllElectron:
         maxnodes=max( [n-l-1 for n,l,nl in self.list_states()] )
         self.rmin, self.rmax, self.N=( 1E-2/self.Z, rmax, (maxnodes+1)*self.nodegpts )
         if self.scalarrel:
-            print >> self.txt, 'Using scalar relativistic corrections.'
-        print>>self.txt, 'max %i nodes, %i grid points' %(maxnodes,self.N)
+            print('Using scalar relativistic corrections.', file=self.txt)
+        print('max %i nodes, %i grid points' %(maxnodes,self.N), file=self.txt)
         self.xgrid=np.linspace(0,np.log(self.rmax/self.rmin),self.N)
         self.rgrid=self.rmin*np.exp(self.xgrid)
         self.grid=RadialGrid(self.rgrid)
         self.timer.stop('init')
-        print>>self.txt, self.get_comment()
+        print(self.get_comment(), file=self.txt)
         self.solved=False
 
     def __getstate__(self):
         """ Return dictionary of all pickable items. """
         d=self.__dict__.copy()
         for key in self.__dict__:
-            if callable(d[key]):
+            if isinstance(d[key], collections.Callable):
                 d.pop(key)
         d.pop('out')
         return d
@@ -153,9 +154,9 @@ class KSAllElectron:
             self.txt=sys.stdout
         else:
             self.txt=open(txt,'a')
-        print>>self.txt, '*******************************************'
-        print>>self.txt, 'Kohn-Sham all-electron calculation for %2s ' %self.symbol
-        print>>self.txt, '*******************************************'
+        print('*******************************************', file=self.txt)
+        print('Kohn-Sham all-electron calculation for %2s ' %self.symbol, file=self.txt)
+        print('*******************************************', file=self.txt)
 
 
     def calculate_energies(self,echo=False):
@@ -167,34 +168,34 @@ class KSAllElectron:
         for n,l,nl in self.list_states():
             self.bs_energy+=self.occu[nl]*self.enl[nl]
 
-        self.exc=array([self.xcf.exc(self.dens[i]) for i in xrange(self.N)])
+        self.exc=array([self.xcf.exc(self.dens[i]) for i in range(self.N)])
         self.Hartree_energy=self.grid.integrate(self.Hartree*self.dens,use_dV=True)/2
         self.vxc_energy=self.grid.integrate(self.vxc*self.dens,use_dV=True)
         self.exc_energy=self.grid.integrate(self.exc*self.dens,use_dV=True)
         self.confinement_energy=self.grid.integrate(self.conf*self.dens,use_dV=True)
         self.total_energy=self.bs_energy-self.Hartree_energy-self.vxc_energy+self.exc_energy
         if echo:
-            print>>self.txt, '\n\nEnergetics:'
-            print>>self.txt, '-------------'
-            print>>self.txt, '\nsingle-particle energies'
-            print>>self.txt, '------------------------'
+            print('\n\nEnergetics:', file=self.txt)
+            print('-------------', file=self.txt)
+            print('\nsingle-particle energies', file=self.txt)
+            print('------------------------', file=self.txt)
             for n,l,nl in self.list_states():
-                print>>self.txt, '%s, energy %.15f' %(nl,self.enl[nl])
+                print('%s, energy %.15f' %(nl,self.enl[nl]), file=self.txt)
 
-            print>>self.txt, '\nvalence orbital energies'
-            print>>self.txt, '--------------------------'
+            print('\nvalence orbital energies', file=self.txt)
+            print('--------------------------', file=self.txt)
             for nl in data[self.symbol]['valence_orbitals']:
-                print>>self.txt, '%s, energy %.15f' %(nl,self.enl[nl])
+                print('%s, energy %.15f' %(nl,self.enl[nl]), file=self.txt)
 
-            print>>self.txt, '\n'
-            print>>self.txt, 'total energies:'
-            print>>self.txt, '---------------'
-            print>>self.txt, 'sum of eigenvalues:     %.15f' %self.bs_energy
-            print>>self.txt, 'Hartree energy:         %.15f' %self.Hartree_energy
-            print>>self.txt, 'vxc correction:         %.15f' %self.vxc_energy
-            print>>self.txt, 'exchange + corr energy: %.15f' %self.exc_energy
-            print>>self.txt, '----------------------------'
-            print>>self.txt, 'total energy:           %.15f\n\n' %self.total_energy
+            print('\n', file=self.txt)
+            print('total energies:', file=self.txt)
+            print('---------------', file=self.txt)
+            print('sum of eigenvalues:     %.15f' %self.bs_energy, file=self.txt)
+            print('Hartree energy:         %.15f' %self.Hartree_energy, file=self.txt)
+            print('vxc correction:         %.15f' %self.vxc_energy, file=self.txt)
+            print('exchange + corr energy: %.15f' %self.exc_energy, file=self.txt)
+            print('----------------------------', file=self.txt)
+            print('total energy:           %.15f\n\n' %self.total_energy, file=self.txt)
         self.timer.stop('energies')
 
 
@@ -251,7 +252,7 @@ class KSAllElectron:
     def calculate_veff(self):
         """ Calculate effective potential. """
         self.timer.start('veff')
-        self.vxc=array([self.xcf.vxc(self.dens[i]) for i in xrange(self.N)])
+        self.vxc=array([self.xcf.vxc(self.dens[i]) for i in range(self.N)])
         self.timer.stop('veff')
         return self.nucl + self.Hartree + self.vxc + self.conf
 
@@ -285,8 +286,8 @@ class KSAllElectron:
                 f.close()
                 done = True
             except IOError:
-                print >> self.txt, "Could not open restart file, " \
-                                   "starting from scratch."
+                print("Could not open restart file, " \
+                                   "starting from scratch.", file=self.txt)
         if not done:
             self.veff=self.nucl+self.conf
             self.dens=self.guess_density()
@@ -297,7 +298,7 @@ class KSAllElectron:
         Solve the self-consistent potential.
         """
         self.timer.start('solve ground state')
-        print>>self.txt, '\nStart iteration...'
+        print('\nStart iteration...', file=self.txt)
         self.enl={}
         self.d_enl={}
         for n,l,nl in self.list_states():
@@ -328,7 +329,7 @@ class KSAllElectron:
                 break
             self.calculate_Hartree_potential()
             if np.mod(it,10)==0:
-                print>>self.txt, 'iter %3i, dn=%.1e>%.1e, max %i sp-iter' %(it,diff,self.convergence['density'],itmax)
+                print('iter %3i, dn=%.1e>%.1e, max %i sp-iter' %(it,diff,self.convergence['density'],itmax), file=self.txt)
             if it==self.itmax-1:
                 if self.timing:
                     self.timer.summary()
@@ -336,8 +337,8 @@ class KSAllElectron:
             self.txt.flush()
 
         self.calculate_energies(echo=True)
-        print>>self.txt, 'converged in %i iterations' %it
-        print>>self.txt, '%9.4f electrons, should be %9.4f' %(self.grid.integrate(self.dens,use_dV=True),self.nel)
+        print('converged in %i iterations' %it, file=self.txt)
+        print('%9.4f electrons, should be %9.4f' %(self.grid.integrate(self.dens,use_dV=True),self.nel), file=self.txt)
         for n,l,nl in self.list_states():
             self.Rnl_fct[nl]=Function('spline',self.rgrid,self.Rnlg[nl])
             self.unl_fct[nl]=Function('spline',self.rgrid,self.unlg[nl])
@@ -438,11 +439,11 @@ class KSAllElectron:
                 hist.append(eps)
 
                 if it>100:
-                    print>>self.txt, 'Epsilon history for %s' %nl
+                    print('Epsilon history for %s' %nl, file=self.txt)
                     for h in hist:
-                        print h
-                    print>>self.txt, 'nl=%s, eps=%f' %(nl,eps)
-                    print>>self.txt, 'max epsilon',epsmax
+                        print(h)
+                    print('nl=%s, eps=%f' %(nl,eps), file=self.txt)
+                    print('max epsilon',epsmax, file=self.txt)
                     raise RuntimeError('Eigensolver out of iterations. Atom not stable?')
 
             itmax=max(it,itmax)
@@ -452,7 +453,7 @@ class KSAllElectron:
             d_enl_max=max(d_enl_max,self.d_enl[nl])
             self.enl[nl]=eps
             if self.verbose:
-                print>>self.txt, '-- state %s, %i eigensolver iterations, e=%9.5f, de=%9.5f' %(nl,it,self.enl[nl],self.d_enl[nl])
+                print('-- state %s, %i eigensolver iterations, e=%9.5f, de=%9.5f' %(nl,it,self.enl[nl],self.d_enl[nl]), file=self.txt)
 
             assert nodes==nodes_nl
             assert u[1]>0.0
@@ -630,17 +631,17 @@ class KSAllElectron:
             orbitals=[nl for n,l,nl in self.list_states()]
         o=open(filename,'a')
         for nl in orbitals:
-            print>>o, '\n\nu_%s=' %nl
+            print('\n\nu_%s=' %nl, file=o)
             for r,u in zip(self.rgrid[::step],self.unlg[nl][::step]):
-                print>>o, r,u
+                print(r,u, file=o)
 
-        print>>o,'\n\nv_effective='
+        print('\n\nv_effective=', file=o)
         for r,ve in zip(self.rgrid[::step],self.veff[::step]):
-                print>>o, r,ve
-        print>>o,'\n\nconfinement='
+                print(r,ve, file=o)
+        print('\n\nconfinement=', file=o)
         for r,vc in zip(self.rgrid[::step],self.conf[::step]):
-                print>>o, r,vc
-        print>>o,'\n\n'
+                print(r,vc, file=o)
+        print('\n\n', file=o)
 
 
 def shoot(u,dx,c2,c1,c0,N):
@@ -674,7 +675,7 @@ def shoot(u,dx,c2,c1,c0,N):
     u[-1]=1.0
     u[-2]=u[-1]*f0[-1]/fm[-1]
     all_negative=np.all(c0<0)
-    for i in xrange(N-2,0,-1):
+    for i in range(N-2,0,-1):
         u[i-1]=(-fp[i]*u[i+1]-f0[i]*u[i])/fm[i]
         if abs(u[i-1])>1E10: u[i-1:]*=1E-10 #numerical stability
         if c0[i]>0:
@@ -688,7 +689,7 @@ def shoot(u,dx,c2,c1,c0,N):
     utp1=u[ctp+1]
     dright=(u[ctp+1]-u[ctp-1])/(2*dx)
 
-    for i in xrange(1,ctp+1):
+    for i in range(1,ctp+1):
         u[i+1]=(-f0[i]*u[i]-fm[i]*u[i-1])/fp[i]
 
     dleft=(u[ctp+1]-u[ctp-1])/(2*dx)
@@ -750,7 +751,7 @@ class RadialGrid:
 
     def plot(self,screen=True):
         rgrid=self.get_grid()
-        pl.scatter(range(len(rgrid)),rgrid)
+        pl.scatter(list(range(len(rgrid))),rgrid)
         if screen: pl.show()
 
     def integrate(self,f,use_dV=False):

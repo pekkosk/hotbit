@@ -45,7 +45,7 @@ for i in c.el.get_present():
     sym = el.get_symbol()
     orbs = el.get_valence_orbitals()
     for orb in orbs:
-        print sym, orb, el.get_epsilon(orb), el.get_epsilon(orb)*Hartree
+        print(sym, orb, el.get_epsilon(orb), el.get_epsilon(orb)*Hartree)
 
 x = np.linspace(1.0, 12.0, 1000)
 

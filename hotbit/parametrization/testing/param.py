@@ -6,8 +6,8 @@ import pylab as pl
 
 #IP=ionization_potential('C',remove='2p')
 IP, EA=IP_EA('O',remove_orb='2p',add_orb='2p',remove=1.0,add=0.5)
-print IP,IP*27.2114,IP*27.2114/0.01036
-print EA,EA*27.2114,EA*27.2114/0.01036
+print(IP,IP*27.2114,IP*27.2114/0.01036)
+print(EA,EA*27.2114,EA*27.2114/0.01036)
 raise SystemExit
 
 for i,element in enumerate(['H','C','Ti','Au']):

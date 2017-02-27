@@ -81,6 +81,6 @@ def matrix_has_property(A,property,tol=1E-12):
 if __name__=='__main__':
     A=np.array([[np.cos(1.3),np.sin(1.3)],\
                 [-np.sin(1.3),np.cos(1.3)]])
-    print matrix_has_property(A,'hermitian')    
-    print matrix_has_property(A,'square')
-    print matrix_has_property(A,'unitary')        
+    print(matrix_has_property(A,'hermitian'))    
+    print(matrix_has_property(A,'square'))
+    print(matrix_has_property(A,'unitary'))        

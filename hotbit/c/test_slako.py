@@ -25,10 +25,10 @@ for i in range(100):
     edst = np.max(np.abs(dst1-dst2))
 
     if eht > 1e-12 or est > 1e-12 or edht > 1e-12 or edst > 1e-12:
-        print "error(ht) = %e" % eht
-        print "error(st) = %e" % est
-        print "error(dht) = %e" % edht
-        print "error(dst) = %e" % edst
+        print("error(ht) = %e" % eht)
+        print("error(st) = %e" % est)
+        print("error(dht) = %e" % edht)
+        print("error(dst) = %e" % edst)
 
 
     

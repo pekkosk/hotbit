@@ -1,23 +1,23 @@
 # Copyright (C) 2008 NSC Jyvaskyla
 # Please see the accompanying LICENSE file for further information.
 
-from atoms import Atoms
-from aseinterface import Hotbit, database_from_path
-from atoms import ExtendedTrajectory
-from electrostatics import Electrostatics
-from element import Element
-from elements import Elements
-from environment import Environment
-from environment import LinearlyPolarizedLaser
-from grids import Grids
-from interactions import Interactions
-from occupations import Occupations
-from output import Output
-from repulsion import RepulsivePotential
-from repulsion import Repulsion
-from solver import Solver
-from states import States
-from wfpropagation import WFPropagation
+from .atoms import Atoms
+from .aseinterface import Hotbit, database_from_path
+from .atoms import ExtendedTrajectory
+from .electrostatics import Electrostatics
+from .element import Element
+from .elements import Elements
+from .environment import Environment
+from .environment import LinearlyPolarizedLaser
+from .grids import Grids
+from .interactions import Interactions
+from .occupations import Occupations
+from .output import Output
+from .repulsion import RepulsivePotential
+from .repulsion import Repulsion
+from .solver import Solver
+from .states import States
+from .wfpropagation import WFPropagation
 
 from hotbit.analysis import LinearResponse
 from hotbit.analysis import MullikenAnalysis

@@ -348,8 +348,8 @@ def nanotube(n,m,R=1.42,length=1,element='C'):
     nxy = max(n, m)+100
     eps = 0.00001
     
-    for x in xrange(-nxy, nxy):
-        for y in xrange(-nxy, nxy):
+    for x in range(-nxy, nxy):
+        for y in range(-nxy, nxy):
             for b1, b2 in b:
                 p = (x+b1)*a1 + (y+b2)*a2
                 abs_p = sqrt(dot(p, p))

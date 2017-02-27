@@ -182,13 +182,13 @@ class Timer:
         dict={}
         dt, txt, self.dict=self.get_summary(total,total,dict)
                 
-        print>>self.txt, '\nTiming:'
-        print>>self.txt, '            label                    time     calls    %sub  %covered   %tot'
-        print>>self.txt, '-'*79
-        print>>self.txt, txt,
-        print>>self.txt, '-'*79
-        print>>self.txt, 'total time %12.3f seconds      %s' % (total, self.human_readable_time(total))
-        print>>self.txt, asctime()
+        print('\nTiming:', file=self.txt)
+        print('            label                    time     calls    %sub  %covered   %tot', file=self.txt)
+        print('-'*79, file=self.txt)
+        print(txt, end=' ', file=self.txt)
+        print('-'*79, file=self.txt)
+        print('total time %12.3f seconds      %s' % (total, self.human_readable_time(total)), file=self.txt)
+        print(asctime(), file=self.txt)
         self.smry=True
         self.txt.flush()
 

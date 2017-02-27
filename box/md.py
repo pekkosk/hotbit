@@ -42,7 +42,7 @@ class TrajectoryRecording:
             self.data[key].append( self.properties[key]() )       
         self.i+=1
         if self.verbose:
-            print 'record',self.i,self.data['epot'][-1]
+            print('record',self.i,self.data['epot'][-1])
         
     def get(self,key):
         return self.data[key]
@@ -203,7 +203,7 @@ def energy_conservation_plot(atoms,dts,total_time=100):
     dU=[]
     for dt in dts:
         steps=int(total_time/dt)
-        print 'time step %.2f fs, steps %i' %(dt,steps)
+        print('time step %.2f fs, steps %i' %(dt,steps))
         atoms.set_positions(R0)
         rec, de, du=energy_conservation(atoms,dt,steps=steps)
         dE.append(de)
@@ -314,9 +314,9 @@ def transition_barrier(calc,quench,guess,cell=None,pbc=None,constraints=None,\
             
     if quench:
         e1=quench_atoms(images[0],'initial')
-        print 'First image quenched. Energy=',e1
+        print('First image quenched. Energy=',e1)
         eM=quench_atoms(images[-1],'final')
-        print 'Last image quenched. Energy=',eM
+        print('Last image quenched. Energy=',eM)
             
     # solve the transition path
     writer=TrajectoryWriter(images)        
@@ -337,7 +337,7 @@ def merge_atoms(atoms1,atoms2,box_from=None,R=0.3):
     from box import Atoms
        
     atoms=atoms1.copy()
-    print type(atoms)
+    print(type(atoms))
 
     # set box from the first atoms or box_from
     if box_from!=None:
@@ -365,9 +365,9 @@ if __name__=='__main__':
     atoms1=Atoms(symbols='C4H',positions=[(0,0,0),(0,0,1),(0,0,2),(0,0,3),(0,0,4)],cell=(7,8,9),pbc=True)
     atoms2=Atoms(symbols='C4H',positions=[(0,0,0.29),(0,0,1),(0,0,7),(0,0,8),(0,0,9)],cell=(170,18,19),pbc=True)
     atoms=merge_atoms(atoms1,atoms2,box_from=atoms2)
-    print atoms.get_positions()
-    print atoms.get_cell()
-    print atoms.get_pbc()
+    print(atoms.get_positions())
+    print(atoms.get_cell())
+    print(atoms.get_pbc())
     
             
             

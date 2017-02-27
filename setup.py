@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import os
 import sys
 import numpy as np
@@ -95,15 +97,15 @@ s=setup(
     )
 
 if 'install' in s.command_options:
-   try:
-      home = s.command_options['install']['home'][1]
-   except KeyError:
-      # installation without parameter --home
-      home = os.getenv('HOME')
-      msgs.append('* No installation directory specified, hotbit installed directly to %s' % home)
-   
-   hb = os.path.expanduser('%s/hotbit' %home)
-   os.chmod(hb, 0755)
+    try:
+       home = s.command_options['install']['home'][1]
+    except KeyError:
+       # installation without parameter --home
+       home = os.getenv('HOME')
+       msgs.append('* No installation directory specified, hotbit installed directly to %s' % home)
+
+    #hb = os.path.expanduser('%s/hotbit' %home)
+    #os.chmod(hb, 0o755)
 
 for msg in msgs:
-    print msg
+    print(msg)

@@ -149,8 +149,8 @@ class MultipoleExpansion(Coulomb):
         sym_ranges = a.get_symmetry_operation_ranges()
         for ( s1, s2 ), k in zip(sym_ranges, self.k):
             if s2 != np.Inf and k != 1:
-                print sym_ranges
-                print self.k
+                print(sym_ranges)
+                print(self.k)
                 raise ValueError('For non-periodic symmetries the k-value must '
                                  'be 1.')
         n1, n2, n3 = n_from_ranges(sym_ranges, self.n1, self.n2)

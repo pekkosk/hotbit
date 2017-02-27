@@ -1,4 +1,4 @@
-from element import Element
+from .element import Element
 from ase import Atoms as ase_Atoms
 from hotbit.atoms import Atoms
 import numpy as np
@@ -126,7 +126,7 @@ class Elements:
 
             a,b = int(round(r[i,0])), int(round(r[i,1]))
             s += '[%i,%i] ' %(a,b)
-            self.ranges.append( range(a,b+1) )
+            self.ranges.append( list(range(a,b+1)) )
         self.range_message = s
 
 
@@ -185,12 +185,12 @@ class Elements:
         ijnn = np.zeros( (self.N,self.N),int )
 
         # add the n=(0,0,0) first (separately)
-        self.Rn = [[self.nvector(r=i,ntuple=(0,0,0)) for i in xrange(self.N)]]
+        self.Rn = [[self.nvector(r=i,ntuple=(0,0,0)) for i in range(self.N)]]
         self.Rot = [ self.rotation((0,0,0)) ]
         self.ntuples = [(0,0,0)]
 
-        for i in xrange(self.N):
-            for j in xrange(self.N):
+        for i in range(self.N):
+            for j in range(self.N):
                 dij = np.linalg.norm( self.Rn[0][i]-self.Rn[0][j] )
                 if dij < self.calc.ia.hscut[i,j]:
                     ijn[i,j,ijnn[i,j]] = 0
@@ -208,7 +208,7 @@ class Elements:
                     nt = (n1,n2,n3)
                     if nt==(0,0,0): continue
                     # check that any atom interacts with this unit cell
-                    R = np.array([self.nvector(r=i,ntuple=nt) for i in xrange(self.N)])
+                    R = np.array([self.nvector(r=i,ntuple=nt) for i in range(self.N)])
                     rn  = np.array(self.Rn[0])
 
                     dRt = rn[:, 0].reshape(1,-1)-R[:, 0].reshape(-1,1)
@@ -529,14 +529,14 @@ class Elements:
         @param lst: 'i'=index; 's'=symbol; 'no'=number of orbitals; 'o1'= first orbital
         '''
         def get_list(p):
-            if p=='i':      return range(self.N)
+            if p=='i':      return list(range(self.N))
             elif p=='s':    return self.symbols
             elif p=='no':   return self.nr_orbitals
             elif p=='o1':   return self.first_orbitals
             else:
                 raise NotImplementedError('Property not defined')
         l = [ get_list(item) for item in lst ]
-        return zip(*l)
+        return list(zip(*l))
 
 
     def get_cube(self):
@@ -569,5 +569,5 @@ class Elements:
 
 
     def update_vdw(self, vdw_parameters):
-        for s, par in vdw_parameters.iteritems():
+        for s, par in vdw_parameters.items():
             self.elements[s].update_vdw(*par)

@@ -30,7 +30,7 @@ class PairPotential:
 
     def greetings(self):
         """ Return the repulsion documentations. """
-        print>> self.calc.txt,'Pair potentials:\n'+self.comment
+        print('Pair potentials:\n'+self.comment, file=self.calc.txt)
     
 
     def add_pair_potential(self,i,j,v,eVA=True):

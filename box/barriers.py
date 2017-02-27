@@ -362,7 +362,7 @@ class BTI:
         #if False:
         tangents=vec(ip.tangents())
         tangents.shape=(self.M,self.N,3)
-        for image,i in zip(self.images,range(self.M)):
+        for image,i in zip(self.images,list(range(self.M))):
             image.set('tangent',tangents[i,:,:])
             image.write_vtk('%s/image_%04i_%04i.vtk' %(self.dir,self.it,i))
             
@@ -377,7 +377,7 @@ class BTI:
             tangent=ip.normalized_tangent(t[i])
             F_homo=-k*np.vdot((R[i]-Rh[i]),tangent)*tangent
             F_tan=np.vdot(tangent,F[i])*tangent
-            print 'homo:',norm(F_homo),'tan:',norm(F_tan)
+            print('homo:',norm(F_homo),'tan:',norm(F_tan))
             F[i]=F[i]-F_tan+F_homo
             
         F=vec(F)
@@ -424,14 +424,14 @@ if __name__=='__main__':
     first=Atoms(symbols='H',positions=[(3.0,-1.3,0.0)]) #,(0,0,0)])
     first.set_calculator(calc)
     md.quench_atoms(first,fmax=fmax)
-    print 'first minimum:',first.get_positions()[0]
+    print('first minimum:',first.get_positions()[0])
     
     
     
     last=Atoms('H',[(0.77,1.31,0.0)]) #,(0,0,0)])
     last.set_calculator(calc)
     md.quench_atoms(last,fmax=fmax)
-    print 'last minimum:',last.get_positions()[0]
+    print('last minimum:',last.get_positions()[0])
     
     
     images=[first.copy() for x in range(10)]

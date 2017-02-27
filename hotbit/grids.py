@@ -51,7 +51,7 @@ class Grids:
         self.pL = np.array(self.pL)
         self.pgrid = []
         for i in range(3):
-            self.pgrid.append( [p*self.dr[i]-self.pL[i]/2 for p in xrange(self.pN[i])] )
+            self.pgrid.append( [p*self.dr[i]-self.pL[i]/2 for p in range(self.pN[i])] )
 
                     
         self._all_basis_orbitals_to_partial_grid()             
@@ -97,9 +97,9 @@ class Grids:
         range = el.get_wf_range(otype,fractional_limit=1E-5)
         
         wf = np.zeros(self.pN)
-        for i in xrange(self.pN[0]):
-            for j in xrange(self.pN[1]):
-                for k in xrange(self.pN[2]):
+        for i in range(self.pN[0]):
+            for j in range(self.pN[1]):
+                for k in range(self.pN[2]):
                     r = np.array( [self.pgrid[0][i],self.pgrid[1][j],self.pgrid[2][k]] )
                     d = sqrt( r[0]**2+r[1]**2+r[2]**2 )
                     if d>self.cutoff or d>range:

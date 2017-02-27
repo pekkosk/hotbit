@@ -10,17 +10,17 @@ import os
 import glob
 import sys
 import numpy as np
-from auxil import k_to_kappa_points
+from .auxil import k_to_kappa_points
 from ase.units import Bohr, Hartree
 from ase import Atoms
 from box.timing import Timer
-from elements import Elements
-from interactions import Interactions
-from environment import Environment
-from pairpotential import PairPotential
-from repulsion import Repulsion
-from states import States
-from grids import Grids
+from .elements import Elements
+from .interactions import Interactions
+from .environment import Environment
+from .pairpotential import PairPotential
+from .repulsion import Repulsion
+from .states import States
+from .grids import Grids
 from hotbit.version import hotbit_version
 from hotbit.analysis import MullikenAnalysis
 from hotbit.analysis import MullikenBondAnalysis
@@ -181,14 +181,14 @@ class Hotbit(Output):
         """ Delete calculator -> timing summary. """
         if self.get('SCC'):
             try:
-                print>>self.txt, self.st.solver.get_iteration_info()
+                print(self.st.solver.get_iteration_info(), file=self.txt)
                 self.txt.flush()
             except:
                 pass
         if len(self.notes)>0:
-            print>>self.txt, 'Notes and warnings:'
+            print('Notes and warnings:', file=self.txt)
             for note in self.notes:
-                print>>self.txt, note
+                print(note, file=self.txt)
         if self.init:
             self.timer.summary()
             Output.__del__(self)
@@ -254,7 +254,7 @@ class Hotbit(Output):
         data['gap'], data['gap_prob'] = self.get_energy_gap()
         data['dose'], data['dos'] = self.get_density_of_states(False)
 
-        for key in data.keys():
+        for key in list(data.keys()):
             if keys!=None and key not in keys:
                 del data[key]
         import pickle
@@ -292,43 +292,43 @@ class Hotbit(Output):
         from os import environ
 
         self.version=hotbit_version
-        print>>self.txt,  '\n\n\n\n\n'
-        print>>self.txt,  ' _           _    _     _ _'
-        print>>self.txt,  '| |__   ___ | |_ | |__ |_| |_'
-        print>>self.txt,  '|  _ \ / _ \|  _||  _ \| |  _|'
-        print>>self.txt,  '| | | | ( ) | |_ | ( ) | | |_'
-        print>>self.txt,  '|_| |_|\___/ \__|\____/|_|\__|  ver.',self.version
-        print>>self.txt,  'Distributed under GNU GPL; see %s' %environ.get('HOTBIT_DIR')+'/LICENSE'
-        print>>self.txt,  'Date:',asctime()
+        print('\n\n\n\n\n', file=self.txt)
+        print(' _           _    _     _ _', file=self.txt)
+        print('| |__   ___ | |_ | |__ |_| |_', file=self.txt)
+        print('|  _ \ / _ \|  _||  _ \| |  _|', file=self.txt)
+        print('| | | | ( ) | |_ | ( ) | | |_', file=self.txt)
+        print('|_| |_|\___/ \__|\____/|_|\__|  ver.',self.version, file=self.txt)
+        print('Distributed under GNU GPL; see %s' %environ.get('HOTBIT_DIR')+'/LICENSE', file=self.txt)
+        print('Date:',asctime(), file=self.txt)
         dat=uname()
-        print>>self.txt,  'Nodename:',dat[1]
-        print>>self.txt,  'Arch:',dat[4]
-        print>>self.txt,  'Dir:',abspath(curdir)
-        print>>self.txt,  'System:',self.el.get_name()
-        print>>self.txt,  '       Charge=%4.1f' % self.charge
-        print>>self.txt,  '       Container', self.el.container_info()
-        print>>self.txt,  'Symmetry operations (if any):'
+        print('Nodename:',dat[1], file=self.txt)
+        print('Arch:',dat[4], file=self.txt)
+        print('Dir:',abspath(curdir), file=self.txt)
+        print('System:',self.el.get_name(), file=self.txt)
+        print('       Charge=%4.1f' % self.charge, file=self.txt)
+        print('       Container', self.el.container_info(), file=self.txt)
+        print('Symmetry operations (if any):', file=self.txt)
         rs = self.get('rs')
         kpts = self.get('kpts')
         M = self.el.get_number_of_transformations()
         for i in range(3):
-            print>>self.txt, '       %i: pbc=' %i, self.el.atoms.get_pbc()[i],
+            print('       %i: pbc=' %i, self.el.atoms.get_pbc()[i], end=' ', file=self.txt)
             if type(kpts)==type([]):
-                print>>self.txt, ', %s-points=%i, M=%.f' %(rs,len(kpts),M[i])
+                print(', %s-points=%i, M=%.f' %(rs,len(kpts),M[i]), file=self.txt)
             else:
-                print>>self.txt, ', %s-points=%i, M=%.f' %(rs,kpts[i],M[i])
-        print>>self.txt,  'Electronic temperature:', self.width*Hartree,'eV'
+                print(', %s-points=%i, M=%.f' %(rs,kpts[i],M[i]), file=self.txt)
+        print('Electronic temperature:', self.width*Hartree,'eV', file=self.txt)
         mixer = self.st.solver.mixer
-        print>>self.txt,  'Mixer:', mixer.get('name'), 'with memory =', mixer.get('memory'), ', mixing parameter =', mixer.get('beta')
-        print>>self.txt, self.el.greetings()
-        print>>self.txt, self.ia.greetings()
-        print>>self.txt, self.rep.greetings()
+        print('Mixer:', mixer.get('name'), 'with memory =', mixer.get('memory'), ', mixing parameter =', mixer.get('beta'), file=self.txt)
+        print(self.el.greetings(), file=self.txt)
+        print(self.ia.greetings(), file=self.txt)
+        print(self.rep.greetings(), file=self.txt)
         if self.pp.exists():
-            print>>self.txt, self.pp.greetings()
+            print(self.pp.greetings(), file=self.txt)
 
 
     def out(self,text):
-        print>>self.txt, text
+        print(text, file=self.txt)
         self.txt.flush()
 
 
@@ -373,7 +373,7 @@ class Hotbit(Output):
         M = self.st.nk*self.st.norb**2*number
         #     H   S   dH0   dS    wf  H1  dH   rho rhoe
         mem = M + M + 3*M + 3*M + M + M + 3*M + M + M
-        print>>self.txt, 'Memory consumption estimate: > %.2f GB' %(mem/1E9)
+        print('Memory consumption estimate: > %.2f GB' %(mem/1E9), file=self.txt)
         self.txt.flush()
         if self.dry_run:
             raise SystemExit
@@ -396,7 +396,7 @@ class Hotbit(Output):
             self.flags['DOS'] = False
             self.flags['bonds'] = False
             if self.verbose:
-                print >> self.get_output(), "Solved in %0.2f seconds" % (t1-t0)
+                print("Solved in %0.2f seconds" % (t1-t0), file=self.get_output())
             #if self.get('SCC'):
             #    atoms.set_charges(-self.st.get_dq())
         else:
@@ -673,7 +673,7 @@ class Hotbit(Output):
             bmin = list(fk<2-otol).index(True)
             amin = list(ek>ek[bmin]-cutoff).index(True)
             amax = list(fk<otol).index(True)
-            for a in xrange(amin,amax+1):
+            for a in range(amin,amax+1):
                 bmax = list(ek>ek[a]+cutoff).index(True)
                 for b in range(max(a+1,bmin),bmax+1):
                     de = ek[b]-ek[a]

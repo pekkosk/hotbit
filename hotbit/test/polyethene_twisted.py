@@ -65,14 +65,14 @@ for calc in [ calc2, calc3 ]:
     # Check forces from finite differences
     ffd, f0, err = check_forces(atoms, dx=1e-6)
     if debug:
-        print "Finite differences forces:"
-        print ffd
-        print "Analytical forces:"
-        print f0
-        print "Difference:"
-        print abs(ffd-f0)
-        print "Error:"
-        print err
+        print("Finite differences forces:")
+        print(ffd)
+        print("Analytical forces:")
+        print(f0)
+        print("Difference:")
+        print(abs(ffd-f0))
+        print("Error:")
+        print(err)
 
     assert err < 1e-5
 

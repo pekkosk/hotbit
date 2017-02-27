@@ -93,7 +93,7 @@ class LinearResponse:
         if self.done==True:
             raise AssertionError('Run LR calculation only once.')
         
-        print>>self.txt, '\nLR for %s (charge %.2f). ' %(self.el.get_name(),self.calc.get_charge()),
+        print('\nLR for %s (charge %.2f). ' %(self.el.get_name(),self.calc.get_charge()), end=' ', file=self.txt)
         
         #
         # select electron-hole excitations (i occupied, j not occupied)
@@ -122,7 +122,7 @@ class LinearResponse:
         #
         self.timer.start('setup matrix')
         dim=len(de)
-        print>>self.txt, 'Dimension %i. ' %dim,
+        print('Dimension %i. ' %dim, end=' ', file=self.txt)
         if not 0<dim<100000:
             raise RuntimeError('Coupling matrix too large or small (%i)' %dim)
         r=self.el.get_positions()            
@@ -146,15 +146,15 @@ class LinearResponse:
             
         self.timer.stop('setup matrix')                            
                                                                         
-        print>>self.txt, 'coupling matrix constructed. ',
+        print('coupling matrix constructed. ', end=' ', file=self.txt)
         self.txt.flush()         
         self.timer.start('diagonalize')                                                         
         omega2,eigv=eigh(matrix)
         self.timer.stop('diagonalize')
-        print>>self.txt, 'Matrix diagonalized.',
+        print('Matrix diagonalized.', end=' ', file=self.txt)
         self.txt.flush()
 #        assert np.all(omega2>1E-16)  
-        print omega2         
+        print(omega2)         
         omega=sqrt(omega2)
         
         # calculate oscillator strengths
@@ -183,16 +183,16 @@ class LinearResponse:
             
     def info(self):
         """ Some info about excitations (energy, main p-h excitations,...) """
-        print '\n#e(eV), f, collectivity, transitions ...'
+        print('\n#e(eV), f, collectivity, transitions ...')
         for ex in range(self.dim):
             if self.F[ex]<self.allowed_cut:
                 continue
-            print '%.5f %.5f %8.1f' %(self.omega[ex]*Hartree,self.F[ex],self.collectivity[ex]), 
+            print('%.5f %.5f %8.1f' %(self.omega[ex]*Hartree,self.F[ex],self.collectivity[ex]), end=' ') 
             order=np.argsort(abs(self.eigv[:,ex]))[::-1]
             for ph in order[:4]:
                 i,j=self.particle_holes[ph]
-                print '%3i-%-3i:%-10.3f' %(i,j,self.eigv[ph,ex]**2),
-            print         
+                print('%3i-%-3i:%-10.3f' %(i,j,self.eigv[ph,ex]**2), end=' ')
+            print()         
             
     def get_excitation(self,i,allowed=True):
         """ Return energy (eV) and oscillation strength for i'th allowed excitation index.
@@ -214,9 +214,9 @@ class LinearResponse:
         if filename==None:
             filename='linear_spectrum.out'
         o=open(filename,'w')
-        print>>o, '#e(eV), f'
+        print('#e(eV), f', file=o)
         for ex in range(self.dim):
-            print>>o, '%10.5f %10.5f %10.5f' %(self.omega[ex]*Hartree,self.F[ex],self.collectivity[ex])
+            print('%10.5f %10.5f %10.5f' %(self.omega[ex]*Hartree,self.F[ex],self.collectivity[ex]), file=o)
         o.close()  
                   
     def read_spectrum(self,filename):

@@ -63,13 +63,13 @@ solvers = [
 ]
 
 if debug:
-    print "%20s   %8s  %8s  (%8s)" % ( "compound", "M", "ref.", "error" )
-    print "%20s   %8s  %8s  %10s" % ( "-------------------",
-                                       "--------", "--------", "----------" )
+    print("%20s   %8s  %8s  (%8s)" % ( "compound", "M", "ref.", "error" ))
+    print("%20s   %8s  %8s  %10s" % ( "-------------------",
+                                       "--------", "--------", "----------" ))
 
 for sol in solvers:
     if debug:
-        print "=== %s ===" % sol.__class__
+        print("=== %s ===" % sol.__class__)
     for name, target_M, nnd, a in systems:
         syms = a.get_chemical_symbols()
         
@@ -91,7 +91,7 @@ for sol in solvers:
         err  = abs(M-target_M)
 
         if debug:
-            print "%20s   %8.6f  %8.6f  (%8.6e)" % ( name, M, target_M, err )
+            print("%20s   %8.6f  %8.6f  (%8.6e)" % ( name, M, target_M, err ))
 
         assert err < 1e-3
 

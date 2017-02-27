@@ -83,7 +83,7 @@ class RepulsiveFitting:
             self.txt=stdout
         else:
             self.txt=open(txt,'a')
-        print>>self.txt, 'Fitting repulsion curve between %s and %s' % (self.sym1, self.sym2)
+        print('Fitting repulsion curve between %s and %s' % (self.sym1, self.sym2), file=self.txt)
         self.colors = ['red','green','blue','cyan','yellow','orange','magenta','pink','black']
         self.colori = 0
 
@@ -222,8 +222,8 @@ class RepulsiveFitting:
             # from documentation of splrep in scipy.interpolate.fitpack
             self.s = len(x) - np.sqrt(2*len(x))
 
-        print>>self.txt, "\nFitting spline for V_rep'(R) with parameters"
-        print>>self.txt, "  k=%i, s=%0.4f, r_cut=%0.4f\n" %(self.k, self.s, self.r_cut)
+        print("\nFitting spline for V_rep'(R) with parameters", file=self.txt)
+        print("  k=%i, s=%0.4f, r_cut=%0.4f\n" %(self.k, self.s, self.r_cut), file=self.txt)
         tck = splrep(x, y, w, s=self.s, k=self.k)
 
         def dv_rep(r):
@@ -287,17 +287,17 @@ class RepulsiveFitting:
         shutil.copy(inputpar, filename)
         f = open(filename, 'a')
         # add comments
-        print >> f, "repulsion_comment="
-        print >> f, "%s\nparameters r_cut = %0.4f Ang, s = %0.4f, k = %3i" % (asctime(),self.r_cut, self.s, self.k)
+        print("repulsion_comment=", file=f)
+        print("%s\nparameters r_cut = %0.4f Ang, s = %0.4f, k = %3i" % (asctime(),self.r_cut, self.s, self.k), file=f)
         if len(self.structures)>1:
-            print >> f, "The systems used to produce this fit:"
+            print("The systems used to produce this fit:", file=f)
             for data in self.structures:
-                print >> f, "%20s %3s" % (data['filename'], data['charge'])
+                print("%20s %3s" % (data['filename'], data['charge']), file=f)
         if len(self.comments) > 0:
-            print >> f, self.comments
-        print >> f, '\n\nrepulsion='
+            print(self.comments, file=f)
+        print('\n\nrepulsion=', file=f)
         for r in np.linspace(0.1, self.r_cut, 100):
-            print >> f, r/Bohr, self(r)/Hartree
+            print(r/Bohr, self(r)/Hartree, file=f)
         f.close()
 
 
@@ -402,7 +402,7 @@ class RepulsiveFitting:
         color = self._get_color(color)
         comment += ';w=%.1f' %weight
         self.append_point(weight,R,-dEwr/N,comment,label,color)
-        print>>self.txt, '\nAdding a scalable system %s with %i bonds at R=%.4f.' %(atoms.get_chemical_symbols(),N,R)
+        print('\nAdding a scalable system %s with %i bonds at R=%.4f.' %(atoms.get_chemical_symbols(),N,R), file=self.txt)
 
 
     def append_dimer(self,weight,calc,R,comment=None,label='dimer',color=None):
@@ -548,10 +548,10 @@ class RepulsiveFitting:
 
         #if not ( isinstance(traj, type(PickleTrajectory)) or isinstance(traj, list) ):
         if not ( isinstance(traj, type(PickleTrajectory)) or isinstance(traj, list) ):
-            print>>self.txt, "\nAppending energy curve data from %s..." %traj
+            print("\nAppending energy curve data from %s..." %traj, file=self.txt)
             traj = PickleTrajectory(traj)
         else:
-            print>>self.txt, '\nAppending energy curve data...'
+            print('\nAppending energy curve data...', file=self.txt)
         Edft, Ewr, N, R = [], [], [], []
         if len(traj)<3:
             raise AssertionError('At least 3 points in energy curve required.')
@@ -589,7 +589,7 @@ class RepulsiveFitting:
                 label='_nolegend_'
                 com = None
             self.append_point(weight/np.sqrt(len(R)),r, vrep(r,der=1), com, label, color)
-        print>>self.txt, "Appended %i points around R=%.4f...%.4f" %(len(N),R.min(),R.max())
+        print("Appended %i points around R=%.4f...%.4f" %(len(N),R.min(),R.max()), file=self.txt)
 
 
     def append_homogeneous_cluster(self,weight,calc,atoms,comment=None,label=None,color=None):
@@ -627,13 +627,13 @@ class RepulsiveFitting:
         N = len(atoms)
         try:
             f_DFT = atoms.get_forces()
-            print>>self.txt, "    Use forces"
+            print("    Use forces", file=self.txt)
         except:
             f_DFT = np.zeros((N,3))
-            print>>self.txt, "    No forces (equilibrium cluster)"
+            print("    No forces (equilibrium cluster)", file=self.txt)
 
         atoms, calc = self._set_calc(atoms,calc)
-        print>>self.txt, "\nAppending homogeneous cluster %s..." % atoms.get_name()
+        print("\nAppending homogeneous cluster %s..." % atoms.get_name(), file=self.txt)
 
         f_wr = atoms.get_forces()
         distances = calc.rep.get_repulsion_distances(self.sym1,self.sym2,self.r_cut)
@@ -664,7 +664,7 @@ class RepulsiveFitting:
 
         from scipy.optimize import fmin
         p = fmin( to_minimize,[-1.0,5.0],args=(atoms,f_DFT,f_wr),xtol=1E-5,ftol=1E-5 )
-        print>>self.txt, '   Cluster: V_rep(R)=%.6f + %.6f (r-%.2f)' %(p[0],p[1],self.r_cut)
+        print('   Cluster: V_rep(R)=%.6f + %.6f (r-%.2f)' %(p[0],p[1],self.r_cut), file=self.txt)
 
         color = self._get_color(color)
         npp = 6
@@ -708,9 +708,9 @@ class RepulsiveFitting:
             pickle.dump(self.structures, f)
             pickle.dump(self.comments, f)
         else:
-            print>>f, self.deriv
-            print>>f, self.structures
-            print>>f, self.comments
+            print(self.deriv, file=f)
+            print(self.structures, file=f)
+            print(self.comments, file=f)
         f.close()
 
 
@@ -747,7 +747,7 @@ class ParametrizationTest:
             filename = data['filename']
             del data['filename']
             c = Hotbit()
-            for key, value in data.iteritems():
+            for key, value in data.items():
                 c.__dict__[key] = data[key]
             self.trajectories.append(filename)
             self.calculators.append(c)
@@ -813,7 +813,7 @@ class ParametrizationTest:
         temp = par.split('_')
         symbols = "%s%s" % (temp[0],temp[1])
         tables = {symbols:par, 'rest':'default'}
-        for i_traj, calc in zip(range(len(self.trajectories)), self.calculators):
+        for i_traj, calc in zip(list(range(len(self.trajectories))), self.calculators):
             pl.figure(i_traj)
             pl.title(self.trajectories[i_traj])
             if i_par == 0:
@@ -837,8 +837,8 @@ class ParametrizationTest:
                 c.tables = tables
                 atoms.set_calculator(c)
                 e_tb = atoms.get_potential_energy()
-            except Exception, ex:
-                print>>self.txt, ex
+            except Exception as ex:
+                print(ex, file=self.txt)
             if e_tb != None:
                 energies.append(e_tb)
                 frames.append(i)

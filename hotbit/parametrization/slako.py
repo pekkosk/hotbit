@@ -1,7 +1,7 @@
 import numpy as np
 import sys
 from box.timing import Timer
-from util import tail_smoothening
+from .util import tail_smoothening
 from time import asctime
 import math
 sin=math.sin
@@ -45,10 +45,10 @@ class SlaterKosterTable:
             self.elements=[ela]
         self.timer=Timer('SlaterKosterTable',txt=self.txt,enabled=timing)
                                         
-        print>>self.txt, '\n\n\n\n'                                        
-        print>>self.txt, '************************************************'
-        print>>self.txt, 'Slater-Koster table construction for %2s and %2s' %(ela.get_symbol(),elb.get_symbol())
-        print>>self.txt, '************************************************'
+        print('\n\n\n\n', file=self.txt)                                        
+        print('************************************************', file=self.txt)
+        print('Slater-Koster table construction for %2s and %2s' %(ela.get_symbol(),elb.get_symbol()), file=self.txt)
+        print('************************************************', file=self.txt)
         
     def __del__(self):
         self.timer.summary()          
@@ -72,20 +72,20 @@ class SlaterKosterTable:
         if filename==None: fn='%s_%s.par' %(self.ela.get_symbol(),self.elb.get_symbol())
         else: fn=filename
         f=open(fn,'w')
-        print>>f, 'slako_comment='
-        print>>f, self.get_comment(), '\n\n'
+        print('slako_comment=', file=f)
+        print(self.get_comment(), '\n\n', file=f)
         for p,(e1,e2) in enumerate(self.pairs):
-            print>>f, '%s_%s_table=' %(e1.get_symbol(),e2.get_symbol())
+            print('%s_%s_table=' %(e1.get_symbol(),e2.get_symbol()), file=f)
             for i,R in enumerate(self.Rgrid):
-                print>>f, '%.6e' %R,
-                for t in xrange(20):
+                print('%.6e' %R, end=' ', file=f)
+                for t in range(20):
                     x=self.tables[p][i,t]
                     if abs(x)<1E-90:
-                        print>>f, '0.',
+                        print('0.', end=' ', file=f)
                     else:
-                        print>>f, '%.6e' %x,
-                print>>f     
-            print>>f, '\n\n'                                                                                   
+                        print('%.6e' %x, end=' ', file=f)
+                print(file=f)     
+            print('\n\n', file=f)                                                                                   
         f.close()
     
     
@@ -105,7 +105,7 @@ class SlaterKosterTable:
         mx=max(1,self.tables[0].max())
         if self.nel==2:
             mx=max(mx,self.tables[1].max())
-        for i in xrange(10):
+        for i in range(10):
             name=integrals[i]
             ax=pl.subplot(5,2,i+1)
             for p,(e1,e2) in enumerate(self.pairs):
@@ -167,7 +167,7 @@ class SlaterKosterTable:
         wf_range=0.0
         for el in self.elements:
             r=max( [el.get_wf_range(nl,fractional_limit) for nl in el.get_valence_orbitals()] )
-            print>>self.txt, 'wf range for %s=%10.5f' %(el.get_symbol(),r)
+            print('wf range for %s=%10.5f' %(el.get_symbol(),r), file=self.txt)
             wf_range=max(r,wf_range)
         if wf_range>20:
             raise AssertionError('Wave function range >20 Bohr. Decrease wflimit?')
@@ -200,20 +200,20 @@ class SlaterKosterTable:
         if self.nel==1: self.tables=[np.zeros((N,20))]
         else: self.tables=[np.zeros((N,20)),np.zeros((N,20))]
         
-        print>>self.txt, 'Start making table...'
+        print('Start making table...', file=self.txt)
         for Ri,R in enumerate(Rgrid):
             if R>2*self.wf_range: 
                 break
             grid, areas = self.make_grid(R,nt=ntheta,nr=nr)
             if  Ri==N-1 or N/10 == 0 or np.mod(Ri,N/10)==0:                    
-                    print>>self.txt, 'R=%8.2f, %i grid points ...' %(R,len(grid))
+                    print('R=%8.2f, %i grid points ...' %(R,len(grid)), file=self.txt)
             for p,(e1,e2) in enumerate(self.pairs):
                 selected=select_integrals(e1,e2) 
                 if Ri==0:
-                    print>>self.txt, 'R=%8.2f %s-%s, %i grid points, ' %(R,e1.get_symbol(),e2.get_symbol(),len(grid)),
-                    print>>self.txt, 'integrals:', 
-                    for s in selected: print>>self.txt, s[0],
-                    print>>self.txt 
+                    print('R=%8.2f %s-%s, %i grid points, ' %(R,e1.get_symbol(),e2.get_symbol(),len(grid)), end=' ', file=self.txt)
+                    print('integrals:', end=' ', file=self.txt) 
+                    for s in selected: print(s[0], end=' ', file=self.txt)
+                    print(file=self.txt) 
                 
                 S,H,H2=self.calculate_mels(selected,e1,e2,R,grid,areas)
                 self.Hmax=max(self.Hmax,max(abs(H)))
@@ -221,9 +221,9 @@ class SlaterKosterTable:
                 self.tables[p][Ri,:10]=H
                 self.tables[p][Ri,10:]=S
         
-        print>>self.txt, 'Maximum value for H=%.2g' %self.Hmax
-        print>>self.txt, 'Maximum error for H=%.2g' %self.dH        
-        print>>self.txt, '     Relative error=%.2g %%' %(self.dH/self.Hmax*100)
+        print('Maximum value for H=%.2g' %self.Hmax, file=self.txt)
+        print('Maximum error for H=%.2g' %self.dH, file=self.txt)        
+        print('     Relative error=%.2g %%' %(self.dH/self.Hmax*100), file=self.txt)
         self.timer.stop('calculate tables')  
         self.comment+='\n'+asctime()
         self.txt.flush()
@@ -355,8 +355,8 @@ class SlaterKosterTable:
         area=[]
         # first calculate grid for polar centered on atom 1:
         # the z=h-like starts cutting full elements starting from point (1)
-        for j in xrange(nt-1):
-            for i in xrange(nr-1):
+        for j in range(nt-1):
+            for i in range(nr-1):
                 # corners of area element
                 d1,z1=R[i+1]*sin(T[j]),R[i+1]*cos(T[j])
                 d2,z2=R[i]*sin(T[j]),R[i]*cos(T[j])
@@ -482,5 +482,5 @@ def g(t1,t2):
            
         
 if __name__=='__main__':
-    print select_orbital2(['2s','2p'],['4s','3d'],'sss')
+    print(select_orbital2(['2s','2p'],['4s','3d'],'sss'))
     

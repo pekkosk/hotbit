@@ -120,9 +120,9 @@ class Solver:
                 if evmin<0:
                     raise AssertionError('Eigenfunction norm deviations from LAPACK %.8f. Minimum eigenvalue of S is %.4f - overlap matrix is not positive definite.' %(maxdev,evmin))
                 else:
-                    print 'diag(H)=',H.diagonal()
+                    print('diag(H)=',H.diagonal())
                     #print 'H=',H
-                    print 'diag(S)=',S.diagonal()
+                    print('diag(S)=',S.diagonal())
                     #print 'S=',S
                     raise AssertionError('LAPACK: Eigenfunctions norm deviates from one by %.8f, but overlap matrix is still positive definite?' %(maxdev))
             self.calc.stop_timing('Check norm (remove?)')

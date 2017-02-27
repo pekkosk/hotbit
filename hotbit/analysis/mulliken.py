@@ -44,14 +44,14 @@ class MullikenAnalysis:
         self.norb = norb
         
         self.diag = np.zeros((norb))        
-        for k in xrange(self.nk):
+        for k in range(self.nk):
             diag_k = ( st.rho[k]*st.S[k].transpose() ).sum(axis=1).real
             self.diag += self.wk[k]*diag_k
             
         self.aux = np.zeros((self.nk,norb,norb))
         wf = st.wf.copy()
         wfc = st.wf.copy().conjugate()
-        for k in xrange(self.nk):
+        for k in range(self.nk):
             for a in range(norb):
                 self.aux[k,a] = ( wfc[k,a] * np.dot(wf[k,a],st.S[k].transpose()) ).real 
 
@@ -321,7 +321,7 @@ class MullikenBondAnalysis(MullikenAnalysis):
         rhoM = []
         n=self.st.norb
         epsilon = []
-        for mu in xrange(self.norb):
+        for mu in range(self.norb):
             epsilon.append( self.calc.el.orbitals(mu,basis=True)['energy'] )
         epsilon = np.array(epsilon)
         #epsilon-bar matrix of Bornsen et al J.Phys.:Cond.mat 11, L287 (1999)
@@ -355,7 +355,7 @@ class MullikenBondAnalysis(MullikenAnalysis):
         orbj = self.calc.el.orbitals(j, indices=True)
         
         M = 0.0
-        for k in xrange(self.nk):
+        for k in range(self.nk):
             for mu in orbi:
                 for nu in orbj:
                     M += self.wk[k] * self.rhoSk[k,mu,nu]*self.rhoSk[k,nu,mu]

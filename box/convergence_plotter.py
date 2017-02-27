@@ -42,11 +42,11 @@ class ConvergencePlotter:
         try:
             import pylab
         except ImportError:
-            print "Could not import pylab, cannot print the Mulliken excess charges."
+            print("Could not import pylab, cannot print the Mulliken excess charges.")
             return
         for p in self.points[:self.iters_saved][::-1]:
             c = self.color()
-            pylab.scatter(range(len(p)), p, color=c)
+            pylab.scatter(list(range(len(p))), p, color=c)
         pylab.title(self.title)
         pylab.xlabel('atom index')
         pylab.ylabel('Mulliken excess population')
@@ -57,6 +57,6 @@ class ConvergencePlotter:
         pylab.ylabel('excess population')
         P=np.array(self.points2)
         for p in P.transpose():
-            pylab.plot(range(len(p)), p)
+            pylab.plot(list(range(len(p))), p)
         pylab.savefig('Mulligen_population_evolution.eps')
         pylab.show()

@@ -1,12 +1,12 @@
 # Please see the accompanying LICENSE file for further information.
 
-from solver import Solver
+from .solver import Solver
 from weakref import proxy
-from electrostatics import Electrostatics
-from occupations import Occupations
+from .electrostatics import Electrostatics
+from .occupations import Occupations
 import numpy as np
 from box import mix
-from auxil import k_to_kappa_points
+from .auxil import k_to_kappa_points
 from box.mix import divisors
 pi=np.pi
 
@@ -112,7 +112,7 @@ class States:
                     # nk1 = nks[abs(nks-nk).argmin()]                  
                     # discrete, well-defined sampling; any k-point is not allowed 
                     if kpts[i] not in mix.divisors(M[i]) and physical:
-                        print 'Allowed k-points for direction',i,'are',mix.divisors(M[i])
+                        print('Allowed k-points for direction',i,'are',mix.divisors(M[i]))
                         raise Warning('Non-physical k-point sampling! ')
                     else:
                         kl.append( np.linspace(0,2*pi-2*pi/kpts[i],kpts[i]) )
@@ -216,12 +216,12 @@ class States:
         reasonable. """
         dQ = self.mulliken()
         if self.calc.verbose_SCC:
-            print>> self.calc.get_output(), "Mulliken populations: min=%0.3f, max=%0.3f" % (np.min(dQ),np.max(dQ))
+            print("Mulliken populations: min=%0.3f, max=%0.3f" % (np.min(dQ),np.max(dQ)), file=self.calc.get_output())
         Z = self.calc.el.get_atomic_numbers()
         for dq, z in zip(dQ, Z):
             if dq < -z or dq > z:
                 for dq, z in zip(dQ, Z):
-                    print >> self.calc.get_output(), "Z=%i    dq=%0.3f    excess charge=%0.3f" % (z, dq, -dq)
+                    print("Z=%i    dq=%0.3f    excess charge=%0.3f" % (z, dq, -dq), file=self.calc.get_output())
                 raise Exception("The Mulliken charges are insane!")
 
 
@@ -316,7 +316,7 @@ class States:
                and diag_i = sum_k w_k diag(k)_i 
         '''
         diag = np.zeros((self.norb))
-        for ik in xrange(self.nk):
+        for ik in range(self.nk):
             diag_k = ( self.rho[ik]*self.S[ik].transpose() ).sum(axis=1).real            
             diag = diag + self.wk[ik] * diag_k
         q=[]
@@ -339,7 +339,7 @@ class States:
         '''
         self.calc.start_timing('e_bs')
         ebs = 0.0
-        for ik in xrange(self.nk):
+        for ik in range(self.nk):
             diagonal = ( self.rho[ik]*self.H0[ik].transpose() ).sum(axis=1)
             ebs += self.wk[ik] * diagonal.sum()
         assert ebs.imag<self.calc.get('tol_imaginary_e')

@@ -108,19 +108,19 @@ db2 = {
 def check_q(db, name, value):
     refvalue = db[name]
     if debug:
-        print '%10s  %10.3f  %10.3f' % ( name, value, refvalue )
+        print('%10s  %10.3f  %10.3f' % ( name, value, refvalue ))
     #assert abs(value-refvalue) < 1e-3
 
 
 def check_db(db, params):
     if debug:
-        print "%10s %10s %10s ( %10s )" \
-            % ( "bond", "value", "reference", "error" )
-    for mol, values in db.iteritems():
+        print("%10s %10s %10s ( %10s )" \
+            % ( "bond", "value", "reference", "error" ))
+    for mol, values in db.items():
         #if mol == 'H2O':
         if 1:
             if debug:
-                print mol
+                print(mol)
 
             a = molecule(mol)
             a.center(vacuum=10.0)
@@ -143,11 +143,11 @@ def check_db(db, params):
 
             #print a.get_charges()
             
-            for name, ( ( i1, i2 ), refvalue ) in values.iteritems():
+            for name, ( ( i1, i2 ), refvalue ) in values.items():
                 value = a.get_distance(i1, i2)
                 if debug:
-                    print '%10s %10.3f %10.3f ( %10.3f )' % \
-                        ( name, value, refvalue, abs(value-refvalue) )
+                    print('%10s %10.3f %10.3f ( %10.3f )' % \
+                        ( name, value, refvalue, abs(value-refvalue) ))
                 assert abs(value-refvalue) < 0.01
 
             #e = [ ]
@@ -165,9 +165,9 @@ params = database_from_path(os.getenv('PBC_0_2'))
 if debug:
     for SCC in [ False, True ]:
         if SCC:
-            print "--- SCC ---"
+            print("--- SCC ---")
         else:
-            print "--- no SCC ---"
+            print("--- no SCC ---")
             
         calc = Hotbit(
             charge_density = 'Slater',

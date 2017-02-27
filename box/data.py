@@ -125,6 +125,6 @@ for key in configurations:
 
 if __name__=='__main__':
     for symbol in data:
-        print 'X'*40
+        print('X'*40)
         for d in data[symbol]:
-            print d,data[symbol][d]
+            print(d,data[symbol][d])

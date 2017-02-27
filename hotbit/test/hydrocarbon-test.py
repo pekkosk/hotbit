@@ -290,17 +290,17 @@ order = ['H2','CH','CH2','CH3','CH4','C2H2','C2H4','C2H6','C3H4','C3H6','C4H10',
 def print_results(data):
     rel_error_current = 0.0
     rel_error_porezag = 0.0
-    print ""
-    print "Current: value of the quantity calculated with default parameters."
-    print "Porezag: values reported in Phys. Rev. B, volume 51, number 19, 1995"
-    print "LSD:     DFT_LSD values obtained from the same paper."
-    print "d:       the relative error of the previous value compared to"
-    print "         the LSD value (d=(x - x_LSD)/x_LSD)."
-    print ""
-    print "The two-atom variables are bond lengths (in Angtroms) and"
-    print "three-atom variables angles (in degrees)."
-    print ""
-    print "%9s %9s %9s %9s %9s %9s %9s" % ('Molecule', 'Variable', 'LSD', 'Current', 'd', 'Porezag', 'd')
+    print("")
+    print("Current: value of the quantity calculated with default parameters.")
+    print("Porezag: values reported in Phys. Rev. B, volume 51, number 19, 1995")
+    print("LSD:     DFT_LSD values obtained from the same paper.")
+    print("d:       the relative error of the previous value compared to")
+    print("         the LSD value (d=(x - x_LSD)/x_LSD).")
+    print("")
+    print("The two-atom variables are bond lengths (in Angtroms) and")
+    print("three-atom variables angles (in degrees).")
+    print("")
+    print("%9s %9s %9s %9s %9s %9s %9s" % ('Molecule', 'Variable', 'LSD', 'Current', 'd', 'Porezag', 'd'))
     N = 0
     for n, k in enumerate(order):
         for i, kv in enumerate(data[k].items()):
@@ -312,12 +312,12 @@ def print_results(data):
                 molecule = ''
             d = value/reference_data[k][key]-1
             rel_error_current += d**2
-            print "%9s %9s %9.3f %9.3f %9.3f" % (molecule, key, reference_data[k][key], value, d),
+            print("%9s %9s %9.3f %9.3f %9.3f" % (molecule, key, reference_data[k][key], value, d), end=' ')
             d = porezag_data[k][key]/reference_data[k][key]-1
             rel_error_porezag += d**2
-            print "%9.3f %9.3f" % (porezag_data[k][key], d),
-            print ''
-    print " The RMS of relative errors:                %0.3f               %0.3f" % (np.sqrt(rel_error_current/N), np.sqrt(rel_error_porezag/N))
+            print("%9.3f %9.3f" % (porezag_data[k][key], d), end=' ')
+            print('')
+    print(" The RMS of relative errors:                %0.3f               %0.3f" % (np.sqrt(rel_error_current/N), np.sqrt(rel_error_porezag/N)))
 
 
 if __name__ == '__main__':

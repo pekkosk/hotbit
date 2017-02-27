@@ -99,8 +99,8 @@ for run in range(NRUNS):
     err_mom2 = np.max(np.abs(Mc_L-Md_L))
 
     if debug:
-        print "err_mom1 = ", err_mom1
-        print "err_mom2 = ", err_mom2
+        print("err_mom1 = ", err_mom1)
+        print("err_mom2 = ", err_mom2)
 
     assert err_mom1 < TOL_MOM and err_mom2 < TOL_MOM
 
@@ -127,8 +127,8 @@ for run in range(NRUNS):
                                              L0_l[1] ])))
 
     if debug:
-        print "err_phi1 = ", err_phi1
-        print "err_phi2 = ", err_phi2
+        print("err_phi1 = ", err_phi1)
+        print("err_phi2 = ", err_phi2)
 
     assert err_phi1 < TOL_PHI
     assert err_phi2 < TOL_PHI
@@ -151,8 +151,8 @@ for run in range(NRUNS):
                                              L0_l2[1] ])))
 
     if debug:
-        print "err_phi3 = ", err_phi3
-        print "err_phi4 = ", err_phi4
+        print("err_phi3 = ", err_phi3)
+        print("err_phi4 = ", err_phi4)
 
     assert err_phi3 < TOL_PHI2
     assert err_phi4 < TOL_PHI2
@@ -187,8 +187,8 @@ for run in range(NRUNS):
     err_mom4 = np.max(np.abs(Me_L-Mf_L))
 
     if debug:
-        print "err_mom3 = ", err_mom3
-        print "err_mom4 = ", err_mom4
+        print("err_mom3 = ", err_mom3)
+        print("err_mom4 = ", err_mom4)
 
     assert err_mom3 < TOL_ROT
     assert err_mom4 < TOL_ROT

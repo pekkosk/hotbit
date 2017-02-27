@@ -64,12 +64,12 @@ def electrostatics_test(b, r=3, r0=None):
     b.set_calculator(mp)
     ffd, f0, err = check_forces(b)
     if debug:
-        print "Finite differences forces:"
-        print ffd
-        print "Analytical forces:"
-        print f0
-        print "Error:"
-        print err
+        print("Finite differences forces:")
+        print(ffd)
+        print("Analytical forces:")
+        print(f0)
+        print("Error:")
+        print(err)
 
     assert err < TOL_FOR
 
@@ -107,7 +107,7 @@ def electrostatics_test(b, r=3, r0=None):
     err_mom   = np.max(np.abs(M_L-M_L_mp))
 
     if debug:
-        print "error(mom)  = ", err_mom0, err_mom
+        print("error(mom)  = ", err_mom0, err_mom)
 
     assert err_mom0 < TOL_MOM[r]
     assert err_mom < TOL_MOM[r]
@@ -119,8 +119,8 @@ def electrostatics_test(b, r=3, r0=None):
     err_E    = np.max(np.abs(E_mp-E_dir))
 
     if debug:
-        print "error(phi)  = ", err_phi
-        print "error(E)    = ", err_E
+        print("error(phi)  = ", err_phi)
+        print("error(E)    = ", err_E)
 
     assert err_phi < TOL_PHI[r]
     assert err_E < TOL_E[r]
@@ -142,7 +142,7 @@ for i in range(NRUNS):
     if False:
         # no periodicity, this should simply not fail
         if debug:
-            print "0D"
+            print("0D")
         a = Atoms('%iH' % NAT,
                   positions  = r,
                   charges    = q,
@@ -161,7 +161,7 @@ for i in range(NRUNS):
     if True:
         # 1D periodicity
         if debug:
-            print "1D"
+            print("1D")
         a = Atoms('%iH' % NAT,
                   positions  = r,
                   charges    = q,
@@ -180,7 +180,7 @@ for i in range(NRUNS):
     if True:
         # 1D and twisted periodicity
         if debug:
-            print "1D - twisted"
+            print("1D - twisted")
         a = Atoms('%iH' % NAT,
                   positions  = r,
                   charges    = q,
@@ -203,7 +203,7 @@ for i in range(NRUNS):
     if True:
         # 2D periodicity
         if debug:
-            print "2D"
+            print("2D")
         a = Atoms('%iH' % NAT,
                   positions  = r,
                   charges    = q,
@@ -222,7 +222,7 @@ for i in range(NRUNS):
     if False:
         # 3D periodicity
         if debug:
-            print "3D"
+            print("3D")
         a = Atoms('%iH' % NAT,
                   positions  = r,
                   charges    = q,
