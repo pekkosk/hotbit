@@ -1,3 +1,4 @@
+import ase.units as units
 from ase import *
 from hotbit import *
 from box.md import check_energy_conservation
@@ -16,8 +17,7 @@ atoms=Atoms('C2',[(0,0,0),(2*cos(pi/6)*R,R,0)],pbc=(True,True,False),\
 calc=Hotbit(SCC=False,txt='graphene.cal',kpts=(nkpts,nkpts,1),**default_param) 
 atoms.set_calculator(calc)
 coh = atoms.get_potential_energy()/2
-assert abs(-9.626283-coh)<1E-6
-
+assert abs(-9.626283-coh)<1E-5
 
 
 # energy conservation
