@@ -11,6 +11,8 @@ can be easily added later.
 # Copyright (C) 2010 NSC Jyvaskyla, Fh-IWM
 # Please see the accompanying LICENSE file for further information.
 
+from __future__ import division, print_function
+
 from math import pi, sqrt
 
 import numpy as np
@@ -72,15 +74,15 @@ class MultipoleExpansion(Coulomb):
 
         # The multipole-to-multipole operation is carried out over the
         # range [self.n1, self.n2]
-        self.n1  = -((n-1)/2)
-        self.n2  = n/2
+        self.n1  = -((n-1)//2)
+        self.n2  = n//2
         #self.dx = -0.5*(self.n1 + self.n2)
 
         # The multipole-to-local operation is carried out over cells farther
         # away, hence the range [self.m1, self.m2]
         n **= 2
-        self.m1  = -((n-1)/2)
-        self.m2  = n/2
+        self.m1  = -((n-1)//2)
+        self.m2  = n//2
 
         if type(k) == int:
             self.k = np.array([k]*3)
@@ -259,7 +261,7 @@ class MultipoleExpansion(Coulomb):
                             multipole_to_local(-r1+self.r0[Mi], self.l_max,
                                                S0_l, S_L, L0_l, L_L)
 
-            level /= self.n2-self.n1+1
+            level //= self.n2-self.n1+1
             Mi    -= 1
 
         self.L = ( L0_l, L_L )

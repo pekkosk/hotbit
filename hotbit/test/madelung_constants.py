@@ -19,7 +19,7 @@ K      = 5
 Q      = 1.0
 a0     = 1.0
 
-debug  = False
+debug  = True
 
 ###
 
@@ -29,18 +29,18 @@ M_CsCl  = 1.762675
 M_ZnS   = 1.638055
 
 systems = [
-#    ( "NaCl", M_NaCl, 0.5,
-#       NaCl(['Na', 'Cl'],
-#            latticeconstant = a0,
-#            size            = [1, 1, 1]) ),
+    ( "NaCl", M_NaCl, 0.5,
+       NaCl(['Na', 'Cl'],
+            latticeconstant = a0,
+            size            = [1, 1, 1]) ),
     ( "CsCl", M_CsCl, sqrt(3.0)/2,
       CsCl(['Cs', 'Cl'],
           latticeconstant   = a0,
           size              = [1, 1, 1]) ),
-#    ( "ZnS", M_ZnS, sqrt(3.0)/4,
-#      ZnS(['Zn', 'S'],
-#          latticeconstant   = a0,
-#          size              = [1, 1, 1]) ),
+    ( "ZnS", M_ZnS, sqrt(3.0)/4,
+      ZnS(['Zn', 'S'],
+          latticeconstant   = a0,
+          size              = [1, 1, 1]) ),
 # Some tests with extended unit cells, not necessary
 #    ( "large NaCl", M_NaCl, 0.5,
 #       NaCl(['Na', 'Cl'],
