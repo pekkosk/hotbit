@@ -141,7 +141,7 @@ def fit2(p,xlist,ylist,fct=False):
     ylist:    y-data to fit
     fct:      additionally return the function with fitted parameters
     '''
-    if p==None:
+    if p is None:
         imin = np.argmin(ylist)
         p = [min(ylist),5*(max(ylist)-min(ylist))/(xlist[-1]-xlist[0])**2,xlist[imin]]
     assert len(p)==3
@@ -479,14 +479,14 @@ def broaden(x,y=None,width=0.05,function='gaussian',extend=False,N=200,a=None,b=
 
     return: xgrid, broadened distribution
     """
-    if y==None:
+    if y is None:
         y=np.ones_like(x)
     dx=[0.0,4*width][extend]
-    if a==None:
+    if a is None:
         mn=min(x)-dx
     else:
         mn=a
-    if b==None:
+    if b is None:
         mx=max(x)+dx
     else:
         mx=b
@@ -591,7 +591,7 @@ def find_value(inp,key,fmt='default',default=None,position='start'):
             elif fmt=='all':   ret=value[0:]
             break
     if opened: f.close()
-    if fmt=='test' and ret==None:
+    if fmt=='test' and ret is None:
         return False
     elif ret is not None:
         if fmt=='strings' and type(ret)!=type([]):
@@ -768,7 +768,7 @@ def gplot(string,file=None,delete=False,view=False):
     from os import system
     from os import environ
 
-    if file==None:
+    if file is None:
         for line in string.splitlines():
             if line.find('set output')>=0:
                 psfile=line.split("'")[1]
@@ -859,7 +859,7 @@ class AnalyticFunction:
 
     def plot(self,a=None,b=None,N=200,out='screen'):
         import pylab as pl
-        if a==b==None:
+        if a==b is None:
             a,b=(-10,10)
 
         x=np.linspace(a,b,N)
