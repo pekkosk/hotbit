@@ -1,3 +1,5 @@
+from __future__ import division
+
 from ase import Atoms as ase_Atoms
 import numpy as np
 from copy import copy
@@ -209,7 +211,7 @@ class Atoms(ase_Atoms):
                         rng = np.arange(0,n[i])
                     else:
                         # take copies around the 0-operation
-                        start = max(r[i,0],-n[i]/2)
+                        start = max(r[i,0],-n[i]//2)
                         rng = np.arange(start,start+n[i])
                     ops.append( rng )
 

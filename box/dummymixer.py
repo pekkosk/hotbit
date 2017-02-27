@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 class DummyMixer:
     """ A dummy mixer that all mixer class should inherit. """
 

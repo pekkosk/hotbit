@@ -9,7 +9,7 @@ from hotbit.atoms import Atoms
 from hotbit.test.misc import default_param
 from numpy import *
 from box.systems import graphene
-from ase.data.molecules import molecule
+from ase.build import molecule
 
 eps = 1E-6
 

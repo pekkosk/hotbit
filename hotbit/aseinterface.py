@@ -6,6 +6,7 @@
     (Hybrid Open-source Tight-Binding Tool)
 
 """
+from __future__ import print_function
 import os
 import glob
 import sys

@@ -1,3 +1,5 @@
+from __future__ import division, print_function
+
 import numpy as np
 import sys
 from box.timing import Timer
@@ -205,7 +207,7 @@ class SlaterKosterTable:
             if R>2*self.wf_range: 
                 break
             grid, areas = self.make_grid(R,nt=ntheta,nr=nr)
-            if  Ri==N-1 or N/10 == 0 or np.mod(Ri,N/10)==0:                    
+            if  Ri==N-1 or N//10 == 0 or np.mod(Ri,N//10)==0:                    
                     print('R=%8.2f, %i grid points ...' %(R,len(grid)), file=self.txt)
             for p,(e1,e2) in enumerate(self.pairs):
                 selected=select_integrals(e1,e2) 

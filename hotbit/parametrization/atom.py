@@ -1,3 +1,5 @@
+from __future__ import division, print_function
+
 import numpy as np
 from scipy.integrate import odeint
 from box.data import data
@@ -681,8 +683,8 @@ def shoot(u,dx,c2,c1,c0,N):
         if c0[i]>0:
             ctp=i
             break
-        if all_negative and i==N/2:
-            ctp=N/2
+        if all_negative and i==N//2:
+            ctp=N//2
             break
 
     utp=u[ctp]

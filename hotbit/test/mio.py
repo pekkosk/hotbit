@@ -2,14 +2,16 @@
 Test the mio parametrization of Frauenheim and co-workers.
 """
 
+from __future__ import print_function
+
 import os
 import glob
 
 import numpy as np
 
+from ase.build import molecule
 from ase.io import read
 from ase.optimize import FIRE, QuasiNewton
-from ase.structure import molecule
 from hotbit import Hotbit, database_from_path
 
 ###

@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 from ase import *
 from hotbit import Hotbit
 import numpy as np

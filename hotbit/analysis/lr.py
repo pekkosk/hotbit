@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import numpy as np
 from numpy.linalg.linalg import eigh 
 from box import mix

@@ -1,7 +1,8 @@
+from __future__ import print_function
 from hotbit import Hotbit 
 #from hotbit import Calculator0
 from ase import *
-from ase.structure import molecule
+from ase.build import molecule
 from hotbit.test.misc import default_param
 import sys
 

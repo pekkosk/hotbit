@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import box.mix as mix 
 
 def rectilinear_vtk(grid,data,fname):

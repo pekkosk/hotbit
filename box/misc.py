@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import numpy as np
 from scipy.linalg import solve
 from box.dummymixer import DummyMixer

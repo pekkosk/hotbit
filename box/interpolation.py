@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import numpy as np
 from box import mix
 from scipy.linalg import norm

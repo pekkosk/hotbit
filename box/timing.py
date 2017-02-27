@@ -1,6 +1,8 @@
 # Copyright (C) 2008 NSC Jyvaskyla
 # Please see the accompanying LICENSE file for further information.
 
+from __future__ import print_function
+
 from time import time, asctime
 import numpy as np
 

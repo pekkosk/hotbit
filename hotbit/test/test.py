@@ -1,6 +1,7 @@
 import os
+import traceback
+import subprocess
 from time import time
-import os
 
 tests = [
     'atom_dimer.py',
@@ -42,9 +43,12 @@ for test in tests:
                 add_env[test], 'skipped...')
             continue
     try:
-        file = os.path.join(pth,'hotbit','test',test)
+        if pth is None:
+            file = test
+        else:
+            file = os.path.join(pth,'hotbit','test',test)
         t1 = time()
-        ret=os.system('python %s' %file)
+        ret=os.system('python3 '+file)
         elapsed = time()-t1
         if ret!=0:
             print(test,'returned',ret,'and FAILED!')
@@ -52,6 +56,7 @@ for test in tests:
             print('%-25s OK. (%.1f seconds)' %(test,elapsed))
     except:
         print(test,'ERROR!')
+        traceback.print_exc()
 
 stop = time()
 print("Total time elapsed: %.0f seconds." %(stop-start))
