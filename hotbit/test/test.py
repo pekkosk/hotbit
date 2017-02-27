@@ -1,3 +1,4 @@
+import sys
 import os
 import traceback
 import subprocess
@@ -48,7 +49,7 @@ for test in tests:
         else:
             file = os.path.join(pth,'hotbit','test',test)
         t1 = time()
-        ret=os.system('python3 '+file)
+        ret=os.system(sys.executable+' '+file)
         elapsed = time()-t1
         if ret!=0:
             print(test,'returned',ret,'and FAILED!')
