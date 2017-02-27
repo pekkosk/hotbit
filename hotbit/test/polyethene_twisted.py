@@ -1,3 +1,4 @@
+import ase.units as units
 from numpy import *
 from ase import optimize
 from ase import *
