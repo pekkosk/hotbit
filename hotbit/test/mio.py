@@ -7,7 +7,9 @@ import glob
 
 import numpy as np
 
-from ase import read, FIRE, QuasiNewton, molecule
+from ase.io import read
+from ase.optimize import FIRE, QuasiNewton
+from ase.structure import molecule
 from hotbit import Hotbit, database_from_path
 
 ###
