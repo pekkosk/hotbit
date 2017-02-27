@@ -795,7 +795,7 @@ PyObject *py_transform_multipole(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    if (!PyArray_NDIM(R) == 2) {
+    if (!(PyArray_NDIM(R) == 2)) {
         PyErr_SetString(PyExc_TypeError, "Rotation matrix needs to be 3x3.");
         return NULL;
     }
