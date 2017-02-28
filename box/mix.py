@@ -9,6 +9,8 @@
 
 
 '''
+from __future__ import division, print_function
+
 import numpy as np
 import time
 from math import atan,cos,sin
@@ -139,7 +141,7 @@ def fit2(p,xlist,ylist,fct=False):
     ylist:    y-data to fit
     fct:      additionally return the function with fitted parameters
     '''
-    if p==None:
+    if p is None:
         imin = np.argmin(ylist)
         p = [min(ylist),5*(max(ylist)-min(ylist))/(xlist[-1]-xlist[0])**2,xlist[imin]]
     assert len(p)==3
@@ -183,7 +185,7 @@ def get_peak_positions(x,y,fact=0.01):
         X.append(x[-1])
         Y.append(y[-1])
 
-    aux = xrange(1,N)
+    aux = range(1,N)
     d = y[1:]-y[:-1]
     peaks = np.extract( (d[:-1]>0)*(d[1:]<0),aux )
     for i in peaks:
@@ -204,7 +206,7 @@ def divisors(x):
     '''
     assert isinstance(x,int)
     lst=[x]
-    for i in range(x/2,0,-1):
+    for i in range(x//2,0,-1):
         if np.mod(x,i)==0: lst.append(i)
     return np.array(lst)
 
@@ -288,7 +290,7 @@ def matrix_pprint(m,fmt='%.4f'):
     """ pretty-pring matrix. """
     assert len(m.shape)==2
     for i in range(len(m[:,0])):
-        print a2s(m[i,:],fmt=fmt)
+        print(a2s(m[i,:],fmt=fmt))
 
 class Timer:
     def __init__(self):
@@ -299,11 +301,11 @@ class Timer:
         t=time.time()
         dt=t-self.t
         self.t=t
-        print 'dt',dt
+        print('dt',dt)
 
     def __del__(self):
         t=time.time()
-        print 'total time',t-self.t0
+        print('total time',t-self.t0)
 
 
 def print_timing(func):
@@ -311,7 +313,7 @@ def print_timing(func):
         t1 = time.time()
         res = func(*arg)
         t2 = time.time()
-        print '%s took %0.3f ms' % (func.func_name, (t2-t1)*1000.0)
+        print('%s took %0.3f ms' % (func.__name__, (t2-t1)*1000.0))
         return res
     return wrapper
 
@@ -477,19 +479,19 @@ def broaden(x,y=None,width=0.05,function='gaussian',extend=False,N=200,a=None,b=
 
     return: xgrid, broadened distribution
     """
-    if y==None:
+    if y is None:
         y=np.ones_like(x)
     dx=[0.0,4*width][extend]
-    if a==None:
+    if a is None:
         mn=min(x)-dx
     else:
         mn=a
-    if b==None:
+    if b is None:
         mx=max(x)+dx
     else:
         mx=b
 
-    if xgrid!=None:
+    if xgrid is not None:
         pass
     else:
         xgrid = np.linspace(mn,mx,N)
@@ -532,9 +534,9 @@ def execute(cmd,echo=True):
         if len(s)>80:
             s=s.split()
             s1=' '.join(s[:-1])
-            print 'Executing:',s1,'...'
-            print '       ...',s[-1],'...'
-        else: print 'Executing:',s,'...'
+            print('Executing:',s1,'...')
+            print('       ...',s[-1],'...')
+        else: print('Executing:',s,'...')
         system(cmd)
 
 
@@ -589,13 +591,13 @@ def find_value(inp,key,fmt='default',default=None,position='start'):
             elif fmt=='all':   ret=value[0:]
             break
     if opened: f.close()
-    if fmt=='test' and ret==None:
+    if fmt=='test' and ret is None:
         return False
-    elif ret!=None:
+    elif ret is not None:
         if fmt=='strings' and type(ret)!=type([]):
             ret=[ret]
         return ret
-    elif default!=None:
+    elif default is not None:
         return default
     else:
         raise RuntimeError('key '+key+' not found from file '+f.name)
@@ -766,7 +768,7 @@ def gplot(string,file=None,delete=False,view=False):
     from os import system
     from os import environ
 
-    if file==None:
+    if file is None:
         for line in string.splitlines():
             if line.find('set output')>=0:
                 psfile=line.split("'")[1]
@@ -852,12 +854,12 @@ class AnalyticFunction:
         self.args.update(kwargs)
 
     def info(self):
-        print 'function:',self.f
-        print 'current arguments:',self.args
+        print('function:',self.f)
+        print('current arguments:',self.args)
 
     def plot(self,a=None,b=None,N=200,out='screen'):
         import pylab as pl
-        if a==b==None:
+        if a==b is None:
             a,b=(-10,10)
 
         x=np.linspace(a,b,N)
@@ -918,15 +920,15 @@ class Const:
 
     def list_constants(self):
         """ List all the constants in this object. """
-        for c in self.constants: print c
+        for c in self.constants: print(c)
 
     def info(self,const):
         """ Print info for the given constant. """
         for c in self.constants:
             if c[1]==const.strip():
-                print c
+                print(c)
                 return
-        print 'Constant',const,'was not found.'
+        print('Constant',const,'was not found.')
 
     def search(self,st):
         """ Search a part of string from the constant database. """
@@ -934,7 +936,7 @@ class Const:
             hlp=[c[0],c[1],c[3]]
             for part in hlp:
                 if part.find(st.strip())>=0:
-                    print c
+                    print(c)
                     exit
 
 
@@ -1010,13 +1012,13 @@ if __name__=='__main__':
     s=sqrt( kg*m**2/J )
     A=C/s
 
-    print 'Basic quantities'
-    print 'm',m
-    print 'C',C
-    print 'kg',kg
-    print 'J',J
-    print 's',s
-    print 'A',A
+    print('Basic quantities')
+    print('m',m)
+    print('C',C)
+    print('kg',kg)
+    print('J',J)
+    print('s',s)
+    print('A',A)
 
     t_0     =1/s
     c       =SI.c*m/s
@@ -1039,31 +1041,31 @@ if __name__=='__main__':
     epsilon_0=SI.epsilon_0 *A*s*C/(m*J)
     # C*V=J => V=J/C
 
-    print '\nConstants'
-    print 't_0',t_0
-    print 'c',c
-    print 'G',G
-    print 'g',g
-    print 'me',me
-    print 'mp',mp
-    print 'mn',mn
-    print 'h',h
-    print 'hbar',hbar
-    print 'Ha',Ha
-    print 'a_B',a_B
-    print 'F',F
-    print 'kB',kB
-    print 'sigma',sigma
-    print 'mu_B',mu_B
-    print 'mu_N',mu_N
-    print 'Cc',Cc
-    print 'mu0',mu0
-    print 'epsilon_0',epsilon_0
+    print('\nConstants')
+    print('t_0',t_0)
+    print('c',c)
+    print('G',G)
+    print('g',g)
+    print('me',me)
+    print('mp',mp)
+    print('mn',mn)
+    print('h',h)
+    print('hbar',hbar)
+    print('Ha',Ha)
+    print('a_B',a_B)
+    print('F',F)
+    print('kB',kB)
+    print('sigma',sigma)
+    print('mu_B',mu_B)
+    print('mu_N',mu_N)
+    print('Cc',Cc)
+    print('mu0',mu0)
+    print('epsilon_0',epsilon_0)
 
     a=[1.0,2.0,3.22]
-    print a2s(a)
+    print(a2s(a))
 
 
     f=AnalyticFunction('x**2+a',a=2,b=5)
     f.info()
-    print f(5,n=3,a=1)
+    print(f(5,n=3,a=1))

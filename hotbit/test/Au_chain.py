@@ -1,3 +1,4 @@
+import ase.units as units
 from ase import *
 from hotbit import *
 from box.md import check_energy_conservation

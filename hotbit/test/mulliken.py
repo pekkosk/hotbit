@@ -9,9 +9,9 @@ from hotbit.atoms import Atoms
 from hotbit.test.misc import default_param
 from numpy import *
 from box.systems import graphene
-from ase.data.molecules import molecule
+from ase.build import molecule
 
-eps = 1E-6
+eps = 1E-5
 
 if True:
     atoms = graphene(2,2,1.42)
@@ -300,7 +300,7 @@ if False:
     MCC = calc.get_mayer_bond_order(0,1) 
     MCH = calc.get_mayer_bond_order(0,0) 
     MHH = calc.get_mayer_bond_order(1,1) 
-    print MCC, MCH, MHH
+    print(MCC, MCH, MHH)
     
     # Using the full benzene
     atoms = a.extended_copy(((-2,3),1,1))

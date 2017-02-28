@@ -1,6 +1,8 @@
 # Copyright (C) 2008 NSC Jyvaskyla
 # Please see the accompanying LICENSE file for further information.
 
+from __future__ import print_function
+
 import numpy as npy
 from box import mix
 from box.data import data
@@ -54,7 +56,7 @@ class Atoms(ase_Atoms):
     def set_data(self):
         """ Read element data in. """
         symbols=self.get_chemical_symbols()
-        keys=data[symbols[0]].keys()
+        keys=list(data[symbols[0]].keys())
         for key in keys:
             self.data[key]=[data[symbol][key] for symbol in symbols]
         
@@ -111,7 +113,7 @@ class Atoms(ase_Atoms):
         Non-orthogonality of unit cell is not implemented yet.
         """
         for a in range(3):
-            aux=range(3)
+            aux=list(range(3))
             aux.pop(a)
             if npy.any(self.cell[a,aux]>1E-9): 
                 raise NotImplementedError('Unit cell not orthogonal.')               
@@ -286,7 +288,7 @@ class Atoms(ase_Atoms):
         if self.get_N()==2:
             return self.distance(0,1)
         else:
-            for i in xrange(len(pdf)-1):
+            for i in range(len(pdf)-1):
                 if pdf[i,1]>pdf[i+1,1]: max=True
                 if max==True and (pdf[i,1]<pdf[i+1,1] or pdf[i,1]<eps or i==len(pdf)-3):
                     rcut = pdf[i,0]
@@ -300,7 +302,7 @@ class Atoms(ase_Atoms):
         eps = 1e-6
         # find the first max and following min of pair
         # distr. function
-        for i in xrange(len(pdf)-1):
+        for i in range(len(pdf)-1):
             if pdf[i,1]>pdf[i+1,1]: max=True
             if max==True and (pdf[i,1]<pdf[i+1,1] or pdf[i,1]<eps):
                 break
@@ -317,7 +319,7 @@ class Atoms(ase_Atoms):
         grd=npy.linspace(rmin,rmax,200)
         pdf=vec([grd,npy.zeros(len(grd))]).transpose()
         for x in rij:
-            for i in xrange(len(grd)):
+            for i in range(len(grd)):
                 pdf[i,1]+=mix.gauss_fct(grd[i],mean=x,sigma=sigma)
         return pdf
         
@@ -326,14 +328,14 @@ class Atoms(ase_Atoms):
         r=self.get_positions()
         N=len(r)
         rij=[]
-        for i in xrange(N):
-            for j in xrange(i+1,N):
+        for i in range(N):
+            for j in range(i+1,N):
                 rij.append( self.distance(i,j) )
         return vec(rij)        
             
     def list_properties(self):
         """ Return all the data properties """
-        return self.data.keys()
+        return list(self.data.keys())
     
     def get(self,key):
         if key in self.data:
@@ -409,22 +411,22 @@ class Atoms(ase_Atoms):
                 continue            
             if tp==type(vec([])) or tp==type([]):
                 if not isinstance(properties[0],(int,float)): continue
-                print>>f, 'VECTORS %s double\n' %property
+                print('VECTORS %s double\n' %property, file=f)
                 for value in properties:
-                    print>>f, mix.a2s(value,fmt=fmt)
+                    print(mix.a2s(value,fmt=fmt), file=f)
             else:
                 try:
                     x=float(properties[0])
                 except:
                     continue                  
-                print>>f, 'SCALARS %s double 1\nLOOKUP_TABLE default' %property
+                print('SCALARS %s double 1\nLOOKUP_TABLE default' %property, file=f)
                 for value in properties:
-                    print>>f, '%12.6f' %(value*1.0)
+                    print('%12.6f' %(value*1.0), file=f)
             
             
         # Then data related to bonds
-        print>>f, 'CELL_DATA %i' %nb
-        print>>f, 'SCALARS bond_length double 1\nLOOKUP_TABLE default'
+        print('CELL_DATA %i' %nb, file=f)
+        print('SCALARS bond_length double 1\nLOOKUP_TABLE default', file=f)
         for bond in bonds:
             f.write( '%f\n' %bond['length'] )
         f.close()            
@@ -487,19 +489,19 @@ class Atoms(ase_Atoms):
                 
 
 if __name__=='__main__':
-    print 'atoms test run'
+    print('atoms test run')
     atoms=Atoms(symbols='H2O',positions=[(1,0,0),(0,1,0),(0,0,0)])
     atoms.set_cell([50,50,50])
     atoms.set_pbc(True)
-    print 'H2O:\n',atoms.get_positions()
+    print('H2O:\n',atoms.get_positions())
     atoms.reduce_atoms_into_cell()
-    print 'H2O:\n',atoms.get_positions()
-    print atoms.vector(vec([0,0,0]),vec([0,4.9,0]))
+    print('H2O:\n',atoms.get_positions())
+    print(atoms.vector(vec([0,0,0]),vec([0,4.9,0])))
     
-    print 'mean bond length',atoms.mean_bond_length()
-    print 'number of bonds',atoms.number_of_bonds()
+    print('mean bond length',atoms.mean_bond_length())
+    print('number of bonds',atoms.number_of_bonds())
     #print 'pair list',atoms.pair_distribution_list()
-    print atoms.get_name()
+    print(atoms.get_name())
     atoms.write_vtk('koe.vtk')
     
     #print 'pdf',atoms.pair_distribution_function()

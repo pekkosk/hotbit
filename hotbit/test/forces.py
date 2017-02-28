@@ -21,11 +21,11 @@ default_param['width']=0.1
 for charge_density in [ None, 'Gaussian', 'Slater' ]:
     for system in systems:
         if charge_density is None:
-            print '    ... forces for %s, no SCC' %system
+            print('    ... forces for %s, no SCC' %system)
             calc=Hotbit(verbose=True,SCC=False,txt='forces.cal',**default_param)
         else:
-            print '    ... forces for %s, SCC, charge density = %s' % \
-                ( system, charge_density )
+            print('    ... forces for %s, SCC, charge density = %s' % \
+                ( system, charge_density ))
             calc=Hotbit(verbose=True,SCC=True,charge_density=charge_density,
                         txt='forces.cal',**default_param)
         atoms=molecule(system)

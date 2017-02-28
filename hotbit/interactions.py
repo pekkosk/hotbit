@@ -343,7 +343,7 @@ class Interactions:
 
                     rijh  = rij/dij
                     if dij<0.1:
-                        print nt
+                        print(nt)
                         raise AssertionError('Distance between atoms %i and %i is only %.4f Bohr' %(i,j,dij) )
                     assert dij>0.1
                     if not r1<=dij<=r2:

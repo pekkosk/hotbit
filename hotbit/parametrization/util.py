@@ -179,7 +179,7 @@ def tail_smoothening(x,y):
             break
     if k<N/4:
         for i in range(N):
-            print x[i],y[i]
+            print(x[i],y[i])
         raise RuntimeError('Problem with tail smoothening: requires too large tail.')
     if k==N-3:
         y[-1]=0.0

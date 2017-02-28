@@ -1,3 +1,4 @@
+from __future__ import print_function
 import box
 import numpy as np
 import math
@@ -46,113 +47,147 @@ def Ylm(l, m):
     """ Return the spherical harmonic function. """
     if l == 0:
         if m == 0:
-            def ret((theta, phi)):
+            def ret(xxx_todo_changeme):
+                (theta, phi) = xxx_todo_changeme
                 return 0.5*sqrt(1/np.pi)
     if l == 1:
         if m == -1:
-            def ret((theta, phi)):
+            def ret(xxx_todo_changeme1):
+                (theta, phi) = xxx_todo_changeme1
                 return 0.5*sqrt(3./(2*pi))*exp(-1j*phi)*sin(theta)
         if m == 0:
-            def ret((theta, phi)):
+            def ret(xxx_todo_changeme2):
+                (theta, phi) = xxx_todo_changeme2
                 return 0.5*sqrt(3/pi)*cos(theta)
         if m == 1:
-            def ret((theta, phi)):
+            def ret(xxx_todo_changeme3):
+                (theta, phi) = xxx_todo_changeme3
                 return -0.5*sqrt(3./(2*pi))*exp(1j*phi)*sin(theta)
     if l == 2:
         if m == -2:
-            def ret((theta, phi)):
+            def ret(xxx_todo_changeme4):
+                (theta, phi) = xxx_todo_changeme4
                 return 0.25*sqrt(15/(2*pi))*exp(-2j*phi)*sin(theta)**2
         if m ==  -1:
-            def ret((theta, phi)):
+            def ret(xxx_todo_changeme5):
+                (theta, phi) = xxx_todo_changeme5
                 return 0.5*sqrt(15/(2*pi))*exp(-1j*phi)*sin(theta)*cos(theta)
         if m == 0:
-            def ret((theta, phi)):
+            def ret(xxx_todo_changeme6):
+                (theta, phi) = xxx_todo_changeme6
                 return 0.25*sqrt(5/pi)*(3*cos(theta)**2 - 1)
         if m == 1:
-            def ret((theta, phi)):
+            def ret(xxx_todo_changeme7):
+                (theta, phi) = xxx_todo_changeme7
                 return -0.5*sqrt(15/(2*pi))*exp(1j*phi)*sin(theta)*cos(theta)
         if m == 2:
-            def ret((theta, phi)):
+            def ret(xxx_todo_changeme8):
+                (theta, phi) = xxx_todo_changeme8
                 return 0.25*sqrt(15/(2*pi))*exp(2j*phi)*sin(theta)**2
     if l == 3:
         if m == -3:
-            def ret((theta, phi)):
+            def ret(xxx_todo_changeme9):
+                (theta, phi) = xxx_todo_changeme9
                 return 0.125*sqrt(35/pi)*exp(-3j*phi)*sin(theta)**3
         if m == -2:
-            def ret((theta, phi)):
+            def ret(xxx_todo_changeme10):
+                (theta, phi) = xxx_todo_changeme10
                 return 0.25*sqrt(105/(2*pi))*exp(-2j*phi)*sin(theta)**2 * cos(theta)
         if m == -1:
-            def ret((theta, phi)):
+            def ret(xxx_todo_changeme11):
+                (theta, phi) = xxx_todo_changeme11
                 return 0.125*sqrt(21/pi)*exp(-1j*phi)*sin(theta)*(5*cos(theta)**2 - 1)
         if m == 0:
-            def ret((theta, phi)):
+            def ret(xxx_todo_changeme12):
+                (theta, phi) = xxx_todo_changeme12
                 return 0.25*sqrt(7/pi)*(5*cos(theta)**3 - 3*cos(theta))
         if m == 1:
-            def ret((theta, phi)):
+            def ret(xxx_todo_changeme13):
+                (theta, phi) = xxx_todo_changeme13
                 return -0.125*sqrt(21/pi)*exp(1j*phi)*sin(theta)*(5*cos(theta)**2 - 1)
         if m == 2:
-            def ret((theta, phi)):
+            def ret(xxx_todo_changeme14):
+                (theta, phi) = xxx_todo_changeme14
                 return 0.25*sqrt(105/(2*pi))*exp(2j*phi)*sin(theta)**2 * cos(theta)
         if m == 3:
-            def ret((theta, phi)):
+            def ret(xxx_todo_changeme15):
+                (theta, phi) = xxx_todo_changeme15
                 return -0.125*sqrt(35/pi)*exp(3j*phi)*sin(theta)**3
     if l == 4:
         if abs(m) == 4:
-            def ret((theta, phi)):
+            def ret(xxx_todo_changeme16):
+                (theta, phi) = xxx_todo_changeme16
                 return (3./16)*sqrt(35/(2*pi))*exp(m*1j*phi)*sin(theta)**4
         if abs(m) == 3:
-            def ret((theta, phi)):
+            def ret(xxx_todo_changeme17):
+                (theta, phi) = xxx_todo_changeme17
                 return np.sign(-m)*(3./8)*sqrt(35/pi)*exp(m*1j*phi)*sin(theta)**3 * cos(theta)
         if abs(m) == 2:
-            def ret((theta, phi)):
+            def ret(xxx_todo_changeme18):
+                (theta, phi) = xxx_todo_changeme18
                 return (3./8)*sqrt(5/(2*pi))*exp(m*1j*phi)*sin(theta)**2 * (7*cos(theta)**2 - 1)
         if abs(m) == 1:
-            def ret((theta, phi)):
+            def ret(xxx_todo_changeme19):
+                (theta, phi) = xxx_todo_changeme19
                 return np.sign(-m)*(3./8)*sqrt(5/pi)*exp(m*1j*phi)*sin(theta)*(7*cos(theta)**3 - 3*cos(theta))
         if m == 0:
-            def ret((theta, phi)):
+            def ret(xxx_todo_changeme20):
+                (theta, phi) = xxx_todo_changeme20
                 return (3./16)*sqrt(1/pi)*(35*cos(theta)**4 - 30*cos(theta)**2 + 3)
 
     if l == 5:
         if abs(m) == 5:
-            def ret((theta, phi)):
+            def ret(xxx_todo_changeme21):
+                (theta, phi) = xxx_todo_changeme21
                 return np.sign(-m)*(3./32)*sqrt(77/pi)*exp(m*1j*phi)*sin(theta)**5
         if abs(m) == 4:
-            def ret((theta, phi)):
+            def ret(xxx_todo_changeme22):
+                (theta, phi) = xxx_todo_changeme22
                 return (3./16)*sqrt(385/(2*pi))*exp(m*1j*phi)*sin(theta)**4 * cos(theta)
         if abs(m) == 3:
-            def ret((theta, phi)):
+            def ret(xxx_todo_changeme23):
+                (theta, phi) = xxx_todo_changeme23
                 return np.sign(-m)*(1./32)*sqrt(385/pi)*exp(m*1j*phi)*sin(theta)**3 * (9*cos(theta)**2 - 1)
         if abs(m) == 2:
-            def ret((theta, phi)):
+            def ret(xxx_todo_changeme24):
+                (theta, phi) = xxx_todo_changeme24
                 return 0.125*sqrt(1155/(2*pi))*exp(m*1j*phi)*sin(theta)**2 * (3*cos(theta)**3 - cos(theta))
         if abs(m) == 1:
-            def ret((theta, phi)):
+            def ret(xxx_todo_changeme25):
+                (theta, phi) = xxx_todo_changeme25
                 return np.sign(-m)*(1./16)*sqrt(165/(2*pi))*exp(m*1j*phi)*sin(theta) * (21*cos(theta)**4 - 14*cos(theta)**2 + 1)
         if m == 0:
-            def ret((theta, phi)):
+            def ret(xxx_todo_changeme26):
+                (theta, phi) = xxx_todo_changeme26
                 return (1./16)*sqrt(11/pi) * (63*cos(theta)**5 - 70*cos(theta)**3 + 15*cos(theta))
     if l == 6:
         if abs(m) == 6:
-            def ret((theta, phi)):
+            def ret(xxx_todo_changeme27):
+                (theta, phi) = xxx_todo_changeme27
                 return (1./64)*sqrt(3003/pi)*exp(m*1j*phi)*sin(theta)**6
         if abs(m) == 5:
-            def ret((theta, phi)):
+            def ret(xxx_todo_changeme28):
+                (theta, phi) = xxx_todo_changeme28
                 return np.sign(-m)*(3./32)*sqrt(1001/pi)*exp(m*1j*phi)*sin(theta)**5 * cos(theta)
         if abs(m) == 4:
-            def ret((theta, phi)):
+            def ret(xxx_todo_changeme29):
+                (theta, phi) = xxx_todo_changeme29
                 return (3./32)*sqrt(91/(2*pi))*exp(m*1j*phi)*sin(theta)**4 * (11*cos(theta)**2 - 1)
         if abs(m) == 3:
-            def ret((theta, phi)):
+            def ret(xxx_todo_changeme30):
+                (theta, phi) = xxx_todo_changeme30
                 return np.sign(-m)*(1./32)*sqrt(1365/pi)*exp(m*1j*phi)*sin(theta)**3 * (11*cos(theta)**3 - 3*cos(theta))
         if abs(m) == 2:
-            def ret((theta, phi)):
+            def ret(xxx_todo_changeme31):
+                (theta, phi) = xxx_todo_changeme31
                 return (1./64)*sqrt(1365/pi)*exp(m*1j*phi)*sin(theta)**2 * (33*cos(theta)**4 - 18*cos(theta)**2 + 1)
         if abs(m) == 1:
-            def ret((theta, phi)):
+            def ret(xxx_todo_changeme32):
+                (theta, phi) = xxx_todo_changeme32
                 return np.sign(-m)*(1./16)*sqrt(273/(2*pi))*exp(m*1j*phi)*sin(theta) * (33*cos(theta)**5 - 30*cos(theta)**3 + 5*cos(theta))
         if m == 0:
-            def ret((theta, phi)):
+            def ret(xxx_todo_changeme33):
+                (theta, phi) = xxx_todo_changeme33
                 return (1./32)*sqrt(13/pi)*(231*cos(theta)**6 - 315*cos(theta)**4 + 105*cos(theta)**2 - 5)
     return ret
 
@@ -265,7 +300,7 @@ class JelliumAnalysis:
                 self.origin = np.array(origin)/Bohr
             self.create_uniform_cubic_grid(a)
             self.maxl = maxl
-            self.l_array = range(min(7, maxl+1))
+            self.l_array = list(range(min(7, maxl+1)))
             self.norb = calc.st.norb
             self.fermi_level = calc.st.occu.get_mu()
             self.e = calc.st.get_eigenvalues()
@@ -408,7 +443,7 @@ class JelliumAnalysis:
             for m in range(-l,l+1):
                 y_lm = Ylm(l, m)
                 t1 = time.time()
-                print >> self.log, "Calculating Y_(l=%i, m=%s) to grid..." % (l, repr(m).rjust(2))
+                print("Calculating Y_(l=%i, m=%s) to grid..." % (l, repr(m).rjust(2)), file=self.log)
                 self.log.flush()
                 values = np.zeros(self.dim, dtype=np.complex)
                 for i, x in enumerate(self.grid_points[0]):
@@ -416,7 +451,7 @@ class JelliumAnalysis:
                         for k, z in enumerate(self.grid_points[2]):
                             r, theta, phi = to_spherical_coordinates(np.array((x,y,z))-self.origin)
                             values[i,j,k] = y_lm((theta, phi))
-                print >> self.log, "  in %i seconds." % (time.time() - t1)
+                print("  in %i seconds." % (time.time() - t1), file=self.log)
                 self.ylms[l,m] = values
 
 
@@ -428,11 +463,11 @@ class JelliumAnalysis:
             R = self.calc.el.get_positions()[atom]
             orbital_type = orbital['orbital']
             if self.needed_orbitals[m] == False:
-                print >> self.log, "Basis function %i/%i is outside the range." % (orbital['index']+1, self.norb)
+                print("Basis function %i/%i is outside the range." % (orbital['index']+1, self.norb), file=self.log)
                 self.basis_functions[m] = None
             else:
                 t1 = time.time()
-                print >> self.log, "Calculating basis function %i/%i to grid..." % (orbital['index']+1, self.norb)
+                print("Calculating basis function %i/%i to grid..." % (orbital['index']+1, self.norb), file=self.log)
                 self.log.flush()
                 r_nl = orbital['Rnl']
                 basis_function = np.zeros(self.dim, dtype=np.float)
@@ -442,7 +477,7 @@ class JelliumAnalysis:
                             vec = np.array((x,y,z))-np.array(R)
                             r, theta, phi = to_spherical_coordinates(vec)
                             basis_function[i,j,k] = r_nl(r)*angular(vec, orbital_type)
-                print >> self.log, "  in %i seconds." % (time.time() - t1)
+                print("  in %i seconds." % (time.time() - t1), file=self.log)
                 self.basis_functions[m] = basis_function
 
 
@@ -473,7 +508,7 @@ class JelliumAnalysis:
         """ Perform the angular momentum analysis on all states. """
         for n in range(self.norb):
             if self.analyzed_states[n] == False:
-                print >> self.log, "Analysing state no. %i (%i/%i)..." % (n, n+1, self.norb)
+                print("Analysing state no. %i (%i/%i)..." % (n, n+1, self.norb), file=self.log)
                 self.log.flush()
                 t1 = time.time()
                 state_grid = self.get_state(n)
@@ -481,7 +516,7 @@ class JelliumAnalysis:
                 self.weights[n] = np.sum(state_grid_squared * np.where(self.shell_index_grid != 0, 1, 0)) * self.dV
                 for l in self.l_array:
                     self.c_nl[n,l] = self.weights[n] * self.analyse_state(state_grid, l)
-                print >> self.log, "  %i seconds." % (time.time() -  t1)
+                print("  %i seconds." % (time.time() -  t1), file=self.log)
                 self.analyzed_states[n] = True
                 self.write()
         self.finished = True
@@ -499,7 +534,7 @@ class JelliumAnalysis:
         for m in range(-l,l+1):
             ylm = self.get_ylm(l, m)
             # The integration
-            for i in self.shells.keys():
+            for i in list(self.shells.keys()):
                 # the mask that gives the grid points of the shell
                 shell_grid = np.where(self.shell_index_grid == i, 1, 0)
                 # the number of boxes in the i:th shell
@@ -511,40 +546,40 @@ class JelliumAnalysis:
 
 
     def greetings(self):
-        print >> self.log, "\n*** Starting the angular momentum analysis. ***"
+        print("\n*** Starting the angular momentum analysis. ***", file=self.log)
         if self.loaded:
-            print >> self.log, "Using data from %s" % self.file
-        print >> self.log, "The grid contains %i x %i x %i grid points" % tuple(self.dim)
-        print >> self.log, "The grid spacing is %0.3f (Ang)" % (self.a*Bohr)
-        print >> self.log, "The center of the expansion (Ang): %0.2f, %0.2f, %0.2f" % tuple(self.origin * Bohr)
-        print >> self.log, "The radius of the expansion: %0.2f (ang)" % (self.R_0 * Bohr)
-        print >> self.log, "The analysis is performed on angular momenta:",
+            print("Using data from %s" % self.file, file=self.log)
+        print("The grid contains %i x %i x %i grid points" % tuple(self.dim), file=self.log)
+        print("The grid spacing is %0.3f (Ang)" % (self.a*Bohr), file=self.log)
+        print("The center of the expansion (Ang): %0.2f, %0.2f, %0.2f" % tuple(self.origin * Bohr), file=self.log)
+        print("The radius of the expansion: %0.2f (ang)" % (self.R_0 * Bohr), file=self.log)
+        print("The analysis is performed on angular momenta:", end=' ', file=self.log)
         for l in self.l_array:
-            print >> self.log, self.letters[l],
-        print >> self.log, ""
-        print >> self.log, "There are %i basis functions, %i are needed." % (self.norb, self.norb_needed)
-        print >> self.log, "There are %i/%i states left to analyze." % (np.sum(np.where(self.analyzed_states, 0, 1)), self.norb)
+            print(self.letters[l], end=' ', file=self.log)
+        print("", file=self.log)
+        print("There are %i basis functions, %i are needed." % (self.norb, self.norb_needed), file=self.log)
+        print("There are %i/%i states left to analyze." % (np.sum(np.where(self.analyzed_states, 0, 1)), self.norb), file=self.log)
         if self.finished == False:
-            print >> self.log, "Estimated amount of memory required: %s" % (self.estimate_memory_consumption(human_readable=True))
-        print >> self.log, ""
+            print("Estimated amount of memory required: %s" % (self.estimate_memory_consumption(human_readable=True)), file=self.log)
+        print("", file=self.log)
         self.log.flush()
 
 
     def write_readable(self, file):
         """ Write the spherical harmonic expansion coefficients to file. """
         f = open(file, 'w')
-        print >> f, "# The center of the expansion (in Ang): %0.2f, %0.2f, %0.2f" % tuple(self.origin * Bohr)
-        print >> f, "# The radius of the expansion (in Ang): %0.2f" % (self.R_0 * Bohr)
-        print >> f, "# The shell thickness (in Ang): %0.2f" % (self.a * Bohr)
-        print >> f, "#state  energy(eV)   weight     occ",
+        print("# The center of the expansion (in Ang): %0.2f, %0.2f, %0.2f" % tuple(self.origin * Bohr), file=f)
+        print("# The radius of the expansion (in Ang): %0.2f" % (self.R_0 * Bohr), file=f)
+        print("# The shell thickness (in Ang): %0.2f" % (self.a * Bohr), file=f)
+        print("#state  energy(eV)   weight     occ", end=' ', file=f)
         for l in self.l_array:
-            print >> f, "%6s" % self.letters[l],
-        print >> f, ""
+            print("%6s" % self.letters[l], end=' ', file=f)
+        print("", file=f)
         for n in range(self.norb):
-            print >> f, "%5i %12.4f %7.4f %7.4f" % (n, self.e[0,n]*Hartree, self.weights[n], self.occ[0,n]),
+            print("%5i %12.4f %7.4f %7.4f" % (n, self.e[0,n]*Hartree, self.weights[n], self.occ[0,n]), end=' ', file=f)
             for l in self.l_array:
-                print >> f, "%6.3f" % self.c_nl[n,l],
-            print >> f, ""
+                print("%6.3f" % self.c_nl[n,l], end=' ', file=f)
+            print("", file=f)
         f.close()
 
 
@@ -577,14 +612,14 @@ def make_plot(file, width=0.1, xlimits=None, ylimits=None, out=None):
             data[name] = dat
         except EOFError:
             break
-    print ""
-    print ""
-    print "*** Spherical harmonics analysis ***"
-    print "center:", data["origin"] * Bohr, "Ang"
-    print "radius:", data["R_0"] * Bohr, "Ang"
-    print "grid box size (shell thickness):", data["a"] * Bohr, "Ang"
-    print "analysis performed on angular momenta:", data["letters"].replace("",",")[1:-1]
-    print "Fermi level (subtracted):", data["fermi_level"] * Hartree, "eV"
+    print("")
+    print("")
+    print("*** Spherical harmonics analysis ***")
+    print("center:", data["origin"] * Bohr, "Ang")
+    print("radius:", data["R_0"] * Bohr, "Ang")
+    print("grid box size (shell thickness):", data["a"] * Bohr, "Ang")
+    print("analysis performed on angular momenta:", data["letters"].replace("",",")[1:-1])
+    print("Fermi level (subtracted):", data["fermi_level"] * Hartree, "eV")
 
     pylab.figure()
     colors = ['#FFFF00','#FF0000','#2758D3','#5FD300',

@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import numpy as np
 from box import mix
 from scipy.linalg import norm
@@ -532,7 +534,7 @@ class VectorSplineFunction:
 
 
     def plot(self,out='screen'):
-        selected=range(self.N) #from maximum deviation?
+        selected=list(range(self.N)) #from maximum deviation?
         n=len(selected)
         ny=n+2
         nx=1
@@ -780,7 +782,7 @@ class TrilinearInterpolation:
         dx0,dy0,dz0=[self.grids[i][1]-self.grids[i][0] for i in range(3)]
         # i,j,k grid point can never be a point at 'larger' side
         i,j,k=[int(min(ind0[i],self.n[i]-2)) for i in range(3)]
-        dx,dy,dz=[r[p]-self.grids[p][ind] for p,ind in zip(range(3),(i,j,k))]
+        dx,dy,dz=[r[p]-self.grids[p][ind] for p,ind in zip(list(range(3)),(i,j,k))]
         dx,dy,dz=(dx/dx0, dy/dy0, dz/dz0)
 
         a=self.a
@@ -808,26 +810,26 @@ class TrilinearInterpolation:
 
 
         of=open('%s.vtk' %name,'w')
-        print>>of,"# vtk DataFile Version 2.0"
-        print>>of,"Trilinear interpolation"
-        print>>of,"ASCII"
-        print>>of,"DATASET RECTILINEAR_GRID"
-        print>>of,"DIMENSIONS %i %i %i" %(nx,ny,nz)
-        print>>of,"X_COORDINATES %i double" %nx
-        print>>of,mix.a2s(R[0])
-        print>>of,"Y_COORDINATES %i double" %ny
-        print>>of,mix.a2s(R[1])
-        print>>of,"Z_COORDINATES %i double" %nz
-        print>>of,mix.a2s(R[2])
-        print>>of,"POINT_DATA %i" %(nx*ny*nz)
-        print>>of,"SCALARS data double"
-        print>>of,"LOOKUP_TABLE default"
+        print("# vtk DataFile Version 2.0", file=of)
+        print("Trilinear interpolation", file=of)
+        print("ASCII", file=of)
+        print("DATASET RECTILINEAR_GRID", file=of)
+        print("DIMENSIONS %i %i %i" %(nx,ny,nz), file=of)
+        print("X_COORDINATES %i double" %nx, file=of)
+        print(mix.a2s(R[0]), file=of)
+        print("Y_COORDINATES %i double" %ny, file=of)
+        print(mix.a2s(R[1]), file=of)
+        print("Z_COORDINATES %i double" %nz, file=of)
+        print(mix.a2s(R[2]), file=of)
+        print("POINT_DATA %i" %(nx*ny*nz), file=of)
+        print("SCALARS data double", file=of)
+        print("LOOKUP_TABLE default", file=of)
 
         for k in range(nz):
             for j in range(ny):
                 for i in range(nx):
                     r=vec([R[0][i],R[1][j],R[2][k]])
-                    print>>of, self(r)
+                    print(self(r), file=of)
         of.close()
 
 
@@ -901,6 +903,6 @@ if __name__=='__main__':
     a[1,1,0]=3
     a[1,1,1]=4
     inte=TrilinearInterpolation(a)
-    print inte(vec([0.999,0.999,0.999]))
-    print inte(vec([1.0,1.0,1.0]))
+    print(inte(vec([0.999,0.999,0.999])))
+    print(inte(vec([1.0,1.0,1.0])))
     inte.write_vtk(gpts=[20,20,20])

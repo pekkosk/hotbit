@@ -1,6 +1,8 @@
 # Copyright (C) 2008 NSC Jyvaskyla
 # Please see the accompanying LICENSE file for further information.
 
+from __future__ import print_function
+
 import numpy as np
 from ase.units import Hartree, Bohr
 from weakref import proxy
@@ -30,7 +32,7 @@ class PairPotential:
 
     def greetings(self):
         """ Return the repulsion documentations. """
-        print>> self.calc.txt,'Pair potentials:\n'+self.comment
+        print('Pair potentials:\n'+self.comment, file=self.calc.txt)
     
 
     def add_pair_potential(self,i,j,v,eVA=True):

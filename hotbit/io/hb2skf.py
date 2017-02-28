@@ -46,7 +46,7 @@ def generate_DFTBplus_repulsion(filename, DEBUG=False):
             data = tmp[line].strip('\n').split()
             x.append(float(data[0]))
             y.append(float(data[1]))
-            print x[-1], y[-1]
+            print(x[-1], y[-1])
             line += 1
 
     ##Repulsion is defined by an initial exponential part
@@ -81,15 +81,15 @@ def generate_DFTBplus_repulsion(filename, DEBUG=False):
         if i < 0.50:
             s2 = i
 
-    print 'Exponential function will be fitted in ' + \
-        'the range {0} to {1}'.format(s1, s2)
+    print('Exponential function will be fitted in ' + \
+        'the range {0} to {1}'.format(s1, s2))
 
     t = np.linspace(s1, s2, 10)
-    print t
+    print(t)
     data = splev(t, SPLINE)
     expParams, fitCovariances = curve_fit(expfit, t, data)
-    print ' Exp. fit coefficients:\n', expParams
-    print ' Covariance matrix:\n', fitCovariances
+    print(' Exp. fit coefficients:\n', expParams)
+    print(' Covariance matrix:\n', fitCovariances)
 
     repulsion_string = 'Spline\n'
 
@@ -120,13 +120,13 @@ def generate_DFTBplus_repulsion(filename, DEBUG=False):
     start = s2
     end = s2 + deltax
     for knot in range(N_dftbplus):
-        print 'Fitting a spline basis function in the range between ' + \
-            '{0} and {1}'.format(start, end)
+        print('Fitting a spline basis function in the range between ' + \
+            '{0} and {1}'.format(start, end))
         t = np.linspace(start, end, 6)
         data = splev(t, SPLINE)
         splParams, fitCovariances = curve_fit(splinefit, [t, start], data)
-        print ' Spline fit coefficients:\n', splParams
-        print ' Covariance matrix:\n', fitCovariances
+        print(' Spline fit coefficients:\n', splParams)
+        print(' Covariance matrix:\n', fitCovariances)
 
         c0, c1, c2, c3 = splParams
         repulsion_string += '{0:5.3f} {1:5.3f} {2:19.15f} {3:19.15f} \
@@ -143,14 +143,14 @@ def generate_DFTBplus_repulsion(filename, DEBUG=False):
         end += deltax
 
     end = x_cut
-    print 'Now Fitting the final spline basis function in the range ' + \
-          'between {0} and {1}'.format(start, end)
+    print('Now Fitting the final spline basis function in the range ' + \
+          'between {0} and {1}'.format(start, end))
 
     t = np.linspace(start, end, 12)
     data = splev(t, SPLINE)
     splParams, fitCovariances = curve_fit(splinefit2, [t, start], data)
-    print ' Spline fit coefficients:\n', splParams
-    print ' Covariance matrix:\n', fitCovariances
+    print(' Spline fit coefficients:\n', splParams)
+    print(' Covariance matrix:\n', fitCovariances)
 
     c0, c1, c2, c3, c4, c5 = splParams
     repulsion_string += '{0:5.3f} {1:5.3f} {2:19.15f} {3:19.15f} {4:19.15f} \
@@ -188,7 +188,7 @@ def generate_DFTBplus_header(elmdat, pardat, hetero):
         # Second Line
         # [Ed]   [Ep]   [Es]
         # (if present, otherwise 0.0)
-        for i in range(3 - len(elmdat[0]['epsilon'].keys())):
+        for i in range(3 - len(list(elmdat[0]['epsilon'].keys()))):
             header += '0.0 '
         for key in sorted(elmdat[0]['epsilon'].keys()):
             header += str("%.8f" % elmdat[0]['epsilon'][key]) + ' '
@@ -267,7 +267,7 @@ for carousel in [(argv[1], argv[2]), (argv[2], argv[1])]:
     pardat = native.read_HS_from_par(parf, carousel[0], carousel[1])
 
     # Generate DFTBplus format string
-    print 'Reading in Hotbit Metadata and repulsive potential'
+    print('Reading in Hotbit Metadata and repulsive potential')
     header = generate_DFTBplus_header(elmdat,
                                       pardat,
                                       argv[1] == argv[2]) + \

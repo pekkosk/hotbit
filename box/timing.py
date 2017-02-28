@@ -1,6 +1,8 @@
 # Copyright (C) 2008 NSC Jyvaskyla
 # Please see the accompanying LICENSE file for further information.
 
+from __future__ import print_function
+
 from time import time, asctime
 import numpy as np
 
@@ -151,12 +153,12 @@ class Timer:
             txt_sub+=txt2
             dt_sub+=dt2
             subs=True
-        sub_covered=dt_sub/dt*100
+        sub_covered=dt_sub/dt*100 if dt > 0.0 else 100
         
-        procent1=dt/total*100.0
+        procent1=dt/total*100.0 if total > 0.0 else 100
         x=int(np.round(procent1*0.3))
         bar='|'+str(self.level)*x+'|'
-        procent2=dt/partial*100.0
+        procent2=dt/partial*100.0 if partial > 0.0 else 100
         txt='../'*self.level+'%-20s' %(self.label) 
         if subs:
             txt+=' '*(10-3*self.level)+'%12.3f %9i (%5.1f %%,%5.1f %%) %5.1f %% %s\n' %(dt,calls,procent2,sub_covered,procent1,bar)
@@ -182,13 +184,13 @@ class Timer:
         dict={}
         dt, txt, self.dict=self.get_summary(total,total,dict)
                 
-        print>>self.txt, '\nTiming:'
-        print>>self.txt, '            label                    time     calls    %sub  %covered   %tot'
-        print>>self.txt, '-'*79
-        print>>self.txt, txt,
-        print>>self.txt, '-'*79
-        print>>self.txt, 'total time %12.3f seconds      %s' % (total, self.human_readable_time(total))
-        print>>self.txt, asctime()
+        print('\nTiming:', file=self.txt)
+        print('            label                    time     calls    %sub  %covered   %tot', file=self.txt)
+        print('-'*79, file=self.txt)
+        print(txt, end=' ', file=self.txt)
+        print('-'*79, file=self.txt)
+        print('total time %12.3f seconds      %s' % (total, self.human_readable_time(total)), file=self.txt)
+        print(asctime(), file=self.txt)
         self.smry=True
         self.txt.flush()
 

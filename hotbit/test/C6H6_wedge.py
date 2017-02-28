@@ -1,3 +1,4 @@
+import ase.units as units
 from ase import *
 from ase import Atoms as ase_Atoms
 from hotbit import *

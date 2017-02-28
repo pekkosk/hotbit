@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import os
 import numpy as np
 from box import mix
@@ -192,7 +194,7 @@ class Element:
         """
         f=open(file,'w')
         for item in self.data:
-            print>>f, item,'=',self.data[item]
+            print(item,'=',self.data[item], file=f)
         f.close()
 
 
@@ -204,5 +206,5 @@ class Element:
         
 if __name__=='__main__':
     elm=Element('H.elm')
-    print elm.get_symbol()
-    print elm.__dict__
+    print(elm.get_symbol())
+    print(elm.__dict__)

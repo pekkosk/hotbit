@@ -13,7 +13,7 @@ for SCC in [True,False]:
     sccs=['non-SCC','SCC'][SCC]
     for nx in [1,2,3,4,5]:
         for ny in [1,2,3,4,5]:
-            print 'nx',nx,ny
+            print('nx',nx,ny)
             atoms = FaceCenteredCubic(directions=[[1,-1,0], [1,1,-2], [1,1,1]],\
                                     size=(nx,ny,1), symbol='Au', pbc=(0,0,0))
                                     

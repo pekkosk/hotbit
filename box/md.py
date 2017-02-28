@@ -3,7 +3,7 @@ import numpy as np
 from box import mix
 from box.data import data
 from ase.md import VelocityVerlet
-from ase.io import PickleTrajectory
+from ase.io import Trajectory
 from ase.units import fs, Hartree
 
 
@@ -42,7 +42,7 @@ class TrajectoryRecording:
             self.data[key].append( self.properties[key]() )       
         self.i+=1
         if self.verbose:
-            print 'record',self.i,self.data['epot'][-1]
+            print('record',self.i,self.data['epot'][-1])
         
     def get(self,key):
         return self.data[key]
@@ -90,7 +90,7 @@ def canonical(atoms,dt=1.0,steps=1000,output=10,name=None,verbose=False):
         except:
             name='microcanonical'
     name+='.trj'        
-    traj=PickleTrajectory(name,'w',atoms)
+    traj=Trajectory(name,'w',atoms)
     rec=TrajectoryRecording(atoms,verbose)
     md=VelocityVerlet(atoms,dt*fs)
     md.attach(rec,interval=output)  
@@ -119,7 +119,7 @@ def microcanonical(atoms,dt=1.0,steps=100,output=1,name=None,verbose=False):
         except:
             name='microcanonical'
     name+='.trj'        
-    traj=PickleTrajectory(name,'w',atoms)
+    traj=Trajectory(name,'w',atoms)
     rec=TrajectoryRecording(atoms,verbose)
     md=VelocityVerlet(atoms,dt*fs)
     md.attach(rec,interval=output)
@@ -203,7 +203,7 @@ def energy_conservation_plot(atoms,dts,total_time=100):
     dU=[]
     for dt in dts:
         steps=int(total_time/dt)
-        print 'time step %.2f fs, steps %i' %(dt,steps)
+        print('time step %.2f fs, steps %i' %(dt,steps))
         atoms.set_positions(R0)
         rec, de, du=energy_conservation(atoms,dt,steps=steps)
         dE.append(de)
@@ -237,8 +237,8 @@ class TrajectoryWriter:
         
     def __call__(self):
         """ Writes trajectory file for current atoms list. """
-        from ase import PickleTrajectory
-        traj = PickleTrajectory('%s_it%i.trj' %(self.name,self.i), 'w')
+        from ase import Trajectory
+        traj = Trajectory('%s_it%i.trj' %(self.name,self.i), 'w')
         for image in self.images:
             traj.write(image)
         self.i+=1 
@@ -251,7 +251,7 @@ def quench(atoms,name=None,fmax=0.05,method='QN'):
             name=atoms.get_chemical_formula(mode="hill")
         except:
             raise ValueError('name not specified')
-    traj=ase.PickleTrajectory(name+'_quenching.trj','w',atoms)
+    traj=ase.Trajectory(name+'_quenching.trj','w',atoms)
     
     if method=='QN':
         qn=ase.QuasiNewton(atoms)
@@ -278,7 +278,7 @@ def transition_barrier(calc,quench,guess,cell=None,pbc=None,constraints=None,\
             assert guess.split('.')[-1]=='trj' and M==None 
             # for some reason copying has to be done...
             images=[]
-            for image in ase.PickleTrajectory(guess):
+            for image in ase.Trajectory(guess):
                 images.append(image.copy())
             path=method(images)
         else:
@@ -314,9 +314,9 @@ def transition_barrier(calc,quench,guess,cell=None,pbc=None,constraints=None,\
             
     if quench:
         e1=quench_atoms(images[0],'initial')
-        print 'First image quenched. Energy=',e1
+        print('First image quenched. Energy=',e1)
         eM=quench_atoms(images[-1],'final')
-        print 'Last image quenched. Energy=',eM
+        print('Last image quenched. Energy=',eM)
             
     # solve the transition path
     writer=TrajectoryWriter(images)        
@@ -325,7 +325,7 @@ def transition_barrier(calc,quench,guess,cell=None,pbc=None,constraints=None,\
     minimizer.run(fmax=fmax,steps=steps)
     
     # output of the final path
-    traj = ase.PickleTrajectory('%s_converged.trj' %name, 'w')
+    traj = ase.Trajectory('%s_converged.trj' %name, 'w')
     path.write(traj)
     return images
        
@@ -337,7 +337,7 @@ def merge_atoms(atoms1,atoms2,box_from=None,R=0.3):
     from box import Atoms
        
     atoms=atoms1.copy()
-    print type(atoms)
+    print(type(atoms))
 
     # set box from the first atoms or box_from
     if box_from!=None:
@@ -365,9 +365,9 @@ if __name__=='__main__':
     atoms1=Atoms(symbols='C4H',positions=[(0,0,0),(0,0,1),(0,0,2),(0,0,3),(0,0,4)],cell=(7,8,9),pbc=True)
     atoms2=Atoms(symbols='C4H',positions=[(0,0,0.29),(0,0,1),(0,0,7),(0,0,8),(0,0,9)],cell=(170,18,19),pbc=True)
     atoms=merge_atoms(atoms1,atoms2,box_from=atoms2)
-    print atoms.get_positions()
-    print atoms.get_cell()
-    print atoms.get_pbc()
+    print(atoms.get_positions())
+    print(atoms.get_cell())
+    print(atoms.get_pbc())
     
             
             

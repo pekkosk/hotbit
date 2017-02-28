@@ -12,6 +12,8 @@ L      l and m for l != 0
 # Copyright (C) 2010 NSC Jyvaskyla, Fh-IWM
 # Please see the accompanying LICENSE file for further information.
 
+from __future__ import division
+
 import numpy as np
 
 from _hotbit import solid_harmonic_R, multipole_to_multipole
@@ -30,7 +32,7 @@ def lm2index(l, m):
     l, m
     """
 
-    return l*(l-1)/2 + m - 1
+    return l*(l-1)//2 + m - 1
 
 
 def zero_moments(l_max):

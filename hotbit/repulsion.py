@@ -194,7 +194,7 @@ class RepulsivePotential:
         pl.axvline(x=self.r_cut,c='r',ls=':')
         pl.plot(r,v)
         pl.ylim(ymin=0,ymax=self(rmin))
-        print 'ymax',self(rmin)
+        print('ymax',self(rmin))
         pl.xlim(xmin=rmin)
 
         # Vrep'

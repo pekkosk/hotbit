@@ -1,7 +1,8 @@
+from __future__ import print_function
 from hotbit import Hotbit 
 #from hotbit import Calculator0
 from ase import *
-from ase.structure import molecule
+from ase.build import molecule
 from hotbit.test.misc import default_param
 import sys
 
@@ -18,7 +19,7 @@ for system,e in zip(systems,energies):
     if e==0:
         calc=Calculator0(verbose=True,SCC=False,txt='standard.cal',**default_param)
         atoms.set_calculator(calc)
-        print 'new system',system,atoms.get_potential_energy()
+        print('new system',system,atoms.get_potential_energy())
         sys.exit(0)        
         
     calc=Hotbit(verbose=True,SCC=True,txt='standard.cal',**default_param)

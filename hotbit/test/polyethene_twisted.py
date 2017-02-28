@@ -1,3 +1,4 @@
+import ase.units as units
 from numpy import *
 from ase import optimize
 from ase import *
@@ -52,7 +53,8 @@ for calc in [ calc2, calc3 ]:
     atoms.set_calculator(calc)
 
     # Relax (twist) the structure
-    q = optimize.FIRE(atoms,trajectory='polyethene.trj',logfile=None)
+    q = optimize.FIRE(atoms, force_consistent=False,
+                      trajectory='polyethene.trj', logfile=None)
     q.run(fmax=0.5)
 
     # Displace atoms from their equilibrium positions and check forces
@@ -65,14 +67,14 @@ for calc in [ calc2, calc3 ]:
     # Check forces from finite differences
     ffd, f0, err = check_forces(atoms, dx=1e-6)
     if debug:
-        print "Finite differences forces:"
-        print ffd
-        print "Analytical forces:"
-        print f0
-        print "Difference:"
-        print abs(ffd-f0)
-        print "Error:"
-        print err
+        print("Finite differences forces:")
+        print(ffd)
+        print("Analytical forces:")
+        print(f0)
+        print("Difference:")
+        print(abs(ffd-f0))
+        print("Error:")
+        print(err)
 
     assert err < 1e-5
 

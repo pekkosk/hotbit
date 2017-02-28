@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import numpy as np
 from scipy.linalg import solve
 from box.dummymixer import DummyMixer
@@ -83,14 +85,14 @@ class AndersonMixer(DummyMixer):
 
     def out_of_iterations(self,out):
         """ Print out-of-iterations info. """
-        print>>out, 'Anderson mixer out of iterations!'
-        print>>out, 'History of maximum residuals:'
+        print('Anderson mixer out of iterations!', file=out)
+        print('History of maximum residuals:', file=out)
         for it,fmax in enumerate(self.fmax):
-            print>>out, it,fmax
+            print(it,fmax, file=out)
 
-        print>>out, "Recent history: (number=i'th last iteration)"
+        print("Recent history: (number=i'th last iteration)", file=out)
         for i in range(1,self.memory+1):
-            print>>out, i-1, self.x[i,:5]
+            print(i-1, self.x[i,:5], file=out)
 
 if __name__=='__main__':
     def testf(x):

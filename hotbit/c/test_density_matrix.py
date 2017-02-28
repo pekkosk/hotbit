@@ -53,15 +53,15 @@ rho_p = py_rho(wf, occ)
 
 err = np.sum(abs(rho_f-rho_c))
 if err < 1e-15:
-    print "Complex density matrix OK"
-print "    error: %e" % err
-print ""
+    print("Complex density matrix OK")
+print("    error: %e" % err)
+print("")
 
 err = np.sum(abs(rho_f-rho_p))
 if err < THRES:
-    print "Complex density matrix OK (Python)"
-print "    error: %e" % err
-print ""
+    print("Complex density matrix OK (Python)")
+print("    error: %e" % err)
+print("")
 
 rhoe_f = fortran_rhoec(wf, occ, e, norb, nk)
 rhoe_c = c_rhoec(wf, occ, e)
@@ -70,15 +70,15 @@ rhoe_p = py_rhoe(wf, occ, e)
 #print rhoe_c
 err = np.sum(abs(rhoe_f-rhoe_c))
 if err < THRES:
-    print "Energy-weighted complex density matrix OK"
-print "    error: %e" % err
-print ""
+    print("Energy-weighted complex density matrix OK")
+print("    error: %e" % err)
+print("")
 
 err = np.sum(abs(rhoe_f-rhoe_p))
 if err < THRES:
-    print "Energy-weighted complex density matrix OK (Python)"
-print "    error: %e" % err
-print ""
+    print("Energy-weighted complex density matrix OK (Python)")
+print("    error: %e" % err)
+print("")
 
 
 

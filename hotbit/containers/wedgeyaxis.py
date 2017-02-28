@@ -1,3 +1,5 @@
+from __future__ import division
+
 import numpy as np
 from box.mix import phival
 from math import sin,cos 
@@ -152,7 +154,7 @@ class WedgeYAxis:
     def get_symmetry_operation_ranges(self):
         """ Return ranges for symmetry operations. """
         M = int( round(2*np.pi/self.get('angle')) )
-        i = M/2
+        i = M//2
         zi = 0
         if self.get('pbc'):
             zi = np.Inf

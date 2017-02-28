@@ -19,13 +19,13 @@ ev_, vec_ = geig_c(a,b)
 err_ev = np.sum(abs(ev - ev_))
 err_vec = np.sum(abs(vec - vec_))
 if err_ev < THRES and err_vec < THRES:
-    print "Real generalized eigensolver OK"
+    print("Real generalized eigensolver OK")
 else:
-    print "Real generalized eigensolver FAILED"
+    print("Real generalized eigensolver FAILED")
 
-print "    error(eigenvalues): %e" % err_ev
-print "    error(eigenvectors): %e" % err_vec
-print ""
+print("    error(eigenvalues): %e" % err_ev)
+print("    error(eigenvectors): %e" % err_vec)
+print("")
     
 A = np.array(((1, 4+0.1j),(4-0.1j, 7)), np.complex, order='c')
 B = np.array(((1,0.2+0.2j),(0.2-0.2j,1)), np.complex)
@@ -40,13 +40,13 @@ ev_, vec_ = geig_c(a,b)
 err_ev = np.sum(abs(ev - ev_))
 err_vec = np.sum(abs(vec - vec_))
 if err_ev < THRES and err_vec < THRES:
-    print "Complex generalized eigensolver OK"
+    print("Complex generalized eigensolver OK")
 else:
-    print "Complex generalized eigensolver FAILED"
+    print("Complex generalized eigensolver FAILED")
 
-print "    error(eigenvalues): %e" % err_ev
-print "    error(eigenvectors): %e" % err_vec
-print ""
+print("    error(eigenvalues): %e" % err_ev)
+print("    error(eigenvectors): %e" % err_vec)
+print("")
 #assert np.sum(abs(ev - ev_)) < 1e-15
 #assert np.sum(abs(vec - vec_)) < 1e-15
 #print "Complex OK"

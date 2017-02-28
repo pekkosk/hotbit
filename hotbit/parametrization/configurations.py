@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 # Copyright (C) 2003  CAMP
 # Please see the accompanying LICENSE file for further information.
 
@@ -1049,7 +1051,7 @@ if __name__ == '__main__':
 
     dftdata = {}
     spdf = {'s': 0, 'p': 1, 'd': 2, 'f': 3}
-    for symbol, Z in Ztable.items():
+    for symbol, Z in list(Ztable.items()):
         occupations = GetOccupations(symbol)
         f = open(path + 'LDA/neutrals/%02d%s' % (Z, symbol), 'r')
         for n in range(5):
@@ -1065,8 +1067,8 @@ if __name__ == '__main__':
             eps = epsilons[state]
             nloe.append((n, l, occ, eps))
         dftdata[symbol] = (Z, nloe)
-    print '# Computer generated code:'
-    print
-    print 'configurations = ',
+    print('# Computer generated code:')
+    print()
+    print('configurations = ', end=' ')
     pprint.pprint(dftdata)
-    print
+    print()

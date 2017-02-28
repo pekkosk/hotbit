@@ -1,6 +1,8 @@
+import sys
 import os
+import traceback
+import subprocess
 from time import time
-import os
 
 tests = [
     'atom_dimer.py',
@@ -34,24 +36,28 @@ pth=os.environ.get('HOTBIT_DIR')
 
 for test in tests:
     if test in skip:
-        print 'test', test,'skipped...'
+        print('test', test,'skipped...')
         continue 
     if test in add_env:
         if not add_env[test] in os.environ:
-            print 'test', test, 'requires environment variable', \
-                add_env[test], 'skipped...'
+            print('test', test, 'requires environment variable', \
+                add_env[test], 'skipped...')
             continue
     try:
-        file = os.path.join(pth,'hotbit','test',test)
+        if pth is None:
+            file = test
+        else:
+            file = os.path.join(pth,'hotbit','test',test)
         t1 = time()
-        ret=os.system('python %s' %file)
+        ret=os.system(sys.executable+' '+file)
         elapsed = time()-t1
         if ret!=0:
-            print test,'returned',ret,'and FAILED!'
+            print(test,'returned',ret,'and FAILED!')
         else:
-            print '%-25s OK. (%.1f seconds)' %(test,elapsed)
+            print('%-25s OK. (%.1f seconds)' %(test,elapsed))
     except:
-        print test,'ERROR!'
+        print(test,'ERROR!')
+        traceback.print_exc()
 
 stop = time()
-print "Total time elapsed: %.0f seconds." %(stop-start)
+print("Total time elapsed: %.0f seconds." %(stop-start))

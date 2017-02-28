@@ -43,17 +43,40 @@ static PyMethodDef hotbit_methods[] = {
     { NULL, NULL, 0, NULL }
 };
 
+/*
+ * Module initialization
+ */
 
-PyMODINIT_FUNC
-init_hotbit(void)
+#ifndef PyMODINIT_FUNC  /* declarations for DLL import/export */
+#define PyMODINIT_FUNC void
+#endif
+
+/*
+ * Module declaration
+ */
+
+#if PY_MAJOR_VERSION >= 3
+    #define MOD_INIT(name) PyMODINIT_FUNC PyInit_##name(void)
+    #define MOD_DEF(ob, name, methods, doc) \
+        static struct PyModuleDef moduledef = { \
+            PyModuleDef_HEAD_INIT, name, doc, -1, methods, }; \
+        ob = PyModule_Create(&moduledef);
+#else
+    #define MOD_INIT(name) PyMODINIT_FUNC init##name(void)
+    #define MOD_DEF(ob, name, methods, doc) \
+        ob = Py_InitModule3(name, methods, doc);
+#endif
+
+MOD_INIT(_hotbit)
 {
-  PyObject *m;
+    PyObject *m;
 
-  import_array();
+    import_array();
 
-  m = Py_InitModule3("_hotbit", hotbit_methods,
-                     "HOTBIT native C extensions.");
-  
-  if (!m)
-    return;
+    MOD_DEF(m, "_hotbit", hotbit_methods,
+            "HOTBIT native C extensions.");
+
+#if PY_MAJOR_VERSION >= 3
+    return m;
+#endif
 }

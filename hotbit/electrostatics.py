@@ -20,7 +20,7 @@ from scipy.special import erf, erfc
 norm=np.linalg.norm
 dot=np.dot
 
-from neighbors import get_neighbors
+from .neighbors import get_neighbors
 from hotbit.coulomb import DirectCoulomb
 
 # diag_indices_from was introduced in numpy 1.4.0
@@ -156,7 +156,7 @@ class Electrostatics:
 
         self.accuracy_goal = accuracy_goal
 
-        if not charge_density in _gamma_correction_dict.keys():
+        if not charge_density in list(_gamma_correction_dict.keys()):
             raise RuntimeError("Unknown charge density type: %s." %
                                charge_density)
 
@@ -216,7 +216,7 @@ class Electrostatics:
     def construct_h1(self,dq=None):
         """ Make the electrostatic part of the Hamiltonian. """
         self.calc.start_timing('h1')
-        if dq!=None:
+        if dq is not None:
             self.set_dq(dq)
                           
         lst = self.calc.el.get_property_lists(['i','o1','no'])

@@ -105,7 +105,7 @@ class DirectCoulomb(Coulomb):
 
         if il is not None:
             # FIXME!!! Is there some fast numpy magic to compute this?
-            for i in xrange(nat):
+            for i in range(nat):
                 self.phi_a[i]    = phi[il == i].sum()
                 self.E_av[i, :]  = E[il == i].sum(axis=0)
 

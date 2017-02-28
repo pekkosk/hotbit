@@ -29,18 +29,18 @@ M_CsCl  = 1.762675
 M_ZnS   = 1.638055
 
 systems = [
-#    ( "NaCl", M_NaCl, 0.5,
-#       NaCl(['Na', 'Cl'],
-#            latticeconstant = a0,
-#            size            = [1, 1, 1]) ),
+    ( "NaCl", M_NaCl, 0.5,
+       NaCl(['Na', 'Cl'],
+            latticeconstant = a0,
+            size            = [1, 1, 1]) ),
     ( "CsCl", M_CsCl, sqrt(3.0)/2,
       CsCl(['Cs', 'Cl'],
           latticeconstant   = a0,
           size              = [1, 1, 1]) ),
-#    ( "ZnS", M_ZnS, sqrt(3.0)/4,
-#      ZnS(['Zn', 'S'],
-#          latticeconstant   = a0,
-#          size              = [1, 1, 1]) ),
+    ( "ZnS", M_ZnS, sqrt(3.0)/4,
+      ZnS(['Zn', 'S'],
+          latticeconstant   = a0,
+          size              = [1, 1, 1]) ),
 # Some tests with extended unit cells, not necessary
 #    ( "large NaCl", M_NaCl, 0.5,
 #       NaCl(['Na', 'Cl'],
@@ -63,13 +63,13 @@ solvers = [
 ]
 
 if debug:
-    print "%20s   %8s  %8s  (%8s)" % ( "compound", "M", "ref.", "error" )
-    print "%20s   %8s  %8s  %10s" % ( "-------------------",
-                                       "--------", "--------", "----------" )
+    print("%20s   %8s  %8s  (%8s)" % ( "compound", "M", "ref.", "error" ))
+    print("%20s   %8s  %8s  %10s" % ( "-------------------",
+                                       "--------", "--------", "----------" ))
 
 for sol in solvers:
     if debug:
-        print "=== %s ===" % sol.__class__
+        print("=== %s ===" % sol.__class__)
     for name, target_M, nnd, a in systems:
         syms = a.get_chemical_symbols()
         
@@ -91,7 +91,7 @@ for sol in solvers:
         err  = abs(M-target_M)
 
         if debug:
-            print "%20s   %8.6f  %8.6f  (%8.6e)" % ( name, M, target_M, err )
+            print("%20s   %8.6f  %8.6f  (%8.6e)" % ( name, M, target_M, err ))
 
         assert err < 1e-3
 

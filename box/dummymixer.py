@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 class DummyMixer:
     """ A dummy mixer that all mixer class should inherit. """
 
@@ -24,18 +26,18 @@ class DummyMixer:
 
     def echo(self, out):
         """ Say something about the progress of iteration. """
-        print >> out, "%s: iter %i  fmax %0.12f" %  (self.name, self.it, self.fmax[-1])
+        print("%s: iter %i  fmax %0.12f" %  (self.name, self.it, self.fmax[-1]), file=out)
         out.flush()
 
 
     def final_echo(self, out):
-        print >> out, self.it
+        print(self.it, file=out)
 
 
     def out_of_iterations(self, out):
         """ Print out-of-iterations info. """
-        print>>out, '%s mixer out of iterations!' % self.name
-        print>>out, 'History of maximum residuals:'
+        print('%s mixer out of iterations!' % self.name, file=out)
+        print('History of maximum residuals:', file=out)
         for it,fmax in enumerate(self.fmax):
-            print>>out, it,fmax
+            print(it,fmax, file=out)
 

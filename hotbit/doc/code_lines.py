@@ -23,7 +23,7 @@ for data in os.walk(folder):
 
 o=open(datafile,'a')
 t=time()
-print>>o, t, python, fortran, c
+print(t, python, fortran, c, file=o)
 o.close()
 
 fig = pl.figure()

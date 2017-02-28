@@ -85,7 +85,8 @@ class EwaldSum(Coulomb):
 
         G_sq   = np.sum( G*G, axis=3 )
 
-        rec_G_sq = 1.0/G_sq
+        rec_G_sq = np.zeros_like(G_sq)
+        rec_G_sq[G_sq>0.0] = 1.0/G_sq[G_sq>0.0]
         rec_G_sq[maxGx, maxGy, maxGz] = 0.0
 
         phase  = np.tensordot(G, r_av, axes=(3, 1))

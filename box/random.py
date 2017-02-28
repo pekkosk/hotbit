@@ -15,7 +15,7 @@ class ArbitraryDistribution:
         except:
             self.x=xgrid
             if self.x is None:
-                self.x=range(len(distr))
+                self.x=list(range(len(distr)))
             self.distr=distr
             self.f=SplineFunction(self.x,self.distr,k=1)
                 

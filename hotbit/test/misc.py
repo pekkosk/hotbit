@@ -1,5 +1,5 @@
 import os
-from ase.structure import molecule as ase_molecule
+from ase.build import molecule as ase_molecule
 from ase import *
 from hotbit import fixpar
 
