@@ -211,7 +211,7 @@ class LinearResponse:
             
     def write_spectrum(self,filename=None):
         """ Write the linear response spectrum into file. """
-        if filename==None:
+        if filename is None:
             filename='linear_spectrum.out'
         o=open(filename,'w')
         print>>o, '#e(eV), f'
@@ -250,7 +250,7 @@ class LinearResponse:
         pl.fill(xs,ys,fc='b',ec='b',alpha=0.5)
         pl.ylim(0,1.2)
         
-        if xlim==None:
+        if xlim is None:
             pl.xlim(0,self.emax*Hartree*1.2)
         else:
             pl.xlim(xlim)            

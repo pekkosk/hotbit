@@ -1,6 +1,7 @@
 from numpy import *
 from ase import optimize
 from ase import *
+from ase.units import fs
 from hotbit import *
 from math import pi
 from hotbit.coulomb import MultipoleExpansion
@@ -50,9 +51,9 @@ calc3 = Hotbit(SCC             = True,
 
 for calc in [ calc2, calc3 ]:
     atoms.set_calculator(calc)
-
     # Relax (twist) the structure
-    q = optimize.FIRE(atoms,trajectory='polyethene.trj',logfile=None)
+    q = optimize.FIRE(atoms,trajectory='polyethene.trj',logfile=None,
+                      force_consistent=False)
     q.run(fmax=0.5)
 
     # Displace atoms from their equilibrium positions and check forces
@@ -77,6 +78,6 @@ for calc in [ calc2, calc3 ]:
     assert err < 1e-5
 
     # Check energy conservation from a molecular dynamics run
-    assert check_energy_conservation(atoms,dt=0.25*units.fs,steps=100,
+    assert check_energy_conservation(atoms,dt=0.25*fs,steps=100,
                                      tol=0.01,plot=debug)
 

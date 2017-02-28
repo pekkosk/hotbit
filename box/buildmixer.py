@@ -4,7 +4,7 @@ from box.pulay import PulayMixer
 mixers = {'pulay':PulayMixer, 'anderson':AndersonMixer}
 
 def BuildMixer(params):
-    if params == None:
+    if params is None:
         return mixers['anderson']()
     elif type(params) == str:
         name = params

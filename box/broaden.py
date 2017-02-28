@@ -15,7 +15,7 @@ def broaden(grid, values, width, weights=None):
         can be provided with different weights (default value
         is that the weights are 1 for all values). Each peak
         integrates to the corresponding weight."""
-    if weights == None:
+    if weights is None:
         weights = np.ones_like(values)
     ret = np.zeros_like(grid)
     for val, weight in zip(values, weights):
@@ -28,9 +28,9 @@ def make_cumulative_plot(grid, values, width, weights_list, labels=None, colors=
         gaussian distributions of FWHM=width. The weights_list is an
         array of the shape [:,len(values)]. """
     import pylab
-    if labels == None:
+    if labels is None:
         labels = ['_nolegend_' for i in range(len(weights_list))]
-    if colors == None:
+    if colors is None:
         colors = np.random.random((len(values), 4))
         colors[:,3] = 1
     low = np.zeros_like(grid)

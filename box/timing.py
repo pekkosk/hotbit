@@ -43,7 +43,7 @@ class Timer:
         self.label=label
         self.timers=[]
         self.first=time()
-        if txt==None:
+        if txt is None:
             from sys import stdout
             self.txt=stdout
         else:
@@ -81,7 +81,7 @@ class Timer:
         else:
             for timer in self.timers:
                 tr=timer.get_timer(label)
-                if tr!=None: 
+                if tr is not None: 
                     return tr
             return None 
                   
@@ -109,7 +109,7 @@ class Timer:
     def start(self,label=None):
         """ Start timer itself or child timer with given label. """   
         if not self.enabled: return
-        if label==None:
+        if label is None:
             if self.running:
                 raise AssertionError('Timer %s already running!' %self.label)
             self.t1=time()
@@ -118,7 +118,7 @@ class Timer:
             tr=self.get_timer(label)   
             if not self.running:
                  raise AssertionError('Timer %s cannot make running child timers; itself is not running!' %self.label)
-            if tr==None:
+            if tr is None:
                 outmost=self.get_outmost_running()
                 tr=Timer(label,txt=self.txt,level=outmost.get_level()+1)    
                 outmost.add_subtimer(tr)
@@ -128,7 +128,7 @@ class Timer:
             
     def stop(self,label=None):
         if not self.enabled: return
-        if label==None:
+        if label is None:
             if not self.running:
                 raise AssertionError('Timer %s cannot be stopped; it is not running!' %self.label)
             self.running=False
@@ -137,7 +137,7 @@ class Timer:
             self.nr_of_calls += 1
         else:
             tr=self.get_timer(label)
-            if tr==None:
+            if tr is None:
                 raise AssertionError('Timer %s cannot be stopped; it does not exist!' %label)
             tr.stop()            
         

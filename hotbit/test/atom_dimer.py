@@ -3,7 +3,7 @@ from numpy import random, pi
 from box import Atoms
 from box import mix
 from hotbit import Hotbit
-#from hotbit import Calculator0
+# #from hotbit import Calculator0
 from ase.units import Bohr, Hartree
 from hotbit.test.misc import default_param
 
@@ -42,4 +42,3 @@ for i in range(10):
     e2=Au2.get_potential_energy()
     if abs(e-e2)>1E-4:
         raise RuntimeError('energy for Au2 %f, should be %f (while rotating)' %(e2,e))
-    

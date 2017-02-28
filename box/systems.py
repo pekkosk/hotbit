@@ -388,7 +388,7 @@ def CNT_list(i=None):
     parameters:
     -----------
     i:     return the (n,m) tuple of i'th CNT in the list.
-           If i==None, return the whole list of 
+           If i is None, return the whole list of 
            (N,d,L,n,m) -tuples (N=atom count, d=diameter,
            L=unit cell length, n,m=chiral indices)
     """
@@ -418,7 +418,7 @@ def CNT_list(i=None):
             return cmp(x[0],y[0])
 
     data.sort(comp)
-    if i==None:
+    if i is None:
         return data
     else:
         return (data[i][3],data[i][4])

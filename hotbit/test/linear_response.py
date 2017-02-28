@@ -1,7 +1,6 @@
 from ase import *
 from hotbit import Hotbit
 from hotbit.analysis import LinearResponse
-from ase.data.molecules import molecule
 from hotbit.test.misc import default_param
 
 atoms=Atoms('Na3',[(1.6964999745231999,0,0),(-1.6964999745231999,0,0),(0,2.9384240999630005,0)])

@@ -1,4 +1,5 @@
 from ase import *
+from ase.io import Trajectory
 from hotbit import *
 from ase.data.molecules import molecule
 
@@ -8,7 +9,7 @@ atoms.center(vacuum=3)
 calc=Hotbit(SCC=True, txt='benzene.cal')
 atoms.set_calculator(calc)
 
-traj=PickleTrajectory('quench.traj','w',atoms=atoms)
+traj=Trajectory('quench.traj','w',atoms=atoms)
 qn=QuasiNewton(atoms)
 qn.attach(traj.write)
 qn.run()

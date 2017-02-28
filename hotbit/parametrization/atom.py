@@ -101,7 +101,7 @@ class KSAllElectron:
         self.occu.update( configuration )
         self.nel=sum(self.occu.values())
         self.charge=nel_neutral-self.nel
-        if self.confinement==None:
+        if self.confinement is None:
             self.confinement_potential=ConfinementPotential('none')
         else:
             self.confinement_potential=ConfinementPotential(**self.confinement)
@@ -149,7 +149,7 @@ class KSAllElectron:
         """ Set output channel and give greetings. """
         if txt == '-':
             self.txt = open(os.devnull,'w')
-        elif txt==None:
+        elif txt is None:
             self.txt=sys.stdout
         else:
             self.txt=open(txt,'a')
@@ -479,7 +479,7 @@ class KSAllElectron:
         
         filename:  output file name + extension (extension used in matplotlib)
         """
-        if pl==None:
+        if pl is None:
             raise AssertionError('pylab could not be imported')
         rmax = data[self.symbol]['R_cov']/0.529177*3
         ri = np.where( self.rgrid<rmax )[0][-1]
@@ -527,7 +527,7 @@ class KSAllElectron:
         #pl.rc('figure.subplot',wspace=0.0,hspace=0.0)
         fig.subplots_adjust(hspace=0.2,wspace=0.1)
         s=''
-        if self.confinement!=None:
+        if self.confinement is not None:
             s='(confined)'
         pl.figtext(0.4,0.95,r'$R_{nl}(r)$ for %s-%s %s' %(self.symbol,self.symbol,s))
         if filename is not None:
@@ -568,7 +568,7 @@ class KSAllElectron:
 
     def effective_potential(self,r,der=0):
         """ Return effective potential at r or its derivatives. """
-        if self.veff_fct==None:
+        if self.veff_fct is None:
             self.veff_fct=Function('spline',self.rgrid,self.veff)
         return self.veff_fct(r,der=der)
 

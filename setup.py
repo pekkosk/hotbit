@@ -48,7 +48,7 @@ for i, arg in enumerate(sys.argv):
       except IndexError:
          customize = 'customize.py'
       break
-if customize!=None and os.path.isfile(customize):
+if customize is not None and os.path.isfile(customize):
    exec(open(customize).read())
    msgs.append('* Using custom system configuration from %s' %customize)
 elif customize is not None:

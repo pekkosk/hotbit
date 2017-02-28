@@ -9,7 +9,7 @@ integrals =['dds','ddp','ddd','pds','pdp','pps','ppp','sds','sps','sss']
 def plot_table(parfile,screen=False,s1=None,s2=None,der=0):
     """ Plot table. """
     import pylab as pl
-    if s1==None or s2==None:
+    if s1 is None or s2 is None:
         s1,s2=parfile.split('.')[0].split('_')
     if s1==s2:
         nel=1
@@ -65,7 +65,7 @@ def compare_tables(parfile1,parfile2,s1=None,s2=None,screen=False):
     """ Plot table. """
     import pylab as pl
     pl.rcParams.update({'legend.fontsize': 5,'legend.linewidth': 0})
-    if s1==None or s2==None:
+    if s1 is None or s2 is None:
         s1,s2=parfile1.split('.')[0].split('_')
     if s1==s2:
         nel=1

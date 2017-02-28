@@ -95,14 +95,14 @@ class Wedge:
         scale_atoms Scale atoms according to changes in parameters. When changing angle, scale
                     also radial distances. (Radii are inversely proportional to angle.)
         """
-        if container!=None:
-            assert angle==None and height==None and M==None and pbcz==None
+        if container is not None:
+            assert angle is None and height is None and M is None and pbcz is None
             self.set(angle=container.get('angle'),height=container.get('height'),\
                      physical=container.get('physical'), pbcz=container.atoms.get_pbc()[2])
 
-        if angle!=None or M!=None:
+        if angle is not None or M is not None:
             #assert not scale_atoms
-            assert not (angle!=None and M!=None)
+            assert not (angle is not None and M is not None)
             old_angle = self.get('angle')
             if M != None:
                 assert isinstance(M,int)
@@ -134,14 +134,14 @@ class Wedge:
                     newr.append( [rad2*np.cos(newphi),rad2*np.sin(newphi),r[2]] )
                 self.atoms.set_positions(newr)
 
-        if height!=None:
+        if height is not None:
             if scale_atoms:
                 r = self.atoms.get_positions()
                 r[:,2] = r[:,2] * height/self.get('height')
                 self.atoms.set_positions(r)
             self._set(height=height)
 
-        if pbcz!=None:
+        if pbcz is not None:
             self._set(pbcz=float(pbcz))
 
         #self._set_table()

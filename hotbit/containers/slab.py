@@ -63,13 +63,13 @@ class Slab:
         x:        fractional translation offset related to reflection.
                   Only integers and half-integers allowed.
         """
-        if container!=None:
+        if container is not None:
             # copy container
-            assert x==None
+            assert x is None
             self.set(x=container.x)
         else:
             x = np.array(x)
-            if x!=None:
+            if x is not None:
                 assert np.all( abs(np.round(2*x)-2*x)<1E-15 )
                 self.x = np.array(x)
         self._set_table()

@@ -30,7 +30,7 @@ class Chiral:
     def __repr__(self):
         angle = self.get('angle')
         height = self.get('height')
-        if angle==None:
+        if angle is None:
             raise AssertionError('Chiral angle was not set yet.')
         if angle<1E-14:
             x='Chiral: angle=0.0, height=%.4f Ang' %(height)
@@ -68,14 +68,14 @@ class Chiral:
         @param: height   Height of the primitive cell in z-direction
         @param: angle    angle (in radians) of rotation
         """
-        if container!=None:
+        if container is not None:
             # copy container
-            assert angle==None and height==None and scale_atoms==False
+            assert angle is None and height is None and scale_atoms==False
             self.set( angle=container.get('angle'),height=container.get('height') )
         else:
             if not scale_atoms:
-                if angle!=None: self._set(angle=angle)
-                if height!=None: self._set(height=height)
+                if angle is not None: self._set(angle=angle)
+                if height is not None: self._set(height=height)
             else:
                 if angle is None:
                     da = 0.0

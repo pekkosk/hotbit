@@ -43,7 +43,7 @@ def atoms_vtk(atoms,scalars={},vectors={},filename=None):
     @param scalars:  dictionary of atoms' scalar properties
     @param vectors:  dictionary of atoms' vector properties
     '''
-    if filename==None:
+    if filename is None:
         filename=atoms.get_name()+'.vtk'
     N=len(atoms)
     f=open(filename,'w')

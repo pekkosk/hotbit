@@ -9,7 +9,7 @@ class Output:
 
     def set_text(self,txt):
         """ Set the stream for text output. """
-        if txt==None:
+        if txt is None:
             self.txt=sys.stdout
         else:
             self.txt=open(txt,'a')

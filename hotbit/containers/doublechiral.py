@@ -93,19 +93,19 @@ class DoubleChiral:
         x:        fractional translation offset related to 180 rotation
                   Only integers and half-integers allowed.
         """
-        if container!=None:
+        if container is not None:
             # copy container
-            assert angle==None and height==None and x==None and scale_atoms==False
+            assert angle is None and height is None and x is None and scale_atoms==False
             self.set(angle=container.get('angle'),height=container.get('height'),x=container.get('x'))
         else:
-            if x!=None:
+            if x is not None:
                 assert abs(np.round(2*x)-2*x)<1E-15
             if not scale_atoms:
-                if angle!=None: self._set(angle=angle)
-                if height!=None: self._set(height=height)
-                if x!=None: self._set(x=x)
+                if angle is not None: self._set(angle=angle)
+                if height is not None: self._set(height=height)
+                if x is not None: self._set(x=x)
             else:
-                if x!=None:
+                if x is not None:
                     raise AssertionError('It is probably illegal to change x. This changes the symmetry, right?')
                 if angle is None:
                     da = 0.0

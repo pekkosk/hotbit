@@ -26,7 +26,7 @@ class SlaterKosterTable:
         self.ela=ela
         self.elb=elb
         self.timing=timing
-        if txt==None:
+        if txt is None:
             self.txt=sys.stdout
         else:
             if type(txt)==type(''):
@@ -69,7 +69,7 @@ class SlaterKosterTable:
     def write(self,filename=None):
         """ Use symbol1_symbol2.par as default. """
         self.smooth_tails()
-        if filename==None: fn='%s_%s.par' %(self.ela.get_symbol(),self.elb.get_symbol())
+        if filename is None: fn='%s_%s.par' %(self.ela.get_symbol(),self.elb.get_symbol())
         else: fn=filename
         f=open(fn,'w')
         print>>f, 'slako_comment='
@@ -146,7 +146,7 @@ class SlaterKosterTable:
         pl.figtext(0.3,0.92,'(thin solid: <%s|%s>, wide dashed: <%s|%s>)' %(e1,e2,e2,e1),size=10)
         
         file = '%s_%s_slako.pdf' %(e1,e2)
-        if filename!=None:
+        if filename is not None:
             file = filename
         pl.savefig(file)            
     
@@ -453,7 +453,7 @@ def select_integrals(e1,e2):
     val1, val2 = e1.get_valence_orbitals(), e2.get_valence_orbitals()
     for ii,integral in enumerate(integrals):
         nl1, nl2=select_orbitals(val1,val2,integral)
-        if nl1==None or nl2==None:
+        if nl1 is None or nl2 is None:
             continue
         else:
             selected.append( (integral,nl1,nl2) )

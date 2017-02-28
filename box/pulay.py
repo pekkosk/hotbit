@@ -55,7 +55,7 @@ class PulayMixer(DummyMixer):
 
         # The input must not change more than chop for all
         maxdev=max(abs(xb-xi))
-        if self.chop!=None and maxdev>self.chop:
+        if self.chop is not None and maxdev>self.chop:
             xb = xi + self.chop/maxdev*(xb-xi)
 
         fmax = max(abs(self.R[0]))

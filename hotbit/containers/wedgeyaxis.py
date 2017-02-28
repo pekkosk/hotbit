@@ -96,14 +96,14 @@ class WedgeYAxis:
         pbc     True if wedge is periodic in y-direction
         scale_atoms Scale atoms according to changes in parameters 
         """
-        if container!=None:
-            assert angle==None and height==None and M==None and pbc==None
+        if container is not None:
+            assert angle is None and height is None and M is None and pbc is None
             self.set(angle=container.get('angle'),height=container.get('height'),\
                      physical=container.get('physical'), pbc=container.atoms.get_pbc()[2])
         
-        if angle!=None or M!=None:
+        if angle is not None or M is not None:
             #assert not scale_atoms
-            assert not (angle!=None and M!=None)
+            assert not (angle is not None and M is not None)
             old_angle = self.get('angle')
             if M != None:
                 assert isinstance(M,int)
@@ -134,14 +134,14 @@ class WedgeYAxis:
                     newr.append( [rad*np.sin(newphi),r[1],rad*np.cos(newphi)] )
                 self.atoms.set_positions(newr)
                 
-        if height!=None:
+        if height is not None:
             if scale_atoms:
                 r = self.atoms.get_positions()
                 r[:,1] = r[:,1] * height/self.get('height')
                 self.atoms.set_positions(r)
             self._set(height=height)
             
-        if pbc!=None:
+        if pbc is not None:
             self._set(pbc=float(pbc))
               
             

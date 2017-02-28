@@ -59,7 +59,7 @@ def list_copy_examples(exdir,arg,show):
     files = []
     for file in examples:
         if '.svn' in file: continue
-        if arg==None or (arg!=None and file.find(arg)==0):
+        if arg is None or (arg is not None and file.find(arg)==0):
             files.append(file)
 
     # if only one file or directory, copy it, otherwise list 
@@ -154,7 +154,7 @@ else:
     
     
     
-    if arg==None:
+    if arg is None:
         #------------------------------------
         # list classes
         #------------------------------------
@@ -257,7 +257,7 @@ else:
                     call = inspect.formatargspec(*inspect.getargspec(init))
                     print '%s %s' %(cl,call)
                     doc = inspect.getdoc(c.__init__)
-                    if doc==None:
+                    if doc is None:
                         print 'No documentation for %s' %cl
                     else:
                         print '\n',doc

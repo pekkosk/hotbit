@@ -137,7 +137,7 @@ class MullikenAnalysis:
         """
         w = 1.0
         if wk: w = self.wk[k]
-        if I==None:
+        if I is None:
             return np.array( [self.get_atom_wf_mulliken(i,k,a,wk) for i in range(self.N)] )
         orbs = self.calc.el.orbitals(I,indices=True)
         return w*self.aux[k,a,orbs].sum()
@@ -375,7 +375,7 @@ class MullikenBondAnalysis(MullikenAnalysis):
         I:         atom index. If None, return all atoms' energies
                    as an array.
         """
-        if I==None:
+        if I is None:
             return np.array( [self.get_atom_energy(i) for i in range(self.N)] )
             
         if self.SCC:
@@ -409,7 +409,7 @@ class MullikenBondAnalysis(MullikenAnalysis):
         I:         atom index. If None, return all atoms' energies
                    as an array.
         """
-        if I==None:
+        if I is None:
             return np.array( [self.get_promotion_energy(i) for i in range(self.N)] )
             
         e = 0.0
@@ -462,7 +462,7 @@ class MullikenBondAnalysis(MullikenAnalysis):
         i:    atom index. If None, return all atoms' energies
               as an array.
         """
-        if i==None:
+        if i is None:
             return np.array( [self.get_atom_and_bond_energy(j) for j in range(self.N)] )
             
         ea = self.get_atom_energy(i)
@@ -496,9 +496,9 @@ class MullikenBondAnalysis(MullikenAnalysis):
     
         return:
         =======
-        x,y:     * if width==None, x is list of energy eigenvalues (including k-points)
+        x,y:     * if width is None, x is list of energy eigenvalues (including k-points)
                    and y covalent energies of those eigenstates
-                 * if width!=None, x is energy grid for ecov.
+                 * if width is not None, x is energy grid for ecov.
                  * energies (both energy grid and ecov) are in eV.
          
         Note: energies are always shifted so that Fermi-level is at zero. 
@@ -508,7 +508,7 @@ class MullikenBondAnalysis(MullikenAnalysis):
         x, y = [], []
         wf = self.st.wf
         energy = self.st.e - self.st.occu.get_mu()
-        if window==None:
+        if window is None:
             mn,mx = energy.flatten().min()-eps, energy.flatten().max()+eps
         else:
             mn,mx = window[0]/Hartree, window[1]/Hartree
@@ -561,7 +561,7 @@ class MullikenBondAnalysis(MullikenAnalysis):
         x,y = np.array(x), np.array(y)
         assert np.all( abs(y.imag)<1E-12 )
         y=y.real
-        if width==None:
+        if width is None:
             return x * Hartree, y * Hartree
         else:
             e,ecov = mix.broaden(x, y, width=width/Hartree, N=npts, a=mn, b=mx)
