@@ -53,7 +53,8 @@ for calc in [ calc2, calc3 ]:
     atoms.set_calculator(calc)
 
     # Relax (twist) the structure
-    q = optimize.FIRE(atoms,trajectory='polyethene.trj',logfile=None)
+    q = optimize.FIRE(atoms, force_consistent=False,
+                      trajectory='polyethene.trj', logfile=None)
     q.run(fmax=0.5)
 
     # Displace atoms from their equilibrium positions and check forces
