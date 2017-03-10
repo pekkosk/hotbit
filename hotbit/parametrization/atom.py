@@ -782,7 +782,7 @@ class ConfinementPotential:
             self.r0=kwargs['r0']
             self.s=kwargs['s']
             self.f=self.general #lambda r:(r/self.r0)**s
-            self.comment='general r0=%.3f s=%.3f' %self.r0, self.s
+            self.comment='general r0=%.3f s=%.3f' %(self.r0, self.s)
         else:
             raise NotImplementedError('implement new confinements')
 
