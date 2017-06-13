@@ -162,7 +162,7 @@ class Hotbit(Output):
                         'internal':internal}
 
         if parameters!=None:
-            os.environ.data['HOTBIT_PARAMETERS']=parameters
+            os.environ['HOTBIT_PARAMETERS']=parameters
 
         self.init=False
         self.notes=[]
