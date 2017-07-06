@@ -1,6 +1,7 @@
 from .bravais import Bravais
 from .chiral import Chiral
 from .doublechiral import DoubleChiral
+from .chiralgeneral import ChiralGeneral
 from .test1 import ContainerTest1
 from .wedge import Wedge
 from .sphere import Sphere
