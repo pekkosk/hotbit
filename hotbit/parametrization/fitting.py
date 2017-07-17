@@ -697,7 +697,7 @@ class RepulsiveFitting:
         rmin, rmax = distances.min(), distances.max()
         if  rmax - rmin > self.tol:
             atoms = calc.get_atoms()
-            raise AssertionError('Bond lengths in %s are not the same, they vary between %.6f ... %.6f' %(atoms.get_name(),rmin,rmax) )
+            raise AssertionError('Bond lengths in are not the same, they vary between %.6f ... %.6f' %(rmin,rmax) )
         N = len(distances)
         return R,N
 
