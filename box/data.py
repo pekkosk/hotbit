@@ -32,6 +32,7 @@ data['Cl']={'Z':17,'symbol':'Cl','name':'chlorine', 'mass':35.4530,  'R_cov':1.0
 data['Ar']={'Z':18,'symbol':'Ar'}
 data['K'] ={'Z':19,'symbol':'K', 'name':'potassium','mass':39.0983,  'R_cov':2.03,'R_vdw':2.75,'IE':4.338, 'EA':0.501}
 data['Ti']={'Z':22,'symbol':'Ti','name':'titanium', 'mass':47.8760,  'R_cov':1.60,'R_vdw':2.15,'IE':6.825, 'EA':0.078}
+data['Ni']={'Z':28,'symbol':'Ni','name':'nickel', 'mass':58.69,      'R_cov':1.24,'R_vdw':1.63,'IE':7.64, 'EA':1.16}
 data['Kr']={'Z':36,'symbol':'Kr'}
 data['Sr']={'Z':38,'symbol':'Sr','name':'strontium','mass':87.62,    'R_cov':1.95,'R_vdw':2.49, 'IE':5.69,'EA':0.052}
 data['Mo']={'Z':42,'symbol':'Mo','name':'molybdenum','mass':95.94,   'R_cov':1.57,'R_vdw':2.10, 'IE':7.08,'EA':0.744}
@@ -62,6 +63,7 @@ valence_orbitals['Cl']=['3s','3p']
 valence_orbitals['Ar']=[]
 valence_orbitals['K']=['4s','4p']
 valence_orbitals['Ti']=['3d','4s','4p']
+valence_orbitals['Ni']=['3d','4s','4p']
 valence_orbitals['Kr']=[]
 valence_orbitals['Sr']=['5s','5p','4d']
 valence_orbitals['Mo']=['5s','5p','4d']
@@ -99,6 +101,7 @@ aux=[ ['H', '',{'1s':1}],\
       # fourth row
       ['K', 'Ar',{'4s':1,'4p':0}],\
       ['Ti','Ar',{'3d':2,'4s':2,'4p':0}],\
+      ['Ni','Ar',{'3d':8,'4s':2,'4p':0}],\
       ['Kr','Ar',{'3d':10,'4s':2,'4p':6}],\
       # fifth row
       ['Sr','Kr',{'5s':2,'4d':0,'5p':0}],
