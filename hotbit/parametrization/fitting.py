@@ -572,7 +572,7 @@ class RepulsiveFitting:
         R = np.array(R)
 
         if np.any( N-N[0]!=0 ):
-            raise RuntimeError('The number of bonds changes within trajectory %s.' %traj[0].get_name())
+            raise RuntimeError('The number of bonds changes within trajectory.')
 
         # sort radii because of spline
         ind = R.argsort()
@@ -635,7 +635,7 @@ class RepulsiveFitting:
             print("    No forces (equilibrium cluster)", file=self.txt)
 
         atoms, calc = self._set_calc(atoms,calc)
-        print("\nAppending homogeneous cluster %s..." % atoms.get_name(), file=self.txt)
+        print("\nAppending homogeneous cluster.", file=self.txt)
 
         f_wr = atoms.get_forces()
         distances = calc.rep.get_repulsion_distances(self.sym1,self.sym2,self.r_cut)
