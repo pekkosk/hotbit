@@ -14,7 +14,6 @@ import numpy as np
 from .auxil import k_to_kappa_points
 from ase.units import Bohr, Hartree
 from ase import Atoms
-from ase.calculators.calculator import PropertyNotImplementedError
 from box.timing import Timer
 from .elements import Elements
 from .interactions import Interactions
@@ -453,7 +452,7 @@ class Hotbit(Output):
     def get_potential_energy(self,atoms,force_consistent=False):
         """ Return the potential energy of present system. """
         if force_consistent:
-            raise PropertyNotImplementedError
+            raise NotImplementedError
         if self.calculation_required(atoms,['energy']):
             self.solve_ground_state(atoms)
             self.start_timing('energy')
