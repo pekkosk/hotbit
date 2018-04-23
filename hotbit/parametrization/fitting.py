@@ -594,7 +594,7 @@ class RepulsiveFitting:
         print("Appended %i points around R=%.4f...%.4f" %(len(N),R.min(),R.max()), file=self.txt)
 
 
-    def append_homogeneous_cluster(self,weight,calc,atoms,comment=None,label=None,color=None):
+    def append_homogeneous_cluster(self,weight,calc,atoms,comment='',label='',color=None):
         """
         Use homonuclear cluster in fitting, even with different bond lengths.
 
@@ -621,8 +621,6 @@ class RepulsiveFitting:
         color:         plotting color
         """
         import numpy as np
-        if comment==None: comment=label
-        if label==None: label=comment
         if type(atoms)==type(''):
             atoms = read(atoms)
 
