@@ -94,7 +94,7 @@ class Grids:
         """
         el = self.calc.el.elements[symbol]
         Rnl = el.get_Rnl_function(otype) 
-        range = el.get_wf_range(otype,fractional_limit=1E-5)
+        rrange = el.get_wf_range(otype,fractional_limit=1E-5)
         
         wf = np.zeros(self.pN)
         for i in range(self.pN[0]):
@@ -102,7 +102,7 @@ class Grids:
                 for k in range(self.pN[2]):
                     r = np.array( [self.pgrid[0][i],self.pgrid[1][j],self.pgrid[2][k]] )
                     d = sqrt( r[0]**2+r[1]**2+r[2]**2 )
-                    if d>self.cutoff or d>range:
+                    if d>self.cutoff or d>rrange:
                         continue
                     else:
                         rnl = Rnl(d)
@@ -161,10 +161,10 @@ class Grids:
                 lo = N[i]-(self.pN[i]-1)/2        
                 hi = N[i]+(self.pN[i]-1)/2
                 # these are indices
-                a1,a2 = max(0,lo), min(self.N[i]-1,hi)
+                a1,a2 = int(max(0,lo)), int(min(self.N[i]-1,hi))
                 an = a2-a1
-                b1 = max(0,-lo)
-                b2 = b1 + an
+                b1 = int(max(0,-lo))
+                b2 = int(b1 + an)
                 a.append( slice(a1,a2+1) )
                 b.append( slice(b1,b2+1) )
                 if b1>b2 or a1>a2:
@@ -188,7 +188,7 @@ class Grids:
         wf = self.calc.st.wf
         
         if np.all( abs(self.calc.ia.get_phases()[:,k]-1)<1E-10 ):
-            gwf = np.zeros(self.N) #TODO: complex
+            gwf = np.zeros(self.N,complex) #TODO: complex..
         else: 
             gwf = np.zeros(self.N,complex)
         
