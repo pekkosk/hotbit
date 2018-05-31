@@ -498,7 +498,7 @@ class Hotbit(Output):
         rs:        use 'kappa'- or 'k'-points in reciprocal space
         h1:        Add Coulomb part to hamiltonian matrix. Required for consistent use of SCC.
         '''
-        if kpts==None:
+        if kpts is None:
             e = self.st.e * Hartree
         else:
             if rs=='k':
