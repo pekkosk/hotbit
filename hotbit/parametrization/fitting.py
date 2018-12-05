@@ -6,7 +6,7 @@ import numpy as np
 from ase.units import Bohr,Hartree
 from hotbit import Atoms
 from ase.io import read
-from ase.io.trajectory import PickleTrajectory
+from ase.io.trajectory import Trajectory
 from box import NullCalculator
 from copy import copy
 from sys import stdout
@@ -451,12 +451,12 @@ class RepulsiveFitting:
         label:               plotting label (replaced by comment if None)
         color:               plotting color
         """
-        traj1 = PickleTrajectory(traj)
+        traj1 = Trajectory(traj)
         atoms2 = traj1[0].copy()
         calc2 = NullCalculator()
         atoms2.set_calculator(calc2)
         tmpfile = '_tmp.traj'
-        traj2 = PickleTrajectory(tmpfile,'w',atoms2)
+        traj2 = Trajectory(tmpfile,'w',atoms2)
         for atoms1 in traj1:
             atoms2.set_positions(atoms1.get_positions())
             atoms2.set_cell( atoms1.get_cell() )
@@ -488,8 +488,8 @@ class RepulsiveFitting:
         dEdp:                slope of energy at p0
         p0:                  the point where energy slope is set
         calc:                Hotbit calculator (remember charge and k-points)
-        traj:                filename for ASE trajectory, or PickleTrajectory
-                             object
+        traj:                filename for ASE trajectory, or Trajectory
+                             object itself
         comment:             fitting comment for par-file (replaced by comment if None)
         label:               plotting label (replaced by comment if None)
         color:               plotting color
@@ -539,8 +539,8 @@ class RepulsiveFitting:
         ===========
         weight:              fitting weight
         calc:                Hotbit calculator (remember charge and k-points)
-        traj:                filename for ASE trajectory, or PickleTrajectory
-                             object
+        traj:                filename for ASE trajectory, or Trajectory
+                             object itself
         comment:             fitting comment for par-file (replaced by comment if None)
         label:               plotting label (replaced by comment if None)
         color:               plotting color
@@ -548,10 +548,9 @@ class RepulsiveFitting:
         if comment==None: comment=label
         if label==None: label=comment
 
-        #if not ( isinstance(traj, type(PickleTrajectory)) or isinstance(traj, list) ):
-        if not ( isinstance(traj, type(PickleTrajectory)) or isinstance(traj, list) ):
+        if not ( isinstance(traj, type(Trajectory)) or isinstance(traj, list) ):
             print("\nAppending energy curve data from %s..." %traj, file=self.txt)
-            traj = PickleTrajectory(traj)
+            traj = Trajectory(traj)
         else:
             print('\nAppending energy curve data...', file=self.txt)
         Edft, Ewr, N, R = [], [], [], []
@@ -701,7 +700,7 @@ class RepulsiveFitting:
 
 
     def write_fitting_data(self, filename, pickle=True):
-        f = open(filename,'w')
+        f = open(filename,'wb')
         if pickle:
             import pickle
             pickle.dump(self.deriv, f)
@@ -716,7 +715,7 @@ class RepulsiveFitting:
 
     def load_fitting_data(self, filename):
         import pickle
-        f = open(filename,'r')
+        f = open(filename,'rb')
         self.deriv = pickle.load(f)
         self.structures = pickle.load(f)
         self.comments = pickle.load(f)
@@ -773,7 +772,7 @@ class ParametrizationTest:
         elements = []
         energies = {}
         for t in trajs:
-            traj = PickleTrajectory(t)
+            traj = Trajectory(t)
             for atom in traj[0]:
                 if not atom.symbol in elements:
                     elements.append(atom.symbol)
@@ -828,7 +827,7 @@ class ParametrizationTest:
         """
         frames = []
         energies = []
-        trajectory = PickleTrajectory(self.trajectories[i_traj])
+        trajectory = Trajectory(self.trajectories[i_traj])
         for i, image in enumerate(trajectory):
             e_tb = None
             try:
@@ -857,7 +856,7 @@ class ParametrizationTest:
         import pylab as pl
 
         e_dft = []
-        traj = PickleTrajectory(self.trajectories[i_traj])
+        traj = Trajectory(self.trajectories[i_traj])
         for image in traj:
             e_dft.append(image.get_total_energy())
         pl.plot(e_dft, c='blue', label='DFT-energies')
