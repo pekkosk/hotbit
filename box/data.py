@@ -3,6 +3,8 @@
 #
 # Experimental data * mass, R_cov (2008 data), R_vdw, EA from www.webelements.com
 #                   * IE from gElemental 1.2.0
+#                   * Part of the values from periodictable.com (there are some discrepancies btw
+#                     values from different sources regarding e.g. vdW radii)
 #
 # UNITS:
 #     * mass in amu
