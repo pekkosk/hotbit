@@ -1,0 +1,635 @@
+
+
+
+
+
+
+ _           _    _     _ _
+| |__   ___ | |_ | |__ |_| |_
+|  _ \ / _ \|  _||  _ \| |  _|
+| | | | ( ) | |_ | ( ) | | |_
+|_| |_|\___/ \__|\____/|_|\__|  ver. 0.1 (svn=)
+Distributed under GNU GPL; see /home/martin/work/software/hotbit/lib/python/LICENSE
+Date: Wed Mar 25 14:25:48 2020
+Nodename: deep-thought
+Arch: x86_64
+Dir: /home/martin/work/software/hotbit/hotbit/test
+System: C20
+       Charge= 0.0
+       Container Bravais: pbc:[0,0,1], cell:[3.91,3.91,4.26] Ang, 
+   cosines(12,13,23):[0.00,0.00,0.00]
+Symmetry operations (if any):
+       0: pbc= False , kappa-points=1, M=1
+       1: pbc= False , kappa-points=1, M=1
+       2: pbc= True , kappa-points=10, M=inf
+Electronic temperature: 0.02 eV
+Mixer: Anderson with memory = 3 , mixing parameter = 0.2
+20 atoms, 80 states, 80.0 electrons (40.0 filled states)
+Initial n ranges:[0,0] [0,0] [-5,5] 
+Element C in /home/martin/work/software/hotbit/param/C.elm
+    *no comment
+
+Interactions:
+  CC in /home/martin/work/software/hotbit/param/C_C.par
+    *(r/r0)**2, r0=1.85*r_cov, standard CC
+
+Repulsions:
+  CC in /home/martin/work/software/hotbit/param/C_C.par
+    *no repulsion doc
+
+Memory consumption estimate: > 0.01 GB
+Hamiltonian ~93.750 % filled.
+
+
+
+
+
+
+ _           _    _     _ _
+| |__   ___ | |_ | |__ |_| |_
+|  _ \ / _ \|  _||  _ \| |  _|
+| | | | ( ) | |_ | ( ) | | |_
+|_| |_|\___/ \__|\____/|_|\__|  ver. 0.1 (svn=)
+Distributed under GNU GPL; see /home/martin/work/software/hotbit/lib/python/LICENSE
+Date: Wed Mar 25 14:25:49 2020
+Nodename: deep-thought
+Arch: x86_64
+Dir: /home/martin/work/software/hotbit/hotbit/test
+System: C20
+       Charge= 0.0
+       Container Chiral: angle=1.2566 (2*pi/5.00), height=4.2600 Ang
+Symmetry operations (if any):
+       0: pbc= False , kappa-points=1, M=1
+       1: pbc= False , kappa-points=1, M=1
+       2: pbc= True , kappa-points=10, M=inf
+Electronic temperature: 0.02 eV
+Mixer: Anderson with memory = 3 , mixing parameter = 0.2
+20 atoms, 80 states, 80.0 electrons (40.0 filled states)
+Initial n ranges:[0,0] [0,0] [-5,5] 
+Element C in /home/martin/work/software/hotbit/param/C.elm
+    *no comment
+
+Interactions:
+  CC in /home/martin/work/software/hotbit/param/C_C.par
+    *(r/r0)**2, r0=1.85*r_cov, standard CC
+
+Repulsions:
+  CC in /home/martin/work/software/hotbit/param/C_C.par
+    *no repulsion doc
+
+Memory consumption estimate: > 0.01 GB
+Hamiltonian ~100.000 % filled.
+
+Timing:
+            label                    time     calls    %sub  %covered   %tot
+-------------------------------------------------------------------------------
+Hotbit                               0.650         1 (100.0 %, 42.3 %) 100.0 % |000000000000000000000000000000|
+../initialization                    0.024         1 (  3.7 %        )   3.7 % |1|
+../geometry                          0.017         1 (  2.6 %, 78.5 %)   2.6 % |1|
+../../operations                     0.010         1 ( 57.5 %        )   1.5 % ||
+../../displacements                  0.004         1 ( 21.0 %        )   0.6 % ||
+../solve                             0.223         1 ( 34.3 %, 99.3 %)  34.3 % |1111111111|
+../../matrix construction            0.171         1 ( 76.8 %        )  26.4 % |22222222|
+../../LAPACK eigensolver             0.039         5 ( 17.5 %        )   6.0 % |22|
+../../Check norm (remove?)           0.005         5 (  2.2 %        )   0.7 % ||
+../../update                         0.003         1 (  1.5 %, 55.7 %)   0.5 % ||
+../../../rho                         0.002         1 ( 55.7 %        )   0.3 % ||
+../../final update                   0.003         1 (  1.4 %        )   0.5 % ||
+../energy                            0.010         1 (  1.6 %, 94.4 %)   1.6 % ||
+../../e_bs                           0.001         1 (  5.4 %        )   0.1 % ||
+../../ecoul                          0.000         1 (  0.1 %        )   0.0 % ||
+../../e_rep                          0.009         1 ( 88.9 %        )   1.4 % ||
+ -------------------------------------------------------------------------------
+total time        0.650 seconds      0 h  0 min  0 sec
+Wed Mar 25 14:25:49 2020
+
+Timing:
+            label                    time     calls    %sub  %covered   %tot
+-------------------------------------------------------------------------------
+Hotbit                               0.371         1 (100.0 %, 88.7 %) 100.0 % |000000000000000000000000000000|
+../initialization                    0.059         1 ( 16.0 %        )  16.0 % |11111|
+../geometry                          0.026         1 (  7.1 %, 66.3 %)   7.1 % |11|
+../../operations                     0.014         1 ( 54.0 %        )   3.8 % |2|
+../../displacements                  0.003         1 ( 12.3 %        )   0.9 % ||
+../solve                             0.234         1 ( 62.9 %, 99.4 %)  62.9 % |1111111111111111111|
+../../matrix construction            0.186         1 ( 79.6 %        )  50.1 % |222222222222222|
+../../LAPACK eigensolver             0.039         5 ( 16.6 %        )  10.5 % |222|
+../../Check norm (remove?)           0.002         5 (  0.8 %        )   0.5 % ||
+../../update                         0.003         1 (  1.4 %, 56.0 %)   0.9 % ||
+../../../rho                         0.002         1 ( 56.0 %        )   0.5 % ||
+../../final update                   0.002         1 (  1.0 %        )   0.6 % ||
+../energy                            0.010         1 (  2.7 %, 94.3 %)   2.7 % |1|
+../../e_bs                           0.001         1 (  5.6 %        )   0.2 % ||
+../../ecoul                          0.000         1 (  0.1 %        )   0.0 % ||
+../../e_rep                          0.009         1 ( 88.5 %        )   2.4 % |2|
+ -------------------------------------------------------------------------------
+total time        0.371 seconds      0 h  0 min  0 sec
+Wed Mar 25 14:25:49 2020
+
+
+
+
+
+
+ _           _    _     _ _
+| |__   ___ | |_ | |__ |_| |_
+|  _ \ / _ \|  _||  _ \| |  _|
+| | | | ( ) | |_ | ( ) | | |_
+|_| |_|\___/ \__|\____/|_|\__|  ver. 0.1 (svn=)
+Distributed under GNU GPL; see /home/martin/work/software/hotbit/lib/python/LICENSE
+Date: Wed Mar 25 14:27:34 2020
+Nodename: deep-thought
+Arch: x86_64
+Dir: /home/martin/work/software/hotbit/hotbit/test
+System: C20
+       Charge= 0.0
+       Container Bravais: pbc:[0,0,1], cell:[3.91,3.91,4.26] Ang, 
+   cosines(12,13,23):[0.00,0.00,0.00]
+Symmetry operations (if any):
+       0: pbc= False , kappa-points=1, M=1
+       1: pbc= False , kappa-points=1, M=1
+       2: pbc= True , kappa-points=10, M=inf
+Electronic temperature: 0.02 eV
+Mixer: Anderson with memory = 3 , mixing parameter = 0.2
+20 atoms, 80 states, 80.0 electrons (40.0 filled states)
+Initial n ranges:[0,0] [0,0] [-5,5] 
+Element C in /home/martin/work/software/hotbit/param/C.elm
+    *no comment
+
+Interactions:
+  CC in /home/martin/work/software/hotbit/param/C_C.par
+    *(r/r0)**2, r0=1.85*r_cov, standard CC
+
+Repulsions:
+  CC in /home/martin/work/software/hotbit/param/C_C.par
+    *no repulsion doc
+
+Memory consumption estimate: > 0.01 GB
+Hamiltonian ~93.750 % filled.
+
+
+
+
+
+
+ _           _    _     _ _
+| |__   ___ | |_ | |__ |_| |_
+|  _ \ / _ \|  _||  _ \| |  _|
+| | | | ( ) | |_ | ( ) | | |_
+|_| |_|\___/ \__|\____/|_|\__|  ver. 0.1 (svn=)
+Distributed under GNU GPL; see /home/martin/work/software/hotbit/lib/python/LICENSE
+Date: Wed Mar 25 14:27:35 2020
+Nodename: deep-thought
+Arch: x86_64
+Dir: /home/martin/work/software/hotbit/hotbit/test
+System: C20
+       Charge= 0.0
+       Container Chiral: angle=1.2566 (2*pi/5.00), height=4.2600 Ang
+Symmetry operations (if any):
+       0: pbc= False , kappa-points=1, M=1
+       1: pbc= False , kappa-points=1, M=1
+       2: pbc= True , kappa-points=10, M=inf
+Electronic temperature: 0.02 eV
+Mixer: Anderson with memory = 3 , mixing parameter = 0.2
+20 atoms, 80 states, 80.0 electrons (40.0 filled states)
+Initial n ranges:[0,0] [0,0] [-5,5] 
+Element C in /home/martin/work/software/hotbit/param/C.elm
+    *no comment
+
+Interactions:
+  CC in /home/martin/work/software/hotbit/param/C_C.par
+    *(r/r0)**2, r0=1.85*r_cov, standard CC
+
+Repulsions:
+  CC in /home/martin/work/software/hotbit/param/C_C.par
+    *no repulsion doc
+
+Memory consumption estimate: > 0.01 GB
+Hamiltonian ~100.000 % filled.
+
+Timing:
+            label                    time     calls    %sub  %covered   %tot
+-------------------------------------------------------------------------------
+Hotbit                               0.788         1 (100.0 %, 35.0 %) 100.0 % |000000000000000000000000000000|
+../initialization                    0.024         1 (  3.0 %        )   3.0 % |1|
+../geometry                          0.017         1 (  2.2 %, 78.5 %)   2.2 % |1|
+../../operations                     0.010         1 ( 58.3 %        )   1.3 % ||
+../../displacements                  0.003         1 ( 20.2 %        )   0.4 % ||
+../solve                             0.225         1 ( 28.5 %, 99.3 %)  28.5 % |111111111|
+../../matrix construction            0.175         1 ( 77.7 %        )  22.1 % |2222222|
+../../LAPACK eigensolver             0.037         5 ( 16.6 %        )   4.7 % |2|
+../../Check norm (remove?)           0.005         5 (  2.3 %        )   0.7 % ||
+../../update                         0.003         1 (  1.5 %, 55.6 %)   0.4 % ||
+../../../rho                         0.002         1 ( 55.6 %        )   0.2 % ||
+../../final update                   0.003         1 (  1.3 %        )   0.4 % ||
+../energy                            0.010         1 (  1.3 %, 94.3 %)   1.3 % ||
+../../e_bs                           0.001         1 (  5.4 %        )   0.1 % ||
+../../ecoul                          0.000         1 (  0.1 %        )   0.0 % ||
+../../e_rep                          0.009         1 ( 88.8 %        )   1.2 % ||
+ -------------------------------------------------------------------------------
+total time        0.788 seconds      0 h  0 min  0 sec
+Wed Mar 25 14:27:35 2020
+
+Timing:
+            label                    time     calls    %sub  %covered   %tot
+-------------------------------------------------------------------------------
+Hotbit                               0.509         1 (100.0 %, 88.5 %) 100.0 % |000000000000000000000000000000|
+../initialization                    0.060         1 ( 11.7 %        )  11.7 % |1111|
+../geometry                          0.026         1 (  5.2 %, 66.9 %)   5.2 % |11|
+../../operations                     0.014         1 ( 54.3 %        )   2.8 % |2|
+../../displacements                  0.003         1 ( 12.5 %        )   0.6 % ||
+../solve                             0.347         1 ( 68.2 %, 99.4 %)  68.2 % |11111111111111111111|
+../../matrix construction            0.277         1 ( 79.9 %        )  54.5 % |2222222222222222|
+../../LAPACK eigensolver             0.053         5 ( 15.2 %        )  10.4 % |222|
+../../Check norm (remove?)           0.009         5 (  2.5 %        )   1.7 % |2|
+../../update                         0.004         1 (  1.0 %, 53.5 %)   0.7 % ||
+../../../rho                         0.002         1 ( 53.5 %        )   0.4 % ||
+../../final update                   0.003         1 (  0.8 %        )   0.5 % ||
+../energy                            0.017         1 (  3.3 %, 96.1 %)   3.3 % |1|
+../../e_bs                           0.001         1 (  3.6 %        )   0.1 % ||
+../../ecoul                          0.000         1 (  0.1 %        )   0.0 % ||
+../../e_rep                          0.016         1 ( 92.3 %        )   3.1 % |2|
+ -------------------------------------------------------------------------------
+total time        0.509 seconds      0 h  0 min  0 sec
+Wed Mar 25 14:27:35 2020
+
+
+
+
+
+
+ _           _    _     _ _
+| |__   ___ | |_ | |__ |_| |_
+|  _ \ / _ \|  _||  _ \| |  _|
+| | | | ( ) | |_ | ( ) | | |_
+|_| |_|\___/ \__|\____/|_|\__|  ver. 0.1 (svn=)
+Distributed under GNU GPL; see /home/martin/work/software/hotbit/lib/python/LICENSE
+Date: Wed Mar 25 14:31:57 2020
+Nodename: deep-thought
+Arch: x86_64
+Dir: /home/martin/work/software/hotbit/hotbit/test
+System: C20
+       Charge= 0.0
+       Container Bravais: pbc:[0,0,1], cell:[3.91,3.91,4.26] Ang, 
+   cosines(12,13,23):[0.00,0.00,0.00]
+Symmetry operations (if any):
+       0: pbc= False , kappa-points=1, M=1
+       1: pbc= False , kappa-points=1, M=1
+       2: pbc= True , kappa-points=10, M=inf
+Electronic temperature: 0.02 eV
+Mixer: Anderson with memory = 3 , mixing parameter = 0.2
+20 atoms, 80 states, 80.0 electrons (40.0 filled states)
+Initial n ranges:[0,0] [0,0] [-5,5] 
+Element C in /home/martin/work/software/hotbit/param/C.elm
+    *no comment
+
+Interactions:
+  CC in /home/martin/work/software/hotbit/param/C_C.par
+    *(r/r0)**2, r0=1.85*r_cov, standard CC
+
+Repulsions:
+  CC in /home/martin/work/software/hotbit/param/C_C.par
+    *no repulsion doc
+
+Memory consumption estimate: > 0.01 GB
+Hamiltonian ~93.750 % filled.
+
+
+
+
+
+
+ _           _    _     _ _
+| |__   ___ | |_ | |__ |_| |_
+|  _ \ / _ \|  _||  _ \| |  _|
+| | | | ( ) | |_ | ( ) | | |_
+|_| |_|\___/ \__|\____/|_|\__|  ver. 0.1 (svn=)
+Distributed under GNU GPL; see /home/martin/work/software/hotbit/lib/python/LICENSE
+Date: Wed Mar 25 14:31:58 2020
+Nodename: deep-thought
+Arch: x86_64
+Dir: /home/martin/work/software/hotbit/hotbit/test
+System: C20
+       Charge= 0.0
+       Container Chiral: angle=1.2566 (2*pi/5.00), height=4.2600 Ang
+Symmetry operations (if any):
+       0: pbc= False , kappa-points=1, M=1
+       1: pbc= False , kappa-points=1, M=1
+       2: pbc= True , kappa-points=10, M=inf
+Electronic temperature: 0.02 eV
+Mixer: Anderson with memory = 3 , mixing parameter = 0.2
+20 atoms, 80 states, 80.0 electrons (40.0 filled states)
+Initial n ranges:[0,0] [0,0] [-5,5] 
+Element C in /home/martin/work/software/hotbit/param/C.elm
+    *no comment
+
+Interactions:
+  CC in /home/martin/work/software/hotbit/param/C_C.par
+    *(r/r0)**2, r0=1.85*r_cov, standard CC
+
+Repulsions:
+  CC in /home/martin/work/software/hotbit/param/C_C.par
+    *no repulsion doc
+
+Memory consumption estimate: > 0.01 GB
+Hamiltonian ~100.000 % filled.
+
+Timing:
+            label                    time     calls    %sub  %covered   %tot
+-------------------------------------------------------------------------------
+Hotbit                               0.627         1 (100.0 %, 42.9 %) 100.0 % |000000000000000000000000000000|
+../initialization                    0.023         1 (  3.7 %        )   3.7 % |1|
+../geometry                          0.017         1 (  2.7 %, 78.4 %)   2.7 % |1|
+../../operations                     0.010         1 ( 58.0 %        )   1.5 % ||
+../../displacements                  0.003         1 ( 20.4 %        )   0.5 % ||
+../solve                             0.219         1 ( 34.9 %, 99.4 %)  34.9 % |1111111111|
+../../matrix construction            0.170         1 ( 77.8 %        )  27.1 % |22222222|
+../../LAPACK eigensolver             0.037         5 ( 17.0 %        )   5.9 % |22|
+../../Check norm (remove?)           0.003         5 (  1.5 %        )   0.5 % ||
+../../update                         0.003         1 (  1.5 %, 55.8 %)   0.5 % ||
+../../../rho                         0.002         1 ( 55.8 %        )   0.3 % ||
+../../final update                   0.003         1 (  1.5 %        )   0.5 % ||
+../energy                            0.010         1 (  1.6 %, 94.4 %)   1.6 % ||
+../../e_bs                           0.001         1 (  5.4 %        )   0.1 % ||
+../../ecoul                          0.000         1 (  0.1 %        )   0.0 % ||
+../../e_rep                          0.009         1 ( 88.8 %        )   1.5 % ||
+ -------------------------------------------------------------------------------
+total time        0.627 seconds      0 h  0 min  0 sec
+Wed Mar 25 14:31:58 2020
+
+Timing:
+            label                    time     calls    %sub  %covered   %tot
+-------------------------------------------------------------------------------
+Hotbit                               0.354         1 (100.0 %, 88.3 %) 100.0 % |000000000000000000000000000000|
+../initialization                    0.059         1 ( 16.8 %        )  16.8 % |11111|
+../geometry                          0.027         1 (  7.5 %, 67.4 %)   7.5 % |11|
+../../operations                     0.015         1 ( 54.7 %        )   4.1 % |2|
+../../displacements                  0.003         1 ( 12.7 %        )   1.0 % ||
+../solve                             0.217         1 ( 61.2 %, 99.4 %)  61.2 % |111111111111111111|
+../../matrix construction            0.169         1 ( 78.1 %        )  47.8 % |22222222222222|
+../../LAPACK eigensolver             0.039         5 ( 17.8 %        )  10.9 % |222|
+../../Check norm (remove?)           0.002         5 (  0.8 %        )   0.5 % ||
+../../update                         0.003         1 (  1.5 %, 55.8 %)   0.9 % ||
+../../../rho                         0.002         1 ( 55.8 %        )   0.5 % ||
+../../final update                   0.002         1 (  1.1 %        )   0.7 % ||
+../energy                            0.010         1 (  2.8 %, 94.5 %)   2.8 % |1|
+../../e_bs                           0.001         1 (  5.7 %        )   0.2 % ||
+../../ecoul                          0.000         1 (  0.1 %        )   0.0 % ||
+../../e_rep                          0.009         1 ( 88.6 %        )   2.5 % |2|
+ -------------------------------------------------------------------------------
+total time        0.354 seconds      0 h  0 min  0 sec
+Wed Mar 25 14:31:58 2020
+
+
+
+
+
+
+ _           _    _     _ _
+| |__   ___ | |_ | |__ |_| |_
+|  _ \ / _ \|  _||  _ \| |  _|
+| | | | ( ) | |_ | ( ) | | |_
+|_| |_|\___/ \__|\____/|_|\__|  ver. 0.1 (svn=)
+Distributed under GNU GPL; see /home/martin/work/software/hotbit/lib/python/LICENSE
+Date: Wed Mar 25 14:34:53 2020
+Nodename: deep-thought
+Arch: x86_64
+Dir: /home/martin/work/software/hotbit/hotbit/test
+System: C20
+       Charge= 0.0
+       Container Bravais: pbc:[0,0,1], cell:[3.91,3.91,4.26] Ang, 
+   cosines(12,13,23):[0.00,0.00,0.00]
+Symmetry operations (if any):
+       0: pbc= False , kappa-points=1, M=1
+       1: pbc= False , kappa-points=1, M=1
+       2: pbc= True , kappa-points=10, M=inf
+Electronic temperature: 0.02 eV
+Mixer: Anderson with memory = 3 , mixing parameter = 0.2
+20 atoms, 80 states, 80.0 electrons (40.0 filled states)
+Initial n ranges:[0,0] [0,0] [-5,5] 
+Element C in /home/martin/work/software/hotbit/param/C.elm
+    *no comment
+
+Interactions:
+  CC in /home/martin/work/software/hotbit/param/C_C.par
+    *(r/r0)**2, r0=1.85*r_cov, standard CC
+
+Repulsions:
+  CC in /home/martin/work/software/hotbit/param/C_C.par
+    *no repulsion doc
+
+Memory consumption estimate: > 0.01 GB
+Hamiltonian ~93.750 % filled.
+
+
+
+
+
+
+ _           _    _     _ _
+| |__   ___ | |_ | |__ |_| |_
+|  _ \ / _ \|  _||  _ \| |  _|
+| | | | ( ) | |_ | ( ) | | |_
+|_| |_|\___/ \__|\____/|_|\__|  ver. 0.1 (svn=)
+Distributed under GNU GPL; see /home/martin/work/software/hotbit/lib/python/LICENSE
+Date: Wed Mar 25 14:34:54 2020
+Nodename: deep-thought
+Arch: x86_64
+Dir: /home/martin/work/software/hotbit/hotbit/test
+System: C20
+       Charge= 0.0
+       Container Chiral: angle=1.2566 (2*pi/5.00), height=4.2600 Ang
+Symmetry operations (if any):
+       0: pbc= False , kappa-points=1, M=1
+       1: pbc= False , kappa-points=1, M=1
+       2: pbc= True , kappa-points=10, M=inf
+Electronic temperature: 0.02 eV
+Mixer: Anderson with memory = 3 , mixing parameter = 0.2
+20 atoms, 80 states, 80.0 electrons (40.0 filled states)
+Initial n ranges:[0,0] [0,0] [-5,5] 
+Element C in /home/martin/work/software/hotbit/param/C.elm
+    *no comment
+
+Interactions:
+  CC in /home/martin/work/software/hotbit/param/C_C.par
+    *(r/r0)**2, r0=1.85*r_cov, standard CC
+
+Repulsions:
+  CC in /home/martin/work/software/hotbit/param/C_C.par
+    *no repulsion doc
+
+Memory consumption estimate: > 0.01 GB
+Hamiltonian ~100.000 % filled.
+
+Timing:
+            label                    time     calls    %sub  %covered   %tot
+-------------------------------------------------------------------------------
+Hotbit                               1.075         1 (100.0 %, 33.8 %) 100.0 % |000000000000000000000000000000|
+../initialization                    0.027         1 (  2.6 %        )   2.6 % |1|
+../geometry                          0.019         1 (  1.7 %, 78.6 %)   1.7 % |1|
+../../operations                     0.011         1 ( 57.5 %        )   1.0 % ||
+../../displacements                  0.004         1 ( 21.1 %        )   0.4 % ||
+../solve                             0.302         1 ( 28.1 %, 99.5 %)  28.1 % |11111111|
+../../matrix construction            0.203         1 ( 67.2 %        )  18.9 % |222222|
+../../LAPACK eigensolver             0.050         5 ( 16.5 %        )   4.6 % |2|
+../../Check norm (remove?)           0.030         5 ( 10.1 %        )   2.8 % |2|
+../../update                         0.008         1 (  2.6 %, 79.6 %)   0.7 % ||
+../../../rho                         0.006         1 ( 79.6 %        )   0.6 % ||
+../../final update                   0.009         1 (  3.1 %        )   0.9 % ||
+../energy                            0.016         1 (  1.4 %, 94.8 %)   1.4 % ||
+../../e_bs                           0.001         1 (  4.6 %        )   0.1 % ||
+../../ecoul                          0.000         1 (  0.1 %        )   0.0 % ||
+../../e_rep                          0.014         1 ( 90.1 %        )   1.3 % ||
+ -------------------------------------------------------------------------------
+total time        1.075 seconds      0 h  0 min  0 sec
+Wed Mar 25 14:34:54 2020
+
+Timing:
+            label                    time     calls    %sub  %covered   %tot
+-------------------------------------------------------------------------------
+Hotbit                               0.706         1 (100.0 %, 92.0 %) 100.0 % |000000000000000000000000000000|
+../initialization                    0.079         1 ( 11.1 %        )  11.1 % |111|
+../geometry                          0.027         1 (  3.9 %, 83.3 %)   3.9 % |1|
+../../operations                     0.019         1 ( 68.7 %        )   2.7 % |2|
+../../displacements                  0.004         1 ( 14.6 %        )   0.6 % ||
+../solve                             0.532         1 ( 75.3 %, 99.5 %)  75.3 % |11111111111111111111111|
+../../matrix construction            0.460         1 ( 86.5 %        )  65.2 % |22222222222222222222|
+../../LAPACK eigensolver             0.053         5 ( 10.0 %        )   7.5 % |22|
+../../Check norm (remove?)           0.003         5 (  0.6 %        )   0.5 % ||
+../../update                         0.004         1 (  0.8 %, 63.2 %)   0.6 % ||
+../../../rho                         0.003         1 ( 63.2 %        )   0.4 % ||
+../../final update                   0.008         1 (  1.5 %        )   1.2 % ||
+../energy                            0.012         1 (  1.6 %, 94.3 %)   1.6 % ||
+../../e_bs                           0.001         1 (  5.3 %        )   0.1 % ||
+../../ecoul                          0.000         1 (  0.1 %        )   0.0 % ||
+../../e_rep                          0.010         1 ( 88.8 %        )   1.5 % ||
+ -------------------------------------------------------------------------------
+total time        0.706 seconds      0 h  0 min  0 sec
+Wed Mar 25 14:34:54 2020
+
+
+
+
+
+
+ _           _    _     _ _
+| |__   ___ | |_ | |__ |_| |_
+|  _ \ / _ \|  _||  _ \| |  _|
+| | | | ( ) | |_ | ( ) | | |_
+|_| |_|\___/ \__|\____/|_|\__|  ver. 0.1 (svn=)
+Distributed under GNU GPL; see /home/martin/work/software/hotbit/lib/python/LICENSE
+Date: Wed Mar 25 14:38:23 2020
+Nodename: deep-thought
+Arch: x86_64
+Dir: /home/martin/work/software/hotbit/hotbit/test
+System: C20
+       Charge= 0.0
+       Container Bravais: pbc:[0,0,1], cell:[3.91,3.91,4.26] Ang, 
+   cosines(12,13,23):[0.00,0.00,0.00]
+Symmetry operations (if any):
+       0: pbc= False , kappa-points=1, M=1
+       1: pbc= False , kappa-points=1, M=1
+       2: pbc= True , kappa-points=10, M=inf
+Electronic temperature: 0.02 eV
+Mixer: Anderson with memory = 3 , mixing parameter = 0.2
+20 atoms, 80 states, 80.0 electrons (40.0 filled states)
+Initial n ranges:[0,0] [0,0] [-5,5] 
+Element C in /home/martin/work/software/hotbit/param/C.elm
+    *no comment
+
+Interactions:
+  CC in /home/martin/work/software/hotbit/param/C_C.par
+    *(r/r0)**2, r0=1.85*r_cov, standard CC
+
+Repulsions:
+  CC in /home/martin/work/software/hotbit/param/C_C.par
+    *no repulsion doc
+
+Memory consumption estimate: > 0.01 GB
+Hamiltonian ~93.750 % filled.
+
+
+
+
+
+
+ _           _    _     _ _
+| |__   ___ | |_ | |__ |_| |_
+|  _ \ / _ \|  _||  _ \| |  _|
+| | | | ( ) | |_ | ( ) | | |_
+|_| |_|\___/ \__|\____/|_|\__|  ver. 0.1 (svn=)
+Distributed under GNU GPL; see /home/martin/work/software/hotbit/lib/python/LICENSE
+Date: Wed Mar 25 14:38:23 2020
+Nodename: deep-thought
+Arch: x86_64
+Dir: /home/martin/work/software/hotbit/hotbit/test
+System: C20
+       Charge= 0.0
+       Container Chiral: angle=1.2566 (2*pi/5.00), height=4.2600 Ang
+Symmetry operations (if any):
+       0: pbc= False , kappa-points=1, M=1
+       1: pbc= False , kappa-points=1, M=1
+       2: pbc= True , kappa-points=10, M=inf
+Electronic temperature: 0.02 eV
+Mixer: Anderson with memory = 3 , mixing parameter = 0.2
+20 atoms, 80 states, 80.0 electrons (40.0 filled states)
+Initial n ranges:[0,0] [0,0] [-5,5] 
+Element C in /home/martin/work/software/hotbit/param/C.elm
+    *no comment
+
+Interactions:
+  CC in /home/martin/work/software/hotbit/param/C_C.par
+    *(r/r0)**2, r0=1.85*r_cov, standard CC
+
+Repulsions:
+  CC in /home/martin/work/software/hotbit/param/C_C.par
+    *no repulsion doc
+
+Memory consumption estimate: > 0.01 GB
+Hamiltonian ~100.000 % filled.
+
+Timing:
+            label                    time     calls    %sub  %covered   %tot
+-------------------------------------------------------------------------------
+Hotbit                               0.662         1 (100.0 %, 45.8 %) 100.0 % |000000000000000000000000000000|
+../initialization                    0.024         1 (  3.6 %        )   3.6 % |1|
+../geometry                          0.017         1 (  2.5 %, 78.5 %)   2.5 % |1|
+../../operations                     0.010         1 ( 58.9 %        )   1.5 % ||
+../../displacements                  0.003         1 ( 19.6 %        )   0.5 % ||
+../solve                             0.251         1 ( 38.0 %, 99.3 %)  38.0 % |11111111111|
+../../matrix construction            0.189         1 ( 75.2 %        )  28.6 % |222222222|
+../../LAPACK eigensolver             0.046         5 ( 18.2 %        )   6.9 % |22|
+../../Check norm (remove?)           0.008         5 (  3.3 %        )   1.3 % ||
+../../update                         0.003         1 (  1.4 %, 53.2 %)   0.5 % ||
+../../../rho                         0.002         1 ( 53.2 %        )   0.3 % ||
+../../final update                   0.003         1 (  1.2 %        )   0.5 % ||
+../energy                            0.011         1 (  1.7 %, 94.5 %)   1.7 % ||
+../../e_bs                           0.001         1 (  5.5 %        )   0.1 % ||
+../../ecoul                          0.000         1 (  0.1 %        )   0.0 % ||
+../../e_rep                          0.010         1 ( 88.9 %        )   1.5 % ||
+ -------------------------------------------------------------------------------
+total time        0.662 seconds      0 h  0 min  0 sec
+Wed Mar 25 14:38:24 2020
+
+Timing:
+            label                    time     calls    %sub  %covered   %tot
+-------------------------------------------------------------------------------
+Hotbit                               0.355         1 (100.0 %, 88.1 %) 100.0 % |000000000000000000000000000000|
+../initialization                    0.060         1 ( 17.0 %        )  17.0 % |11111|
+../geometry                          0.025         1 (  7.2 %, 65.5 %)   7.2 % |11|
+../../operations                     0.013         1 ( 51.9 %        )   3.7 % |2|
+../../displacements                  0.003         1 ( 13.6 %        )   1.0 % ||
+../solve                             0.217         1 ( 61.1 %, 99.3 %)  61.1 % |111111111111111111|
+../../matrix construction            0.170         1 ( 78.3 %        )  47.8 % |22222222222222|
+../../LAPACK eigensolver             0.038         5 ( 17.7 %        )  10.8 % |222|
+../../Check norm (remove?)           0.002         5 (  0.8 %        )   0.5 % ||
+../../update                         0.003         1 (  1.5 %, 55.9 %)   0.9 % ||
+../../../rho                         0.002         1 ( 55.9 %        )   0.5 % ||
+../../final update                   0.002         1 (  1.1 %        )   0.7 % ||
+../energy                            0.010         1 (  2.8 %, 94.2 %)   2.8 % |1|
+../../e_bs                           0.001         1 (  5.6 %        )   0.2 % ||
+../../ecoul                          0.000         1 (  0.1 %        )   0.0 % ||
+../../e_rep                          0.009         1 ( 88.5 %        )   2.5 % |2|
+ -------------------------------------------------------------------------------
+total time        0.355 seconds      0 h  0 min  0 sec
+Wed Mar 25 14:38:24 2020

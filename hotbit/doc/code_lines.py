@@ -1,5 +1,6 @@
 import os
 import pylab as pl
+import numpy as np   ## MS: needed for work-around of pylab.poly_between
 from box import mix
 from time import time,localtime
 import datetime
@@ -38,12 +39,19 @@ dates = [datetime.date(a[0],a[1],a[2]) for a in timetuples]
 #data[:,0]/=356*24*3600
 #pl.plot(dates,data[:,1])
 #xs, ys = pl.poly_between(data[:,0],0,data[:,1])
-xs, ys = pl.poly_between(dates,0,data[:,1])
-pl.fill(xs,ys,label='python')
-xs, ys = pl.poly_between(dates,data[:,1],data[:,1]+data[:,2])
-pl.fill(xs,ys,label='fortran')
-xs, ys = pl.poly_between(dates,data[:,1]+data[:,2],data[:,1]+data[:,2]+data[:,3])
-pl.fill(xs,ys,label='C')
+## MS: incompatibility issue with matplotlib>=3.1
+#xs, ys = pl.poly_between(dates,0,data[:,1])
+#pl.fill(xs,ys,label='python')
+#xs, ys = pl.poly_between(dates,data[:,1],data[:,1]+data[:,2])
+#pl.fill(xs,ys,label='fortran')
+#xs, ys = pl.poly_between(dates,data[:,1]+data[:,2],data[:,1]+data[:,2]+data[:,3])
+#pl.fill(xs,ys,label='C')
+pl.fill(np.append(dates,0), np.append(data[:,1],0), label='python')
+pl.fill(np.append(dates,data[:,1]), np.append(data[:,1]+data[:,2],0), 
+        label='fortran')
+pl.fill(np.append(dates,data[:,1]+data[:,2]), 
+        np.append(data[:,1]+data[:,2]+data[:,3],data[:,1]+data[:,2]),
+        label='C')
 pl.title('lines of code in hotbit')
 pl.xlabel('Years since 14.10 2008')
 pl.ylabel('Lines of code')

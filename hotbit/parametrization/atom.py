@@ -12,6 +12,7 @@ from time import asctime
 import math
 import pickle
 import collections
+from sys import float_info
 
 try:
     import pylab as pl
@@ -114,7 +115,10 @@ class KSAllElectron:
         if self.xc=='PW92':
             self.xcf=XC_PW92()
         else:
-            raise NotImplementedError('Not implemented xc functional: %s' %xc)
+            ## MS: add support for functionals from libxc
+            from .pylibxc_interface import libXCFunctional
+            self.xcf = libXCFunctional(self.xc)
+#            raise NotImplementedError('Not implemented xc functional: %s' %xc)
 
         # technical stuff
         self.maxl=9
@@ -170,7 +174,10 @@ class KSAllElectron:
         for n,l,nl in self.list_states():
             self.bs_energy+=self.occu[nl]*self.enl[nl]
 
-        self.exc=array([self.xcf.exc(self.dens[i]) for i in range(self.N)])
+        ## MS: re-write exc as a function of rho on grid
+#        self.exc=array([self.xcf.exc(self.dens[i]) for i in range(self.N)])
+        self.xcf.set_grid(self.grid)
+        self.exc=self.xcf.exc(self.dens)
         self.Hartree_energy=self.grid.integrate(self.Hartree*self.dens,use_dV=True)/2
         self.vxc_energy=self.grid.integrate(self.vxc*self.dens,use_dV=True)
         self.exc_energy=self.grid.integrate(self.exc*self.dens,use_dV=True)
@@ -254,7 +261,10 @@ class KSAllElectron:
     def calculate_veff(self):
         """ Calculate effective potential. """
         self.timer.start('veff')
-        self.vxc=array([self.xcf.vxc(self.dens[i]) for i in range(self.N)])
+        ## MS: re-write xcf.vxc as function of density on grid
+#        self.vxc=array([self.xcf.vxc(self.dens[i]) for i in range(self.N)])
+        self.xcf.set_grid(self.grid)
+        self.vxc=self.xcf.vxc(self.dens)
         self.timer.stop('veff')
         return self.nucl + self.Hartree + self.vxc + self.conf
 
@@ -482,8 +492,7 @@ class KSAllElectron:
         
         filename:  output file name + extension (extension used in matplotlib)
         """
-        if pl==None:
-            raise AssertionError('pylab could not be imported')
+        if pl==None: raise AssertionError('pylab could not be imported')
         rmax = data[self.symbol]['R_cov']/0.529177*3
         ri = np.where( self.rgrid<rmax )[0][-1]
         states=len(self.list_states())
@@ -495,16 +504,14 @@ class KSAllElectron:
         for n,l,nl in self.list_states():
             ax=pl.subplot(2*p,p,i)
             pl.plot(self.Rnlg[nl])
-            pl.yticks([],[])
+#            pl.yticks([],[])
+            pl.yticks(size=5)
             pl.xticks(size=5)
-            
             # annotate
-            c = 'k'
-            if nl in self.valence: 
-                c='r'
-            pl.text(0.5,0.4,r'$R_{%s}(r)$' %nl,transform=ax.transAxes,size=15,color=c)
-            if ax.is_first_col():
-                pl.ylabel(r'$R_{nl}(r)$',size=8)
+            c = 'r' if (nl in self.valence) else 'k'
+            pl.text(0.5,0.4,r'$R_{%s}(gridpts)$' %nl, \
+                    transform=ax.transAxes,size=15,color=c)
+            if ax.is_first_col(): pl.ylabel(r'$R_{nl}(r)$',size=8)
             i+=1
             
         # as a function of radius
@@ -512,38 +519,31 @@ class KSAllElectron:
         for n,l,nl in self.list_states():
             ax=pl.subplot(2*p,p,i)
             pl.plot(self.rgrid[:ri],self.Rnlg[nl][:ri])
-            pl.yticks([],[])
+#            pl.yticks([],[])
+            pl.yticks(size=5)
             pl.xticks(size=5)
-            if ax.is_last_row():
-                pl.xlabel('r (Bohr)',size=8)
-
-            c = 'k'
-            if nl in self.valence: 
-                c='r'
-            pl.text(0.5,0.4,r'$R_{%s}(r)$' %nl,transform=ax.transAxes,size=15,color=c)
-            if ax.is_first_col():
-                pl.ylabel(r'$R_{nl}(r)$',size=8)
+            if ax.is_last_row(): pl.xlabel('r (Bohr)',size=8)
+            # annotate
+            c = 'r' if (nl in self.valence) else 'k'
+            pl.text(0.5,0.4,r'$R_{%s}(r)$' %nl, \
+                    transform=ax.transAxes,size=15,color=c)
+            if ax.is_first_col(): pl.ylabel(r'$R_{nl}(r)$',size=8)
             i+=1
-        
 
-        file = '%s_KSAllElectron.pdf' %self.symbol
+        filen = '%s_KSAllElectron.pdf' %self.symbol
         #pl.rc('figure.subplot',wspace=0.0,hspace=0.0)
         fig.subplots_adjust(hspace=0.2,wspace=0.1)
-        s=''
-        if self.confinement!=None:
-            s='(confined)'
+        s = '' if (self.confinement is None) else '(confined)'
         pl.figtext(0.4,0.95,r'$R_{nl}(r)$ for %s-%s %s' %(self.symbol,self.symbol,s))
-        if filename is not None:
-            file = filename
-        pl.savefig(file)
+        if filename is not None: filen = filename
+        pl.savefig(filen)
 
 
     def get_wf_range(self,nl,fractional_limit=1E-7):
         """ Return the maximum r for which |R(r)|<fractional_limit*max(|R(r)|) """
         wfmax=max(abs(self.Rnlg[nl]))
         for r,wf in zip(self.rgrid[-1::-1],self.Rnlg[nl][-1::-1]):
-            if abs(wf)>fractional_limit*wfmax:
-                return r
+            if abs(wf)>fractional_limit*wfmax: return r
 
 
     def list_states(self):
@@ -765,6 +765,17 @@ class RadialGrid:
             return ((f[0:self.N-1]+f[1:self.N])*self.dV).sum()*0.5
         else:
             return ((f[0:self.N-1]+f[1:self.N])*self.dr).sum()*0.5
+        
+    
+    ## MS: add function for getting derivative of function on grid
+    def derivative(self, f, order=1):
+        """
+        Get order-th derivative of function f (given with N grid points).
+        """
+        x = self.get_grid()
+        f_spline = SplineFunction(x, f)
+        dfdx = f_spline(x, der=order)
+        return dfdx
 
 
 
@@ -819,10 +830,13 @@ class XC_PW92:
 
     def exc(self,n,der=0):
         """ Exchange-correlation with electron density n. """
-        if n<self.small:
-            return 0.0
-        else:
-            return self.e_x(n,der=der)+self.e_corr(n,der=der)
+        ## MS: re-write to take full density on grid instead of individual points
+#        if n<self.small:
+#            return 0.0
+#        else:
+#            return self.e_x(n,der=der)+self.e_corr(n,der=der)
+        return np.where( n<self.small, 0.0, \
+                         self.e_x(n,der=der)+self.e_corr(n,der=der) )
 
     def e_x(self,n,der=0):
         """ Exchange. """
@@ -833,24 +847,46 @@ class XC_PW92:
 
     def e_corr(self,n,der=0):
         """ Correlation energy. """
-        rs = (3.0/(4*pi*n))**(1.0/3)
-        aux=2*self.c0*( self.b1*sqrt(rs)+self.b2*rs+self.b3*rs**(3.0/2)+self.b4*rs**2 )
+        sqrtrs=(3.0/(4*pi*n))**(1.0/6)
+        rs=sqrtrs*sqrtrs
+        aux=2*self.c0*( self.b1*sqrtrs+self.b2*rs+self.b3*rs**(3.0/2)\
+            +self.b4*rs**2 )
+        auxinv = 1./aux
         if der==0:
-            return -2*self.c0*(1+self.a1*rs)*log(1+aux**-1)
+            return -2*self.c0*(1+self.a1*rs)*np.log(1+auxinv)
         elif der==1:
-            return ( -2*self.c0*self.a1*log(1+aux**-1) \
-                   -2*self.c0*(1+self.a1*rs)*(1+aux**-1)**-1*(-aux**-2)\
-                   *2*self.c0*(self.b1/(2*sqrt(rs))+self.b2+3*self.b3*sqrt(rs)/2+2*self.b4*rs) )*( -(4*pi*n**2*rs**2)**-1 )
+            ## avoid overflow in reciprocal
+            sqrtmax = sqrt(float_info.max)
+            aux_new = 2 * sqrt(pi) * n * rs
+            aux_new = np.clip(aux_new, 1./sqrtmax, sqrtmax)
+            aux_new2 = aux_new * aux_new
+            maux_new2inv = -1. / aux_new2
+            
+            return ( -2*self.c0*self.a1*np.log(1+auxinv) \
+                   -2*self.c0*(1+self.a1*rs)*(1+auxinv)**-1*(-auxinv*auxinv)\
+                   *2*self.c0*(self.b1/(2*sqrtrs)+self.b2\
+                   +3*self.b3*sqrtrs/2+2*self.b4*rs) )*maux_new2inv
 
     def vxc(self,n):
         """ Exchange-correlation potential (functional derivative of exc). """
-        eps=1E-9*n
-        if n<self.small:
-            return 0.0
-        else:
-            return self.exc(n)+n*self.exc(n,der=1)
-
-
+        ## MS: re-write to take full density on grid instead of individual points
+#        eps=1E-9*n
+#        if n<self.small:
+#            return 0.0
+#        else:
+#            return self.exc(n)+n*self.exc(n,der=1)
+        return np.where( n<self.small, 0.0, self.exc(n)+n*self.exc(n,der=1) )
+        
+    
+    ## MS: allow to pass grid to xc functional (needed by GGAs)
+    def set_grid(self, grid):
+        """
+        Communicates the grid to the xc instance.
+        (NOTE: This is just for internal consistency, LDA doesn't use the grid)
+        """
+        pass
+        
+    
 
 angular_momenta=['s','p','d','f','g','h','i','j','k','l']
 def orbit_transform(nl,string):
