@@ -33,6 +33,16 @@ If you find hotbit useful in your work, please cite ([pdf](http://users.jyu.fi/~
     }
 ```
 
+## environment variables
+When installing with
+```
+python setup.py install --home=.
+```
+you can set the necessary environment variables by calling
+```
+bash env_exports
+```
+
 ## libxc interface:
 _libxc_ can be found at [www.tddft.org/programs/libxc](https://www.tddft.org/programs/libxc)
 * For using the Hotbit Slater-Koster parametrization suite together with exchange-correlation functionals from _libxc_, you should install _libxc_ and its python module. For details on the installation, please refer to the instructions given with the _libxc_ package.

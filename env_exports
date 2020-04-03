@@ -1,0 +1,4 @@
+export HOTBIT_DIR=$(pwd)/lib/python
+export HOTBIT_PARAMETERS=$(pwd)/param
+export PATH=$(pwd):$PATH
+export PYTHONPATH=$HOTBIT_DIR:$PYTHONPATH

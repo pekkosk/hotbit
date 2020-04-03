@@ -41,8 +41,7 @@ class libXCFunctional:
         if self._anyGGA:
             if not hasattr(self, 'grid'): raise ValueError(_ERR_NOGRID)
             drho_dr = where( rho<self.rho_min, 0.0, self.grid.derivative(rho))
-            sigma = drho_dr * drho_dr
-            inp['sigma'] = sigma
+            inp['sigma'] = drho_dr * drho_dr
         
         if self._sep_xc:
             # calculate exchange energy (density)
@@ -88,7 +87,7 @@ class libXCFunctional:
             v_xc = res['vrho'][0]
             # GGA contribution to vxc
             if self._xcGGA: v_xc -= self.v_gga(res['vsigma'][0], drho_dr)
-        
+
         return where( rho<self.rho_min, 0.0, v_xc)
         
     
@@ -111,8 +110,71 @@ class libXCFunctional:
         de_dgrad = 2. * de_dsigma * grad
         d2e_drdgrad = self.grid.derivative(de_dgrad)
         r = clip(self.grid.get_grid(), 1e-20, None)
-        de_rdgrad = de_dgrad / r
-        return 2. * de_rdgrad + d2e_drdgrad
+        TWOde_rdgrad = 2. * de_dgrad / r
+        return TWOde_rdgrad + d2e_drdgrad
+        
+    
+
+##############################################################
+##  OLD: based on full derivation of functional derivative  ##
+##############################################################
+#
+#    def vxc1(self, rho):
+#        """ Returns exchange-correlation potential for density rho. """
+#        inp = {'rho':rho}
+#        if self._anyGGA:
+#            if not hasattr(self, 'grid'): raise ValueError(_ERR_NOGRID)
+#            drho_dr = where( rho<self.rho_min, 0.0, self.grid.derivative(rho))
+#            sigma = drho_dr * drho_dr
+#            inp['sigma'] = sigma
+#            
+#        if self._sep_xc:
+#            res = self._pylibxc_x.compute(inp, do_exc=True, do_vxc=True)
+#            v_x = res['zk'][0] + rho * res['vrho'][0]
+#            # GGA contribution
+#            if self._xGGA: v_x -= self.v_gga1(rho, drho_dr, res['vsigma'][0])
+#            
+#            res = self._pylibxc_c.compute(inp, do_exc=True, do_vxc=True)
+#            v_c = res['zk'][0] + rho * res['vrho'][0]
+#            # GGA contribution
+#            if self._cGGA: v_c -= self.v_gga1(rho, drho_dr, res['vsigma'][0])
+#
+#            v_xc = v_x + v_c
+#        else:
+#            res = self._pylibxc_xc.compute(inp, do_exc=True, do_vxc=True)
+#            v_xc = res['zk'][0] + rho * res['vrho'][0]
+#            # GGA contribution
+#            if self._xcGGA: v_xc -= self.v_gga1(rho, drho_dr, res['vsigma'][0])
+#        
+#        return where( rho<self.rho_min, 0.0, v_xc)
+#        
+#    
+#    def v_gga1(self, rho, grad, de_dsigma):
+#        """
+#        Returns GGA contribution to radial vx, vc, or vxc, as given by:
+#            rho*[ 2/r*2*deps/dgrad + d/dr(2*deps/dgrad) ] + 2*sigma*deps/dsigma
+#        where
+#            rho is the radial density,
+#            r the position in the radial grid,
+#            eps the energy density,
+#            grad the derivative of the density,
+#            deps/dgrad the partial derivative of eps w.r.t. grad
+#            sigma the square of the radial density
+#            deps/dsigma the partial derivative of eps w.r.t. sigma
+#        
+#        Arguments:
+#        ==========
+#            . rho:      [array] density on radial grid
+#            . grad:     [array] gradient of density
+#            . de_dsigma [array] partial derivative of the energy density
+#                                w.r.t. sigma
+#        """
+#        de_dgrad = 2. * de_dsigma * grad
+#        d2e_drdgrad = self.grid.derivative(de_dgrad)
+#        r = clip(self.grid.get_grid(), 1e-20, None)
+#        TWOde_rdgrad = 2. * de_dgrad / r
+#        return rho * (TWOde_rdgrad + d2e_drdgrad) + de_dgrad * grad
+##############################################################
         
     
 
