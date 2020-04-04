@@ -7,6 +7,7 @@ xc2libxc = {
 ## LDAs ##
 'gl'        :   'LDA_X,LDA_C_GL',
 'hl'        :   'LDA_X,LDA_C_HL',
+'pw92'      :   'LDA_X,LDA_C_PW',
 'pz'        :   'LDA_X,LDA_C_PZ',
 'svwn'      :   'LDA_X,LDA_C_VWN',
 'teter93'   :   'LDA_XC_TETER93',
