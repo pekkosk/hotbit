@@ -16,8 +16,11 @@ _ERR_UNKNOWNXC  = "The specified xc-functional '{0:s}' is not known"
 _ERR_UNKNOWNXC += " or not supported yet.\nAvailable functionals:\n"
 _ERR_UNKNOWNXC += ", ".join(["'"+f.upper()+"'" for f in available_xcs])
 
-_ERR_NOGRID  = "GGA calculations require to set the grid "
+_ERR_NOGRID  = "GGA and Hybrid calculations require to set the grid "
 _ERR_NOGRID += "via set_grid(grid)! I didn't find self.grid. Aborting."
+
+_ERR_NORNL  = "Hybrid calculations require to the the radial wavefunctions "
+_ERR_NORNL += "via set_Rnl(Rnl)! I didn't find self.Rnl. Aborting."
 
 
 ####################

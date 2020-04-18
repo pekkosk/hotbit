@@ -12,7 +12,6 @@ from time import asctime
 import math
 import pickle
 import collections
-from sys import float_info
 
 try:
     import pylab as pl
@@ -794,6 +793,13 @@ class ConfinementPotential:
             self.s=kwargs['s']
             self.f=self.general #lambda r:(r/self.r0)**s
             self.comment='general r0=%.3f s=%.3f' %(self.r0, self.s)
+        elif mode.lower() in ['woods-saxon','woodssaxon']:
+            self.r0=kwargs['r0']
+            self.a=kwargs['a']
+            self.W=kwargs['W']
+            self.f=self.woods_saxon
+            self.comment='Woods-Saxon r0=%.3f ' %self.r0
+            self.comment+='a=%.3f W=%.3f' %(self.a, self.W)
         else:
             raise NotImplementedError('implement new confinements')
 
@@ -809,6 +815,9 @@ class ConfinementPotential:
     def general(self,r):
         return (r/self.r0)**self.s
 
+    def woods_saxon(self,r):
+        return self.W/(1.+np.exp(-self.a*(r-self.r0)))
+    
     def __call__(self,r):
         return self.f(r)
 
@@ -830,14 +839,24 @@ class XC_PW92:
 
     def exc(self,n,der=0):
         """ Exchange-correlation with electron density n. """
-        ## MS: re-write to take full density on grid instead of individual points
-#        if n<self.small:
-#            return 0.0
-#        else:
-#            return self.e_x(n,der=der)+self.e_corr(n,der=der)
-        return np.where( n<self.small, 0.0, \
-                         self.e_x(n,der=der)+self.e_corr(n,der=der) )
-
+        n = np.array(n)
+        if (n.ndim==0):
+            exc_clip = self.clipped_exc(n,der=der)
+        elif (n.ndim==1):
+            exc_clip = np.zeros_like(n)
+            for i_n, n_i in enumerate(n):
+                exc_clip[i_n] = self.clipped_exc(n_i,der=der)
+        else:
+            msg = "Got density of unexpected dimensionality "+str(n.ndim)
+            raise ValueError(msg)
+        return exc_clip
+    
+    def clipped_exc(self,n,der=0):
+        if n<self.small:
+            return 0.0
+        else:
+            return self.e_x(n,der=der)+self.e_corr(n,der=der)
+    
     def e_x(self,n,der=0):
         """ Exchange. """
         if der==0:
@@ -855,13 +874,8 @@ class XC_PW92:
         if der==0:
             return -2*self.c0*(1+self.a1*rs)*np.log(1+auxinv)
         elif der==1:
-            ## avoid overflow in reciprocal
-            sqrtmax = sqrt(float_info.max)
             aux_new = 2 * sqrt(pi) * n * rs
-            aux_new = np.clip(aux_new, 1./sqrtmax, sqrtmax)
-            aux_new2 = aux_new * aux_new
-            maux_new2inv = -1. / aux_new2
-            
+            maux_new2inv = -1. / (aux_new * aux_new)
             return ( -2*self.c0*self.a1*np.log(1+auxinv) \
                    -2*self.c0*(1+self.a1*rs)*(1+auxinv)**-1*(-auxinv*auxinv)\
                    *2*self.c0*(self.b1/(2*sqrtrs)+self.b2\
@@ -869,13 +883,7 @@ class XC_PW92:
 
     def vxc(self,n):
         """ Exchange-correlation potential (functional derivative of exc). """
-        ## MS: re-write to take full density on grid instead of individual points
-#        eps=1E-9*n
-#        if n<self.small:
-#            return 0.0
-#        else:
-#            return self.exc(n)+n*self.exc(n,der=1)
-        return np.where( n<self.small, 0.0, self.exc(n)+n*self.exc(n,der=1) )
+        return self.exc(n)+n*self.exc(n,der=1)
         
     
     ## MS: allow to pass grid to xc functional (needed by GGAs)
