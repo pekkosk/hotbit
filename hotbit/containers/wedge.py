@@ -132,6 +132,7 @@ class Wedge:
                     x,y = r[0],r[1]
                     rad = np.sqrt( x**2+y**2 )
                     newphi = phival(x,y)*(self.get('angle')/old_angle)
+                    if newphi>pi: newphi-=2*pi
                     rad2 = rad * old_angle/self.get('angle')
                     newr.append( [rad2*np.cos(newphi),rad2*np.sin(newphi),r[2]] )
                 self.atoms.set_positions(newr)
