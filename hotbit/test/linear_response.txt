@@ -1,6 +1,0 @@
-
-LR for Na3 (charge 1.00).  Dimension 11.  coupling matrix constructed.  Matrix diagonalized. 
-LR for Na3 (charge 1.00).  Dimension 11.  coupling matrix constructed.  Matrix diagonalized. 
-LR for Na3 (charge 1.00).  Dimension 11.  coupling matrix constructed.  Matrix diagonalized. 
-LR for Na3 (charge 1.00).  Dimension 11.  coupling matrix constructed.  Matrix diagonalized. 
-LR for Na3 (charge 1.00).  Dimension 11.  coupling matrix constructed.  Matrix diagonalized. 

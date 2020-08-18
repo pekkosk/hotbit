@@ -117,7 +117,6 @@ class KSAllElectron:
             ## MS: add support for functionals from libxc
             from .pylibxc_interface import libXCFunctional
             self.xcf = libXCFunctional(self.xc)
-#            raise NotImplementedError('Not implemented xc functional: %s' %xc)
 
         # technical stuff
         self.maxl=9
@@ -174,7 +173,6 @@ class KSAllElectron:
             self.bs_energy+=self.occu[nl]*self.enl[nl]
 
         ## MS: re-write exc as a function of rho on grid
-#        self.exc=array([self.xcf.exc(self.dens[i]) for i in range(self.N)])
         self.xcf.set_grid(self.grid)
         self.exc=self.xcf.exc(self.dens)
         self.Hartree_energy=self.grid.integrate(self.Hartree*self.dens,use_dV=True)/2
@@ -261,7 +259,6 @@ class KSAllElectron:
         """ Calculate effective potential. """
         self.timer.start('veff')
         ## MS: re-write xcf.vxc as function of density on grid
-#        self.vxc=array([self.xcf.vxc(self.dens[i]) for i in range(self.N)])
         self.xcf.set_grid(self.grid)
         self.vxc=self.xcf.vxc(self.dens)
         self.timer.stop('veff')
@@ -286,7 +283,7 @@ class KSAllElectron:
             # use density and effective potential from another calculation
             try:
                 from scipy.interpolate import splrep, splev
-                f = open(self.restart)
+                f = open(self.restart, 'rb')
                 rgrid = pickle.load(f)
                 veff = pickle.load(f)
                 dens = pickle.load(f)
@@ -296,9 +293,9 @@ class KSAllElectron:
                 self.dens = array([splev(r,d) for r in self.rgrid])
                 f.close()
                 done = True
-            except IOError:
+            except:
                 print("Could not open restart file, " \
-                                   "starting from scratch.", file=self.txt)
+                      "starting from scratch.", file=self.txt)
         if not done:
             self.veff=self.nucl+self.conf
             self.dens=self.guess_density()
@@ -358,7 +355,7 @@ class KSAllElectron:
         self.txt.flush()
         self.solved=True
         if self.write != None:
-            f=open(self.write,'w')
+            f=open(self.write,'wb')
             pickle.dump(self.rgrid, f)
             pickle.dump(self.veff, f)
             pickle.dump(self.dens, f)
@@ -793,7 +790,7 @@ class ConfinementPotential:
             self.s=kwargs['s']
             self.f=self.general #lambda r:(r/self.r0)**s
             self.comment='general r0=%.3f s=%.3f' %(self.r0, self.s)
-        elif mode.lower() in ['woods-saxon','woodssaxon']:
+        elif mode.lower() in ['woods-saxon','woods_saxon','woodssaxon']:
             self.r0=kwargs['r0']
             self.a=kwargs['a']
             self.W=kwargs['W']

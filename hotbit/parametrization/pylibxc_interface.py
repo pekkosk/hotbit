@@ -1,5 +1,5 @@
 from numpy import clip, where
-from .pylibxc_helper import _ERR_NOLIBXC, _ERR_NOGRID, _ERR_NORNL, translate_xc
+from .pylibxc_helper import _ERR_NOLIBXC, _ERR_NOGRID, translate_xc
 try:
     import pylibxc
 except ImportError:
@@ -7,7 +7,6 @@ except ImportError:
 
 
 _ggaIDs = [pylibxc.flags.XC_FAMILY_GGA, pylibxc.flags.XC_FAMILY_HYB_GGA]
-_hybIDs = [pylibxc.flags.XC_FAMILY_HYB_GGA, pylibxc.flags.XC_FAMILY_HYB_MGGA]
 
 ##########################################################################
 ##  Interface to python module of libxc (www.tddft.org/programs/libxc)  ##
@@ -31,7 +30,6 @@ class libXCFunctional:
     def __init__(self, xc_name_in):
         self.mini = 1e-90
         self._xGGA, self._cGGA, self._xcGGA = False, False, False
-        self._EXXfrac = 0.
         
         xc_name = translate_xc(xc_name_in)
         self._sep_xc = (',' in xc_name)
@@ -41,29 +39,16 @@ class libXCFunctional:
             self._pylibxc_c = pylibxc.LibXCFunctional(c_name, "unpolarized")
             self._xGGA = (self._pylibxc_x.get_family() in _ggaIDs)
             self._cGGA = (self._pylibxc_c.get_family() in _ggaIDs)
-            self._doEXX = (self._pylibxc_x.get_family() in _hybIDs)
-            if self._doEXX: self._EXXfrac = self._pylibxc_x.get_hyb_exx_coef()
         else:
             self._pylibxc_xc = pylibxc.LibXCFunctional(xc_name, "unpolarized")
             self._xcGGA = (self._pylibxc_xc.get_family() in _ggaIDs)
-            self._doEXX = (self._pylibxc_xc.get_family() in _hybIDs)
-            if self._doEXX: self._EXXfrac = self._pylibxc_xc.get_hyb_exx_coef()
         
         self._anyGGA = any([self._xGGA, self._cGGA, self._xcGGA])
-        if self._doEXX:
-            raise NotImplementedError("Exact exchange not implemented yet.")
         
     
     def set_grid(self, grid):
         """ Communicates grid to xc instance (Needed for GGAs). """
         self.grid = grid
-        
-    
-    def set_Rnl(self, Rnl):
-        """
-        Communicates radial wave functions to xc instance (Needed for hybrids).
-        """
-        self.Rnl = Rnl
         
     
     def exc(self, rho):
@@ -77,7 +62,6 @@ class libXCFunctional:
         if self._sep_xc:
             # calculate exchange energy (density)
             res = self._pylibxc_x.compute(inp, do_exc=True, do_vxc=False)
-            e_x = (1. - self._EXXfrac) * res['zk'][0]
             # calculate correlation energy (density)
             res = self._pylibxc_c.compute(inp, do_exc=True, do_vxc=False)
             e_c = res['zk'][0]
@@ -85,11 +69,6 @@ class libXCFunctional:
         else:
             res = self._pylibxc_xc.compute(inp, do_exc=True, do_vxc=False)
             e_xc = res['zk'][0]
-        
-        if self._doEXX:
-            if not hasattr(self, 'grid'): raise ValueError(_ERR_NOGRID)
-            if not hasattr(self, 'Rnl'): raise ValueError(_ERR_NORNL)
-            exc += self._EXXfrac * self.get_exx()
         
         return e_xc
         
@@ -109,7 +88,6 @@ class libXCFunctional:
             v_x = res['vrho'][0]
             # GGA contribution to vx
             if self._xGGA: v_x -= self.v_gga(res['vsigma'][0], drho_dr)
-            v_x *= (1. - self._EXXfrac)
             
             # calculate correlation potential
             res = self._pylibxc_c.compute(inp, do_exc=False, do_vxc=True)
@@ -124,11 +102,6 @@ class libXCFunctional:
             v_xc = res['vrho'][0]
             # GGA contribution to vxc
             if self._xcGGA: v_xc -= self.v_gga(res['vsigma'][0], drho_dr)
-        
-        if self._doEXX:
-            if not hasattr(self, 'grid'): raise ValueError(_ERR_NOGRID)
-            if not hasattr(self, 'Rnl'): raise ValueError(_ERR_NORNL)
-            vxc += self._EXXfrac * self.get_vxx()
         
         return v_xc
         
@@ -154,38 +127,6 @@ class libXCFunctional:
         r = clip(self.grid.get_grid(), self.mini, None)
         TWOde_rdgrad = 2. * de_dgrad / r
         return TWOde_rdgrad + d2e_drdgrad
-        
-    
 
-#########################################################################
-##  Hybrids: libxc provides the density-based parts of Exc, vxc, etc.  ##
-#########################################################################
-#                                                                       #
-#  . EXX energy contribution:                                           #
-#      exx = -1/2 \sum_i,j \int n_HF(r,r') / |r-r'| dr' / rho           #
-#    with n_HF(r,r') = Rnl_i(r) Rnl_i(r') Rnl_j(r) Rnl_j(r').           #
-#  . EXX potential contribution:                                        #
-#      vxx = dexx/dn = dexx/dRnl dRnl/dveff dveff/drho = ??             #
-#                                                                       #
-#########################################################################
-    
-    def get_exx(self):
-        """
-        Returns exact exchange contribution to xc energy density:
-            exx = -1/2 \sum_i,j \int n_HF(r,r') / |r-r'| dr' / rho
-        with n_HF(r,r') = Rnl_i(r) Rnl_i(r') Rnl_j(r) Rnl_j(r')
-        where Rnl_i are the radial wave functions.
-        """
-        raise NotImplementedError("Exact exchange not implemented yet.")
-        
-    
-    def get_vxx(self):
-        """
-        Returns exact exchange contribution to radial vxc or vx:
-            vxx = ???
-        """
-        raise NotImplementedError("Exact exchange not implemented yet.")
-        
-    
 
 #--EOF--#
