@@ -46,7 +46,7 @@ bash env_exports
 ## libxc interface:
 _libxc_ can be found at [www.tddft.org/programs/libxc](https://www.tddft.org/programs/libxc)
 * For using the Hotbit Slater-Koster parametrization suite together with exchange-correlation functionals from _libxc_, you should install _libxc_ and its python module. For details on the installation, please refer to the instructions given with the _libxc_ package.
-Currently, Hotbit supports LDA, GGA and hybrid GGA functionals (meta-GGAs and hybrid meta-GGAs pending)
+Currently, Hotbit supports LDA and GGA functionals (meta-GGAs and hybrids pending)
 Specification of functionals is supported via their generic names. For a list of available functionals, please refer to
 ```
 hotbit.parametrization.pylibxc_functionals.py
