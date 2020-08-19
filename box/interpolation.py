@@ -377,13 +377,13 @@ class SplineFunction:
 class Function:
 
     def __init__(self,mode,*args,**kwargs):
-        if mode is 'spline':
+        if mode == 'spline':
             self.f=SplineFunction(*args,**kwargs)
-        elif mode is 'string':
+        elif mode == 'string':
             raise NotImplementedError('todo')
             self.args=args
             self.kwargs=kwargs
-        elif mode is 'fastspline':
+        elif mode == 'fastspline':
             self.f=FastSplineFunction(*args,**kwargs)
         else:
             raise NotImplementedError('todo')

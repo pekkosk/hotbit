@@ -248,8 +248,10 @@ class LinearResponse:
         f=f/max(abs(f))
         
         pl.plot(e,f,lw=2)
-        xs, ys = pl.poly_between(e, 0, f)
-        pl.fill(xs,ys,fc='b',ec='b',alpha=0.5)
+        ## MS: incompatibility issue with matplotlib>=3.1
+#        xs, ys = pl.poly_between(e, 0, f)
+#        pl.fill(xs,ys,fc='b',ec='b',alpha=0.5)
+        pl.fill(np.append(e,0), np.append(f,0), fc='b', ec='b', alpha=0.5)
         pl.ylim(0,1.2)
         
         if xlim==None:

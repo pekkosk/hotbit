@@ -36,7 +36,10 @@ def make_cumulative_plot(grid, values, width, weights_list, labels=None, colors=
     low = np.zeros_like(grid)
     for weights, color, label in zip(weights_list, colors, labels):
         up = low + broaden(grid, values, width, weights)
-        x, y = pylab.poly_between(grid, low, up)
-        pylab.fill(x, y, facecolor=color, edgecolor='none', label=label)
+        ## MS: incompatibility issue with matplotlib>=3.1
+#        x, y = pylab.poly_between(grid, low, up)
+#        pylab.fill(x, y, facecolor=color, edgecolor='none', label=label)
+        pylab.fill(np.append(grid,low), np.append(up, low),
+                   facecolor=color, edgecolor='none', label=label)
         low = up
 
