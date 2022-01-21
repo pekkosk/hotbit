@@ -129,15 +129,15 @@ class Element:
 
 
     def get_C6(self):
-        return self.data['C6']
+        return float(self.data['C6'])
 
 
     def get_p(self):
-        return self.data['p']
+        return float(self.data['p'])
 
 
     def get_R0(self):
-        return self.data['R0']
+        return float(self.data['R0'])
 
 
     def get_file(self):
