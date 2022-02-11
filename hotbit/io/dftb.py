@@ -52,13 +52,14 @@ def read_element_from_skf(fileobj, symbol):
     data['U'] = U[2]
     data['FWHM'] = sqrt(8*log(2.0)/pi)/data['U']
 
-    energies=[]            
-    for orbital in data['valence_orbitals']:            
+    es, ep, ed = np.array([]), np.array([]), np.array([])
+    for orbital in data['valence_orbitals']:
         eps = data['epsilon'][orbital]
-        if   's' in orbital: n=1
-        elif 'p' in orbital: n=3
-        elif 'd' in orbital: n=5
-        energies.extend( [eps]*n )                
+        if   's' in orbital: es = np.array([eps])
+        elif 'p' in orbital: ep = np.array([eps]*3)
+        elif 'd' in orbital: ed = np.array([eps]*5)
+
+    energies = np.concatenate( (es,ep,ed) )
     data['onsite_energies'] = energies
     data['nr_basis_orbitals'] = len(energies)
     data['valence_energies'] = np.array(energies, dtype=float)
