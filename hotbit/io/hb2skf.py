@@ -13,7 +13,6 @@ RJ Maurer & GS Michelitsch, Technische Universitaet Muenchen, 14/03/2014
 from sys import argv
 from hotbit.io import native
 
-
 def generate_DFTBplus_repulsion(filename, DEBUG=False):
     """
     Transforms Hotbit repulsion to DFTB+ format.
@@ -46,7 +45,6 @@ def generate_DFTBplus_repulsion(filename, DEBUG=False):
             data = tmp[line].strip('\n').split()
             x.append(float(data[0]))
             y.append(float(data[1]))
-            print(x[-1], y[-1])
             line += 1
 
     ##Repulsion is defined by an initial exponential part
@@ -58,20 +56,23 @@ def generate_DFTBplus_repulsion(filename, DEBUG=False):
         return np.exp(-a1 * x + a2) + a3
 
     def splinefit(t, c0, c1, c2, c3):
-        x, x0 = t[0], t[1]
-        func = c0 + c1 * (x - x0) + c2 * (x - x0) ** 2 + \
-            c3 * (x - x0) ** 3
+        #here t = (x-x0) directly
+        func = c0 + c1*t + c2*t**2 + c3*t**3
         return func
 
     def splinefit2(t, c0, c1, c2, c3, c4, c5):
-        x, x0 = t[0], t[1]
-        func = c0 + c1 * (x - x0) + c2 * (x - x0) ** 2 + \
-            c3 * (x - x0) ** 3 + c4 * (x - x0) ** 4 + \
-            c5 * (x - x0) ** 5
+        # here t = (x-x0) directly
+        func = c0 + c1 * t + c2 * t ** 2 + \
+            c3 * t ** 3 + c4 * t ** 4 + \
+            c5 * t ** 5
         return func
 
     #third order scipy spline
     SPLINE = splrep(x, y, s=0, k=3)
+    if DEBUG:
+        import matplotlib.pylab as pl
+        pl.axhline(0,c='k',ls='--')
+        pl.plot(x,y,lw=4,ls='--',c='r',alpha=0.2,label='original')
 
     #START WITH EXPONENTIAL FIT
     #find last x value below 0.50 Bohr
@@ -85,12 +86,11 @@ def generate_DFTBplus_repulsion(filename, DEBUG=False):
         'the range {0} to {1}'.format(s1, s2))
 
     t = np.linspace(s1, s2, 10)
-    print(t)
     data = splev(t, SPLINE)
+
     expParams, fitCovariances = curve_fit(expfit, t, data)
     print(' Exp. fit coefficients:\n', expParams)
     print(' Covariance matrix:\n', fitCovariances)
-
     repulsion_string = 'Spline\n'
 
     if DEBUG:
@@ -124,7 +124,7 @@ def generate_DFTBplus_repulsion(filename, DEBUG=False):
             '{0} and {1}'.format(start, end))
         t = np.linspace(start, end, 6)
         data = splev(t, SPLINE)
-        splParams, fitCovariances = curve_fit(splinefit, [t, start], data)
+        splParams, fitCovariances = curve_fit(splinefit, t-start, data)
         print(' Spline fit coefficients:\n', splParams)
         print(' Covariance matrix:\n', fitCovariances)
 
@@ -135,7 +135,7 @@ def generate_DFTBplus_repulsion(filename, DEBUG=False):
         if DEBUG:
             X = np.linspace(start, end, 20)
             Y = [splev(x, SPLINE) for x in X]
-            Y2 = [splinefit([x, start], c0, c1, c2, c3) for x in X]
+            Y2 = [splinefit(x-start, c0, c1, c2, c3) for x in X]
             pl.plot(X, Y)
             pl.plot(X, Y2)
 
@@ -148,7 +148,7 @@ def generate_DFTBplus_repulsion(filename, DEBUG=False):
 
     t = np.linspace(start, end, 12)
     data = splev(t, SPLINE)
-    splParams, fitCovariances = curve_fit(splinefit2, [t, start], data)
+    splParams, fitCovariances = curve_fit(splinefit2,t-start,data)
     print(' Spline fit coefficients:\n', splParams)
     print(' Covariance matrix:\n', fitCovariances)
 
@@ -159,12 +159,15 @@ def generate_DFTBplus_repulsion(filename, DEBUG=False):
     if DEBUG:
         X = np.linspace(start, end, 20)
         Y = [splev(x, SPLINE) for x in X]
-        Y2 = [splinefit2([x, start], c0, c1, c2, c3, c4, c5) for x in X]
+        Y2 = [splinefit2(x-start, c0, c1, c2, c3, c4, c5) for x in X]
         pl.plot(X, Y)
         pl.plot(X, Y2)
+        pl.legend()
         pl.show()
 
     return repulsion_string
+
+
 
 
 def generate_DFTBplus_header(elmdat, pardat, hetero):
