@@ -113,7 +113,7 @@ def generate_DFTBplus_repulsion(filename, DEBUG=False):
     N_dftbplus = int((x_end - s2) / deltax)
     x_end = s1 + deltax * N_dftbplus
 
-    repulsion_string += '{0} {1:4.2f}\n'.format(N_dftbplus + 1, x_cut)
+    repulsion_string += '{0} {1:4.6f}\n'.format(N_dftbplus + 1, x_cut)
     a1, a2, a3 = expParams
     repulsion_string += '{0:18.15f} {1:18.15f} {2:18.15f}\n'.format(a1, a2, a3)
 
@@ -129,7 +129,7 @@ def generate_DFTBplus_repulsion(filename, DEBUG=False):
         print(' Covariance matrix:\n', fitCovariances)
 
         c0, c1, c2, c3 = splParams
-        repulsion_string += '{0:5.3f} {1:5.3f} {2:19.15f} {3:19.15f} \
+        repulsion_string += '{0:5.6f} {1:5.6f} {2:19.15f} {3:19.15f} \
 {4:19.15f} {5:19.15f}\n'.format(start, end, c0, c1, c2, c3)
 
         if DEBUG:
@@ -153,7 +153,7 @@ def generate_DFTBplus_repulsion(filename, DEBUG=False):
     print(' Covariance matrix:\n', fitCovariances)
 
     c0, c1, c2, c3, c4, c5 = splParams
-    repulsion_string += '{0:5.3f} {1:5.3f} {2:19.15f} {3:19.15f} {4:19.15f} \
+    repulsion_string += '{0:5.6f} {1:5.6f} {2:19.15f} {3:19.15f} {4:19.15f} \
 {5:19.15f} {6:19.15f} {7:19.15f}\n'.format(start, end, c0, c1, c2, c3, c4, c5)
 
     if DEBUG:
