@@ -1,6 +1,7 @@
 from pylab import *
 from ase import *
 from hotbit import *
+from ase.io import write
 
 d1,d2 = 1.06, 1.203
 atoms = Atoms('HCCH',[(0,0,0),(d1,0,0),(d1+d2,0,0),(2*d1+d2,0,0)])
@@ -12,13 +13,13 @@ atoms.get_potential_energy()
 #
 # charges and energetics
 #
-print 'charges:',calc.get_dq()
-print 'H: mulliken charge',calc.get_atom_mulliken(0)
-print 'C: mulliken charge',calc.get_atom_mulliken(1)
-print 'H: atom and bond energy',calc.get_atom_and_bond_energy(0)
-print 'C: atom and bond energy',calc.get_atom_and_bond_energy(1)
-print 'H: atom energy',calc.get_atom_energy(0)
-print 'C: atom energy',calc.get_atom_energy(1)
+print('charges:',calc.get_dq())
+print('H: mulliken charge',calc.get_atom_mulliken(0))
+print('C: mulliken charge',calc.get_atom_mulliken(1))
+print('H: atom and bond energy',calc.get_atom_and_bond_energy(0))
+print('C: atom and bond energy',calc.get_atom_and_bond_energy(1))
+print('H: atom energy',calc.get_atom_energy(0))
+print('C: atom energy',calc.get_atom_energy(1))
 
 #
 # grid analysis
