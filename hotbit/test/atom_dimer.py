@@ -37,7 +37,8 @@ e=-152.981553763-(-149.76607940880001)
 for i in range(10):    
     Au2.set_calculator(calc)
     vector=mix.random_direction(vector=True)
-    Au2.rotate(vector*random.rand()*2*pi)
+    #Au2.rotate(vector*random.rand()*2*pi)
+    Au2.rotate(vector*random.rand()*2*pi,'y')
     Au2.center(vacuum=10)
     e2=Au2.get_potential_energy()
     if abs(e-e2)>1E-4:
