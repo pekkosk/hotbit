@@ -3,6 +3,7 @@ from hotbit import *
 from pylab import *
 from numpy import *
 from copy import copy
+from ase.io import write
 
 a=4.08
 d = a/2
