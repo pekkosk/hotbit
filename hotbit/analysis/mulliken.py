@@ -1,4 +1,5 @@
-from ase.units import Hartree
+from ase.units import Hartree, Bohr
+from hotbit.coulomb import DirectCoulomb
 import numpy as np
 from weakref import proxy
 from box import mix
@@ -380,6 +381,10 @@ class MullikenBondAnalysis(MullikenAnalysis):
             
         if self.SCC:
             coul = 0.5*self.calc.st.es.G[I,I]*self.st.dq[I]**2
+            cut = self.calc.get('gamma_cut')
+            self.solver = DirectCoulomb(cut)
+            self.solver.update(self.calc.el.atoms, self.st.dq)
+            coul += 0.5 * self.st.dq[I] * self.solver.get_potential()[I]*Bohr
         else:
             coul = 0.0         
         
