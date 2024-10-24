@@ -555,6 +555,9 @@ class Elements:
         i_element = orb['atom']
         n_el = self.get_valences()[i_element]
         atomindex = orb['atomindex'] # atomindex states before this
+        # TODO: there is a bug here for d-elements: d orbitals are occupied 
+        # before p-orbitals, but this logic occupies p first,
+        # because the atomic orbital list is p, px, py,...
         return max(0, min(2, n_el - 2*atomindex))
 
 
