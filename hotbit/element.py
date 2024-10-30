@@ -7,7 +7,9 @@ import numpy as npy
 from box.data import data
 from hotbit.io import read_element
 
-orbital_list=['s','px','py','pz','dxy','dyz','dzx','dx2-y2','d3z2-r2']
+orbital_list_s=['s']
+orbital_list_sp=['s','px','py','pz']
+orbital_list_sdp=['s','dxy','dyz','dzx','dx2-y2','d3z2-r2','px','py','pz']
                 
 class Element:
     def __init__(self,element):
@@ -78,8 +80,17 @@ class Element:
     def get_valence_orbitals(self):
         """ Return ['2s','2p']... """
         return self.data['valence_orbitals']
-            
-            
+
+
+    def get_s_occupation(self):
+        """ Return the no of electrons in the outermost s shell. """
+        config = self.data['configuration']
+        s_orbs = ['7s', '6s', '5s', '4s', '3s', '2s', '1s']
+        for orb in s_orbs:
+            if orb in config.keys():
+                return config[orb]
+
+
     def get_symbol(self):
         """ Return 'H', 'C', etc. """
         return self.data['symbol']
@@ -107,13 +118,21 @@ class Element:
     
     def get_onsite_energies(self):
         """ Return on-site energies for all basis functions. """
-        return self.data['onsite_energies']
+        energies = list(self.data['onsite_energies'])
+        if len(energies) == 9:
+            return np.array([energies[0]] + energies[4:] + energies[1:4])
+        return np.array(energies)
     
     
     def get_orbital_types(self):
         """ Return list of valence orbital types ['s','px','py',...] """
         no=self.get_nr_basis_orbitals()
-        return orbital_list[:no]
+        if no == 1:
+            return orbital_list_s
+        if no == 4:
+            return orbital_list_sp
+        return orbital_list_sdp
+        #return orbital_list[:no]
     
     
     def get_U(self):

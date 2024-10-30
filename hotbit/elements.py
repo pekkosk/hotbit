@@ -418,6 +418,7 @@ class Elements:
         # number of valence electrons on atoms and the total number of electrons
         self.nr_of_valences=np.array( [self.elements[symb].get_valence_number() for symb in self.symbols] )
         self.electrons=self.get_valences().sum()-self.charge
+        self.s_occupations=np.array( [self.elements[symb].get_s_occupation() for symb in self.symbols] )
 
         # set list of element pairs
         #self.el_pair_list=[]
@@ -448,6 +449,10 @@ class Elements:
     def get_valences(self):
         """ Number of valence electrons for atoms. """
         return self.nr_of_valences
+        
+    def get_s_occupations(self):
+        """ Number of electrons in the outermost s shell. """
+        return self.s_occupations
 
     def get_number_of_electrons(self):
         """ Total number of electrons in system. """
@@ -554,10 +559,11 @@ class Elements:
         orb = self.orb[m]
         i_element = orb['atom']
         n_el = self.get_valences()[i_element]
+        n_s_el = self.get_s_occupations()[i_element]
+        if orb['orbital'] == 's':
+            return n_s_el
+        n_el += 2 - n_s_el
         atomindex = orb['atomindex'] # atomindex states before this
-        # TODO: there is a bug here for d-elements: d orbitals are occupied 
-        # before p-orbitals, but this logic occupies p first,
-        # because the atomic orbital list is p, px, py,...
         return max(0, min(2, n_el - 2*atomindex))
 
 
