@@ -7,9 +7,7 @@ import numpy as npy
 from box.data import data
 from hotbit.io import read_element
 
-orbital_list_s=['s']
-orbital_list_sp=['s','px','py','pz']
-orbital_list_sdp=['s','dxy','dyz','dzx','dx2-y2','d3z2-r2','px','py','pz']
+orbital_list = ['s','px','py','pz','dxy','dyz','dzx','dx2-y2','d3z2-r2']
                 
 class Element:
     def __init__(self,element):
@@ -118,21 +116,13 @@ class Element:
     
     def get_onsite_energies(self):
         """ Return on-site energies for all basis functions. """
-        energies = list(self.data['onsite_energies'])
-        if len(energies) == 9:
-            return np.array([energies[0]] + energies[4:] + energies[1:4])
-        return np.array(energies)
+        return self.data['onsite_energies']
     
     
     def get_orbital_types(self):
         """ Return list of valence orbital types ['s','px','py',...] """
         no=self.get_nr_basis_orbitals()
-        if no == 1:
-            return orbital_list_s
-        if no == 4:
-            return orbital_list_sp
-        return orbital_list_sdp
-        #return orbital_list[:no]
+        return orbital_list[:no]
     
     
     def get_U(self):
