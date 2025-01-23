@@ -564,8 +564,8 @@ class Elements:
         n_el = self.get_valences()[i_element]
         n_el += 2 - n_s_el
         atomindex = orb['atomindex'] # atomindex states before this
-        if len(self.orb) == 9:
-            # Orbital d should come before p
+        if any([orbital['orbital'][0] == 'd' for orbital in self.orb if orbital['atom'] == orb['atom']]):
+            # In this case orbital d should come before p
             if orb['orbital'][0] == 'p':
                 atomindex += 5
             else:
