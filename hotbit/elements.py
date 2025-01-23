@@ -558,12 +558,18 @@ class Elements:
         is isolated (a number between zero and two). """
         orb = self.orb[m]
         i_element = orb['atom']
-        n_el = self.get_valences()[i_element]
         n_s_el = self.get_s_occupations()[i_element]
         if orb['orbital'] == 's':
             return n_s_el
+        n_el = self.get_valences()[i_element]
         n_el += 2 - n_s_el
         atomindex = orb['atomindex'] # atomindex states before this
+        if len(self.orb) == 9:
+            # Orbital d should come before p
+            if orb['orbital'][0] == 'p':
+                atomindex += 5
+            else:
+                atomindex -= 3
         return max(0, min(2, n_el - 2*atomindex))
 
 
