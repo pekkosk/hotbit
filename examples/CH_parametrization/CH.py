@@ -37,7 +37,7 @@ if phase==2:
     table = SlaterKosterTable(A,B)
     rmin, rmax, dr = 1,10,0.1
     N = int( (rmax-rmin)/dr )
-    print N,'points in the table'
+    print(N,'points in the table')
     table.run(rmin,rmax,N)
     table.write('C_H_norep.par')
     table.plot('C_H_slako.pdf')

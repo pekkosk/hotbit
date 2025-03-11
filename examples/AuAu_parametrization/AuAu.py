@@ -28,7 +28,7 @@ if phase==2:
     table = SlaterKosterTable(atom,atom)
     rmin, rmax, dr = 1,12,0.1
     N = int( (rmax-rmin)/dr )
-    print N,'points in the table'
+    print(N,'points in the table')
     table.run(rmin,rmax,N)
     table.write('Au_Au_no_repulsion.par')
     table.plot('Au_Au_slako.pdf')
